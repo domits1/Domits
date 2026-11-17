@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals
 import { Forbidden } from "../../functions/PropertyHandler/util/exception/Forbidden.js";
 import { NotFoundException } from "../../functions/PropertyHandler/util/exception/NotFoundException.js";
 import { WebsiteQuoteService } from "../../functions/PropertyHandler/business/service/websiteQuoteService.js";
-import { signWebsiteQuoteToken } from "../../functions/.shared/websiteQuoteToken.js";
+import { WEBSITE_PLAN_READ_TIMEOUT_MS } from "../../functions/PropertyHandler/business/service/websiteElitePageSettings.js";
+import { SITE_PROPERTY_READ_TIMEOUT_MS } from "../../functions/PropertyHandler/business/service/websiteSitePropertySnapshots.js";
+import { signWebsiteQuoteToken, verifyWebsiteQuoteToken } from "../../functions/.shared/websiteQuoteToken.js";
 import {
   EXISTING_DOMAIN,
   EXISTING_SITE,
@@ -13,6 +15,7 @@ import {
   buildStoringSiteRepository,
   expectNoPlanRead,
   hostEvent,
+  ratePlanRow,
 } from "./support/existingSiteRender.js";
 
 const SECRET = "quote-secret";
@@ -20,15 +23,20 @@ const NOW = Date.parse("2026-09-02T10:00:00.000Z");
 const HOST = EXISTING_SITE.hostId;
 const MAIN = EXISTING_SITE.propertyId;
 const OWN = "property-own-2";
+const OWN_UNLISTED = "property-own-3";
+const FOREIGN = "property-foreign";
 const STAY = Object.freeze({ checkIn: "2026-10-01", checkOut: "2026-10-05", guests: 2 });
 const LIVE_RATES = Object.freeze({
   [MAIN]: { roomRate: 190, cleaning: 50, minimumStay: 2 },
   [OWN]: { roomRate: 120, cleaning: 30, minimumStay: 3 },
+  [OWN_UNLISTED]: { roomRate: 150, cleaning: 40, minimumStay: 2 },
 });
 
-const buildQuotePropertyService = (listings) => {
+const buildQuotePropertyService = (listings, blockedNights) => {
   const ratesOf = (propertyId) => {
-    if (propertyId !== MAIN && !listings.has(propertyId)) throw Object.assign(new Error("not found"), { statusCode: 404 });
+    if (propertyId !== MAIN && !listings.has(propertyId)) {
+      throw Object.assign(new Error("not found"), { statusCode: 404 });
+    }
     return LIVE_RATES[propertyId];
   };
   const listingDetails = (propertyId, location) => ({
@@ -53,17 +61,22 @@ const buildQuotePropertyService = (listings) => {
       { availableStartDate: Date.UTC(2026, 9, 1), availableEndDate: Date.UTC(2026, 9, 31) },
     ]),
     getPricing: jest.fn(async (propertyId) => ({ property_id: propertyId, ...ratesOf(propertyId) })),
-    getPublicCalendarAvailability: jest.fn(async () => ({
+    getPublicCalendarAvailability: jest.fn(async (propertyId) => ({
       externalBlockedDates: [],
       availableDateKeys: [],
-      unavailableDateKeys: [],
+      unavailableDateKeys: blockedNights.get(propertyId) ?? [],
     })),
   };
 };
 
 const buildQuoteFlow = ({ site = null, planRow = PAID_ELITE_ROW } = {}) => {
   const store = { draft: null, site };
-  const listings = new Map([[OWN, { hostId: HOST, status: "ACTIVE", title: "Beach house" }]]);
+  const listings = new Map([
+    [OWN, { hostId: HOST, status: "ACTIVE", title: "Beach house" }],
+    [OWN_UNLISTED, { hostId: HOST, status: "ACTIVE", title: "Forest cabin" }],
+    [FOREIGN, { hostId: "host-other", status: "ACTIVE", title: "Not this host's" }],
+  ]);
+  const blockedNights = new Map();
   const ratePlanRepository = buildRatePlanRepository(planRow);
   const controller = buildExistingSiteController({ ratePlanRepository });
   controller.authManager = {
@@ -78,15 +91,15 @@ const buildQuoteFlow = ({ site = null, planRow = PAID_ELITE_ROW } = {}) => {
   controller.directBookingWebsiteSiteRepository = buildStoringSiteRepository(store, { propertyStates: listings });
   controller.directBookingWebsiteDomainRepository.getFallbackDomainBySiteId = jest.fn(async () => null);
   controller.directBookingWebsiteDomainRepository.ensureDomain = jest.fn(async () => EXISTING_DOMAIN);
-  controller.propertyService = buildQuotePropertyService(listings);
+  controller.propertyService = buildQuotePropertyService(listings, blockedNights);
   controller.websiteQuoteService = new WebsiteQuoteService({
     propertyService: controller.propertyService,
     quoteTokenSecretProvider: async () => SECRET,
     clock: () => NOW,
   });
 
-  const publishList = async (siteProperties) => {
-    await controller.upsertWebsiteDraft(
+  const saveList = (siteProperties) =>
+    controller.upsertWebsiteDraft(
       hostEvent({
         propertyId: MAIN,
         templateKey: EXISTING_SITE.templateKey,
@@ -97,6 +110,8 @@ const buildQuoteFlow = ({ site = null, planRow = PAID_ELITE_ROW } = {}) => {
         publishedThemeOverrides: {},
       })
     );
+  const publishList = async (siteProperties) => {
+    await saveList(siteProperties);
     const published = await controller.publishWebsiteSite(hostEvent({ propertyId: MAIN }));
     expect(published.statusCode).toBe(200);
     jest.clearAllMocks();
@@ -114,10 +129,22 @@ const buildQuoteFlow = ({ site = null, planRow = PAID_ELITE_ROW } = {}) => {
       }),
       requestContext: { requestId: "req-1" },
     });
-  const recordedEvents = () => controller.directBookingWebsiteEventRepository.recordEvent.mock.calls.map(([input]) => input);
+  const recordedEvents = () =>
+    controller.directBookingWebsiteEventRepository.recordEvent.mock.calls.map(([input]) => input);
   const quoteReads = () => controller.propertyService.getBasePropertyInfo.mock.calls.map(([propertyId]) => propertyId);
 
-  return { controller, store, listings, ratePlanRepository, publishList, quote, recordedEvents, quoteReads };
+  return {
+    controller,
+    store,
+    listings,
+    blockedNights,
+    ratePlanRepository,
+    saveList,
+    publishList,
+    quote,
+    recordedEvents,
+    quoteReads,
+  };
 };
 
 const expectedQuoteBody = (quoteId, propertyId) => {
@@ -146,7 +173,13 @@ const expectedQuoteBody = (quoteId, propertyId) => {
     checkOut: STAY.checkOut,
     nights: 4,
     guestCount: 2,
-    availability: { isAvailable: true, bookableFrom: "2026-10-01", bookableUntil: "2026-10-31", minimumStay, maximumStay: null },
+    availability: {
+      isAvailable: true,
+      bookableFrom: "2026-10-01",
+      bookableUntil: "2026-10-31",
+      minimumStay,
+      maximumStay: null,
+    },
     priceBreakdown,
     policiesApplied: ["minimum_stay", "availability_window"],
     expiresAt,
@@ -232,5 +265,228 @@ describe("quoting the site's own property", () => {
 
     expectMainQuoteAsToday(flow, response, consoleLog);
     expectNoPlanRead(flow.ratePlanRepository);
+  });
+});
+
+const LIST = Object.freeze([
+  { propertyId: MAIN, slug: "villa" },
+  { propertyId: OWN, slug: "beach-house" },
+]);
+const NOT_FOUND = Object.freeze({
+  error: { code: "property_not_found", message: "No property was found for this website.", requestId: "req-1" },
+});
+const QUOTE_READS = Object.freeze([
+  "getBasePropertyInfo",
+  "getGeneralDetails",
+  "getAvailabilityRestrictions",
+  "getAvailability",
+  "getPricing",
+  "getPublicCalendarAvailability",
+]);
+
+const publishedFlow = async (options) => {
+  const flow = buildQuoteFlow(options);
+  await flow.publishList(LIST);
+  return flow;
+};
+
+const expectRefused = (flow, response) => {
+  expect(response.statusCode).toBe(404);
+  expect(JSON.parse(response.body)).toEqual(NOT_FOUND);
+  expect(flow.quoteReads()).toEqual([]);
+  expect(flow.recordedEvents()).toEqual([]);
+};
+
+const expectMainStillQuotes = async (flow) => {
+  const main = await flow.quote();
+  expect(main.body).toBe(expectedQuoteBody(JSON.parse(main.body).quoteId, MAIN));
+};
+
+describe("quoting another property of an Elite website", () => {
+  it("quotes a listed property from its own live data and binds the token to the site and that property", async () => {
+    const flow = await publishedFlow();
+
+    const response = await flow.quote({ propertyId: OWN });
+
+    const body = JSON.parse(response.body);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBe(expectedQuoteBody(body.quoteId, OWN));
+    expect(verifyWebsiteQuoteToken(body.quoteToken, SECRET, { now: NOW })).toMatchObject({
+      siteId: EXISTING_SITE.id,
+      propertyId: OWN,
+      priceBreakdown: { total: 51000 },
+    });
+    expect(QUOTE_READS.flatMap((name) => flow.controller.propertyService[name].mock.calls)).toEqual(
+      QUOTE_READS.map(() => [OWN])
+    );
+    expect(flow.recordedEvents()).toEqual([
+      expect.objectContaining({
+        propertyId: MAIN,
+        hostId: HOST,
+        eventType: "SITE_QUOTE_REQUESTED",
+        payload: expect.objectContaining({ siteId: EXISTING_SITE.id, propertyId: OWN }),
+      }),
+      expect.objectContaining({
+        eventType: "SITE_QUOTE_RETURNED",
+        payload: expect.objectContaining({ propertyId: OWN, quoteId: body.quoteId, total: 51000 }),
+      }),
+    ]);
+    expect(consoleLog.mock.calls.map(([line]) => JSON.parse(line))).toEqual([
+      expect.objectContaining({ outcome: "returned", propertyId: OWN, quoteId: body.quoteId }),
+    ]);
+  });
+
+  it("refuses dates by the listed property's own calendar and minimum stay, where the main property could take them", async () => {
+    const flow = await publishedFlow();
+    flow.blockedNights.set(OWN, ["2026-10-02"]);
+    const shortStay = { checkIn: "2026-10-10", checkOut: "2026-10-12" };
+
+    const blocked = await flow.quote({ propertyId: OWN });
+    const tooShort = await flow.quote({ propertyId: OWN, ...shortStay });
+    const main = await flow.quote(shortStay);
+
+    expect([blocked.statusCode, JSON.parse(blocked.body).error.code]).toEqual([409, "unavailable_dates"]);
+    expect([tooShort.statusCode, JSON.parse(tooShort.body).error.code]).toEqual([409, "stay_restriction_violation"]);
+    expect(main.statusCode).toBe(200);
+    const conflicts = flow.recordedEvents().filter(({ eventType }) => eventType === "SITE_QUOTE_CONFLICTED");
+    expect(conflicts.map(({ propertyId, payload }) => [propertyId, payload.propertyId, payload.code])).toEqual([
+      [MAIN, OWN, "unavailable_dates"],
+      [MAIN, OWN, "stay_restriction_violation"],
+    ]);
+    expect(consoleLog.mock.calls.map(([line]) => JSON.parse(line).propertyId)).toEqual([OWN, OWN, MAIN]);
+  });
+
+  it.each([
+    ["a property of another host", FOREIGN],
+    ["a property of the host that is not listed", OWN_UNLISTED],
+    ["the id of a website", "site-other"],
+    ["an id that exists nowhere", "property-nowhere"],
+    ["a very long id", "p".repeat(100_000)],
+    ["the main property id in other letters", MAIN.toUpperCase()],
+  ])("refuses %s without reading the plan, a snapshot or the property", async (_label, propertyId) => {
+    const flow = await publishedFlow();
+
+    const response = await flow.quote({ propertyId });
+
+    expectRefused(flow, response);
+    expectNoPlanRead(flow.ratePlanRepository);
+    expect(flow.controller.directBookingWebsiteSiteRepository.getPublishedSitePropertySnapshots).not.toHaveBeenCalled();
+    expect(flow.controller.directBookingWebsiteSiteRepository.getSitePropertyStates).not.toHaveBeenCalled();
+  });
+
+  it("refuses a property that is only in the draft list, and quotes it once the site is published with it", async () => {
+    const flow = await publishedFlow();
+    const withUnlisted = [...LIST, { propertyId: OWN_UNLISTED, slug: "forest-cabin" }];
+    await flow.saveList(withUnlisted);
+    jest.clearAllMocks();
+
+    expectRefused(flow, await flow.quote({ propertyId: OWN_UNLISTED }));
+
+    await flow.publishList(withUnlisted);
+    const published = await flow.quote({ propertyId: OWN_UNLISTED });
+    expect(published.body).toBe(expectedQuoteBody(JSON.parse(published.body).quoteId, OWN_UNLISTED));
+  });
+
+  it.each([
+    ["is deactivated", (flow) => flow.listings.set(OWN, { ...flow.listings.get(OWN), status: "INACTIVE" })],
+    ["moves to another host", (flow) => flow.listings.set(OWN, { ...flow.listings.get(OWN), hostId: "host-other" })],
+    ["is deleted", (flow) => flow.listings.delete(OWN)],
+    ["has no published snapshot", (flow) => Object.assign(flow.store, { sitePropertySnapshots: [] })],
+    [
+      "belongs to a host whose Elite ended",
+      (flow) => flow.ratePlanRepository.findCurrentByAccountId.mockResolvedValue(ratePlanRow()),
+    ],
+    ["is removed from the list and the site is published again", (flow) => flow.publishList([LIST[0]])],
+  ])(
+    "stops quoting a listed property that after publish %s, and still quotes the main property",
+    async (_label, change) => {
+      const flow = await publishedFlow();
+      await change(flow);
+
+      expectRefused(flow, await flow.quote({ propertyId: OWN }));
+      await expectMainStillQuotes(flow);
+    }
+  );
+
+  it.each([
+    ["the plan read", (flow) => flow.ratePlanRepository.findCurrentByAccountId],
+    [
+      "the snapshot read",
+      (flow) => flow.controller.directBookingWebsiteSiteRepository.getPublishedSitePropertySnapshots,
+    ],
+  ])("refuses a listed property when %s fails, and logs it", async (_label, read) => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const flow = await publishedFlow();
+    read(flow).mockRejectedValue(new Error("connection timed out"));
+
+    expectRefused(flow, await flow.quote({ propertyId: OWN }));
+    expect(consoleError).toHaveBeenCalledTimes(1);
+    await expectMainStillQuotes(flow);
+  });
+
+  it.each([
+    ["the plan read", (flow) => flow.ratePlanRepository.findCurrentByAccountId, WEBSITE_PLAN_READ_TIMEOUT_MS],
+    [
+      "the snapshot read",
+      (flow) => flow.controller.directBookingWebsiteSiteRepository.getPublishedSitePropertySnapshots,
+      SITE_PROPERTY_READ_TIMEOUT_MS,
+    ],
+  ])("refuses a listed property when %s does not answer in time", async (_label, read, limitMs) => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const flow = await publishedFlow();
+    read(flow).mockReturnValue(new Promise(() => undefined));
+    jest.useFakeTimers();
+
+    const pending = flow.quote({ propertyId: OWN });
+    await jest.advanceTimersByTimeAsync(limitMs);
+
+    expectRefused(flow, await pending);
+  });
+
+  it.each([
+    ["an empty string", ""],
+    ["only spaces", "   "],
+    ["a number", 42],
+    ["an array", [OWN]],
+    ["an object", { propertyId: OWN }],
+    ["a boolean", true],
+  ])("answers 400 for a propertyId that is %s, before reading the site", async (_label, propertyId) => {
+    const flow = await publishedFlow();
+
+    const response = await flow.quote({ propertyId });
+
+    expect(response.statusCode).toBe(400);
+    expect(JSON.parse(response.body)).toEqual({
+      error: { code: "invalid_request", message: "propertyId must be a non-empty string.", requestId: "req-1" },
+    });
+    expect(flow.controller.directBookingWebsiteSiteRepository.getSiteById).not.toHaveBeenCalled();
+  });
+
+  it("signs the token so that it cannot be changed to another property of the site", async () => {
+    const flow = await publishedFlow();
+    const { quoteToken } = JSON.parse((await flow.quote({ propertyId: OWN })).body);
+    const [encodedPayload, signature] = quoteToken.slice("qtok_".length).split(".");
+    const payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
+    const changed = Buffer.from(JSON.stringify({ ...payload, propertyId: MAIN }), "utf8").toString("base64url");
+
+    expect(payload).toMatchObject({ siteId: EXISTING_SITE.id, propertyId: OWN });
+    expect(verifyWebsiteQuoteToken(`qtok_${changed}.${signature}`, SECRET, { now: NOW })).toBeNull();
+  });
+
+  it("quotes every property of the site for the same dates at the same time, each from its own data", async () => {
+    const flow = buildQuoteFlow();
+    await flow.publishList([...LIST, { propertyId: OWN_UNLISTED, slug: "forest-cabin" }]);
+
+    const responses = await Promise.all([
+      flow.quote(),
+      flow.quote({ propertyId: OWN }),
+      flow.quote({ propertyId: OWN_UNLISTED }),
+    ]);
+
+    expect(responses.map(({ body }) => body)).toEqual(
+      [MAIN, OWN, OWN_UNLISTED].map((propertyId, index) =>
+        expectedQuoteBody(JSON.parse(responses[index].body).quoteId, propertyId)
+      )
+    );
   });
 });

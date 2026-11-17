@@ -83,6 +83,19 @@ export class WebsiteSitePropertySnapshots {
     return served.length < 2 ? [] : served;
   }
 
+  async servesOtherSiteProperty({ site, propertyId }) {
+    const overrides = site.publishedContentOverrides;
+    const list = isPlainObject(overrides) ? overrides[SITE_PROPERTIES_OVERRIDE_KEY] : undefined;
+    if (!Array.isArray(list) || !list.some((entry) => entry?.propertyId === propertyId)) {
+      return false;
+    }
+    if (!(await this.pageSettings.allowsSiteProperties(site.hostId))) {
+      return false;
+    }
+    const served = await this.serveForRender({ site, overrides });
+    return served.some((entry) => !entry.isMainProperty && entry.propertyId === propertyId);
+  }
+
   async readPublishedSiteProperties(site, otherPropertyIds) {
     const [snapshots, states] = await Promise.all([
       this.siteRepository.getPublishedSitePropertySnapshots(site.id, site.staticPageRevision),

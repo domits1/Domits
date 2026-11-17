@@ -38,7 +38,7 @@ import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
 import { TypeException } from "../util/exception/TypeException.js";
-import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
+import { WebsiteQuoteError, WEBSITE_QUOTE_ERROR_CODES } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
 import { WebsitePublishNotAllowedError } from "../util/exception/WebsitePublishNotAllowedError.js";
@@ -94,6 +94,8 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 // validation 400s are guest input errors, not conflicts.
 const PUBLIC_REVIEW_ERROR_CODES = new Set(["wrong_status", "stale_review"]);
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
+const otherQuotedPropertyFields = (site, quotedPropertyId) =>
+    quotedPropertyId === site.propertyId ? {} : { propertyId: quotedPropertyId };
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM = "CUSTOM";
@@ -3326,6 +3328,7 @@ export class PropertyController {
     async createPublicWebsiteQuote(event) {
         const requestId = cleanWebsiteText(event?.requestContext?.requestId) || randomUUID();
         let site = null;
+        let quotedPropertyId = null;
         try {
             let requestBody = null;
             try {
@@ -3341,6 +3344,10 @@ export class PropertyController {
             if (!siteId) {
                 return this.websiteQuoteErrorResponse(400, "invalid_request", "siteId is required.", requestId);
             }
+            const requestedPropertyId = requestBody.propertyId ?? null;
+            if (requestedPropertyId !== null && (typeof requestedPropertyId !== "string" || !requestedPropertyId.trim())) {
+                return this.websiteQuoteErrorResponse(400, "invalid_request", "propertyId must be a non-empty string.", requestId);
+            }
 
             site = await this.directBookingWebsiteSiteRepository.getSiteById(siteId);
             if (!site) {
@@ -3353,6 +3360,8 @@ export class PropertyController {
                 return this.websiteQuoteErrorResponse(409, "site_not_published", "This website is not published.", requestId);
             }
 
+            quotedPropertyId = await this.resolveWebsiteQuotePropertyId(site, requestedPropertyId);
+            const quotedPropertyFields = otherQuotedPropertyFields(site, quotedPropertyId);
             const sessionId = cleanWebsiteText(requestBody.session?.sessionId) || null;
             await this.recordStandaloneWebsiteEventSafely({
                 draftId: null,
@@ -3362,6 +3371,7 @@ export class PropertyController {
                 payload: {
                     requestId,
                     siteId: site.id,
+                    ...quotedPropertyFields,
                     sessionId,
                     checkIn: requestBody.checkIn ?? null,
                     checkOut: requestBody.checkOut ?? null,
@@ -3369,10 +3379,9 @@ export class PropertyController {
                 },
             });
 
-            // The quoted property is the site's own; a client-supplied propertyId is never used.
             const quote = await this.getWebsiteQuoteService().createQuote({
                 siteId: site.id,
-                propertyId: site.propertyId,
+                propertyId: quotedPropertyId,
                 checkIn: requestBody.checkIn,
                 checkOut: requestBody.checkOut,
                 guests: requestBody.guests,
@@ -3387,6 +3396,7 @@ export class PropertyController {
                 payload: {
                     requestId,
                     siteId: site.id,
+                    ...quotedPropertyFields,
                     sessionId,
                     quoteId: quote.quoteId,
                     nights: quote.nights,
@@ -3399,7 +3409,7 @@ export class PropertyController {
                 outcome: "returned",
                 requestId,
                 siteId: site.id,
-                propertyId: site.propertyId,
+                propertyId: quotedPropertyId,
                 quoteId: quote.quoteId,
             }));
             return {
@@ -3415,7 +3425,7 @@ export class PropertyController {
                         propertyId: site.propertyId,
                         hostId: site.hostId,
                         eventType: "SITE_QUOTE_CONFLICTED",
-                        payload: { requestId, siteId: site.id, code: error.code },
+                        payload: { requestId, siteId: site.id, ...otherQuotedPropertyFields(site, quotedPropertyId), code: error.code },
                     });
                 }
                 console.log(JSON.stringify({
@@ -3423,7 +3433,7 @@ export class PropertyController {
                     outcome: error.code,
                     requestId,
                     siteId: site?.id ?? null,
-                    propertyId: site?.propertyId ?? null,
+                    propertyId: quotedPropertyId ?? site?.propertyId ?? null,
                 }));
                 return this.websiteQuoteErrorResponse(error.statusCode, error.code, error.message, requestId);
             }
@@ -3623,6 +3633,17 @@ export class PropertyController {
             eventRepository: this.directBookingWebsiteEventRepository,
         });
         return this.websiteCustomDomainService;
+    }
+
+    async resolveWebsiteQuotePropertyId(site, requestedPropertyId) {
+        const propertyId = requestedPropertyId?.trim() ?? site.propertyId;
+        if (propertyId === site.propertyId) {
+            return propertyId;
+        }
+        if (await this.getWebsiteSitePropertySnapshots().servesOtherSiteProperty({ site, propertyId })) {
+            return propertyId;
+        }
+        throw new WebsiteQuoteError(WEBSITE_QUOTE_ERROR_CODES.PROPERTY_NOT_FOUND, "No property was found for this website.");
     }
 
     websiteQuoteErrorResponse(statusCode, code, message, requestId) {
