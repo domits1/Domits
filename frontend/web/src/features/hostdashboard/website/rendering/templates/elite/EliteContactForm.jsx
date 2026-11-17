@@ -31,13 +31,7 @@ export default function EliteContactForm({ contactContext }) {
   const { properties } = contactContext;
   const hasPicker = properties.length > 0;
 
-  useEffect(
-    () => () => {
-      requestRef.current?.abort();
-      requestRef.current = null;
-    },
-    []
-  );
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   const controlProps = (field) => ({
     id: `${idPrefix}-${field}`,
@@ -98,11 +92,6 @@ export default function EliteContactForm({ contactContext }) {
     const message = { siteId: contactContext.siteId, propertyId, ...cleanValues };
     const answer = await sendWebsiteContactMessage(message, request.signal);
     globalThis.clearTimeout(timer);
-    if (requestRef.current !== request) {
-      return;
-    }
-
-    requestRef.current = null;
     isSendingRef.current = false;
     setIsSending(false);
     showAnswer(answer);
