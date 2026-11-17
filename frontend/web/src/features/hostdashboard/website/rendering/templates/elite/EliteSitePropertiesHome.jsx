@@ -7,11 +7,10 @@ import { formatMinorUnits, formatStayDate, getTodayDateKey } from "../../booking
 import { SITE_PROPERTY_SEARCH_STATUS, useSitePropertySearch } from "../../booking/useSitePropertySearch";
 import { getOrCreateVisitorId } from "../../../services/websiteVisitorId";
 import { MAIN_SITE_PAGE_KEY, buildSitePageHref, listSitePageMenuItems } from "../../websitePages";
-import { buildSitePropertyHref } from "../../websiteSiteProperties";
+import { buildSitePropertyHref, buildSitePropertyStayQuery } from "../../websiteSiteProperties";
 import {
   MAX_SITE_PROPERTY_SEARCH_GUESTS,
   buildSitePropertyCards,
-  buildSitePropertyStayQuery,
   countSearchNights,
   describeSitePropertyCard,
   formatCount,
