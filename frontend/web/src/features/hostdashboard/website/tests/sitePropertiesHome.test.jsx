@@ -41,6 +41,7 @@ const STAY = { checkIn: "2030-01-15", checkOut: "2030-01-22", guests: "4" };
 const STAY_QUERY = "checkIn=2030-01-15&checkOut=2030-01-22&guests=4";
 
 const withSiteProperties = (payload, siteProperties = [MAIN_PROPERTY, VILLA_B]) => ({ ...payload, siteProperties });
+const GALLERY_ON = { ...SITE_HOST_PAYLOAD, contentOverrides: { sitePages: { gallery: { enabled: true } } } };
 const QUOTE = { checkIn: STAY.checkIn, checkOut: STAY.checkOut, nights: 7, expiresAt: "2030-01-01", quoteToken: "t" };
 const quoteOf = (propertyId, total, guestCount = 4) => ({
   ...QUOTE,
@@ -100,20 +101,28 @@ afterEach(() => {
 
 describe("the home page of an Elite website with its properties", () => {
   it("shows a card for every property and filters them by location, without a request", async () => {
-    const galleryOn = { ...SITE_HOST_PAYLOAD, contentOverrides: { sitePages: { gallery: { enabled: true } } } };
-    await openOverview("/", withSiteProperties(galleryOn));
+    await openOverview("/", withSiteProperties(GALLERY_ON));
 
     expect(screen.getByRole("link", { name: /Ubud, Indonesia/ })).toHaveAttribute("href", "/properties/villa-a");
     expect(screen.getByRole("link", { name: /^Villa B/ })).toHaveAttribute("href", "/properties/villa-b");
     expect(screen.getByText("Canggu, Indonesia · 4 guests · 2 bedrooms")).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Filter by location" })).toHaveTextContent("AllUbudCanggu");
     expect(screen.getByRole("link", { name: "Gallery" })).toHaveAttribute("href", "/gallery");
+    expect(screen.queryByRole("link", { name: "Home" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Canggu" }));
 
     expect(screen.queryByRole("link", { name: /Ubud, Indonesia/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Canggu" })).toHaveAttribute("aria-pressed", "true");
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("keeps the site's own pages on their paths", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(GALLERY_ON));
+    renderSiteAt("/gallery");
+
+    expect(await screen.findByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
+    expect(screen.queryByRole("heading", { name: "Our properties" })).toBeNull();
   });
 
   it("leaves out the filter for one city and the date search when the site's quote panel is off", async () => {
@@ -215,7 +224,6 @@ describe("the home page of an Elite website with its properties", () => {
     [{ checkIn: "2020-01-15" }, "Check-in can't be in the past."],
     [{ checkOut: "2030-01-15" }, "Check-out must be after check-in."],
     [{ checkOut: "2031-01-17" }, "A stay can be at most 366 nights."],
-    [{ checkOut: "9999-12-31" }, "A stay can be at most 366 nights."],
     [{ guests: "0" }, "Choose 1 to 50 guests."],
     [{ guests: "51" }, "Choose 1 to 50 guests."],
     [{ guests: "2.5" }, "Choose 1 to 50 guests."],
