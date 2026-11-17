@@ -122,7 +122,7 @@ function MainDashboardHost() {
             <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
             <Route path="summary" element={<SummaryViewAndSubmit />} />
 
-            <Route path="*" element={<Navigate to="." replace />} />
+            <Route path="*" element={<Navigate to="/hostdashboard/hostonboarding" replace />} />
           </Route>
 
           <Route path="calendar-pricing" element={<HostCalendar />} />
@@ -181,7 +181,7 @@ function MainDashboardHost() {
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />
 
           <Route path="reservations/:id" element={<HostReservationDetails />} />
-          <Route path="*" element={<Navigate to="." replace />} />
+          <Route path="*" element={<Navigate to="/hostdashboard" replace />} />
         </Routes>
       </div>
     </div>

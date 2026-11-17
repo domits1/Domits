@@ -36,6 +36,10 @@ const loadChannexAccess = async () => {
   return checkChannexCertificationAccess(user?.attributes?.sub);
 };
 
+// Absolute targets: this menu renders inside the "/hostdashboard/*" splat route, where React Router 7 resolves
+// relative links against the full current URL (e.g. "messages" from /hostdashboard/reservations).
+const hostDashboardPath = (to) => (to.startsWith("/") ? to : to === "." ? "/hostdashboard" : `/hostdashboard/${to}`);
+
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
   { key: "Dashboard", label: "Dashboard", icon: <DashboardIcon />, to: "." },
@@ -161,7 +165,7 @@ function Pages({ onNavigate }) {
             {visibleNav.map((item) => (
               <li key={item.key}>
                 <NavLink
-                  to={item.to}
+                  to={hostDashboardPath(item.to)}
                   end={item.to === "."}
                   onClick={() => onNavigate?.(item.key)}
                   className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}>
