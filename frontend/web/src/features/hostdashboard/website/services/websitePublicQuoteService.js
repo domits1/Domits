@@ -68,7 +68,14 @@ const normalizePublicWebsiteQuote = (payload) => {
   };
 };
 
-export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, guests, sessionId, signal }) => {
+const unexpectedQuoteResponse = (status) =>
+  new WebsitePublicQuoteError({
+    code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
+    message: "The quote service returned an unexpected response.",
+    status,
+  });
+
+const postPublicWebsiteQuote = async (requestBody, signal) => {
   let response;
   try {
     response = await fetch(PUBLIC_WEBSITE_QUOTE_URL, {
@@ -76,14 +83,7 @@ export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, gue
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
       signal,
-      body: JSON.stringify({
-        siteId,
-        checkIn,
-        checkOut,
-        guests,
-        currency: QUOTE_CURRENCY,
-        session: { sessionId, source: QUOTE_SESSION_SOURCE },
-      }),
+      body: JSON.stringify(requestBody),
     });
   } catch (error) {
     if (error?.name === "AbortError") {
@@ -114,20 +114,28 @@ export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, gue
         status: response.status,
       });
     }
-    throw new WebsitePublicQuoteError({
-      code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
-      message: "The quote service returned an unexpected response.",
-      status: response.status,
-    });
+    throw unexpectedQuoteResponse(response.status);
   }
+
+  return { payload, status: response.status };
+};
+
+export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, guests, sessionId, signal }) => {
+  const { payload, status } = await postPublicWebsiteQuote(
+    {
+      siteId,
+      checkIn,
+      checkOut,
+      guests,
+      currency: QUOTE_CURRENCY,
+      session: { sessionId, source: QUOTE_SESSION_SOURCE },
+    },
+    signal
+  );
 
   const quote = normalizePublicWebsiteQuote(payload);
   if (!quote) {
-    throw new WebsitePublicQuoteError({
-      code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
-      message: "The quote service returned an unexpected response.",
-      status: response.status,
-    });
+    throw unexpectedQuoteResponse(status);
   }
 
   return quote;
