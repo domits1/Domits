@@ -11,16 +11,8 @@ jest.mock("../services/websitePublicSiteService", () => ({
 jest.mock("../services/websitePropertyService", () => ({
   enrichWebsitePropertyDetails: async (propertySnapshot) => propertySnapshot,
 }));
-jest.mock("../services/websitePreviewSync", () => ({
-  WEBSITE_LIVE_SITE_UPDATE_MESSAGE_TYPE: "website-live-site-update",
-  subscribeToWebsiteLiveSiteUpdates: () => () => {},
-}));
 jest.mock("../analytics/websiteAnalyticsService", () => ({
   recordPublicWebsiteAnalyticsEventSafely: async () => {},
-}));
-jest.mock("../analytics/websitePreviewAnalytics", () => ({
-  getWebsiteAnalyticsViewport: () => "desktop",
-  startWebsitePreviewLcpObserver: () => () => {},
 }));
 
 const { fetchPublicWebsiteRenderModel } = jest.requireMock("../services/websitePublicSiteService");
