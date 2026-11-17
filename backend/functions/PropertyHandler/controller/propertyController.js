@@ -32,6 +32,7 @@ import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
 import { TypeException } from "../util/exception/TypeException.js";
+import { getLocationLimitError } from "../util/locationLimits.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
@@ -1408,6 +1409,13 @@ export class PropertyController {
             }
         }
 
+        // Before the missing-field check: a digit string too long for a number parses to Infinity and
+        // has to be answered as too large, not as missing.
+        const limitError = getLocationLimitError({ houseNumber, houseNumberExtension });
+        if (limitError) {
+            throw new Error(limitError);
+        }
+
         if (!street || !postalCode || !city || !country || !Number.isFinite(houseNumber)) {
             throw new Error("Location requires street, houseNumber, postalCode, city and country.");
         }
@@ -1441,10 +1449,8 @@ export class PropertyController {
             return null;
         }
 
+        // Not checked for Infinity here: normalizeLocationPayload rejects it as too large.
         const parsedHouseNumber = Number(normalizedValue.slice(0, digitEndIndex));
-        if (!Number.isFinite(parsedHouseNumber)) {
-            return null;
-        }
 
         return {
             houseNumber: Math.trunc(parsedHouseNumber),

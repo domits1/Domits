@@ -2,6 +2,7 @@ import { SystemManagerRepository } from "../../data/repository/systemManagerRepo
 
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { TypeException } from "../../util/exception/TypeException.js";
+import { getLocationLimitError } from "../../util/locationLimits.js";
 
 import { randomUUID } from "node:crypto";
 
@@ -156,6 +157,12 @@ export class PropertyBuilder {
         }
       }
     });
+    // After the missing-field loop, so 0 and NaN keep their "Missing houseNumber." message.
+    // A TypeException answers 400; a plain Error here would answer 500.
+    const limitError = getLocationLimitError(location);
+    if (limitError) {
+      throw new TypeException(limitError);
+    }
     this.propertyLocation = location;
     return this;
   }
