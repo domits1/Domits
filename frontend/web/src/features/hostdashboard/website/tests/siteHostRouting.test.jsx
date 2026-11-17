@@ -813,6 +813,15 @@ describe("property paths of an Elite website on its own domain", () => {
     expect(await readSiteHtml()).toBe(todaysHtml);
   });
 
+  it("shows the home page as today once fewer than two properties are usable", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0]]));
+    const todaysHtml = await renderTodaysSiteHtml();
+
+    renderAppAt("/");
+
+    expect(await readSiteHtml()).toBe(todaysHtml);
+  });
+
   it("shows the not found page once a refresh no longer serves the property, also while it reloads", async () => {
     renderAppAt("/properties/villa-b");
     await screen.findByRole("link", { name: "Home" });
