@@ -57,7 +57,6 @@ export const useWebsiteEditorSiteProperties = ({
   const canEditSiteProperties =
     draftTemplateKey === "panorama-landing" && hasEntitlement(WEBSITE_ENTITLEMENT_MULTI_PROPERTY);
   const [listingsRead, setListingsRead] = useState(LISTINGS_LOADING);
-  const [listingsAttempt, setListingsAttempt] = useState(0);
   const [editedEntries, setEditedEntries] = useState(null);
 
   useEffect(() => {
@@ -73,7 +72,7 @@ export const useWebsiteEditorSiteProperties = ({
     return () => {
       isCurrent = false;
     };
-  }, [canEditSiteProperties, listingsAttempt, mainPropertyId]);
+  }, [canEditSiteProperties, mainPropertyId]);
 
   const isReady = canEditSiteProperties && listingsRead.status === SITE_PROPERTIES_LISTINGS_STATUS.READY;
   const listingsById = new Map(listingsRead.listings.map((listing) => [listing.propertyId, listing]));
@@ -98,7 +97,6 @@ export const useWebsiteEditorSiteProperties = ({
   return {
     canEditSiteProperties,
     listingsStatus: listingsRead.status,
-    retryListings: () => setListingsAttempt((attempt) => attempt + 1),
     entries,
     addableListings: listingsRead.listings.filter(
       (listing) => !entries.some((e) => e.propertyId === listing.propertyId)

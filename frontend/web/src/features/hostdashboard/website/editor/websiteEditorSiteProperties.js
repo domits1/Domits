@@ -32,9 +32,6 @@ export const suggestSitePropertySlug = (title, takenSlugs = []) => {
 
 export const describeSitePropertySlugProblem = (slug, otherSlugs) => {
   const cleanedSlug = cleanSitePropertySlug(slug);
-  if (!cleanedSlug) {
-    return "Give this property an address.";
-  }
   if (cleanedSlug.length > MAX_SITE_PROPERTY_SLUG_LENGTH || !SLUG_PATTERN.test(cleanedSlug)) {
     return `Use lowercase letters, digits and single hyphens, at most ${MAX_SITE_PROPERTY_SLUG_LENGTH} characters.`;
   }
@@ -91,12 +88,5 @@ export const findSitePropertiesProblem = (entries, { forPublish }) => {
     : "";
 };
 
-export const explainSitePropertiesSaveError = (error) => {
-  const message = String(error?.message || "");
-  if (NOT_LISTED_REFUSALS.has(message)) {
-    return new Error(SITE_PROPERTY_NOT_LISTED_MESSAGE);
-  }
-  return message.startsWith("siteProperties ")
-    ? new Error("The properties of your website could not be saved. Check their addresses and save again.")
-    : error;
-};
+export const explainSitePropertiesSaveError = (error) =>
+  NOT_LISTED_REFUSALS.has(error?.message) ? new Error(SITE_PROPERTY_NOT_LISTED_MESSAGE) : error;
