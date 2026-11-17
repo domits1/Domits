@@ -26,8 +26,9 @@ const HostProtectedRoute = ({ children }) => {
   const isAdminPath = ADMIN_PATHS.some((path) => matchPath(path, pathname));
   const isAdminRole = role === ROLES.ADMIN;
   const hasHostAccess = HOST_ROLES.includes(role) || isPOM;
-  const needsApprovalCheck = !isLoading && Boolean(user) && !isAdminRole && !(isAdminPath && hasHostAccess);
+  const needsApprovalCheck = !isLoading && Boolean(user) && !(isAdminPath && hasHostAccess);
   const [approvalAccess, setApprovalAccess] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!needsApprovalCheck) return;
@@ -39,17 +40,29 @@ const HostProtectedRoute = ({ children }) => {
     return () => {
       active = false;
     };
-  }, [needsApprovalCheck, user]);
+  }, [needsApprovalCheck, user, retryCount]);
 
   if (isLoading || (needsApprovalCheck && approvalAccess?.user !== user)) {
     return <div>Loading...</div>;
   }
 
-  const isAdmin = isAdminRole || (needsApprovalCheck && approvalAccess?.allowed);
-  if (isAdmin && !isAdminPath) return <Navigate to={REVIEW_APPROVAL_ADMIN_PATH} replace />;
+  const isReviewApprover = needsApprovalCheck && approvalAccess?.allowed === true;
+  if (isReviewApprover && !isAdminPath) return <Navigate to={REVIEW_APPROVAL_ADMIN_PATH} replace />;
+  if (isAdminRole && !isAdminPath) {
+    if (approvalAccess?.allowed === null) {
+      return <div role="alert">
+        Could not verify review administration access.
+        <button type="button" onClick={() => {
+          setApprovalAccess(null);
+          setRetryCount((count) => count + 1);
+        }}>Try again</button>
+      </div>;
+    }
+    return <div role="alert">Your account does not have review approval access.</div>;
+  }
   // A review-service outage must not revoke an existing host entitlement.
   // Confirmed approvers still redirect above; backend routes enforce permissions.
-  if (isAdmin || hasHostAccess) return children;
+  if (isReviewApprover || hasHostAccess) return children;
 
   return <Navigate to="/" replace />;
 };

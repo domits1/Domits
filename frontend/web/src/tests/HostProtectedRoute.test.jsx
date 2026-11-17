@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import HostProtectedRoute from "../features/auth/hostauth/HostProtectedRoute";
 import { useUser } from "../features/auth/UserContext";
@@ -15,6 +15,7 @@ const renderGuard = (path = "/hostdashboard") => render(
       <Route path="/" element={<div>Public home</div>} />
       <Route path="/hostdashboard" element={<HostProtectedRoute><div>Host dashboard</div></HostProtectedRoute>} />
       <Route path="/hostdashboard/admin/review-approval" element={<HostProtectedRoute><div>Review administration</div></HostProtectedRoute>} />
+      <Route path="/hostdashboard/admin/property-review" element={<HostProtectedRoute><div>Property administration</div></HostProtectedRoute>} />
     </Routes>
   </MemoryRouter>
 );
@@ -30,17 +31,46 @@ test.each([false, null])("preserves ordinary host access when approval access is
   expect(await screen.findByText("Host dashboard")).toBeInTheDocument();
 });
 
-test("keeps confirmed approvers out of the ordinary host dashboard", async () => {
+test.each([ROLES.GUEST_EXPERIENCE_MANAGER, ROLES.PROPERTY_OPERATIONS_MANAGER, ROLES.RESERVATION_MANAGER, ROLES.GENERAL_MANAGER])("redirects a backend-confirmed %s approver away from the host dashboard", async (role) => {
+  useUser.mockReturnValue({ user: {}, role, isLoading: false });
   hasReviewApprovalAccess.mockResolvedValue(true);
   renderGuard();
   expect(await screen.findByText("Review administration")).toBeInTheDocument();
   expect(screen.queryByText("Host dashboard")).not.toBeInTheDocument();
 });
 
-test("redirects admins without probing ReviewSystem", async () => {
+test("redirects admins only after ReviewSystem confirms approval access", async () => {
   useUser.mockReturnValue({ user: {}, role: ROLES.ADMIN, isLoading: false });
+  hasReviewApprovalAccess.mockResolvedValue(true);
   renderGuard();
   expect(await screen.findByText("Review administration")).toBeInTheDocument();
+  expect(hasReviewApprovalAccess).toHaveBeenCalled();
+});
+
+test("does not redirect a non-approver Admin to the review queue or grant host access", async () => {
+  useUser.mockReturnValue({ user: {}, role: ROLES.ADMIN, isLoading: false });
+  hasReviewApprovalAccess.mockResolvedValue(false);
+  renderGuard();
+  expect(await screen.findByRole("alert")).toHaveTextContent("Your account does not have review approval access.");
+  expect(screen.queryByText("Review administration")).not.toBeInTheDocument();
+  expect(screen.queryByText("Host dashboard")).not.toBeInTheDocument();
+});
+
+test("lets Admins retry an unknown approval result before redirecting", async () => {
+  useUser.mockReturnValue({ user: {}, role: ROLES.ADMIN, isLoading: false });
+  hasReviewApprovalAccess.mockResolvedValueOnce(null).mockResolvedValueOnce(true);
+  renderGuard();
+  expect(await screen.findByRole("alert")).toHaveTextContent("Could not verify review administration access.");
+  expect(screen.queryByText("Host dashboard")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  expect(await screen.findByText("Review administration")).toBeInTheDocument();
+  expect(hasReviewApprovalAccess).toHaveBeenCalledTimes(2);
+});
+
+test("preserves access to other admin paths without assuming review privileges", async () => {
+  useUser.mockReturnValue({ user: {}, role: ROLES.ADMIN, isLoading: false });
+  renderGuard("/hostdashboard/admin/property-review");
+  expect(await screen.findByText("Property administration")).toBeInTheDocument();
   expect(hasReviewApprovalAccess).not.toHaveBeenCalled();
 });
 
