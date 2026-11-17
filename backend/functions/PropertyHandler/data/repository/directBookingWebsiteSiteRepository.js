@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { STATIC_PAGE_ATTEMPT_LIMIT } from "./staticPageOutboxRepository.js";
 import { WebsitePublishConflictError } from "../../util/exception/WebsitePublishConflictError.js";
 import { WebsitePublishNotAllowedError } from "../../util/exception/WebsitePublishNotAllowedError.js";
+import { WebsiteSitePropertyNotAllowedError } from "../../util/exception/WebsiteSitePropertyNotAllowedError.js";
 import { retryWebsiteDelete } from "./websiteDeleteRetry.js";
 
 const SITE_ALLOWED_STATUSES = new Set(["DRAFT", "PREVIEW", "PUBLISHED", "SUSPENDED"]);
@@ -264,6 +265,7 @@ export class DirectBookingWebsiteSiteRepository {
     previewTokenHash = null,
     publishedAt = null,
     suspendedAt = null,
+    sitePropertySnapshots = undefined,
   }) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
@@ -282,6 +284,20 @@ export class DirectBookingWebsiteSiteRepository {
       );
       if (!activePropertyResult?.records?.length) {
         throw new WebsitePublishNotAllowedError();
+      }
+
+      for (const { propertyId: sitePropertyId } of sitePropertySnapshots ?? []) {
+        const sitePropertyResult = await manager.queryRunner.query(
+          `SELECT id
+      FROM ${propertyTableName(schemaName)}
+      WHERE id = $1 AND hostid = $2 AND status = 'ACTIVE'
+      FOR UPDATE`,
+          [sitePropertyId, hostId],
+          true
+        );
+        if (!sitePropertyResult?.records?.length) {
+          throw new WebsiteSitePropertyNotAllowedError();
+        }
       }
 
       const siteResult = await manager.queryRunner.query(
@@ -344,6 +360,16 @@ export class DirectBookingWebsiteSiteRepository {
       const site = mapSiteRow(siteResult?.records?.[0] || null);
       if (!site) {
         throw new Error("Publishing a website site did not return the stored site.");
+      }
+
+      if (sitePropertySnapshots !== undefined) {
+        await manager.queryRunner.query(
+          `UPDATE ${tableName}
+      SET published_site_properties_json = $2
+      WHERE id = $1`,
+          [site.id, JSON.stringify(sitePropertySnapshots)],
+          true
+        );
       }
 
       await queueStaticPage(manager.queryRunner, outboxTableName, site, now);
@@ -515,6 +541,30 @@ export class DirectBookingWebsiteSiteRepository {
     const rows = await client.query(buildSiteSelectQuery(tableName, "WHERE id = $1"), [siteId]);
 
     return mapSiteRow(rows?.[0] || null);
+  }
+
+  async getPublishedSitePropertySnapshots(siteId) {
+    const client = await Database.getInstance();
+    const tableName = siteTableName(resolveSchemaName(client));
+
+    const rows = await client.query(`SELECT published_site_properties_json FROM ${tableName} WHERE id = $1`, [siteId]);
+    const snapshots = safeParseJson(rows?.[0]?.published_site_properties_json, []);
+
+    return Array.isArray(snapshots) ? snapshots : [];
+  }
+
+  async getSitePropertyStates(propertyIds) {
+    if (propertyIds.length === 0) {
+      return [];
+    }
+
+    const client = await Database.getInstance();
+    const rows = await client.query(
+      `SELECT id, hostid, status FROM ${propertyTableName(resolveSchemaName(client))} WHERE id = ANY($1)`,
+      [propertyIds]
+    );
+
+    return (rows || []).map((row) => ({ id: String(row.id), hostId: String(row.hostid), status: String(row.status) }));
   }
 
   async getPublishedSiteByNormalizedIdPrefix(normalizedIdPrefix) {

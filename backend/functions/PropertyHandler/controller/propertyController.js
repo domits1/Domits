@@ -22,7 +22,12 @@ import { WebsiteCleanupService } from "../business/service/websiteCleanupService
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { WebsiteElitePageSettings } from "../business/service/websiteElitePageSettings.js";
-import { listOtherSitePropertyIds, withNormalizedSiteProperties } from "../business/service/websiteSiteProperties.js";
+import {
+    SITE_PROPERTIES_OVERRIDE_KEY,
+    listOtherSitePropertyIds,
+    withNormalizedSiteProperties,
+} from "../business/service/websiteSiteProperties.js";
+import { WebsiteSitePropertySnapshots } from "../business/service/websiteSitePropertySnapshots.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
@@ -37,6 +42,7 @@ import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
 import { WebsitePublishNotAllowedError } from "../util/exception/WebsitePublishNotAllowedError.js";
+import { WebsiteSitePropertyNotAllowedError } from "../util/exception/WebsiteSitePropertyNotAllowedError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
@@ -1753,14 +1759,18 @@ export class PropertyController {
         propertySnapshot = undefined,
         primaryDomain = null,
         host = null,
-        contentOverrides = site?.publishedContentOverrides
+        contentOverrides = site?.publishedContentOverrides,
+        siteProperties = []
     ) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
         }
 
-        return {
+        const publicContentOverrides = Object.fromEntries(
+            Object.entries(contentOverrides || {}).filter(([key]) => key !== SITE_PROPERTIES_OVERRIDE_KEY)
+        );
+        const payload = {
             resolution,
             site: toPublicWebsiteSiteView(site),
             domain: toPublicWebsiteDomainView(domain),
@@ -1771,10 +1781,11 @@ export class PropertyController {
                     ? propertySnapshot
                     : site.publishedPropertySnapshot || {}
             ),
-            contentOverrides: contentOverrides || {},
+            contentOverrides: publicContentOverrides,
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
         };
+        return siteProperties.length > 0 ? { ...payload, siteProperties } : payload;
     }
 
     async buildPublicPropertySnapshotForWebsiteRender(site) {
@@ -2102,6 +2113,10 @@ export class PropertyController {
             { includeCalendarAvailability: true }
         );
         this.ensureDirectBookingWebsitePublishEligibility(propertyDetails);
+        const sitePropertySnapshots = await this.getWebsiteSitePropertySnapshots().buildForPublish({
+            mainPropertyId: propertyId,
+            overrides: draft.publishedContentOverrides,
+        });
 
         const siteName = this.buildDirectBookingWebsiteName({
             draft,
@@ -2120,6 +2135,7 @@ export class PropertyController {
             publishedThemeOverrides: draft.publishedThemeOverrides || {},
             publishedAt: Date.now(),
             suspendedAt: null,
+            sitePropertySnapshots,
         });
 
         const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(
@@ -3108,7 +3124,11 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            if (error instanceof WebsitePublishConflictError || error instanceof WebsitePublishNotAllowedError) {
+            if (
+                error instanceof WebsitePublishConflictError ||
+                error instanceof WebsitePublishNotAllowedError ||
+                error instanceof WebsiteSitePropertyNotAllowedError
+            ) {
                 return {
                     statusCode: error.statusCode,
                     headers: draftResponseHeaders,
@@ -3266,6 +3286,10 @@ export class PropertyController {
                     overrides: resolutionResult.site.publishedContentOverrides,
                 }),
             ]);
+            const siteProperties = await this.getWebsiteSitePropertySnapshots().serveForRender({
+                site: resolutionResult.site,
+                overrides: contentOverrides,
+            });
 
             return {
                 statusCode: 200,
@@ -3276,7 +3300,8 @@ export class PropertyController {
                     propertySnapshot,
                     primaryDomain,
                     host,
-                    contentOverrides
+                    contentOverrides,
+                    siteProperties
                 )),
             };
         } catch (error) {
@@ -3559,6 +3584,14 @@ export class PropertyController {
     getWebsitePublicHostService() {
         this.websitePublicHostService ??= new WebsitePublicHostService();
         return this.websitePublicHostService;
+    }
+
+    getWebsiteSitePropertySnapshots() {
+        this.websiteSitePropertySnapshots ??= new WebsiteSitePropertySnapshots({
+            propertyService: this.propertyService,
+            siteRepository: this.directBookingWebsiteSiteRepository,
+        });
+        return this.websiteSitePropertySnapshots;
     }
 
     getWebsiteElitePageSettings() {

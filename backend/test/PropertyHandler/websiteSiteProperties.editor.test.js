@@ -32,6 +32,7 @@ const buildEditorFlow = ({ ratePlanRow: planRow = PAID_ELITE_ROW } = {}) => {
     [OWN, HOST],
     [FOREIGN, "host-other"],
   ]);
+  const listings = new Map([[OWN, { hostId: HOST, status: "ACTIVE", title: "Beach house" }]]);
   const ratePlanRepository = buildRatePlanRepository(planRow);
   const controller = buildExistingSiteController({ ratePlanRepository });
   controller.authManager = {
@@ -43,11 +44,13 @@ const buildEditorFlow = ({ ratePlanRow: planRow = PAID_ELITE_ROW } = {}) => {
     }),
   };
   controller.directBookingWebsiteDraftRepository = buildStoringDraftRepository(store);
-  controller.directBookingWebsiteSiteRepository = buildStoringSiteRepository(store);
+  controller.directBookingWebsiteSiteRepository = buildStoringSiteRepository(store, { propertyStates: listings });
   controller.directBookingWebsiteDomainRepository.getFallbackDomainBySiteId = jest.fn(async () => null);
   controller.directBookingWebsiteDomainRepository.ensureDomain = jest.fn(async () => EXISTING_DOMAIN);
-  controller.propertyService.getFullPropertyAttributesWithFullLocation = jest.fn(
-    async () => EXISTING_SITE.publishedPropertySnapshot
+  controller.propertyService.getFullPropertyAttributesWithFullLocation = jest.fn(async (propertyId) =>
+    listings.has(propertyId)
+      ? { property: { id: propertyId, ...listings.get(propertyId) }, images: [{ key: `${propertyId}.jpg` }] }
+      : EXISTING_SITE.publishedPropertySnapshot
   );
 
   const save = (contentOverrides) =>
@@ -65,7 +68,10 @@ const buildEditorFlow = ({ ratePlanRow: planRow = PAID_ELITE_ROW } = {}) => {
   const publish = () => controller.publishWebsiteSite(hostEvent({ propertyId: MAIN }));
   const render = () => controller.getPublicWebsiteRenderModel(renderEvent({ domain: EXISTING_DOMAIN.domain }));
 
-  return { controller, store, owners, save, publish, render };
+  const loadedListings = () =>
+    controller.propertyService.getFullPropertyAttributesWithFullLocation.mock.calls.map(([propertyId]) => propertyId);
+
+  return { controller, store, owners, listings, save, publish, render, loadedListings };
 };
 
 const servedOverrides = (response) => JSON.parse(response.body).contentOverrides;
@@ -205,18 +211,86 @@ describe("publishing the properties of a website", () => {
 });
 
 describe("serving the properties of a live website", () => {
-  it("serves the list of an Elite host", async () => {
+  const servedTitles = (response) =>
+    (JSON.parse(response.body).siteProperties ?? []).map(({ propertyId, propertySnapshot }) => [
+      propertyId,
+      propertySnapshot?.property?.title ?? null,
+    ]);
+
+  it("serves the snapshots taken at publish next to the overrides, without loading a listing at render", async () => {
     const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
     await flow.save({ heroTitle: "Villa", siteProperties: ownList() });
     await flow.publish();
+    const loadedAtPublish = flow.loadedListings();
+
+    const rendered = await flow.render();
+    const body = JSON.parse(rendered.body);
+
+    expect(loadedAtPublish).toEqual([MAIN, OWN]);
+    expect(flow.loadedListings()).toEqual([MAIN, OWN]);
+    expect(rendered.statusCode).toBe(200);
+    expect(body.contentOverrides).toEqual({ heroTitle: "Villa" });
+    expect(body.siteProperties).toEqual([
+      { propertyId: MAIN, slug: "villa-main", isMainProperty: true },
+      {
+        propertyId: OWN,
+        slug: "beach-house",
+        isMainProperty: false,
+        propertySnapshot: { property: { id: OWN, status: "ACTIVE", title: "Beach house" }, images: [{ key: `${OWN}.jpg` }] },
+      },
+    ]);
+  });
+
+  it("keeps serving the published version of a property edited after publish, until the next publish", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), title: "Beach house, renovated" });
+
+    expect(servedTitles(await flow.render())).toEqual([[MAIN, null], [OWN, "Beach house"]]);
+
+    await flow.publish();
+
+    expect(servedTitles(await flow.render())).toEqual([[MAIN, null], [OWN, "Beach house, renovated"]]);
+  });
+
+  it("stops serving a property deactivated after publish, and the site falls back to one property", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), status: "INACTIVE" });
 
     const rendered = await flow.render();
 
     expect(rendered.statusCode).toBe(200);
-    expect(servedOverrides(rendered).siteProperties).toEqual([
-      { propertyId: MAIN, slug: "villa-main" },
-      { propertyId: OWN, slug: "beach-house" },
+    expect(JSON.parse(rendered.body)).not.toHaveProperty("siteProperties");
+  });
+
+  it("refuses to publish while a listed property is not active, and keeps the last published version", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), status: "INACTIVE", title: "Closed" });
+
+    const published = await flow.publish();
+
+    expect(published.statusCode).toBe(400);
+    expect(JSON.parse(published.body).code).toBe("site_property_not_active");
+    expect(flow.store.sitePropertySnapshots.map(({ propertySnapshot }) => propertySnapshot.property.title)).toEqual([
+      "Beach house",
     ]);
+  });
+
+  it("replaces the snapshots when the host removes a property and publishes again", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+
+    await flow.save({ siteProperties: [{ propertyId: MAIN, slug: "villa-main" }] });
+    await flow.publish();
+
+    expect(flow.store.sitePropertySnapshots).toEqual([]);
+    expect(JSON.parse((await flow.render()).body)).not.toHaveProperty("siteProperties");
   });
 
   it("leaves the list out for an Essentials host and keeps every other override", async () => {
@@ -228,6 +302,7 @@ describe("serving the properties of a live website", () => {
 
     expect(rendered.statusCode).toBe(200);
     expect(servedOverrides(rendered)).toEqual({ heroTitle: "Villa" });
+    expect(JSON.parse(rendered.body)).not.toHaveProperty("siteProperties");
   });
 });
 
