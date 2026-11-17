@@ -17,22 +17,10 @@ jest.mock("../services/websitePublicBookingService", () => ({
 const STAY = { checkIn: "2099-01-10", checkOut: "2099-01-14", guests: 3 };
 const PROPERTY_HREF = "/properties/villa-b?checkIn=2099-01-10&checkOut=2099-01-14&guests=3";
 const PRICE = { currency: "EUR", nightlyBaseTotal: 80000, cleaningFee: 5000, total: 85000 };
-const QUOTE = {
-  ...STAY,
-  quoteId: "quote-1",
-  propertyId: "property-b",
-  nights: 4,
-  guestCount: 3,
-  priceBreakdown: PRICE,
-  expiresAt: "2099-01-01T10:00:00.000Z",
-  quoteToken: "token-1",
-};
+const QUOTE_ID = { quoteId: "quote-1", propertyId: "property-b", nights: 4, guestCount: 3, quoteToken: "token-1" };
+const QUOTE = { ...STAY, ...QUOTE_ID, priceBreakdown: PRICE, expiresAt: "2099-01-01T10:00:00.000Z" };
 const SENT = { publicBookingRef: "DBW-ABCDEFGHJK", status: "REQUESTED", ...STAY, total: 85000, currency: "EUR" };
-const MODEL = {
-  site: { title: "Wellness Villa Bisous", locationLabel: "Ubud, Indonesia" },
-  stay: { guests: 4 },
-  media: {},
-};
+const MODEL = { site: { title: "Villa Bisous", locationLabel: "Ubud, Indonesia" }, stay: { guests: 4 }, media: {} };
 const PAGE = {
   kind: "request",
   pageKey: "accommodation",
@@ -40,17 +28,14 @@ const PAGE = {
   overviewHref: "/",
   navItems: [],
   stay: STAY,
-  booking: { key: "property-b", siteId: "site-1", propertyId: "property-b" },
-  buildRequestHref: () => "",
-  headerTone: "light",
-  propertyHref: PROPERTY_HREF,
 };
+const BOOKING = { key: "property-b", siteId: "site-1", propertyId: "property-b" };
 
 const renderPage = (page = {}) =>
   render(
     <MemoryRouter>
       <EliteSitePropertyRequestPage
-        sitePropertyPage={{ ...PAGE, ...page }}
+        sitePropertyPage={{ ...PAGE, booking: BOOKING, propertyHref: PROPERTY_HREF, buildRequestHref: String, ...page }}
         headerTone="light"
         model={MODEL}
         viewState={{ showTopBar: false }}

@@ -41,9 +41,9 @@ const MESSAGE_FIELD = Object.freeze({
 
 const formatStay = ({ checkIn, checkOut }) => `${formatStayDate(checkIn)} to ${formatStayDate(checkOut)}`;
 
-const renderFacts = (rows) => (
+const renderFacts = (facts) => (
   <dl className={requestStyles.facts}>
-    {rows.map(([label, value]) => (
+    {Object.entries(facts).map(([label, value]) => (
       <div key={label}>
         <dt>{label}</dt>
         <dd>{value}</dd>
@@ -193,12 +193,12 @@ export default function EliteSitePropertyRequestContent({
       <div className={`${styles.elitePriceCard} ${requestStyles.sent}`} role="status">
         <span className={styles.eliteFactLabel}>Booking reference</span>
         <p className={requestStyles.sentReference}>{sent.publicBookingRef}</p>
-        {renderFacts([
-          ["Property", title],
-          ["Dates", formatStay(sent)],
-          ["Guests", sent.guests],
-          ["Total", formatMinorUnits(sent.total, sent.currency)],
-        ])}
+        {renderFacts({
+          Property: title,
+          Dates: formatStay(sent),
+          Guests: sent.guests,
+          Total: formatMinorUnits(sent.total, sent.currency),
+        })}
         <p className={requestStyles.sentText}>{SITE_PROPERTY_REQUEST_SENT_TEXT}</p>
         <PanoramaPageLink href={overviewHref} className={styles.eliteButton}>
           Back to our properties
@@ -216,17 +216,12 @@ export default function EliteSitePropertyRequestContent({
 
   return (
     <div className={`${styles.eliteBookingPanel} ${requestStyles.layout}`}>
-      <aside className={`${styles.elitePriceCard} ${requestStyles.summary}`} aria-label="Your stay">
+      <aside className={styles.elitePriceCard} aria-label="Your stay">
         <div>
           <p className={requestStyles.summaryTitle}>{title}</p>
           {location ? <p className={requestStyles.summaryLocation}>{location}</p> : null}
         </div>
-        {quote
-          ? renderFacts([
-              ["Dates", formatStay(quote)],
-              ["Guests", quote.guestCount],
-            ])
-          : null}
+        {quote ? renderFacts({ Dates: formatStay(quote), Guests: quote.guestCount }) : null}
         {quoteView.showBreakdown ? (
           <QuoteBreakdown quote={quote} isStale={quoteView.isStale} staleReason={quoteState.staleReason} />
         ) : null}

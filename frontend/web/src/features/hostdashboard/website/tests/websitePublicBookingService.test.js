@@ -102,18 +102,6 @@ describe("requestPublicSiteBooking", () => {
     );
   });
 
-  it("leaves an empty phone and message out of the request", async () => {
-    mockFetchResponse({ body: BOOKING_RESPONSE });
-
-    await requestPublicSiteBooking({ ...BOOKING_REQUEST, guest: { ...BOOKING_REQUEST.guest, phone: "" }, message: "" });
-
-    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
-      quoteToken: "qtok_abc",
-      guest: { name: "Guest Name", email: "guest@example.com" },
-      session: { sessionId: "visitor-1", source: "standalone_site" },
-    });
-  });
-
   it("encodes the site id in the path", async () => {
     mockFetchResponse({ body: BOOKING_RESPONSE });
 

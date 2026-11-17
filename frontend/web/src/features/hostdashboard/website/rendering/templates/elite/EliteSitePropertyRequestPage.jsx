@@ -59,10 +59,7 @@ export default function EliteSitePropertyRequestPage({ sitePropertyPage, headerT
 EliteSitePropertyRequestPage.propTypes = {
   sitePropertyPage: sitePropertyPagePropType.isRequired,
   headerTone: PropTypes.oneOf(["photo", "light"]).isRequired,
-  model: PropTypes.shape({
-    site: PropTypes.shape({ title: PropTypes.string }).isRequired,
-    media: PropTypes.object.isRequired,
-  }).isRequired,
+  model: PropTypes.shape({ site: PropTypes.object.isRequired, media: PropTypes.object.isRequired }).isRequired,
   viewState: PropTypes.shape({ showTopBar: PropTypes.bool.isRequired }).isRequired,
   headerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]).isRequired,
 };
