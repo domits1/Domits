@@ -588,6 +588,7 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
         locationLabel,
         guestsLabel,
       }),
+      isDescriptionGenerated: !description,
       imageUrl: galleryImages[0] || placeholderImage,
       contentAlignment: DEFAULT_WEBSITE_HERO_CONTENT_ALIGNMENT,
     },

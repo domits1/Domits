@@ -3,7 +3,8 @@ import { UserProvider } from "./hostmessages/context/AuthContext";
 import { useAuth } from "./hostmessages/hooks/useAuth";
 import { LanguageContext } from "../../context/LanguageContext";
 import WhatsAppConnection from "./hostintegrations/components/WhatsAppConnection";
-import IntegrationCard, { WHATSAPP_CONNECTION_ID } from "./hostintegrations/components/IntegrationCard";
+import { WHATSAPP_CONNECTION_ID } from "./hostintegrations/components/IntegrationCard";
+import IntegrationMarketplace from "./hostintegrations/components/IntegrationMarketplace";
 import { INTEGRATION_CATALOG } from "./hostintegrations/utils/integrationCatalog";
 import { resolveIntegrationContent } from "./hostintegrations/utils/integrationContent";
 import "./hostintegrations/HostIntegrations.scss";
@@ -23,13 +24,7 @@ function HostIntegrationsInner() {
         </div>
       </header>
 
-      <ul className="host-integrations-market-grid" aria-label={texts.listLabel}>
-        {INTEGRATION_CATALOG.map((integration) => (
-          <li key={integration.id}>
-            <IntegrationCard integration={integration} texts={texts} />
-          </li>
-        ))}
-      </ul>
+      <IntegrationMarketplace integrations={INTEGRATION_CATALOG} texts={texts} />
 
       <section id={WHATSAPP_CONNECTION_ID} className="host-integrations-connection">
         <WhatsAppConnection userId={userId} />
