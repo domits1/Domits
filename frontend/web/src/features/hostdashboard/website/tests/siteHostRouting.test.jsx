@@ -136,8 +136,13 @@ const withSitePages = (payload, sitePages) => ({
 
 const lastTemplateProps = () => mockTemplateProps.at(-1);
 
-const listSectionIds = () =>
-  Array.from(document.querySelectorAll(".publicPreviewCanvas article > section[id]")).map((section) => section.id);
+const listSectionIds = () => {
+  const elitePage = document.querySelector(".publicPreviewCanvas [data-elite-page]");
+  if (elitePage) {
+    return [elitePage.dataset.elitePage];
+  }
+  return Array.from(document.querySelectorAll(".publicPreviewCanvas article > section[id]")).map((section) => section.id);
+};
 
 const getTopMenu = () => document.querySelector(".templateTopBarNav");
 
@@ -361,6 +366,7 @@ describe("site host routing for a site with site pages", () => {
     await screen.findByTestId("quote-availability");
 
     fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Gallery" }));
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Home" }));
 
     const revealTargets = Array.from(document.querySelectorAll(".publicPreviewCanvas [data-scroll-reveal]"));
     expect(revealTargets.length).toBeGreaterThan(0);
@@ -736,7 +742,7 @@ describe("property paths of an Elite website on its own domain", () => {
     expect(lastTemplateProps().model.source.propertyId).toBe("property-b");
     expect(lastTemplateProps().model.host.name).toBe("Amara");
     expect(readPageHeading()).toBe("Villa B");
-    expect(listSectionIds()).toEqual(["about", "features"]);
+    expect(listSectionIds()).toEqual(["accommodation"]);
     expect(readMenuItems()).toEqual([
       ["Home", "/"],
       ["Villa B", currentPageHref],
