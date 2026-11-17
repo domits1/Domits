@@ -468,11 +468,11 @@ Elite websites can have more than one page. The page settings live in the conten
 - A failed plan read, or one that does not answer within 3 seconds (`WEBSITE_PLAN_READ_TIMEOUT_MS`), drops the key and logs a `[WebsitePageSettings]` line. The guest still gets the site with status 200.
 - When Elite ends, the next request no longer serves the key.
 
+Editor: a host with `website.multi_property` on Panorama edits `siteProperties` in a Properties section (`editor/hooks/useWebsiteEditorSiteProperties.js`), from his own listings (`fetchHostPropertySelectOptions`); the editor checks the server's list rules before a save and holds back a publish with a listing that is not live. Other hosts get no section and no listings read; a stored list is saved back unchanged.
+
 `GET /property/website/rate-plan?view=entitlements` answers `{ plan, entitlements, effectiveUntil }` for the host in the token, read only. An Elite plan without a Stripe subscription or an end date reads like any other Elite plan. Without `view=entitlements` the route answers the full plan as before, including the Essentials row it creates for a new host.
 
 Code: `business/service/websiteElitePageSettings.js` and `getCurrentEntitlements`. The static page worker does not apply the check yet; its renderer ignores `sitePages`.
-
-Editor: a host with `website.multi_property` on Panorama edits `siteProperties` in a Properties section (`editor/hooks/useWebsiteEditorSiteProperties.js`), from his own listings (`fetchHostPropertySelectOptions`); the editor checks the server's list rules before a save and holds back a publish with a listing that is not live. Other hosts get no section and no listings read; a stored list is saved back unchanged.
 
 `backend/test/PropertyHandler/__fixtures__/existingSitePublicRender.json` is the public render response of the existing site in `backend/prerender/__fixtures__/renderPayload.json`, captured from the code before page settings existed. `publicWebsiteRender.elitePageSettings.test.js` compares the response with it byte for byte. When the public render response changes on purpose, regenerate that file in the same commit.
 
