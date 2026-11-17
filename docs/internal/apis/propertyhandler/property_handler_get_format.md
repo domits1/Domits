@@ -79,7 +79,19 @@ The lookup ignores the listing's status. If the listing you continue from is arc
 | 400 | `"Unknown pagination cursor."` | The cursor `id` matches no property, or the property was deleted since the previous page. For `byCountry` it also happens when the property is in another country than the one in the request, or moved there since the previous page. |
 | 404 | `"No property found."` | No property matches, or there are no more pages. The last page is not marked: ask for the next one and a `404` means the list has ended. |
 
-**What a client should do.** On a `400` for a cursor, start again from the first page without a cursor. On a `404` after at least one page, stop: the list has ended. Because the position is read at request time, a listing that is approved again between two pages moves to the bottom, and a client whose cursor points at it continues from there.
+**What a client should do.** On a `400` for a cursor, start again from the first page without a cursor. On a `404` after at least one page, stop: the list has ended.
+
+**The `400` contract.** A `400` on a request that carries a cursor means the cursor row is gone, and the client should restart from page 1. The body is the bare string `"Unknown pagination cursor."`: there is no error code, no extra header and no object body, so a client must not parse for one. Which listings leave the feed, and what the cursor does then:
+
+| What happened to the cursor listing | Result |
+|---|---|
+| Archived (a listing with bookings is archived when the host deletes it) or set to another non-`ACTIVE` status | The next page works. The lookup ignores status. |
+| Hard-deleted (a listing without bookings is deleted) | `400`. |
+| `byCountry` only: in another country than the request, or moved there | `400`. |
+
+No client restarts from page 1 on this `400` yet. Web clears its cursor and stops loading more (`Accommodations.js`, the `catch` in `loadMoreProperties`). Mobile throws a generic "Something went wrong while fetching properties" error and drops the server's message (`propertyRepository.js`), so what the user sees depends on the screen that catches it. The filter Lambda ends its walk (see Known gap). A client change is a follow-up, not part of this change.
+
+**Known limit: re-approval between two pages.** Because the position is read at request time, a listing that is approved again between two pages moves to the bottom, and a client whose cursor points at it continues from there. The listings that sat between its old and its new position are not shown to that guest in this walk, and nothing signals it. It is pinned by a test (`listingPosition.test.js`, "skips the listings between the old and the new position…") as documented behaviour, not endorsed. No fix is planned.
 
 **Known gap.** The filter Lambda (`General-Accommodation-FilterFunction`) walks the `all` feed page by page and does not check the status of the response. A `400` ends its walk silently and it caches an incomplete list for up to 60 seconds. Tracked in [#3890](https://github.com/domits1/Domits/issues/3890).
 
