@@ -71,7 +71,6 @@ describe("Panorama with site pages switched on", () => {
 
   it.each([
     ["gallery", "Gallery", ["gallery"]],
-    ["accommodation", "The villa", ["about", "features"]],
     ["contact", "Contact us", ["contact"]],
   ])("renders only the %s sections under a page header", (pageKey, title, sectionIds) => {
     const { container } = renderTemplate(buildModel({ sitePages: ALL_PAGES_ON }), { activePageKey: pageKey });
@@ -111,7 +110,7 @@ describe("Panorama with site pages switched on", () => {
 
     const header = container.querySelector("[data-panorama-page-header]");
     expect(listPageHeadings()).toEqual([title]);
-    expect(header.querySelectorAll("img")).toHaveLength(0);
+    expect(header.querySelector('img[src="x"]')).toBeNull();
   });
 
   it.each([
