@@ -127,7 +127,9 @@ export const EXISTING_SITE_RENDER_QUERIES = Object.freeze([
 const asStored = (value) => JSON.parse(JSON.stringify(value));
 
 export const buildStoringDraftRepository = (store) => ({
-  getDraftByPropertyIdAndHostId: jest.fn(async () => store.draft),
+  getDraftByPropertyIdAndHostId: jest.fn(async (propertyId, hostId) =>
+    store.draft?.propertyId === propertyId && store.draft?.hostId === hostId ? store.draft : null
+  ),
   getDraftById: jest.fn(async (draftId) => (store.draft?.id === draftId ? store.draft : null)),
   upsertDraft: jest.fn(async (input) => {
     store.draft = {

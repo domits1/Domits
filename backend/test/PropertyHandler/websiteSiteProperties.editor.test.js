@@ -173,6 +173,125 @@ describe("saving the properties of a website", () => {
   });
 });
 
+describe("saving a list that the stored draft already holds", () => {
+  const OWN_3 = "property-own-3";
+  const storedList = [
+    { propertyId: MAIN, slug: "villa-main" },
+    { propertyId: OWN, slug: "beach-house" },
+  ];
+  const checkedIds = (flow) => flow.controller.authManager.authorizeOwnerRequest.mock.calls.map(([, id]) => id);
+  const saveDraft = (flow, body) =>
+    flow.controller.upsertWebsiteDraft(
+      hostEvent({ propertyId: MAIN, templateKey: EXISTING_SITE.templateKey, ...body })
+    );
+  const flowWithStoredList = async (options) => {
+    const flow = buildEditorFlow(options);
+    await flow.save({ siteProperties: ownList() });
+    flow.controller.authManager.authorizeOwnerRequest.mockClear();
+    return flow;
+  };
+
+  it.each([
+    ["no longer exists", (owners) => owners.delete(OWN)],
+    ["belongs to another host now", (owners) => owners.set(OWN, "host-other")],
+  ])("keeps a stored property that %s without checking it, for a host without the plan", async (_label, change) => {
+    const flow = await flowWithStoredList({ ratePlanRow: ratePlanRow() });
+    change(flow.owners);
+
+    const saved = await flow.save({ heroTitle: "Villa", siteProperties: storedList });
+
+    expect(saved.statusCode).toBe(200);
+    expect(flow.store.draft.contentOverrides).toEqual({ heroTitle: "Villa", siteProperties: storedList });
+    expect(checkedIds(flow)).toEqual([MAIN]);
+    expect(flow.controller.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId).toHaveBeenLastCalledWith(
+      MAIN,
+      HOST
+    );
+  });
+
+  it("checks only the properties the stored draft does not hold yet, also when a stored slug changes", async () => {
+    const flow = await flowWithStoredList();
+    flow.owners.set(OWN_3, HOST);
+    const nextList = [
+      storedList[0],
+      { propertyId: OWN, slug: "beach-house-two" },
+      { propertyId: OWN_3, slug: "garden" },
+    ];
+
+    const saved = await flow.save({ siteProperties: nextList });
+
+    expect(saved.statusCode).toBe(200);
+    expect(flow.store.draft.contentOverrides.siteProperties).toEqual(nextList);
+    expect(checkedIds(flow)).toEqual([MAIN, OWN_3]);
+  });
+
+  it("refuses a new property of another host next to stored ones and keeps the stored draft", async () => {
+    const flow = await flowWithStoredList();
+
+    const saved = await flow.save({ siteProperties: [...storedList, { propertyId: FOREIGN, slug: "not-mine" }] });
+
+    expect(saved.statusCode).toBe(403);
+    expect(checkedIds(flow)).toEqual([MAIN, FOREIGN]);
+    expect(flow.controller.directBookingWebsiteDraftRepository.upsertDraft).toHaveBeenCalledTimes(1);
+    expect(flow.store.draft.contentOverrides.siteProperties).toEqual(storedList);
+  });
+
+  it("checks a property again once the stored draft no longer holds it, as when an older tab sends it back", async () => {
+    const flow = await flowWithStoredList();
+    await flow.save({ siteProperties: [storedList[0]] });
+    flow.owners.set(OWN, "host-other");
+
+    const saved = await flow.save({ siteProperties: storedList });
+
+    expect(saved.statusCode).toBe(403);
+    expect(checkedIds(flow)).toEqual([MAIN, MAIN, OWN]);
+    expect(flow.store.draft.contentOverrides.siteProperties).toEqual([storedList[0]]);
+  });
+
+  it("keeps a property that only the stored live list holds when the draft goes back to the live version", async () => {
+    const flow = await flowWithStoredList({ ratePlanRow: ratePlanRow() });
+    await saveDraft(flow, {
+      contentOverrides: { siteProperties: [storedList[0]] },
+      publishedContentOverrides: flow.store.draft.publishedContentOverrides,
+    });
+    flow.owners.delete(OWN);
+
+    const saved = await saveDraft(flow, { contentOverrides: flow.store.draft.publishedContentOverrides });
+
+    expect(saved.statusCode).toBe(200);
+    expect(flow.store.draft.contentOverrides.siteProperties).toEqual(storedList);
+    expect(checkedIds(flow)).toEqual([MAIN, MAIN]);
+  });
+
+  it("does not trust the list of a draft row of another host", async () => {
+    const flow = buildEditorFlow();
+    const list = [storedList[0], { propertyId: FOREIGN, slug: "not-mine" }];
+    flow.store.draft = {
+      id: "draft-1",
+      propertyId: MAIN,
+      hostId: "host-before",
+      contentOverrides: { siteProperties: list },
+      publishedContentOverrides: { siteProperties: list },
+    };
+
+    const saved = await flow.save({ siteProperties: list });
+
+    expect(saved.statusCode).toBe(403);
+    expect(checkedIds(flow)).toEqual([MAIN, FOREIGN]);
+    expect(flow.store.draft.hostId).toBe("host-before");
+  });
+
+  it("still applies the list rules to the stored properties", async () => {
+    const flow = await flowWithStoredList();
+
+    const saved = await flow.save({ siteProperties: storedList.map((entry) => ({ ...entry, slug: "same" })) });
+
+    expect(saved.statusCode).toBe(400);
+    expect(JSON.parse(saved.body).message).toBe("siteProperties must not list a property or a slug twice.");
+    expect(flow.store.draft.contentOverrides.siteProperties).toEqual(storedList);
+  });
+});
+
 describe("publishing the properties of a website", () => {
   it("publishes the checked list", async () => {
     const flow = buildEditorFlow();
