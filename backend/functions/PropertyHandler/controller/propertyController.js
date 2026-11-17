@@ -1784,7 +1784,8 @@ export class PropertyController {
         primaryDomain = null,
         host = null,
         contentOverrides = site?.publishedContentOverrides,
-        siteProperties = []
+        siteProperties = [],
+        acceptsContactMessages = false
     ) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
@@ -1809,7 +1810,8 @@ export class PropertyController {
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
         };
-        return siteProperties.length > 0 ? { ...payload, siteProperties } : payload;
+        const servedPayload = siteProperties.length > 0 ? { ...payload, siteProperties } : payload;
+        return acceptsContactMessages ? { ...servedPayload, acceptsContactMessages } : servedPayload;
     }
 
     async buildPublicPropertySnapshotForWebsiteRender(site) {
@@ -3321,21 +3323,20 @@ export class PropertyController {
                 site: resolutionResult.site,
                 overrides: contentOverrides,
             });
-            const renderPayload = this.buildPublicDirectBookingWebsiteRenderPayload(
-                resolutionResult.site,
-                resolutionResult.domain,
-                propertySnapshot,
-                primaryDomain,
-                host,
-                contentOverrides,
-                siteProperties
-            );
-            const acceptsContactMessages = Boolean(renderPayload) && servesContactMessages(contentOverrides);
 
             return {
                 statusCode: 200,
                 headers: draftResponseHeaders,
-                body: JSON.stringify(acceptsContactMessages ? { ...renderPayload, acceptsContactMessages } : renderPayload),
+                body: JSON.stringify(this.buildPublicDirectBookingWebsiteRenderPayload(
+                    resolutionResult.site,
+                    resolutionResult.domain,
+                    propertySnapshot,
+                    primaryDomain,
+                    host,
+                    contentOverrides,
+                    siteProperties,
+                    servesContactMessages(contentOverrides)
+                )),
             };
         } catch (error) {
             console.error(error);

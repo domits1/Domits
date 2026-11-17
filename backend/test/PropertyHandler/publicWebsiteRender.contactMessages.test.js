@@ -28,11 +28,6 @@ const TODAYS_ELITE_SITE_BODY = JSON.stringify({
   contentOverrides: ELITE_SITE.publishedContentOverrides,
 });
 
-const ELITE_SITE_BODY_WITH_CONTACT = JSON.stringify({
-  ...JSON.parse(TODAYS_ELITE_SITE_BODY),
-  acceptsContactMessages: true,
-});
-
 const renderBody = async ({
   site = ELITE_SITE,
   ratePlanRepository = buildRatePlanRepository(PAID_ELITE_ROW),
@@ -82,7 +77,7 @@ describe("the public render while contact messages are on", () => {
 
       const body = await renderBody({ ratePlanRepository, query: { ...query, hostId: "host-from-request" } });
 
-      expect(body).toBe(ELITE_SITE_BODY_WITH_CONTACT);
+      expect(body).toBe(`${TODAYS_ELITE_SITE_BODY.slice(0, -1)},"acceptsContactMessages":true}`);
       expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledTimes(1);
       expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledWith(EXISTING_SITE.hostId);
       expectOnlyCurrentPlanRead(ratePlanRepository);
@@ -104,19 +99,6 @@ describe("the public render while contact messages are on", () => {
     jest.spyOn(console, "error").mockImplementation(() => undefined);
 
     expect(await renderBody({ ratePlanRepository: buildRepository() })).toBe(EXISTING_SITE_RENDER_BODY);
-  });
-
-  it("adds nothing to a render without a payload", async () => {
-    process.env[CONTACT_FLAG] = "true";
-    const controller = buildExistingSiteController({
-      site: ELITE_SITE,
-      ratePlanRepository: buildRatePlanRepository(PAID_ELITE_ROW),
-    });
-    controller.buildPublicDirectBookingWebsiteRenderPayload = () => null;
-
-    const response = await controller.getPublicWebsiteRenderModel(renderEvent({ domain: EXISTING_DOMAIN.domain }));
-
-    expect(response.body).toBe("null");
   });
 
   it("answers a site without content overrides without the field", async () => {
