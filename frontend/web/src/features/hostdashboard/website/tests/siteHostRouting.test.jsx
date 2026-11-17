@@ -999,9 +999,9 @@ describe("the photos page of a property of an Elite website", () => {
   const readCrumbHrefs = () =>
     Array.from(document.querySelectorAll("[data-panorama-page-header] p a")).map((link) => link.getAttribute("href"));
   const listPhotoSources = () =>
-    within(screen.getByRole("region", { name: "Photos" }))
-      .getAllByRole("img")
-      .map((image) => image.getAttribute("src"));
+    Array.from(screen.getByRole("region", { name: "Photos" }).querySelectorAll("img"), (image) =>
+      image.getAttribute("src")
+    );
 
   beforeEach(() => {
     process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
