@@ -317,6 +317,53 @@ describe("keyset position", () => {
       expect(result.getQuery()).not.toContain('"property"."title" = :title');
     });
 
+    // Documents a known limit, it does not endorse it: the position is read at request time, so a re-approval between
+    // two pages moves the cursor row to the bottom and the next page continues from there. Listings that sit between
+    // the old and the new position are never shown to that guest. No fix is planned (see the eng-review).
+    it("skips the listings between the old and the new position when the cursor row is approved again between pages", async () => {
+      const listings = [
+        { id: "listing-b", approvedAt: 2000 },
+        { id: "listing-c", approvedAt: 3000 },
+        { id: "listing-d", approvedAt: 4000 },
+      ];
+      // Mirrors the first branch of the keyset predicate (approved_at > cursor); the three listings have distinct
+      // approval times, so the createdat and id branches never apply.
+      const pageAfter = (query) => listings.filter((row) => row.approvedAt > query.getParameters().cursorApprovedAt);
+      const rowApprovedAt = (approvedAt) => ({ ...POSITION_ROW, approved_at: String(approvedAt) });
+
+      withLookupRow(rowApprovedAt(1000));
+      const beforeReapproval = pageAfter(await applyListingCursor(dataSource, newQuery(), CURSOR));
+      withLookupRow(rowApprovedAt(9000));
+      const afterReapproval = pageAfter(await applyListingCursor(dataSource, newQuery(), CURSOR));
+
+      expect(beforeReapproval.map((row) => row.id)).toEqual(["listing-b", "listing-c", "listing-d"]);
+      expect(afterReapproval).toEqual([]);
+    });
+
+    it("continues from an archived cursor row: the lookup has no status filter, with or without a scope", async () => {
+      withLookupRow({ ...POSITION_ROW, property_status: "ARCHIVED" });
+      const countryScope = (lookup) => lookup.andWhere("property.country_stub = :country", { country: "Germany" });
+
+      const unscoped = await applyListingCursor(dataSource, newQuery(), CURSOR);
+      const scoped = await applyListingCursor(dataSource, newQuery(), CURSOR, countryScope);
+
+      expect(lookups).toHaveLength(2);
+      lookups.forEach(({ sql }) => expect(sql).not.toContain('"property"."status"'));
+      expect(unscoped.getParameters()).toMatchObject({ cursorId: "property-6" });
+      expect(scoped.getParameters()).toMatchObject({ cursorId: "property-6" });
+    });
+
+    // A listing without bookings is hard-deleted (propertyService.deleteProperty), so its row is gone for good.
+    it("refuses a cursor row that was hard-deleted with the existing 400 and message", async () => {
+      withLookupRow(null);
+
+      await expect(applyListingCursor(dataSource, newQuery(), CURSOR)).rejects.toMatchObject({
+        name: "TypeException",
+        statusCode: 400,
+        message: "Unknown pagination cursor.",
+      });
+    });
+
     it("refuses a cursor id that matches no row with a 400", async () => {
       withLookupRow(null);
 

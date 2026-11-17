@@ -99,6 +99,18 @@ describe("PropertyLocationRepository.getActivePropertiesByCountry", () => {
         expect(scoped).toBe(lookup);
       });
 
+      // A listing archived between two pages must stay a valid place to continue from, so the lookup may not
+      // filter on status the way the page query does.
+      it("does not filter on status, so an archived cursor row still gives a position", async () => {
+        const lookup = fakeLookup();
+
+        (await lookupScopeFor("Germany"))(lookup);
+
+        const clauses = [...lookup.innerJoin.mock.calls, ...lookup.andWhere.mock.calls].map(([sql]) => sql);
+        expect(clauses).toHaveLength(2);
+        expect(clauses.join(" ")).not.toMatch(/status/i);
+      });
+
       it("uses the country of this request, not a fixed one", async () => {
         const lookup = fakeLookup();
 
