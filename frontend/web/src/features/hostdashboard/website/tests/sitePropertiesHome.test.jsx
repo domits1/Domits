@@ -241,6 +241,25 @@ describe("the home page of an Elite website with its properties", () => {
     expect(readSentBodies()).toEqual([expect.objectContaining({ checkOut: "2031-01-16", guests: 50 })]);
   });
 
+  it.each([
+    ["365 nights", "2031-01-15", "2030-01-15"],
+    ["366 nights", "2031-01-16", ""],
+  ])("links a stay of %s for 50 guests to the property page, which reads the dates %p", async (_, checkOut, dates) => {
+    await openOverview();
+    const villaBFree = { propertyId: "property-b", quote: { ...quoteOf("property-b", 100, 50), checkOut } };
+    global.fetch.mockResolvedValue(answerOf([MAIN_BOOKED, villaBFree]));
+    searchFor({ checkOut, guests: "50" });
+    const resultLink = await screen.findByRole("link", { name: /^Villa B.*€1\.00/ });
+    expect(resultLink).toHaveAttribute("href", `/properties/villa-b?checkIn=2030-01-15&checkOut=${checkOut}&guests=50`);
+    global.fetch.mockReturnValue(new Promise(() => {}));
+
+    fireEvent.click(resultLink);
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Villa B" })).toBeInTheDocument();
+    expect(await screen.findByLabelText("Check in")).toHaveValue(dates);
+    expect(document.querySelector(".stepperValue").textContent).toBe("50");
+  });
+
   it("keeps the newer search when the answer of an older one arrives late", async () => {
     await openOverview();
     let answerOlderSearch;

@@ -260,11 +260,17 @@ describe("readSitePropertyStayQuery", () => {
     ["a day that does not exist", "?checkIn=2027-02-27&checkOut=2027-02-30"],
     ["a year before 100", "?checkIn=0027-02-27&checkOut=0027-03-02"],
     ["another date format", "?checkIn=01-12-2026&checkOut=08-12-2026"],
-    ["a stay longer than a year", "?checkIn=2026-12-01&checkOut=2027-12-02"],
+    ["a stay of 366 nights", "?checkIn=2026-12-01&checkOut=2027-12-02"],
+    ["a stay of 367 nights", "?checkIn=2026-12-01&checkOut=2027-12-03"],
     ["one date only", "?checkIn=2026-12-01"],
     ["a date given twice", "?checkIn=2026-12-01&checkIn=2026-12-02&checkOut=2026-12-08"],
   ])("ignores the dates for %s and keeps the guests", (_, search) => {
     expect(readSitePropertyStayQuery(`${search}&guests=3`, TODAY)).toEqual({ ...NO_DATES, guests: 3 });
+  });
+
+  it.each([50, 51])("reads %p guests, also above the home search limit", (guests) => {
+    expect(readSitePropertyStayQuery(`?guests=${guests}`, TODAY)).toEqual({ ...NO_DATES, guests });
+    expect(buildSitePropertyStayQuery("", { guests })).toBe(`?guests=${guests}`);
   });
 
   it.each(["0", "1.5", "100", "two"])("ignores the guests %p and keeps the dates", (guests) => {
