@@ -1099,6 +1099,28 @@ describe("the photos page of a property of an Elite website", () => {
     expect(screen.getByText("This property has no photos yet.")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Photos" })).toBeNull();
   });
+
+  it("stops a running quote when the guest opens the photos", async () => {
+    globalThis.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("link", { name: "View all photos" }));
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toBeInTheDocument();
+    expect(globalThis.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+  });
+
+  it("keeps the temporary page without a calendar on the photos path of another template", async () => {
+    const site = { ...SITE_HOST_PAYLOAD.site, templateKey: "trust-signals" };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...SITE_HOST_PAYLOAD, site }));
+    renderAppAt("/properties/villa-b/photos");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Villa B" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Back to Villa B" })).toBeNull();
+    expect(document.querySelector("[data-elite-page]")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show next months" })).toBeNull();
+  });
 });
 
 describe("the booking panel on the property page of an Elite website", () => {
