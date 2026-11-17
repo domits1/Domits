@@ -26,7 +26,7 @@ export const fetchWebsitePreviewByDraftId = async (draftId) => {
 
   const response = await requestWebsitePreview(normalizedDraftId);
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 403) {
     throw new Error(WEBSITE_PREVIEW_LOGIN_MESSAGE);
   }
   if (!response.ok) {
