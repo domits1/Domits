@@ -3593,6 +3593,8 @@ export class PropertyController {
     // -------------------------
     async getWebsitePreviewByDraftId(event) {
         try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
             const draftId = String(
                 event.queryStringParameters?.draft ||
                 event.queryStringParameters?.draftId ||
@@ -3604,20 +3606,19 @@ export class PropertyController {
             }
 
             const draft = await this.directBookingWebsiteDraftRepository.getDraftById(draftId);
-            if (!draft || draft.status === "SUSPENDED") {
+            if (!draft || draft.status === "SUSPENDED" || draft.hostId !== hostId) {
                 return {
                     statusCode: 404,
                     headers: draftResponseHeaders,
                     body: JSON.stringify({ message: "Website preview not found." }),
                 };
             }
+            await this.authManager.authorizeOwnerRequest(accessToken, draft.propertyId);
 
-            const [propertyDetails, servedDraft] = await Promise.all([
-                this.propertyService.getFullPropertyAttributesWithFullLocation(
-                    draft.propertyId,
-                    { includeCalendarAvailability: true }
-                ),
+            const [propertyDetails, servedDraft, host] = await Promise.all([
+                this.propertyService.getFullPropertyAttributes(draft.propertyId, { includeCalendarAvailability: true }),
                 this.getWebsiteElitePageSettings().servePageSettingsOnDraft(draft),
+                this.loadPublicWebsiteHostSafely(draft),
             ]);
 
             await this.recordStandaloneWebsiteEventSafely({
@@ -3635,7 +3636,8 @@ export class PropertyController {
                 headers: draftResponseHeaders,
                 body: JSON.stringify({
                     draft: servedDraft,
-                    propertyDetails,
+                    propertyDetails: toPublicWebsitePropertySnapshotView(propertyDetails),
+                    host,
                 }),
             };
         } catch (error) {
@@ -3643,7 +3645,14 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            if (error instanceof NotFoundException) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website preview not found." }),
+                };
+            }
+            return this.websiteFailureResponse(error);
         }
     }
 
