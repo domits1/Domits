@@ -21,9 +21,7 @@ const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
 export class WebsiteContactError extends Error {
   constructor(code, message, field = null) {
     const statusCode = STATUS_CODE_BY_ERROR_CODE[code];
-    if (!statusCode) {
-      throw new TypeError(`Unknown website contact error code: ${code}`);
-    }
+    if (!statusCode) throw new TypeError(`Unknown website contact error code: ${code}`);
     super(message);
     this.name = "WebsiteContactError";
     this.code = code;

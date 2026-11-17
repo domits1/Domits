@@ -30,6 +30,10 @@ describe("sending a text email through the email service", () => {
     expect(JSON.parse(input.Payload)).toEqual({ body: EMAIL });
   });
 
+  it("calls the email service once, so a lost answer is never retried into a second email", async () => {
+    await expect(new EmailNotificationRepository().lambdaClient.config.maxAttempts()).resolves.toBe(1);
+  });
+
   it("uses the function named in EMAIL_NOTIFICATION_LAMBDA_NAME, as the other mailers do", async () => {
     process.env.EMAIL_NOTIFICATION_LAMBDA_NAME = "EmailNotificationService-test";
     const { repository, send } = buildRepository(answer(sent()));
@@ -44,17 +48,21 @@ describe("sending a text email through the email service", () => {
     await expect(refused.repository.sendTextEmail({ ...EMAIL, replyTo: undefined })).rejects.toThrow("status 500");
   });
 
+  const named = (name) => Object.assign(new Error(name), { name });
+
   it.each([
     ["the service answers 500, as it does when SES refuses", answer({ statusCode: 500, body: "{}" }), false],
     ["the service answers 400, as it does for a missing field", answer({ statusCode: 400 }), false],
-    ["the function fails, whatever its payload says", { ...answer(sent()), FunctionError: "Unhandled" }, false],
+    ["Lambda refuses the call", named("AccessDeniedException"), false],
+    ["Lambda throttles the call", named("TooManyRequestsException"), false],
+    ["the function fails, whatever its payload says", { ...answer(sent()), FunctionError: "Unhandled" }, true],
     ["the service sent it without the reply-to, as it does today", answer({ statusCode: 200, body: "{}" }), true],
     ["the service confirms another reply-to", answer(sent("someone@example.com")), true],
     ["the service answers 200 with a body that is not JSON", answer({ statusCode: 200, body: "sent" }), true],
-    ["the answer has no payload", { StatusCode: 200 }, false],
-    ["the answer is not JSON", { StatusCode: 200, Payload: new TextEncoder().encode("not json") }, false],
-    ["the answer has no status", answer({ message: "Email sent successfully!" }), false],
-    ["the invoke itself fails", new Error("AccessDeniedException"), false],
+    ["the answer has no payload", { StatusCode: 200 }, true],
+    ["the answer is not JSON", { StatusCode: 200, Payload: new TextEncoder().encode("not json") }, true],
+    ["the answer has no status", answer({ message: "Email sent successfully!" }), true],
+    ["the answer is lost after the call", named("TimeoutError"), true],
   ])("rejects when %s, and says whether it may have been sent", async (_label, response, deliveryUnknown) => {
     const { repository } = buildRepository(response);
     const error = await repository.sendTextEmail(EMAIL).catch((failure) => failure);

@@ -92,6 +92,12 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  const toText = (value) => (value instanceof Error ? `${value.stack} ${toText(value.cause)}` : JSON.stringify(value));
+  const output = logged
+    .flatMap((spy) => spy.mock.calls.flat())
+    .map(toText)
+    .join(" ");
+  [GUEST.name, GUEST.email, GUEST.phone, "free in May"].forEach((detail) => expect(output).not.toContain(detail));
   delete process.env.DIRECT_BOOKING_WEBSITE_CONTACT_ENABLED;
   jest.restoreAllMocks();
 });
@@ -127,7 +133,7 @@ Reply to this email to answer the guest.`,
     ]);
   });
 
-  it("records the request before the email, without the guest's details, and logs none of them", async () => {
+  it("records the request before the email, without the guest's details", async () => {
     const { send, eventRepository, lambdaClient } = buildContact();
     await send({ ...GUEST, propertyId: OWN });
     expect(eventRepository.recordEvent.mock.invocationCallOrder[0]).toBeLessThan(
@@ -143,8 +149,6 @@ Reply to this email to answer the guest.`,
         },
       ],
     ]);
-    const output = JSON.stringify(logged.flatMap((spy) => spy.mock.calls));
-    [GUEST.name, GUEST.email, GUEST.phone, "free in May"].forEach((detail) => expect(output).not.toContain(detail));
   });
 
   it.each([
@@ -246,6 +250,7 @@ describe("refusing a property that the site does not serve", () => {
 
 describe("telling the guest the message was not sent, or could not be confirmed", () => {
   const never = () => new Promise(() => {});
+  const REFUSED = Object.assign(new Error("denied"), { name: "AccessDeniedException" });
   const late = (command) => new Promise((resolve) => setTimeout(() => resolve(confirmingReplyTo(command)), 150));
   const answering = (answer) => (c) => c.lambdaClient.send.mockResolvedValue(lambdaAnswer(answer));
   const UNCONFIRMED = [504, "message_not_confirmed"];
@@ -258,19 +263,11 @@ describe("telling the guest the message was not sent, or could not be confirmed"
   it.each([
     ["the email service answers 500", 1, answering({ statusCode: 500 })],
     ["the email service sends without the reply-to, as it does today", 1, answering({ statusCode: 200 }), UNCONFIRMED],
-    ["the invoke fails", 1, (c) => c.lambdaClient.send.mockRejectedValue(DOWN)],
-    [
-      "the email service answers after the time limit",
-      1,
-      (c) => c.lambdaClient.send.mockImplementation(late),
-      UNCONFIRMED,
-    ],
+    ["Lambda refuses the call", 1, (c) => c.lambdaClient.send.mockRejectedValue(REFUSED)],
+    ["the call fails on the way back", 1, (c) => c.lambdaClient.send.mockRejectedValue(DOWN), UNCONFIRMED],
+    ["a late answer", 1, (c) => c.lambdaClient.send.mockImplementation(late), UNCONFIRMED],
     ["the host's address cannot be read", 0, (c) => c.service.cognitoRepository.getUserById.mockRejectedValue(DOWN)],
-    [
-      "the host's address does not come in time",
-      0,
-      (c) => c.service.cognitoRepository.getUserById.mockReturnValue(never()),
-    ],
+    ["a host address that never comes", 0, (c) => c.service.cognitoRepository.getUserById.mockReturnValue(never())],
     ["the host has no email address", 0, (c) => c.service.cognitoRepository.getUserById.mockResolvedValue({})],
     ["the host's messages cannot be counted", 0, (c) => c.eventRepository.countEventsSince.mockRejectedValue(DOWN)],
     ["the message cannot be recorded", 0, (c) => c.eventRepository.recordEvent.mockRejectedValue(DOWN)],
@@ -282,8 +279,17 @@ describe("telling the guest the message was not sent, or could not be confirmed"
     expectRefusal(response, status, code);
     expect(parse(response).error.message).toBe(TEXTS[code]);
     expect(contact.lambdaClient.send).toHaveBeenCalledTimes(attempts);
-    const output = JSON.stringify(logged.flatMap((spy) => spy.mock.calls));
-    [GUEST.name, GUEST.email, "free in May"].forEach((detail) => expect(output).not.toContain(detail));
+  });
+
+  it("sends nothing when a step before the send finishes after its limit", async () => {
+    const contact = buildContact();
+    const address = { UserAttributes: [{ Name: "email", Value: HOST_EMAIL }] };
+    contact.service.cognitoRepository.getUserById.mockReturnValue(
+      new Promise((done) => setTimeout(() => done(address), 150))
+    );
+    expectRefusal(await contact.send(), 503, "message_not_sent");
+    await new Promise((done) => setTimeout(done, 250));
+    expect(contact.lambdaClient.send).not.toHaveBeenCalled();
   });
 
   it.each([
