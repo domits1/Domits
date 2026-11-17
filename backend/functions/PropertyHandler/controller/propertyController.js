@@ -1,6 +1,7 @@
 import { PropertyBuilder } from "../business/service/propertyBuilder.js";
 import { PropertyService } from "../business/service/propertyService.js";
 import { WebsiteQuoteService } from "../business/service/websiteQuoteService.js";
+import { WebsiteContactService, websiteContactFailure } from "../business/service/websiteContactService.js";
 import { WebsiteCustomDomainService, isCustomDomainSyncable } from "../business/service/websiteCustomDomainService.js";
 import { CloudFrontTenantRepository } from "../data/repository/cloudFrontTenantRepository.js";
 import { AuthManager } from "../auth/authManager.js";
@@ -39,6 +40,7 @@ import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
 import { TypeException } from "../util/exception/TypeException.js";
 import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
+import { WebsiteContactError, WEBSITE_CONTACT_ERROR_CODES } from "../util/exception/WebsiteContactError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
 import { WebsitePublishNotAllowedError } from "../util/exception/WebsitePublishNotAllowedError.js";
@@ -3432,6 +3434,36 @@ export class PropertyController {
         }
     }
 
+    async sendPublicWebsiteContactMessage(event) {
+        const requestId = cleanWebsiteText(event?.requestContext?.requestId) || randomUUID();
+        let body = null;
+        try {
+            body = JSON.parse(event?.body || "");
+        } catch {
+            body = null;
+        }
+        try {
+            const result = await this.getWebsiteContactService().sendMessage({
+                body,
+                sourceIp: cleanWebsiteText(event?.requestContext?.identity?.sourceIp),
+                requestId,
+            });
+            return { statusCode: 200, headers: draftResponseHeaders, body: JSON.stringify(result) };
+        } catch (error) {
+            const isContactFailure = error instanceof WebsiteContactError;
+            if (!isContactFailure) {
+                console.error("Website contact message failed.", error);
+            }
+            const failure = isContactFailure ? error : websiteContactFailure(WEBSITE_CONTACT_ERROR_CODES.INTERNAL_ERROR);
+            const field = failure.field ? { field: failure.field } : {};
+            return {
+                statusCode: failure.statusCode,
+                headers: draftResponseHeaders,
+                body: JSON.stringify({ error: { code: failure.code, message: failure.message, ...field, requestId } }),
+            };
+        }
+    }
+
     // -------------------------
     // GET /property/website/domains
     // -------------------------
@@ -3631,6 +3663,16 @@ export class PropertyController {
             headers: draftResponseHeaders,
             body: JSON.stringify({ error: { code, message, requestId } }),
         };
+    }
+
+    getWebsiteContactService() {
+        this.websiteContactService ??= new WebsiteContactService({
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            eventRepository: this.directBookingWebsiteEventRepository,
+            pageSettings: this.getWebsiteElitePageSettings(),
+            sitePropertySnapshots: this.getWebsiteSitePropertySnapshots(),
+        });
+        return this.websiteContactService;
     }
 
     getWebsiteQuoteService() {

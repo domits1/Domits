@@ -55,6 +55,9 @@ const handlePost = async (event) => {
   if (isPath(event, "/property/website/public/quote")) {
     return controller.createPublicWebsiteQuote(event);
   }
+  if (isPath(event, "/property/website/public/contact")) {
+    return controller.sendPublicWebsiteContactMessage(event);
+  }
   if (isPath(event, "/property/website/site/publish")) {
     return controller.publishWebsiteSite(event);
   }
