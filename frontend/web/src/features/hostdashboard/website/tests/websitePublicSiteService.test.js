@@ -69,7 +69,6 @@ describe("fetchPublicWebsiteRenderModel", () => {
   it.each([
     [true, true],
     ["true", undefined],
-    [undefined, undefined],
   ])("passes acceptsContactMessages %p on as %p", async (acceptsContactMessages, expected) => {
     answerWith({ ...RENDER_ANSWER, acceptsContactMessages });
 

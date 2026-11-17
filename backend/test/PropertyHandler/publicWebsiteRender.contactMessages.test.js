@@ -111,3 +111,21 @@ describe("the public render while contact messages are on", () => {
     expect(body).not.toHaveProperty("acceptsContactMessages");
   });
 });
+
+describe("the render answer builder", () => {
+  const build = (domain, siteProperties) => {
+    const overrides = ELITE_SITE.publishedContentOverrides;
+    const args = [ELITE_SITE, domain, undefined, null, null, overrides, siteProperties, true];
+    return buildExistingSiteController().buildPublicDirectBookingWebsiteRenderPayload(...args);
+  };
+
+  it("keeps the served properties next to the field", () => {
+    const siteProperties = [{ propertyId: "property-1", slug: "villa-one", isMainProperty: true }];
+
+    expect(build(EXISTING_DOMAIN, siteProperties)).toMatchObject({ siteProperties, acceptsContactMessages: true });
+  });
+
+  it("answers nothing without a resolution, even with the field on", () => {
+    expect(build(null, [])).toBeNull();
+  });
+});

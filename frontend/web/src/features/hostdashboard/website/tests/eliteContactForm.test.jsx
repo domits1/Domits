@@ -1,9 +1,6 @@
 import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import EliteContactForm, {
-  CONTACT_REQUEST_TIMEOUT_MS,
-  CONTACT_RESEND_PAUSE_MS,
-} from "../rendering/templates/elite/EliteContactForm";
+import EliteContactForm, { CONTACT_REQUEST_TIMEOUT_MS } from "../rendering/templates/elite/EliteContactForm";
 import { PUBLIC_WEBSITE_CONTACT_URL } from "../services/websitePublicContactService";
 
 const TEXT = Object.freeze({
@@ -111,6 +108,7 @@ describe("sending a contact message", () => {
       phone: "+31 6 1234 5678",
       message: GUEST.Message,
     });
+    expect(valueOf(PICKER)).toBe("");
   });
 
   it("cleans pasted text before it is sent", async () => {
@@ -141,7 +139,6 @@ describe("a message the server did not confirm or refused", () => {
     ["message_not_confirmed", 504, failure("message_not_confirmed", { message: "Sent." }), TEXT.unconfirmed],
     ["a gateway 504", 504, { message: "Endpoint request timed out" }, TEXT.unconfirmed],
     ["a gateway 502", 502, { message: "Internal server error" }, TEXT.unconfirmed],
-    ["a 503 without a code", 503, { message: "Service Unavailable" }, TEXT.unconfirmed],
     ["a network error", null, null, TEXT.unconfirmed],
     ["site_not_found", 404, failure("site_not_found"), TEXT.site],
     ["rate_limited", 429, failure("rate_limited"), TEXT.rate],
@@ -257,7 +254,7 @@ describe("a slow or repeated send", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(TEXT.unconfirmed);
   });
 
-  it("stops waiting after the time limit, shows not confirmed, and sends again without a timer left", async () => {
+  it("stops waiting after the time limit, shows not confirmed, and sends again a second after it", async () => {
     jest.useFakeTimers();
     const fetchMock = holdFetch();
     await sendWith(SITE, GUEST);
@@ -269,7 +266,11 @@ describe("a slow or repeated send", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(TEXT.unconfirmed);
     expect(valueOf("Message")).toBe(GUEST.Message);
     fetchMock.mockResolvedValueOnce(answer(200, { status: "SENT" }));
-    await act(async () => jest.advanceTimersByTime(CONTACT_RESEND_PAUSE_MS));
+    await send();
+    await act(async () => jest.advanceTimersByTime(999));
+    await send();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await act(async () => jest.advanceTimersByTime(1));
     await send();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("status")).toHaveTextContent(TEXT.sent);

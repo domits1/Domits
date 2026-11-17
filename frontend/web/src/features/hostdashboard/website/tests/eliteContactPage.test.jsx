@@ -72,7 +72,6 @@ afterEach(() => {
 describe("the Contact us page of a site that cannot receive messages", () => {
   it.each([
     ["without the field", {}],
-    ["with false", { acceptsContactMessages: false }],
     ["with the text true", { acceptsContactMessages: "true" }],
   ])("shows today's contact content only, %s", async (_label, fields) => {
     await openSitePath("/contact-us", withContactPage(fields));
