@@ -1,0 +1,57 @@
+describe('Guest Reviews', () => {
+    beforeEach(() => {
+      cy.viewport(1920, 1080);
+      cy.loginAsGuest(); 
+  
+      cy.fixture('reviews.json').then((reviewsData) => {
+        cy.intercept('GET', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews?scope=written', {
+          body: reviewsData.reviews
+        }).as('fetchReviews');
+  
+      cy.intercept('GET', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews?scope=received', {
+        body: reviewsData.receivedReviews
+      }).as('fetchReceivedReviews');
+    });
+  });
+  
+    it('Should display reviews correctly', () => {
+      cy.get('.header-links > .headerHostButton').click();
+      cy.wait(500); 
+
+      cy.get('.dashboardSections > :nth-child(4)').click(); 
+  
+      cy.wait('@fetchReviews');
+      cy.wait('@fetchReceivedReviews');
+      cy.wait(500); 
+
+      cy.contains('My reviews (2)').should('exist');
+      cy.contains('Great service').should('exist');
+      cy.contains('Good experience').should('exist');
+      cy.wait(500); 
+
+      cy.contains('Received reviews(1)').should('exist');
+      cy.contains('Awesome customer').should('exist');
+    });
+  
+    it('Allows deleting a review', () => {
+      cy.get('.header-links > .headerHostButton').click();
+      cy.wait(500); 
+  
+      cy.get('.dashboardSections > :nth-child(4)').click(); 
+  
+      cy.wait('@fetchReviews');
+ 
+      cy.intercept('DELETE', 'https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default/reviews/*', {
+        statusCode: 204
+      }).as('deleteReview');
+  
+      cy.get('button')
+      cy.get(':nth-child(2) > .HostReviews_reviewDelete__hg2oT > .cross').click();
+
+      cy.wait('@deleteReview');
+      cy.wait(500); 
+
+      cy.contains('Great service').should('not.exist');
+    });
+  });
+  

@@ -139,10 +139,10 @@ describe("Login MFA challenge", () => {
     enterCode(CODE);
 
     await screen.findByText("Invalid code. Please try again.");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Verify" })).toBeDisabled());
     const digitInputs = screen.getAllByRole("textbox");
     digitInputs.forEach((input) => expect(input).toHaveValue(""));
     expect(digitInputs[0]).toHaveFocus();
-    expect(screen.getByRole("button", { name: "Verify" })).toBeDisabled();
   });
 
   it("returns to the password form with the email kept when the challenge session expired", async () => {

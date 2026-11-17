@@ -43,20 +43,23 @@ describe("ChannexCertificationAdminPage", () => {
   test("shows Channex admin page when backend admin-access allows the user", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: true });
 
-    render(<ChannexCertificationAdminPage />);
+    const { container } = render(<ChannexCertificationAdminPage />);
 
     expect(screen.getByText("Checking access")).toBeTruthy();
     expect(await screen.findByText("Channex diagnostics loaded")).toBeTruthy();
     expect(getChannexAdminAccess).toHaveBeenCalledWith({ userId: "allowed-user" });
+    expect(screen.getByRole("heading", { level: 1, name: "Channex diagnostics" })).toBeTruthy();
+    expect(container.textContent).not.toMatch(/certification/i);
   });
 
   test("shows not authorized when backend admin-access denies the user", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });
 
-    render(<ChannexCertificationAdminPage />);
+    const { container } = render(<ChannexCertificationAdminPage />);
 
     expect(await screen.findByText("Not authorized")).toBeTruthy();
     expect(screen.queryByText("Channex diagnostics loaded")).toBeNull();
+    expect(container.textContent).not.toMatch(/certification/i);
   });
 
   test("denies access safely when backend admin-access check fails", async () => {

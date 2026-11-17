@@ -1,0 +1,14 @@
+{
+  "Name": "domits-task-due-soon-rate-15-minutes",
+  "Description": "Emails the assignee or host about tasks due within the next day, twenty per run.",
+  "ScheduleExpression": "rate(15 minutes)",
+  "ScheduleExpressionTimezone": "Europe/Amsterdam",
+  "State": "DISABLED",
+  "FlexibleTimeWindow": { "Mode": "OFF" },
+  "Target": {
+    "Arn": "arn:aws:lambda:eu-north-1:115462458880:function:property-tasks",
+    "RoleArn": "arn:aws:iam::115462458880:role/domits-task-overdue-scheduler",
+    "Input": "{\"task\": \"notify-due-soon-tasks\", \"limit\": 20}",
+    "RetryPolicy": { "MaximumRetryAttempts": 0, "MaximumEventAgeInSeconds": 60 }
+  }
+}

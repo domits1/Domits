@@ -1,0 +1,14 @@
+{
+  "Name": "domits-static-page-worker-rate-5-minutes",
+  "Description": "Builds the queued static pages of the direct booking websites, five per run.",
+  "ScheduleExpression": "rate(5 minutes)",
+  "ScheduleExpressionTimezone": "Europe/Amsterdam",
+  "State": "DISABLED",
+  "FlexibleTimeWindow": { "Mode": "OFF" },
+  "Target": {
+    "Arn": "arn:aws:lambda:eu-north-1:115462458880:function:PropertyHandler",
+    "RoleArn": "arn:aws:iam::115462458880:role/domits-static-page-worker-scheduler",
+    "Input": "{\"task\": \"build-static-pages\", \"limit\": 5}",
+    "RetryPolicy": { "MaximumRetryAttempts": 0, "MaximumEventAgeInSeconds": 60 }
+  }
+}

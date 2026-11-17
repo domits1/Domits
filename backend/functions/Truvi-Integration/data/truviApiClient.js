@@ -44,6 +44,7 @@ export class TruviApiClient {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     let response;
+    let text;
     try {
       response = await this.fetchImpl(`${this.baseUrl}${path}`, {
         method,
@@ -54,6 +55,7 @@ export class TruviApiClient {
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+      text = await response.text();
     } catch (error) {
       if (controller.signal.aborted) {
         throw new TruviApiError(null, `Truvi did not answer within ${this.timeoutMs} ms`);
@@ -63,7 +65,6 @@ export class TruviApiClient {
       clearTimeout(timer);
     }
 
-    const text = await response.text();
     let data;
     try {
       data = text ? JSON.parse(text) : {};

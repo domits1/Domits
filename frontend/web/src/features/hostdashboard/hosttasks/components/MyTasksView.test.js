@@ -36,6 +36,29 @@ describe('MyTasksView', () => {
         expect(screen.queryByText("Someone else's task")).not.toBeInTheDocument();
     });
 
+    describe('for a team member whose tasks name them by email', () => {
+        const member = { name: 'Sam', email: 'Sam@Example.com' };
+        const taskFor = (assignee) => ({ id: 't1', title: 'Clean the villa', assignee, property: 'Villa Sunshine', dueDate: todayStr, status: 'Pending', isLegacy: false });
+
+        test('shows a task assigned to their email, whatever its letter case', () => {
+            render(<MyTasksView {...baseProps} currentUser={member} tasks={[taskFor('sam@example.com')]} />);
+
+            expect(screen.getByText('Clean the villa')).toBeInTheDocument();
+        });
+
+        test('does not show a task assigned to someone else\'s email', () => {
+            render(<MyTasksView {...baseProps} currentUser={member} tasks={[taskFor('other@example.com')]} />);
+
+            expect(screen.queryByText('Clean the villa')).not.toBeInTheDocument();
+        });
+
+        test('does not treat an unassigned task as theirs when their email is not known yet', () => {
+            render(<MyTasksView {...baseProps} currentUser={{ name: 'Sam', email: '' }} tasks={[taskFor('')]} />);
+
+            expect(screen.queryByText('Clean the villa')).not.toBeInTheDocument();
+        });
+    });
+
     test('calls onTaskClick when a task row is clicked', () => {
         const task = { id: 't1', title: 'Due today', assignee: 'Alex Host', property: 'Villa Sunshine', dueDate: todayStr, status: 'Pending', isLegacy: false };
         render(<MyTasksView {...baseProps} tasks={[task]} />);

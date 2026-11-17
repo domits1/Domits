@@ -632,4 +632,17 @@ export const updatePropertyLifecycleStatus = async ({ propertyId, status }) => {
     const apiErrorMessage = await getApiErrorMessage(response, "Failed to update listing status.");
     throw new Error(apiErrorMessage);
   }
+
+  // Older deploys answer 204 without a body, so the requested status is the best answer available.
+  const rawBody = await response.text();
+  try {
+    const reportedStatus = JSON.parse(rawBody)?.status;
+    if (typeof reportedStatus === "string" && reportedStatus.trim()) {
+      return { status: reportedStatus.trim().toUpperCase() };
+    }
+  } catch {
+    // No-op: fall back to the requested status below.
+  }
+
+  return { status: normalizedStatus };
 };

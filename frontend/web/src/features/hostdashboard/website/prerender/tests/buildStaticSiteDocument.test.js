@@ -53,6 +53,21 @@ describe("a complete static document for a published direct booking website", ()
     expect(html).toMatch(/<meta property="og:image" content="https:\/\/[^"]+web\.jpg" \/>/);
   });
 
+  it("carries the structured data a search engine reads without rendering the page", () => {
+    const html = buildDocumentFor();
+    const jsonLd = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+
+    expect(jsonLd["@type"]).toBe("LodgingBusiness");
+    expect(jsonLd.image).toHaveLength(2);
+    expect(jsonLd.amenityFeature.map((feature) => feature.name)).toEqual(["Freezer", "Oven"]);
+    expect(jsonLd.containsPlace).toMatchObject({ numberOfBedrooms: 4, numberOfBathroomsTotal: 3 });
+    expect(jsonLd.checkinTime).toBe("15:00:00");
+    expect(html).toContain("<li>Freezer</li>");
+    const pageImages = [...html.matchAll(/<img src="([^"]+)"/g)].map((match) => match[1]);
+    expect(pageImages).toHaveLength(3);
+    expect(jsonLd.image).toEqual([...new Set(pageImages)]);
+  });
+
   it("replaces an Open Graph tag the shell already carries", () => {
     const html = buildDocumentFor({
       template: APP_SHELL_TEMPLATE.replace(

@@ -519,13 +519,6 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   const previewImages = galleryImages.slice(0, 3);
   const featuredGalleryImages = galleryImages.slice(0, MAX_FEATURED_GALLERY_IMAGES);
   const locationLabel = buildLocationLabel(propertyDetails?.location, summaryProperty);
-  const hostId = cleanText(
-    property.hostId ||
-      property.host_id ||
-      propertyDetails?.hostProfile?.userId ||
-      propertyDetails?.host?.userId ||
-      summaryProperty?.hostId
-  );
   const host = buildHostDetails(propertyDetails, summaryProperty);
 
   const title = cleanText(property.title || summaryProperty?.title || summaryProperty?.label || "Untitled listing");
@@ -560,7 +553,6 @@ export const buildWebsiteTemplateModel = ({ propertyDetails, summaryProperty = n
   return {
     source: {
       propertyId: cleanText(property.id || summaryProperty?.value),
-      hostId,
       status: cleanText(property.status || summaryProperty?.status || "INACTIVE"),
       locale: DEFAULT_LOCALE,
     },

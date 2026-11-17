@@ -20,6 +20,8 @@ import { createNavigationHandlers } from "./navigationHandlers";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "../../pages/landingpage/utils/animations.js";
 import { FiGlobe, FiZap, FiCompass, FiCheckSquare, FiHelpCircle, FiMail } from "react-icons/fi";
+import DestinationsMenu from "../../features/destinations/components/DestinationsMenu";
+import { useDestinationMenu } from "../../features/destinations/hooks/useDestinationMenu";
 
 const contentByLanguage = { en, nl, de, es };
 
@@ -40,6 +42,8 @@ function Header({ setSearchResults, setLoading }) {
   );
   const [listingScrollProgress, setListingScrollProgress] = useState(0);
   const [appsMenuOpen, setAppsMenuOpen] = useState(false);
+  const destinationContinents = useDestinationMenu();
+  const hasDestinationsMenu = destinationContinents.length > 0;
 
   const { language, setLanguage } = useContext(LanguageContext);
   const components = contentByLanguage[language]?.component;
@@ -378,13 +382,23 @@ function Header({ setSearchResults, setLoading }) {
         <nav
           className={`header-nav ${isActiveSearchBar ? "active" : "inactive"} ${
             isActiveSearchBar ? "no-scroll" : ""
-          }`}
+          }${hasDestinationsMenu ? " has-destinations" : ""}`}
         >
           <div className="logo">
             <a href="/">
               <img src={logo} width={150} alt="Logo" />
             </a>
           </div>
+
+          {hasDestinationsMenu && (
+            <DestinationsMenu
+              continents={destinationContinents}
+              onOpen={() => {
+                setAppsMenuOpen(false);
+                setDropdownVisible(false);
+              }}
+            />
+          )}
 
           {!hiddenSearchPaths.includes(location.pathname) && (
             <SearchBar

@@ -35,7 +35,10 @@ const accommodation = (title) => ({
     houseNumber: "1",
     houseNumberExtension: "",
   },
-  Capacity: 4,
+  generalDetails: [
+    { detail: "Guests", value: 4 },
+    { detail: "Bedrooms", value: 2 },
+  ],
   rules: [{ value: false }, { value: false }, { value: false }],
 });
 
@@ -102,6 +105,47 @@ describe("BookingTab booking details", () => {
     expect(globalThis.fetch.mock.calls.some(([url]) => String(url).includes("/messages?threadId="))).toBe(false);
   });
 
+  const renderHostBookingTab = (listing) => {
+    globalThis.fetch
+      .mockResolvedValueOnce(
+        okText([
+          {
+            id: "property-1",
+            title: "Host Cabin",
+            res: {
+              response: [
+                {
+                  id: "booking-host-1",
+                  hostid: "host-1",
+                  guestid: "guest-1",
+                  property_id: "property-1",
+                  arrivaldate: "2026-07-01",
+                  departuredate: "2026-07-04",
+                  guests: 2,
+                },
+              ],
+            },
+          },
+        ])
+      )
+      .mockResolvedValueOnce(okJson(listing));
+
+    render(<BookingTab userId="host-1" contactId="guest-1" dashboardType="host" propertyId="property-1" />);
+  };
+
+  test("house rules show the guest capacity from the listing details", async () => {
+    renderHostBookingTab(accommodation("Host Cabin"));
+
+    expect(await screen.findByText("4 guests maximum")).toBeInTheDocument();
+  });
+
+  test("house rules leave out the guest capacity when the listing has none", async () => {
+    renderHostBookingTab({ ...accommodation("Host Cabin"), generalDetails: [] });
+
+    expect(await screen.findByText("House rules")).toBeInTheDocument();
+    expect(screen.queryByText(/guests maximum/)).not.toBeInTheDocument();
+  });
+
   test("guest BookingTab loads the exact bookingId and does not use host/guest pseudo-thread lookup", async () => {
     globalThis.fetch
       .mockResolvedValueOnce(
@@ -138,5 +182,113 @@ describe("BookingTab booking details", () => {
     expect(globalThis.fetch.mock.calls[0][0]).toContain("guestId=guest-1");
     expect(globalThis.fetch.mock.calls[1][0]).toContain("bookingId=booking-2");
     expect(globalThis.fetch.mock.calls.some(([url]) => String(url).includes("/messages?threadId="))).toBe(false);
+  });
+
+  test("hides the listing title and photo when they are already shown next to it", async () => {
+    globalThis.fetch
+      .mockResolvedValueOnce(
+        okText([
+          {
+            id: "booking-3",
+            guestid: "guest-1",
+            hostid: "host-1",
+            property_id: "property-3",
+            arrivaldate: "2027-01-28",
+            departuredate: "2027-01-30",
+            guests: 2,
+          },
+        ])
+      )
+      .mockResolvedValueOnce(okText(accommodation("Emerald Estate")));
+
+    render(
+      <BookingTab userId="guest-1" contactId="host-1" dashboardType="guest" bookingId="booking-3" showAccommodation={false} />
+    );
+
+    expect(await screen.findByText("Booking ID: booking-3")).toBeInTheDocument();
+    expect(screen.queryByText("Emerald Estate")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("Accommodation")).not.toBeInTheDocument();
+  });
+
+  test.each([
+    ["whole hours", { from: 15, till: 22 }, { from: 8, till: 11 }, "15:00-22:00", "8:00-11:00"],
+    ["time strings", { from: "16:00:00", till: "18:30:00" }, { from: "10:00:00", till: "10:00:00" }, "16:00-18:30", "10:00-10:00"],
+  ])("shows check-in and check-out times stored as %s", async (_label, checkIn, checkOut, checkInText, checkOutText) => {
+    globalThis.fetch
+      .mockResolvedValueOnce(
+        okText([
+          {
+            id: "booking-3",
+            guestid: "guest-1",
+            hostid: "host-1",
+            property_id: "property-3",
+            arrivaldate: "2027-01-28",
+            departuredate: "2027-01-30",
+            guests: 2,
+          },
+        ])
+      )
+      .mockResolvedValueOnce(okText({ ...accommodation("Emerald Estate"), checkIn: { checkIn, checkOut } }));
+
+    render(<BookingTab userId="guest-1" contactId="host-1" dashboardType="guest" bookingId="booking-3" />);
+
+    expect(await screen.findByText("Emerald Estate")).toBeInTheDocument();
+    expect(screen.getByText(checkInText)).toBeInTheDocument();
+    expect(screen.getByText(checkOutText)).toBeInTheDocument();
+  });
+});
+
+describe("BookingTab address", () => {
+  const hostBookings = okText([
+    {
+      id: "property-1",
+      res: {
+        response: [
+          {
+            id: "booking-host-1",
+            hostid: "host-1",
+            guestid: "guest-1",
+            property_id: "property-1",
+            arrivaldate: "2026-07-01",
+            departuredate: "2026-07-04",
+            guests: 2,
+          },
+        ],
+      },
+    },
+  ]);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    globalThis.fetch = jest.fn();
+    getAccessToken.mockReturnValue("host-token-1");
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("shows the street of a listing from the host dashboard", async () => {
+    globalThis.fetch.mockResolvedValueOnce(hostBookings).mockResolvedValueOnce(okJson(accommodation("Host Cabin")));
+
+    render(<BookingTab userId="host-1" contactId="guest-1" dashboardType="host" propertyId="property-1" />);
+
+    expect(await screen.findByText("Main Street 1")).toBeInTheDocument();
+  });
+
+  test("leaves out the address row for a public listing, which has no street", async () => {
+    const publicListing = { ...accommodation("Public Cabin"), location: { country: "Netherlands", city: "Haarlem" } };
+    globalThis.fetch
+      .mockResolvedValueOnce(hostBookings)
+      .mockResolvedValueOnce({ ok: false, status: 403, json: async () => "Forbidden" })
+      .mockResolvedValueOnce(okJson(publicListing));
+
+    const { container } = render(
+      <BookingTab userId="host-1" contactId="guest-1" dashboardType="host" propertyId="property-1" />
+    );
+
+    expect(await screen.findByText("Public Cabin")).toBeInTheDocument();
+    expect(screen.getByText("Booking ID: booking-host-1")).toBeInTheDocument();
+    expect(container.querySelector(".street")).toBeNull();
   });
 });

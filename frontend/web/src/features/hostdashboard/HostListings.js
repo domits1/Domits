@@ -15,14 +15,23 @@ import { useSetLiveEligibility } from "./hooks/useSetLiveEligibility";
 import {
   updatePropertyLifecycleStatus,
 } from "./hostproperty/services/hostPropertyApi";
+import {
+  LISTING_STATUS,
+  getListingStatusLabel,
+  getListingStatusTone,
+  isSubmittedForReview,
+  normalizeListingStatus,
+} from "./hostproperty/utils/listingStatus";
 
 const LISTING_FILTERS = [
-  { key: "ACTIVE", label: "Live listings" },
-  { key: "INACTIVE", label: "Drafted listings" },
-  { key: "ARCHIVED", label: "Archived listings" },
+  { key: LISTING_STATUS.ACTIVE, label: "Live listings" },
+  { key: LISTING_STATUS.PENDING_REVIEW, label: "Pending review" },
+  { key: LISTING_STATUS.REJECTED, label: "Rejected" },
+  { key: LISTING_STATUS.INACTIVE, label: "Drafted listings" },
+  { key: LISTING_STATUS.ARCHIVED, label: "Archived listings" },
 ];
 
-const getListingStatus = (accommodation) => String(accommodation?.property?.status || "INACTIVE").toUpperCase();
+const getListingStatus = (accommodation) => normalizeListingStatus(accommodation?.property?.status);
 
 const getListingImage = (accommodation) => {
   const firstImage = Array.isArray(accommodation?.images) ? accommodation.images[0] : null;
@@ -32,14 +41,10 @@ const getListingImage = (accommodation) => {
   return resolveAccommodationImageUrl(firstImage, "thumb");
 };
 
-const getStatusLabel = (status) => {
-  if (status === "ACTIVE") {
-    return "Live";
-  }
-  if (status === "ARCHIVED") {
-    return "Archived";
-  }
-  return "Drafted";
+const STATUS_TONE_CLASSES = {
+  archived: styles.isArchived,
+  pending: styles.isPending,
+  rejected: styles.isRejected,
 };
 
 const LISTING_ACTIONS = {
@@ -47,10 +52,30 @@ const LISTING_ACTIONS = {
     { id: "details", label: "Details", kind: "details" },
     { id: "edit", label: "Edit", kind: "edit" },
   ],
+  PENDING_REVIEW: [
+    {
+      id: "withdraw",
+      label: "Withdraw",
+      kind: "status",
+      nextStatus: "INACTIVE",
+      successMessage: "Submission withdrawn.",
+    },
+    { id: "edit", label: "Edit", kind: "edit" },
+  ],
+  REJECTED: [
+    {
+      id: "resubmit",
+      label: "Resubmit",
+      kind: "status",
+      nextStatus: "ACTIVE",
+      successMessage: "Listing set to Live.",
+    },
+    { id: "edit", label: "Edit", kind: "edit" },
+  ],
   INACTIVE: [
     {
       id: "set-live",
-      label: "Set as live",
+      label: "Submit for review",
       kind: "status",
       nextStatus: "ACTIVE",
       successMessage: "Listing set to Live.",
@@ -115,16 +140,16 @@ function HostListings() {
   const [activeFilter, setActiveFilter] = useState("ACTIVE");
   const [processingPropertyId, setProcessingPropertyId] = useState("");
   const navigate = useNavigate();
-  const { effectiveHostId: userId, ownId, managedHostId, isPurelyPOM } = useEffectiveHostId();
-  const { liveEligibility, liveEligibilityError, liveEligibilityLoading, fetchVerificationStatus } =
-    useSetLiveEligibility({ userId: ownId });
+  const { effectiveHostId: userId, managedHostId, isPurelyPOM } = useEffectiveHostId();
+  const { liveEligibility, liveEligibilityError, liveEligibilityLoading, fetchLiveEligibility } =
+    useSetLiveEligibility();
 
   useEffect(() => {
     if (userId) {
-      fetchVerificationStatus();
+      fetchLiveEligibility();
       fetchAccommodations();
     }
-  }, [fetchVerificationStatus, userId, managedHostId, isPurelyPOM]);
+  }, [fetchLiveEligibility, userId, managedHostId, isPurelyPOM]);
 
   const fetchFromByHostId = async (hostId) => {
     try {
@@ -179,6 +204,8 @@ function HostListings() {
   const listingsByStatus = useMemo(() => {
     const grouped = {
       ACTIVE: [],
+      PENDING_REVIEW: [],
+      REJECTED: [],
       INACTIVE: [],
       ARCHIVED: [],
     };
@@ -203,11 +230,15 @@ function HostListings() {
       return false;
     }
     if (liveEligibilityLoading) {
-      toast.info("Checking verification status. Please try again in a moment.");
+      toast.info("Checking Stripe payout setup. Please try again in a moment.");
       return false;
     }
-    if (liveEligibilityError || !liveEligibility) {
-      toast.error("You need to complete your bank details before you can publish this listing. Redirecting to finance...");
+    if (liveEligibilityError) {
+      toast.error("We couldn't verify your Stripe payout status. Please refresh and try again.");
+      return false;
+    }
+    if (!liveEligibility) {
+      toast.error("Your Stripe account must be fully set up and payouts enabled before you can publish this listing. Redirecting to Finance...");
       navigate("/hostdashboard/finance");
       return false;
     }
@@ -228,8 +259,10 @@ function HostListings() {
 
     setProcessingPropertyId(propertyId);
     try {
-      await updatePropertyLifecycleStatus({ propertyId, status: nextStatus });
-      toast.success(successMessage);
+      const result = await updatePropertyLifecycleStatus({ propertyId, status: nextStatus });
+      const returnedStatus = normalizeListingStatus(result?.status || nextStatus);
+      toast.success(isSubmittedForReview(returnedStatus) ? "Submitted for review." : successMessage);
+      setActiveFilter(returnedStatus);
       await fetchAccommodations();
     } catch (error) {
       toast.error(error?.message || "Failed to update listing status.");
@@ -278,7 +311,7 @@ function HostListings() {
         {visibleListings.map((accommodation, index) => {
           const propertyId = accommodation?.property?.id || "";
           const propertyStatus = getListingStatus(accommodation);
-          const statusLabel = getStatusLabel(propertyStatus);
+          const statusLabel = getListingStatusLabel(propertyStatus);
           const propertyTitle = accommodation?.property?.title || "Untitled listing";
           const propertyCity = accommodation?.location?.city || "Unknown city";
           const propertyImage = getListingImage(accommodation);
@@ -311,7 +344,7 @@ function HostListings() {
 
               <div className={styles.accommodationDetails}>
                 <span
-                  className={`${styles.status} ${propertyStatus === "ARCHIVED" ? styles.isArchived : ""}`}
+                  className={`${styles.status} ${STATUS_TONE_CLASSES[getListingStatusTone(propertyStatus)] || ""}`}
                 >
                   {statusLabel}
                 </span>

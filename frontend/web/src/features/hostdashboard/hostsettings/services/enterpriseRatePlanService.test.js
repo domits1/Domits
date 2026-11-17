@@ -24,9 +24,9 @@ describe("getEnterpriseRatePlan", () => {
       status: 200,
       json: jest.fn().mockResolvedValue({
         activeProperties: 100,
-        pricePerProperty: 49,
+        pricePerProperty: 43,
         currency: "EUR",
-        estimatedMonthlyCost: 4900,
+        estimatedMonthlyCost: 4300,
       }),
     });
 

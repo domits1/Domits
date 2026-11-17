@@ -77,6 +77,8 @@ const PROPERTY_STATUS_LABELS = {
   ACTIVE: "Live",
   INACTIVE: "Draft",
   ARCHIVED: "Archived",
+  PENDING_REVIEW: "Pending review",
+  REJECTED: "Rejected",
 };
 
 const SUMMARY_DESCRIPTION_WORD_LIMIT = 23;

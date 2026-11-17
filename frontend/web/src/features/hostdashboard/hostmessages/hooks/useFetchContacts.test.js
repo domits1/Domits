@@ -61,6 +61,18 @@ Harness.propTypes = {
   role: PropTypes.string,
 };
 
+const NamesHarness = () => {
+  const { contacts } = useFetchContacts("host-1", "host");
+
+  return <div data-testid="names">{contacts.map((contact) => `${contact.partnerId}=${contact.givenName}`).join("|")}</div>;
+};
+
+const LabelsHarness = () => {
+  const { contacts } = useFetchContacts("host-1", "host");
+
+  return <div data-testid="labels">{contacts.map((contact) => `${contact.threadId}=${contact.channelLabel}`).join("|")}</div>;
+};
+
 const okJson = (payload) => ({
   ok: true,
   json: async () => payload,
@@ -160,5 +172,78 @@ describe("useFetchContacts history merging", () => {
     expect(fetchBookingDetailsAndAccommodation).toHaveBeenCalledWith(
       expect.objectContaining({ token: "host-access-token-1" })
     );
+  });
+
+  test.each([
+    ["the booking guest name when the thread has one", { guestName: "Tst Domits" }, "Tst Domits"],
+    ["a name label when the thread has no guest name", {}, "Channex guest"],
+  ])("shows a Channex guest with %s, not the guest id as a phone number", async (_label, threadPatch, expectedName) => {
+    const channexGuestId = "CHANNEX_GUEST:e8731e65-851c-41ec-b786-4d604d8d7f67";
+    const fetchUnifiedData = globalThis.fetch.getMockImplementation();
+    globalThis.fetch.mockImplementation(async (url) => {
+      if (String(url).includes("/threads")) {
+        return okJson([
+          {
+            id: "channex-thread-1",
+            hostId: "host-1",
+            guestId: channexGuestId,
+            propertyId: "property-1",
+            bookingId: "booking-1",
+            platform: "CHANNEX",
+            externalThreadId: "channex-message-thread-1",
+            integrationAccountId: "integration-2",
+            unreadCount: 1,
+            ...threadPatch,
+          },
+        ]);
+      }
+      return fetchUnifiedData(url);
+    });
+
+    render(<NamesHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("names")).toHaveTextContent(`${channexGuestId}=${expectedName}`);
+    });
+    expect(screen.getByTestId("names")).not.toHaveTextContent("+8731658514178646048767");
+    expect(fetchUserProfileById).not.toHaveBeenCalledWith(channexGuestId);
+  });
+
+  test.each([
+    ["the Channex code BookingCom as Booking.com", "BookingCom", "Booking.com"],
+    ["an unknown source as it is", "Airbnb", "Airbnb"],
+    ["Channex when the thread has no booking source", undefined, "Channex"],
+  ])("labels a Channex conversation with %s", async (_label, bookingSource, expectedLabel) => {
+    const fetchUnifiedData = globalThis.fetch.getMockImplementation();
+    globalThis.fetch.mockImplementation(async (url) => {
+      if (String(url).includes("/threads")) {
+        return okJson([
+          {
+            id: "channex-thread-1",
+            hostId: "host-1",
+            guestId: "CHANNEX_GUEST:channex-booking-1",
+            propertyId: "property-1",
+            bookingId: "booking-1",
+            platform: "CHANNEX",
+            bookingSource,
+          },
+        ]);
+      }
+      return fetchUnifiedData(url);
+    });
+
+    render(<LabelsHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("labels")).toHaveTextContent(`channex-thread-1=${expectedLabel}`);
+    });
+  });
+
+  test("keeps formatting WhatsApp guests as phone numbers", async () => {
+    render(<NamesHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("names")).toHaveTextContent("+31612345678=+31 6 1234 5678");
+    });
   });
 });

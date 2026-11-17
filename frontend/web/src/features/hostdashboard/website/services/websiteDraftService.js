@@ -1,28 +1,16 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
+import { fetchWithWebsiteSession } from "./websiteSession";
 
 const buildWebsiteDraftsUrl = () => `${PROPERTY_API_BASE}/website/drafts`;
 const buildWebsiteDraftUrl = (propertyId) =>
   `${PROPERTY_API_BASE}/website/draft?property=${encodeURIComponent(propertyId)}`;
 const buildWebsiteDraftMutationUrl = () => `${PROPERTY_API_BASE}/website/draft`;
 
-const getRequiredAccessToken = () => {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be signed in to manage website drafts.");
-  }
-
-  return accessToken;
-};
-
 export const fetchWebsiteDrafts = async () => {
-  const response = await fetch(buildWebsiteDraftsUrl(), {
+  const response = await fetchWithWebsiteSession(buildWebsiteDraftsUrl(), {
     method: "GET",
     cache: "no-store",
-    headers: {
-      Authorization: getRequiredAccessToken(),
-    },
   });
 
   if (!response.ok) {
@@ -43,12 +31,9 @@ export const fetchWebsiteDraftByPropertyId = async (propertyId) => {
     throw new Error("Missing propertyId for website draft lookup.");
   }
 
-  const response = await fetch(buildWebsiteDraftUrl(normalizedPropertyId), {
+  const response = await fetchWithWebsiteSession(buildWebsiteDraftUrl(normalizedPropertyId), {
     method: "GET",
     cache: "no-store",
-    headers: {
-      Authorization: getRequiredAccessToken(),
-    },
   });
 
   if (response.status === 404) {
@@ -86,11 +71,10 @@ export const upsertWebsiteDraft = async ({
     throw new Error("Missing templateKey for website draft save.");
   }
 
-  const response = await fetch(buildWebsiteDraftMutationUrl(), {
+  const response = await fetchWithWebsiteSession(buildWebsiteDraftMutationUrl(), {
     method: "POST",
     cache: "no-store",
     headers: {
-      Authorization: getRequiredAccessToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -122,11 +106,10 @@ export const deleteWebsiteDraft = async (propertyId, deleteReasons = []) => {
     throw new Error("Missing propertyId for website draft delete.");
   }
 
-  const response = await fetch(buildWebsiteDraftMutationUrl(), {
+  const response = await fetchWithWebsiteSession(buildWebsiteDraftMutationUrl(), {
     method: "DELETE",
     cache: "no-store",
     headers: {
-      Authorization: getRequiredAccessToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

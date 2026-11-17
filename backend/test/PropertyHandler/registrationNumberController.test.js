@@ -47,6 +47,23 @@ describe("PropertyController.updateRegistrationNumber", () => {
     expect(controller.authManager.authorizeOwnerRequest).toHaveBeenCalledWith("lower-token", "p");
   });
 
+  it.each([
+    ["headers are absent", undefined],
+    ["headers are empty", {}],
+  ])("returns 401 without authorizing or updating when %s", async (_label, headers) => {
+    const response = await controller.updateRegistrationNumber({
+      httpMethod: "PATCH",
+      path: "/property/registration",
+      headers,
+      body: JSON.stringify({ propertyId: "property-1", registrationNumber: "NL-1234" }),
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(JSON.parse(response.body)).toEqual({ message: "You must be logged in." });
+    expect(controller.authManager.authorizeOwnerRequest).not.toHaveBeenCalled();
+    expect(controller.propertyService.updateRegistrationNumber).not.toHaveBeenCalled();
+  });
+
   it("returns 400 without authorizing when propertyId is missing", async () => {
     const response = await controller.updateRegistrationNumber(buildEvent({ registrationNumber: "NL-1234" }));
 

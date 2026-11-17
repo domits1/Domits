@@ -1,6 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { Auth } from "aws-amplify";
 import { LanguageContext } from "../../../../context/LanguageContext";
 import WebsiteBuilderPage from "../WebsiteBuilderPage";
 import {
@@ -82,10 +83,14 @@ it("preserves renderer lookup for saved drafts and published template keys", () 
 it("saves the original key when the host chooses Essentials", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ templateKey: "panorama-landing" }) });
+  const sessionSpy = jest
+    .spyOn(Auth, "currentSession")
+    .mockResolvedValue({ getAccessToken: () => ({ getJwtToken: () => "test-token" }) });
   try {
     await upsertWebsiteDraft({ propertyId: "test-property", templateKey: WEBSITE_TEMPLATE_OPTIONS[0].id });
     expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body).templateKey).toBe("panorama-landing");
   } finally {
     globalThis.fetch = originalFetch;
+    sessionSpy.mockRestore();
   }
 });

@@ -1,9 +1,10 @@
 import MessageRepository from "../data/messageRepository.js";
 import ThreadRepository, { isDomitsBookingThreadUniqueError } from "../data/threadRepository.js";
 import BookingRepository from "../data/bookingRepository.js";
+import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
 import { createDefaultProviderAdapters, resolveProviderAdapter } from "./providerAdapterRegistry.js";
 import publishRealtimeMessage from "./publishRealtimeMessage.js";
-import { badRequest, forbidden, notFound } from "../util/httpErrors.js";
+import { badRequest, conflict, forbidden, notFound } from "../util/httpErrors.js";
 
 const isExternalProviderPayload = (payload) => Boolean(payload.platform) && payload.platform !== "DOMITS";
 const resolveParticipantId = (explicitId, fallbackId) => explicitId || fallbackId;
@@ -48,12 +49,46 @@ const normalizeThread = (thread) => {
   };
 };
 
-const buildGenericProviderFailureResult = (payload, recipientId, error, platform) => ({
+const PROVIDER_ERROR_MESSAGES = {
+  CHANNEX_INTEGRATION_NOT_FOUND: "This Channex connection could not be found.",
+  CHANNEX_RECONNECT_REQUIRED: "This Channex connection needs to be reconnected.",
+  CHANNEX_THREAD_ID_REQUIRED: "This conversation is missing its Channex thread reference.",
+  CHANNEX_ATTACHMENTS_UNSUPPORTED: "Channex does not support sending attachments yet.",
+  UNAUTHORIZED: "This channel connection is no longer authorized.",
+  MESSAGING_NOT_INSTALLED: "Messaging is not enabled for this channel connection.",
+  THREAD_NOT_FOUND: "This conversation could not be found on the channel.",
+  OTA_MESSAGING_UNSUPPORTED: "This channel does not support sending messages.",
+};
+const DEFAULT_PROVIDER_ERROR_MESSAGE = "This message could not be delivered.";
+const resolveProviderErrorMessage = (code) => PROVIDER_ERROR_MESSAGES[code] || DEFAULT_PROVIDER_ERROR_MESSAGE;
+
+const PROVIDER_RESULT_SAFE_FIELDS = ["accepted", "mode", "channel", "recipientId", "recipientWhatsAppId", "messageType"];
+
+const buildAllowListedProviderFailureResult = (rawProviderResult, errorMessage) => {
+  const allowed = {};
+  for (const field of PROVIDER_RESULT_SAFE_FIELDS) {
+    if (rawProviderResult && Object.hasOwn(rawProviderResult, field)) {
+      allowed[field] = rawProviderResult[field];
+    }
+  }
+  allowed.error = errorMessage;
+  return allowed;
+};
+
+const buildGenericProviderFailureResult = (recipientId, platform) => ({
   accepted: false,
   channel: platform,
   recipientId,
-  error: error?.message || String(error),
 });
+
+const parseStoredMetadata = (metadata) => {
+  if (typeof metadata !== "string") return metadata;
+  try {
+    return JSON.parse(metadata);
+  } catch {
+    return metadata;
+  }
+};
 
 const buildStoredMetadata = (payload, providerResult) => {
   if (!isExternalProviderPayload(payload)) {
@@ -69,13 +104,23 @@ const buildStoredMetadata = (payload, providerResult) => {
   });
 };
 
+const channexBookingDetails = (details) => ({
+  ...(details?.guestName ? { guestName: details.guestName } : {}),
+  ...(details?.bookingSource ? { bookingSource: details.bookingSource } : {}),
+});
+
 class MessageService {
-  constructor({ realtimePublisher = publishRealtimeMessage, providerAdapters = createDefaultProviderAdapters() } = {}) {
+  constructor({
+    realtimePublisher = publishRealtimeMessage,
+    providerAdapters = createDefaultProviderAdapters(),
+    integrationAccounts = new IntegrationAccountRepository(),
+  } = {}) {
     this.messageRepository = new MessageRepository();
     this.threadRepository = new ThreadRepository();
     this.bookingRepository = new BookingRepository();
     this.providerAdapters = providerAdapters;
     this.realtimePublisher = realtimePublisher;
+    this.integrationAccounts = integrationAccounts;
   }
 
   async resolveDomitsBookingThread(payload, senderId, recipientId) {
@@ -212,6 +257,13 @@ class MessageService {
     resolveProviderAdapter(this.providerAdapters, payload.platform);
   }
 
+  async assertNewExternalConversationOwnership(payload, senderId) {
+    const integration = await this.integrationAccounts.getById(payload.integrationAccountId);
+    if (!integration || !idsEqual(integration.userId, senderId)) {
+      throw forbidden("You do not own this integration account.");
+    }
+  }
+
   async sendViaProviderAdapter(payload, recipientId) {
     const adapter = resolveProviderAdapter(this.providerAdapters, payload.platform);
 
@@ -221,6 +273,7 @@ class MessageService {
         recipientId,
         content: payload.content,
         attachments: payload.attachments,
+        externalThreadId: payload.externalThreadId,
       });
 
       return {
@@ -231,17 +284,20 @@ class MessageService {
         errorMessage: null,
       };
     } catch (error) {
-      const providerResult =
+      const errorCode = error?.code || `${payload.platform}_SEND_FAILED`;
+      const errorMessage = resolveProviderErrorMessage(errorCode);
+      const rawProviderResult =
         typeof adapter.describeFailure === "function"
           ? adapter.describeFailure(payload, recipientId, error)
-          : buildGenericProviderFailureResult(payload, recipientId, error, payload.platform);
+          : buildGenericProviderFailureResult(recipientId, payload.platform);
+      const providerResult = buildAllowListedProviderFailureResult(rawProviderResult, errorMessage);
 
       return {
         providerResult,
         platformMessageId: payload.platformMessageId ?? null,
         deliveryStatus: "failed",
-        errorCode: error?.code || `${payload.platform}_SEND_FAILED`,
-        errorMessage: error?.message || `${payload.platform} send failed`,
+        errorCode,
+        errorMessage,
       };
     }
   }
@@ -389,6 +445,10 @@ class MessageService {
 
     this.assertSupportedProvider(resolvedPayload);
 
+    if (!threadId && isExternalProviderPayload(resolvedPayload)) {
+      await this.assertNewExternalConversationOwnership(resolvedPayload, senderId);
+    }
+
     const { threadId: resolvedThreadId } = threadId
       ? { threadId }
       : await this.resolveThread(resolvedPayload, senderId, recipientId);
@@ -439,6 +499,53 @@ class MessageService {
         ...message,
         threadId: resolvedThreadId,
         providerResult,
+      },
+    };
+  }
+
+  async retryMessage(messageId, authenticatedUser) {
+    const message = await this.messageRepository.getMessageById(messageId);
+    if (!message) throw notFound("Message not found.");
+
+    if (!idsEqual(message.senderId, authenticatedUser.userId)) {
+      throw forbidden("Only the sender can retry this message.");
+    }
+
+    const thread = await this.threadRepository.getThreadById(message.threadId);
+    await this.assertThreadAccess(thread, authenticatedUser);
+
+    const retryPayload = {
+      platform: thread.platform,
+      integrationAccountId: thread.integrationAccountId,
+      externalThreadId: thread.externalThreadId,
+      content: message.content,
+      attachments: message.attachments,
+      metadata: parseStoredMetadata(message.metadata),
+    };
+
+    if (message.deliveryStatus !== "failed" || !isExternalProviderPayload(retryPayload)) {
+      throw conflict("Only a failed message on a connected channel can be retried.");
+    }
+    this.assertSupportedProvider(retryPayload);
+
+    const claimed = await this.messageRepository.claimFailedMessageForRetry(message.id);
+    if (!claimed) throw conflict("This message is already being retried.");
+
+    const sendResult = await this.sendViaProviderAdapter(retryPayload, message.recipientId);
+
+    const updated = await this.messageRepository.updateDeliveryResult(message.id, {
+      deliveryStatus: sendResult.deliveryStatus,
+      platformMessageId: sendResult.platformMessageId,
+      errorCode: sendResult.errorCode,
+      errorMessage: sendResult.errorMessage,
+      metadata: buildStoredMetadata(retryPayload, sendResult.providerResult),
+    });
+
+    return {
+      statusCode: sendResult.errorCode ? 502 : 200,
+      response: {
+        ...updated,
+        providerResult: sendResult.providerResult,
       },
     };
   }
@@ -606,11 +713,25 @@ class MessageService {
       visible.map((t) => t.id),
       authenticatedUser.userId
     );
+    const bookingDetails = await this.findChannexBookingDetails(visible, authenticatedUser.userId);
 
     return {
       statusCode: 200,
-      response: visible.map((t) => ({ ...t, unreadCount: unreadCounts[t.id] || 0 })),
+      response: visible.map((t) => ({
+        ...t,
+        unreadCount: unreadCounts[t.id] || 0,
+        ...(t.platform === "CHANNEX" ? channexBookingDetails(bookingDetails[t.bookingId]) : {}),
+      })),
     };
+  }
+
+  async findChannexBookingDetails(threads, hostId) {
+    const bookingIds = threads
+      .filter((t) => t.platform === "CHANNEX" && t.bookingId && idsEqual(t.hostId, hostId))
+      .map((t) => t.bookingId);
+    if (bookingIds.length === 0) return {};
+
+    return (await this.bookingRepository.findBookingDetailsForHostBookings({ hostId, bookingIds })) || {};
   }
 
   async getMessages(threadId, authenticatedUser) {

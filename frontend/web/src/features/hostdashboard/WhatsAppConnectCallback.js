@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { UserProvider } from "./hostmessages/context/AuthContext";
 import { useAuth } from "./hostmessages/hooks/useAuth";
+import { getIdToken } from "../../services/getAccessToken";
 import "./hostintegrations/HostIntegrations.scss";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
@@ -201,9 +202,13 @@ function WhatsAppConnectCallbackInner() {
           startedAt: Date.now(),
         });
 
+        const idToken = await getIdToken();
         const res = await fetch(`${UNIFIED_API}/integrations/whatsapp/connect/complete`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+          },
           body: JSON.stringify({
             userId: resolvedUserId,
             connectSessionId: decodedState.connectSessionId,
@@ -261,9 +266,13 @@ function WhatsAppConnectCallbackInner() {
       const resolvedUserId = decodedState?.userId || userId;
       if (!resolvedUserId) throw new Error("Missing userId.");
 
+      const idToken = await getIdToken();
       const res = await fetch(`${UNIFIED_API}/integrations/whatsapp/connect/select-number`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({
           userId: resolvedUserId,
           connectSessionId: decodedState?.connectSessionId,

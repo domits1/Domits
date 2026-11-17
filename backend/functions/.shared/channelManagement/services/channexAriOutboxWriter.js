@@ -2,7 +2,11 @@ import { ChannelIntegrationAccount } from "database/models/unified/integrations/
 import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
 
 import ChannexAriOutboxRepository from "../repositories/channexAriOutboxRepository.js";
-import { CHANNEX_ARI_OUTBOX_KIND } from "../utils/channexAriOutboxConstants.js";
+import {
+  CHANNEX_ARI_CHANGE_TYPE,
+  CHANNEX_ARI_OUTBOX_KIND,
+  CHANNEX_ARI_OUTBOX_SOURCE,
+} from "../utils/channexAriOutboxConstants.js";
 
 const FORWARD_SYNC_DAYS = 500;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -61,6 +65,28 @@ export default class ChannexAriOutboxWriter {
         dateFrom: from,
         dateTo: to,
         source,
+        now,
+      });
+    }
+    return true;
+  }
+
+  // Sends the complete current state of a property: every change type for the next 500
+  // days. The worker merges types with the same dates, so these rows become the 2 calls
+  // Channex expects for a full sync (scenario 1), and absorbs pending changes in that range.
+  async enqueueChannexFullSync(manager, { domitsPropertyId }) {
+    if (!(await this.isMappedToChannex(manager, domitsPropertyId))) return false;
+
+    const now = this.now();
+    const { dateFrom, dateTo } = buildForwardSyncRange(now);
+    for (const type of Object.values(CHANNEX_ARI_CHANGE_TYPE)) {
+      await this.outbox.insert(manager, {
+        domitsPropertyId,
+        kind: CHANNEX_ARI_OUTBOX_KIND.FULL_SYNC,
+        changeTypes: [type],
+        dateFrom: isoToDateInt(dateFrom),
+        dateTo: isoToDateInt(dateTo),
+        source: CHANNEX_ARI_OUTBOX_SOURCE.GO_LIVE,
         now,
       });
     }

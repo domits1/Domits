@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS test.guest_risk_assessment (
     status VARCHAR(30) NOT NULL,
     flaggedreason TEXT,
     errormessage TEXT,
+    arrivaldate BIGINT,
+    departuredate BIGINT,
     createdat BIGINT NOT NULL,
     updatedat BIGINT NOT NULL
 );
@@ -32,6 +34,8 @@ CREATE TABLE IF NOT EXISTS main.guest_risk_assessment (
     status VARCHAR(30) NOT NULL,
     flaggedreason TEXT,
     errormessage TEXT,
+    arrivaldate BIGINT,
+    departuredate BIGINT,
     createdat BIGINT NOT NULL,
     updatedat BIGINT NOT NULL
 );

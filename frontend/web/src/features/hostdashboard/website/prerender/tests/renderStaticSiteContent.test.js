@@ -96,7 +96,7 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(html).not.toContain("Freezer");
     expect(html).not.toContain("Your host");
     expect(html.match(/<img/g)).toHaveLength(1);
-    expect(html).not.toContain("second/web.jpg");
+    expect(html).not.toContain("00000000-0000-4000-8000-000000000002/web.jpg");
     expect(html).toContain("<h1>");
   });
 
@@ -131,6 +131,19 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(model.amenities.featured.length).toBeLessThanOrEqual(6);
   });
 
+  it("keeps an amenity the host never named, because the live template shows it too", () => {
+    const html = renderStaticSiteContent({
+      model: buildModelFor({
+        contentOverrides: { amenities: [{ id: "pool", label: "Heated pool" }, { id: "blank", label: "" }] },
+      }),
+      title: "Villa",
+      templateKey: PANORAMA,
+    });
+
+    expect(html).toContain("<li>Heated pool</li>");
+    expect(html).toContain("<li>New amenity</li>");
+  });
+
   it("renders only the sections the panorama template renders itself", () => {
     const html = renderContentFor();
 
@@ -143,7 +156,7 @@ describe("static site content for a crawler without JavaScript", () => {
     expect(html).not.toContain("static-site-policies");
   });
 
-  it("publishes no house rule and no check-in time, because panorama only shows those through an overridable card", () => {
+  it("publishes no house rule and no check-in time in the static html, which mirrors only the hero, amenities, gallery and host", () => {
     const text = stripTags(renderContentFor());
 
     expect(text).not.toContain("No smoking");

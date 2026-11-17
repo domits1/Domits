@@ -155,8 +155,9 @@ $color-bg-dark-alt: #1a1a1a;
   font-size: 18px;
 }
 
-.Toastify__progress-bar {
-  display: none !important;
+.Toastify__toast--error .Toastify__progress-bar,
+.Toastify__toast--warning .Toastify__progress-bar {
+  animation: none;
 }
 
 .Toastify__close-button {

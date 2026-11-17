@@ -1,5 +1,6 @@
 import Database from "database";
 import { randomUUID } from "node:crypto";
+import { retryWebsiteDelete } from "./websiteDeleteRetry.js";
 
 const FALLBACK_CONTENT_OVERRIDES = "{}";
 const FALLBACK_THEME_OVERRIDES = "{}";
@@ -298,10 +299,12 @@ export class DirectBookingWebsiteDraftRepository {
     const schemaName = resolveSchemaName(client);
     const tableName = draftTableName(schemaName);
 
-    await client.query(
-      `DELETE FROM ${tableName}
+    await retryWebsiteDelete(() =>
+      client.query(
+        `DELETE FROM ${tableName}
       WHERE property_id = $1 AND host_id = $2`,
-      [propertyId, hostId]
+        [propertyId, hostId]
+      )
     );
   }
 }

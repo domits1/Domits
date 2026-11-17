@@ -127,7 +127,7 @@ describe("buildWebsiteHeadTags", () => {
       model: buildModel({ media: { heroImage: NORMALIZED_PLACEHOLDER, galleryImages: [NORMALIZED_PLACEHOLDER] } }),
     });
 
-    expect(NORMALIZED_PLACEHOLDER).toMatch(/^https:\/\//);
+    expect(NORMALIZED_PLACEHOLDER).toBe(placeholderImage);
     expect(tags.metaByProperty["og:image"]).toBeUndefined();
     expect(tags.metaByProperty["og:image:alt"]).toBeUndefined();
     expect(JSON.stringify(tags)).not.toContain("data:");
@@ -225,6 +225,25 @@ describe("buildWebsiteHeadTags", () => {
 
     expect(tags.metaByName).toEqual({});
     expect(tags.metaByProperty).toEqual({});
+  });
+});
+
+describe("buildWebsiteHeadTags on a site page", () => {
+  const PAGE_TITLE = "The villa | Wellness Villa Bisous";
+
+  it("puts the page title before the site name and keeps the description", () => {
+    const tags = buildWebsiteHeadTags({ model: buildModel(), pageTitle: "  The   villa " });
+
+    expect(tags.title).toBe(PAGE_TITLE);
+    expect(tags.metaByProperty["og:title"]).toBe(PAGE_TITLE);
+    expect(tags.metaByProperty["og:image:alt"]).toBe(PAGE_TITLE);
+    expect(tags.metaByName.description).toBe(buildWebsiteHeadTags({ model: buildModel() }).metaByName.description);
+  });
+
+  it.each(["", "   ", undefined, null])("keeps the tags of Main for the page title %p", (pageTitle) => {
+    expect(buildWebsiteHeadTags({ model: buildModel(), pageTitle })).toEqual(
+      buildWebsiteHeadTags({ model: buildModel() })
+    );
   });
 });
 

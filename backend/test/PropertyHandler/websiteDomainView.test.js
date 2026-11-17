@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { toHostWebsiteDomainView } from "../../functions/PropertyHandler/util/websiteDomainView.js";
+import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../../functions/PropertyHandler/util/websiteDomainView.js";
 
 const CUSTOM_RECORD = {
   id: "domain-1",
@@ -71,5 +71,24 @@ describe("toHostWebsiteDomainView", () => {
 
   it("maps a missing record to null", () => {
     expect(toHostWebsiteDomainView(null)).toBeNull();
+  });
+});
+
+describe("toPublicWebsiteDomainView", () => {
+  it("exposes the domain, its status and the primary flag, and nothing else", () => {
+    const view = toPublicWebsiteDomainView(CUSTOM_RECORD);
+
+    expect(view).toEqual({ domain: "www.example.com", status: "PENDING", isPrimary: false });
+    expect(JSON.stringify(view)).not.toMatch(/dt_1|arn:cert|cg_1|dbw-site-1|cloudfront|verificationDetails|lastCheckedAt/);
+  });
+
+  it("drops a column it does not know", () => {
+    const view = toPublicWebsiteDomainView({ ...FALLBACK_RECORD, newColumn: "secret" });
+
+    expect(view).toEqual({ domain: "villa-abc12345.direct.domits.com", status: "ACTIVE", isPrimary: true });
+  });
+
+  it("maps a missing record to null", () => {
+    expect(toPublicWebsiteDomainView(null)).toBeNull();
   });
 });

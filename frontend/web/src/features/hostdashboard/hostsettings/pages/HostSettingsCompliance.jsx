@@ -80,7 +80,7 @@ const HostSettingsCompliance = () => {
                         name="registrationNumber"
                         value={compliance.registrationNumber}
                         onChange={(event) => compliance.updateRegistrationNumber(event.target.value)}
-                        disabled={compliance.isRegistrationNumberUnavailable}
+                        disabled={compliance.isRegistrationNumberUnavailable || compliance.isSaving}
                         className="pd-field-input"
                         placeholder={fields.placeholder}
                     />

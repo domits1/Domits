@@ -3,8 +3,14 @@ jest.mock("./whatsappProviderAdapter.js", () => ({
   default: jest.fn().mockImplementation(() => ({ sendMessage: jest.fn(), describeFailure: jest.fn() })),
 }));
 
+jest.mock("./channexProviderAdapter.js", () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => ({ sendMessage: jest.fn() })),
+}));
+
 const { createDefaultProviderAdapters, resolveProviderAdapter } = require("./providerAdapterRegistry.js");
 const WhatsAppProviderAdapter = require("./whatsappProviderAdapter.js").default;
+const ChannexProviderAdapter = require("./channexProviderAdapter.js").default;
 
 describe("providerAdapterRegistry", () => {
   beforeEach(() => {
@@ -16,7 +22,14 @@ describe("providerAdapterRegistry", () => {
 
     expect(WhatsAppProviderAdapter).toHaveBeenCalledTimes(1);
     expect(adapters.WHATSAPP).toBeDefined();
-    expect(Object.keys(adapters)).toEqual(["WHATSAPP"]);
+    expect(Object.keys(adapters)).toEqual(["WHATSAPP", "CHANNEX"]);
+  });
+
+  test("createDefaultProviderAdapters also registers Channex under the CHANNEX platform key", () => {
+    const adapters = createDefaultProviderAdapters();
+
+    expect(ChannexProviderAdapter).toHaveBeenCalledTimes(1);
+    expect(adapters.CHANNEX).toBeDefined();
   });
 
   test("resolveProviderAdapter returns the registered adapter for a known platform", () => {

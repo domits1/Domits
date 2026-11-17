@@ -34,28 +34,34 @@ const normalizeWebsiteHostWhatsApp = (integration) => {
   };
 };
 
-export const fetchWebsiteHostWhatsApp = async (hostId) => {
+const buildHostWhatsAppHeaders = (idToken) => ({
+  "Content-Type": "application/json",
+  ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+});
+
+export const fetchWebsiteHostWhatsApp = async (hostId, { idToken = null } = {}) => {
   const normalizedHostId = cleanText(hostId);
   if (!normalizedHostId) {
     return getEmptyWebsiteHostWhatsApp();
   }
 
-  if (!HOST_WHATSAPP_PROMISE_CACHE.has(normalizedHostId)) {
+  const normalizedIdToken = cleanText(idToken);
+  const cacheKey = `${normalizedHostId}:${normalizedIdToken ? "host" : "public"}`;
+  if (!HOST_WHATSAPP_PROMISE_CACHE.has(cacheKey)) {
     HOST_WHATSAPP_PROMISE_CACHE.set(
-      normalizedHostId,
+      cacheKey,
       fetch(`${UNIFIED_API}/integrations?userId=${encodeURIComponent(normalizedHostId)}`, {
         method: "GET",
         cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: buildHostWhatsAppHeaders(normalizedIdToken),
       })
         .then(async (response) => {
           if (!response.ok) {
+            HOST_WHATSAPP_PROMISE_CACHE.delete(cacheKey);
             return getEmptyWebsiteHostWhatsApp();
           }
 
-          const payload = await response.json().catch(() => []);
+          const payload = await response.json();
           const integrations = Array.isArray(payload) ? payload : [];
           const whatsappIntegration =
             integrations.find((integration) => cleanText(integration?.channel).toUpperCase() === "WHATSAPP") || null;
@@ -64,9 +70,16 @@ export const fetchWebsiteHostWhatsApp = async (hostId) => {
             ? normalizeWebsiteHostWhatsApp(whatsappIntegration)
             : getEmptyWebsiteHostWhatsApp();
         })
-        .catch(() => getEmptyWebsiteHostWhatsApp())
+        .catch(() => {
+          HOST_WHATSAPP_PROMISE_CACHE.delete(cacheKey);
+          return getEmptyWebsiteHostWhatsApp();
+        })
     );
   }
 
-  return HOST_WHATSAPP_PROMISE_CACHE.get(normalizedHostId);
+  return HOST_WHATSAPP_PROMISE_CACHE.get(cacheKey);
+};
+
+export const clearWebsiteHostWhatsAppCache = () => {
+  HOST_WHATSAPP_PROMISE_CACHE.clear();
 };

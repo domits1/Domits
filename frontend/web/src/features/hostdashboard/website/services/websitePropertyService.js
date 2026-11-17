@@ -1,4 +1,4 @@
-import { getAccessToken } from "../../../../services/getAccessToken";
+import { getAccessToken, getIdToken } from "../../../../services/getAccessToken";
 import { dbListIcalSources } from "../../../../utils/icalRetrieveHost";
 import {
   fetchUserProfileById,
@@ -6,6 +6,7 @@ import {
 } from "../../services/fetchUserProfileById";
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
+import { fetchWithWebsiteSession } from "./websiteSession";
 import {
   fetchWebsiteHostWhatsApp,
   getEmptyWebsiteHostWhatsApp,
@@ -300,9 +301,53 @@ const mergeWebsiteCalendarAvailability = (
   };
 };
 
-export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty = null) => {
+const HOST_ID_TOKEN_WAIT_MS = 5000;
+
+const readHostIdToken = () =>
+  new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), HOST_ID_TOKEN_WAIT_MS);
+    getIdToken()
+      .then((token) => token || null, () => null)
+      .then((token) => {
+        clearTimeout(timer);
+        resolve(token);
+      });
+  });
+
+const buildWebsiteHostProfileFromPublicHost = (host) => {
+  const phoneNumber = String(host?.whatsapp?.phoneNumber || "").trim();
+  const phoneNumberDigits =
+    String(host?.whatsapp?.phoneNumberDigits || "").trim() || phoneNumber.replaceAll(/\D+/g, "");
+  const isAvailable = host?.whatsapp?.isAvailable === true && Boolean(phoneNumberDigits);
+
+  return {
+    ...getEmptyUserProfile(null),
+    givenName: String(host?.displayName || "").trim() || null,
+    profileImage: String(host?.profileImage || "").trim() || null,
+    whatsapp: {
+      ...getEmptyWebsiteHostWhatsApp(),
+      connected: isAvailable,
+      phoneNumber: isAvailable ? phoneNumber : "",
+      phoneNumberDigits: isAvailable ? phoneNumberDigits : "",
+      isAvailable,
+    },
+  };
+};
+
+export const attachWebsiteHostProfile = async (
+  propertyDetails,
+  summaryProperty = null,
+  { host = null, idToken = null } = {}
+) => {
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
+  if (host && typeof host === "object") {
+    return {
+      ...normalizedPropertyDetails,
+      hostProfile: buildWebsiteHostProfileFromPublicHost(host),
+    };
+  }
+
   const hostId = resolveWebsiteHostId(normalizedPropertyDetails, summaryProperty);
   const hostProfilePromise =
     normalizedPropertyDetails.hostProfile && typeof normalizedPropertyDetails.hostProfile === "object"
@@ -311,7 +356,7 @@ export const attachWebsiteHostProfile = async (propertyDetails, summaryProperty 
 
   const [hostProfile, whatsapp] = await Promise.all([
     hostProfilePromise,
-    fetchWebsiteHostWhatsApp(hostId),
+    fetchWebsiteHostWhatsApp(hostId, { idToken }),
   ]);
 
   return {
@@ -344,11 +389,16 @@ const fetchWebsiteCalendarOverrides = async (propertyId, accessToken) => {
     .catch(() => null);
 };
 
-export const enrichWebsitePropertyDetails = async (propertyDetails, summaryProperty = null) => {
+export const enrichWebsitePropertyDetails = async (
+  propertyDetails,
+  summaryProperty = null,
+  { host = null, hostSession = false } = {}
+) => {
   const normalizedPropertyDetails =
     propertyDetails && typeof propertyDetails === "object" ? propertyDetails : {};
   const normalizedPropertyId = resolveWebsitePropertyId(normalizedPropertyDetails, summaryProperty);
   const accessToken = getAccessToken();
+  const idToken = hostSession ? await readHostIdToken() : null;
   let nextPropertyDetails = normalizedPropertyDetails;
 
   try {
@@ -366,7 +416,7 @@ export const enrichWebsitePropertyDetails = async (propertyDetails, summaryPrope
     );
   } catch {}
 
-  return attachWebsiteHostProfile(nextPropertyDetails, summaryProperty);
+  return attachWebsiteHostProfile(nextPropertyDetails, summaryProperty, { host, idToken });
 };
 
 export const fetchWebsitePropertyDetails = async (propertyId) => {
@@ -375,17 +425,9 @@ export const fetchWebsitePropertyDetails = async (propertyId) => {
     throw new Error("Select a listing before building a website preview.");
   }
 
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("You must be signed in to build a website preview.");
-  }
-
-  const response = await fetch(buildSinglePropertyUrl(normalizedPropertyId), {
+  const response = await fetchWithWebsiteSession(buildSinglePropertyUrl(normalizedPropertyId), {
     method: "GET",
     cache: "no-store",
-    headers: {
-      Authorization: accessToken,
-    },
   });
 
   if (!response.ok) {
@@ -397,5 +439,5 @@ export const fetchWebsitePropertyDetails = async (propertyId) => {
   }
 
   const propertyDetails = await response.json();
-  return enrichWebsitePropertyDetails(propertyDetails);
+  return enrichWebsitePropertyDetails(propertyDetails, null, { hostSession: true });
 };

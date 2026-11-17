@@ -1,5 +1,5 @@
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
-import { buildAuthorizedHeaders } from "./websiteSiteService";
+import { WebsiteSessionExpiredError, fetchWithWebsiteSession } from "./websiteSession";
 
 const WEBSITE_DOMAINS_URL = `${PROPERTY_API_BASE}/website/domains`;
 const WEBSITE_DOMAIN_VERIFY_URL = `${WEBSITE_DOMAINS_URL}/verify`;
@@ -30,26 +30,21 @@ const parseJsonSafely = (rawBody) => {
   }
 };
 
-const buildDomainRequestHeaders = (contentType) => {
-  try {
-    return buildAuthorizedHeaders(contentType);
-  } catch (error) {
-    throw new WebsiteDomainError({
-      code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNAUTHORIZED,
-      message: error?.message || "You must be signed in to manage domains.",
-      status: 401,
-    });
-  }
-};
-
 const sendWebsiteDomainRequest = async (url, { method, body = null }, fallbackMessage) => {
-  const headers = buildDomainRequestHeaders(body ? JSON_CONTENT_TYPE : null);
+  const headers = body ? { "Content-Type": JSON_CONTENT_TYPE } : {};
   let response;
   let rawBody;
   try {
-    response = await fetch(url, { method, cache: "no-store", headers, body });
+    response = await fetchWithWebsiteSession(url, { method, cache: "no-store", headers, body });
     rawBody = await response.text();
-  } catch {
+  } catch (error) {
+    if (error instanceof WebsiteSessionExpiredError) {
+      throw new WebsiteDomainError({
+        code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.UNAUTHORIZED,
+        message: error.message,
+        status: 401,
+      });
+    }
     throw new WebsiteDomainError({
       code: WEBSITE_DOMAIN_CLIENT_ERROR_CODES.NETWORK_ERROR,
       message: "The domain request could not reach the server.",

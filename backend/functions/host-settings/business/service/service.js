@@ -24,6 +24,7 @@ export class Service {
             require_photo_proof: data.require_photo_proof ?? (existing?.require_photo_proof ?? false),
             notif_email_assigned: data.notif_email_assigned ?? (existing?.notif_email_assigned ?? true),
             notif_email_overdue: data.notif_email_overdue ?? (existing?.notif_email_overdue ?? true),
+            notif_email_due_soon: data.notif_email_due_soon ?? (existing?.notif_email_due_soon ?? true),
             notif_email_completed: data.notif_email_completed ?? (existing?.notif_email_completed ?? true),
             notif_sms_urgent: data.notif_sms_urgent ?? (existing?.notif_sms_urgent ?? false),
             notif_inapp_enabled: data.notif_inapp_enabled ?? (existing?.notif_inapp_enabled ?? true),
@@ -42,6 +43,7 @@ export class Service {
             require_photo_proof: false,
             notif_email_assigned: true,
             notif_email_overdue: true,
+            notif_email_due_soon: true,
             notif_email_completed: true,
             notif_sms_urgent: false,
             notif_inapp_enabled: true

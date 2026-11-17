@@ -70,6 +70,11 @@ const buildRenderPayload = ({ domain = globalThis.location.host, siteId = "site-
     },
     images: [{ image_id: "image-1", key: "images/property-1/image-1/web.jpg", status: "READY" }],
   },
+  host: {
+    displayName: "Karim",
+    profileImage: "",
+    whatsapp: { isAvailable: true, phoneNumber: "+31 6 1234 5678", phoneNumberDigits: "31612345678" },
+  },
   contentOverrides: {},
   themeOverrides: {},
   renderSource: "published_site",
@@ -142,6 +147,19 @@ describe("WebsitePublicSitePage head tags", () => {
     expect(readMetaContent("property", "og:image")).toContain("images/property-1/image-1/web.jpg");
     expect(readMetaContent("property", "og:image:alt")).toBe("Wellness Villa Bisous | Ubud, Indonesia");
     expect(document.head.querySelector('meta[name="robots"]')).toBeNull();
+  });
+
+  it("hands the host block of the render response to the enrichment instead of a host id", async () => {
+    const payload = buildRenderPayload();
+    fetchPublicWebsiteRenderModel.mockResolvedValue(payload);
+
+    renderPage();
+
+    await screen.findByTestId("published-site");
+    await waitFor(() => {
+      expect(enrichWebsitePropertyDetails).toHaveBeenCalledWith(payload.propertySnapshot, null, { host: payload.host });
+    });
+    expect(JSON.stringify(payload.propertySnapshot)).not.toContain("hostId");
   });
 
   it("never exposes the street or postal code in the head", async () => {

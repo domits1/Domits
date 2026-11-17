@@ -259,6 +259,14 @@
   background-color: #777777;
 }
 
+.statusDotPending {
+  background-color: #b45309;
+}
+
+.statusDotRejected {
+  background-color: #b91c1c;
+}
+
 .card {
   border: 1px solid #e1e1e1;
   border-radius: 8px;
@@ -2713,4 +2721,37 @@
   .ruleToggleRow:last-child {
     border-bottom: none;
   }
+}
+
+.rejectionBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid #f1b5b0;
+  border-left: 4px solid #b91c1c;
+  border-radius: 8px;
+  background: #fef3f2;
+  color: #7a271a;
+}
+
+.rejectionBannerTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #b42318;
+}
+
+.rejectionBannerReason {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rejectionBannerMeta {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.3;
 }

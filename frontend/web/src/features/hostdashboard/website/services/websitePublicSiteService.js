@@ -38,7 +38,6 @@ const normalizePublicWebsiteResolution = (payload) => {
   return {
     siteId: String(payload.siteId || "").trim(),
     propertyId: String(payload.propertyId || "").trim(),
-    hostId: String(payload.hostId || "").trim(),
     templateKey: String(payload.templateKey || "").trim(),
     primaryLocale: String(payload.primaryLocale || "").trim(),
     siteName: String(payload.siteName || "").trim(),
@@ -59,6 +58,7 @@ const normalizePublicWebsiteRenderPayload = (payload) => {
     site: payload.site && typeof payload.site === "object" ? payload.site : null,
     domain: payload.domain && typeof payload.domain === "object" ? payload.domain : null,
     propertySnapshot: payload.propertySnapshot && typeof payload.propertySnapshot === "object" ? payload.propertySnapshot : null,
+    host: payload.host && typeof payload.host === "object" ? payload.host : null,
     contentOverrides: payload.contentOverrides && typeof payload.contentOverrides === "object" ? payload.contentOverrides : {},
     themeOverrides: payload.themeOverrides && typeof payload.themeOverrides === "object" ? payload.themeOverrides : {},
     renderSource: String(payload.renderSource || "").trim(),

@@ -1,4 +1,15 @@
 {
   "translation": {
+    "Two-factor authentication": "Autenticación en dos pasos",
+    "Enter the 6-digit code from your authenticator app.": "Introduce el código de 6 dígitos de tu aplicación de autenticación.",
+    "6-digit code": "Código de 6 dígitos",
+    "Verify": "Verificar",
+    "Verifying...": "Verificando...",
+    "Back to login": "Volver al inicio de sesión",
+    "Invalid code. Please try again.": "Código no válido. Inténtalo de nuevo.",
+    "Too many attempts. Please wait a moment and try again.": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+    "Something went wrong. Please try again.": "Algo ha salido mal. Inténtalo de nuevo.",
+    "Your sign-in session expired. Please sign in again.": "Tu sesión de inicio de sesión ha caducado. Vuelve a iniciar sesión.",
+    "This sign-in method is not supported yet. Please contact support.": "Este método de inicio de sesión aún no es compatible. Ponte en contacto con el soporte."
   }
 }

@@ -1,3 +1,7 @@
+## Eng-review
+- [ ] Before opening this PR, I ran the engineering review ([eng-review](https://github.com/domits1/Domits/blob/acceptance/.claude/skills/eng-review/SKILL.md)) skill and fixed or explained its findings.
+- [ ] I added the findings and decisions in [docs/internal/eng-reviews/](https://github.com/domits1/Domits/blob/acceptance/docs/internal/eng-reviews/README.md) (file: )
+
 ## Close or Relate the Issue
 [//]: # (Only if this should close the issue)
 - Closes #

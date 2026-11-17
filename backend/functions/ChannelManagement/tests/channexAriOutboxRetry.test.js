@@ -92,6 +92,7 @@ describe("the worker on a retry", () => {
       release: jest.fn(async () => 1),
       markFailed: jest.fn(async () => 1),
     };
+    const log = { error: jest.fn() };
     const worker = new ChannexAriOutboxWorker({
       outbox,
       props: { listActiveByDomitsPropertyId: async () => [{ integrationAccountId: "account-1" }] },
@@ -100,9 +101,9 @@ describe("the worker on a retry", () => {
       syncCalendarChange: async () => answer,
       now: () => NOW,
       random: () => 0,
-      log: { error: jest.fn() },
+      log,
     });
-    return { worker, outbox };
+    return { worker, outbox, log };
   };
 
   test("waits longer after each attempt", async () => {
@@ -126,11 +127,17 @@ describe("the worker on a retry", () => {
   });
 
   test("gives up after 8 attempts, so a change that keeps failing becomes visible", async () => {
-    const { worker, outbox } = createWorker(8, rateLimited());
+    const { worker, outbox, log } = createWorker(8, rateLimited());
 
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe(OUTCOME.FAILED);
     expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
     expect(outbox.returnToPending).not.toHaveBeenCalled();
+    expect(JSON.parse(log.error.mock.calls[0][0])).toEqual({
+      event: "CHANNEX_ARI_OUTBOX_ROWS_FAILED",
+      domitsPropertyId: "property-1",
+      count: 1,
+      reason: "MAX_ATTEMPTS_EXCEEDED",
+    });
   });
 });
 

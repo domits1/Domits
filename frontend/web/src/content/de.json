@@ -25,6 +25,10 @@
     }
   },
   "component": {
+    "destinations": {
+      "title": "Reiseziele",
+      "allIn": "Alle Reiseziele in"
+    },
     "user": {
       "hello": "Hallo",
       "profile": "Profil",
@@ -429,22 +433,50 @@
         "subtitle": "Leidenschaftliche Reisende und Tech-Innovatoren, die die Zukunft der Gastfreundschaft gestalten",
         "moreMembers": "+32 Mitglieder",
         "members": [
-          { "name": "Stefan Hopman", "role": "Gründer" },
-          { "name": "Robert Hopman", "role": "Engineering Manager" },
-          { "name": "Chiel van Heerwaarden", "role": "Entwickler" }
+          {
+            "name": "Stefan Hopman",
+            "role": "Gründer"
+          },
+          {
+            "name": "Robert Hopman",
+            "role": "Engineering Manager"
+          },
+          {
+            "name": "Chiel van Heerwaarden",
+            "role": "Entwickler"
+          }
         ]
       },
       "stats": [
-        { "icon": "globe", "value": "+10", "label": "Nationalitäten" },
-        { "icon": "users", "value": "+35", "label": "Teammitglieder" },
-        { "icon": "laptop", "value": "Remote-first", "label": "Arbeite von überall" },
-        { "icon": "handHeart", "value": "People-first", "label": "Kultur, die sich kümmert" }
+        {
+          "icon": "globe",
+          "value": "+10",
+          "label": "Nationalitäten"
+        },
+        {
+          "icon": "users",
+          "value": "+35",
+          "label": "Teammitglieder"
+        },
+        {
+          "icon": "laptop",
+          "value": "Remote-first",
+          "label": "Arbeite von überall"
+        },
+        {
+          "icon": "handHeart",
+          "value": "People-first",
+          "label": "Kultur, die sich kümmert"
+        }
       ],
       "cards": {
         "featured": {
           "title": "Die Zukunft des Reisens gestalten",
           "description": "Wir denken neu, wie Menschen Reisen entdecken, buchen und erleben. Gestalte mit uns Technologie, die die Welt näher zusammenbringt.",
-          "tags": ["Globale Wirkung", "Innovation zuerst"]
+          "tags": [
+            "Globale Wirkung",
+            "Innovation zuerst"
+          ]
         },
         "partnerSuccess": {
           "title": "Erfolg für Partner",
@@ -454,12 +486,20 @@
         "culture": {
           "title": "Kultur, die sich kümmert",
           "description": "Remote-first, inklusiv und menschlich. Wir legen Wert auf Work-Life-Balance und sinnvolle Wirkung.",
-          "tags": ["Remote", "Flexibel", "Global"]
+          "tags": [
+            "Remote",
+            "Flexibel",
+            "Global"
+          ]
         },
         "openPositions": {
           "title": "Offene Stellen",
           "description": "Wir stellen in den Bereichen Engineering, Produkt, Design und Partnerschaften ein.",
-          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+          "tags": [
+            "Senior Engineer",
+            "Product Designer",
+            "Partnership Manager"
+          ]
         }
       },
       "join": {
@@ -712,18 +752,36 @@
         "eyebrow": "Für Gäste",
         "heading": "Finde deine perfekte Unterkunft in 3 einfachen Schritten",
         "steps": [
-          { "title": "Suche dein Reiseziel", "description": "Entdecke Ferienunterkünfte mit smarten Filtern für Ort, Daten, Preis und Ausstattung." },
-          { "title": "Buche deinen Aufenthalt", "description": "Wähle deine bevorzugte Unterkunft und bestätige deine Buchung mit nur wenigen Klicks." },
-          { "title": "Erlebe Domits", "description": "Schreibe deinem Gastgeber, verwalte deine Reise und genieße persönliche Unterstützung." }
+          {
+            "title": "Suche dein Reiseziel",
+            "description": "Entdecke Ferienunterkünfte mit smarten Filtern für Ort, Daten, Preis und Ausstattung."
+          },
+          {
+            "title": "Buche deinen Aufenthalt",
+            "description": "Wähle deine bevorzugte Unterkunft und bestätige deine Buchung mit nur wenigen Klicks."
+          },
+          {
+            "title": "Erlebe Domits",
+            "description": "Schreibe deinem Gastgeber, verwalte deine Reise und genieße persönliche Unterstützung."
+          }
         ]
       },
       "hosts": {
         "eyebrow": "Für Gastgeber",
         "heading": "Lass dein Vermietungsgeschäft mühelos wachsen",
         "steps": [
-          { "title": "Inseriere deine Unterkunft", "description": "Füge Fotos, Beschreibung und Ausstattung hinzu und lege in wenigen Minuten Preis und Verfügbarkeit fest." },
-          { "title": "Verwalte Buchungen", "description": "Verfolge Buchungen, verwalte deinen Kalender und kommuniziere mühelos mit Gästen." },
-          { "title": "Werde sicher bezahlt", "description": "Erhalte Zahlungen sicher und verfolge deine Einnahmen und Einblicke in Echtzeit." }
+          {
+            "title": "Inseriere deine Unterkunft",
+            "description": "Füge Fotos, Beschreibung und Ausstattung hinzu und lege in wenigen Minuten Preis und Verfügbarkeit fest."
+          },
+          {
+            "title": "Verwalte Buchungen",
+            "description": "Verfolge Buchungen, verwalte deinen Kalender und kommuniziere mühelos mit Gästen."
+          },
+          {
+            "title": "Werde sicher bezahlt",
+            "description": "Erhalte Zahlungen sicher und verfolge deine Einnahmen und Einblicke in Echtzeit."
+          }
         ]
       }
     },
@@ -1163,8 +1221,107 @@
         "onboarding": {
           "title": "Onboarding",
           "desc": "Verfolge deinen Fortschritt vom Eintragen deiner Unterkunft bis zur Veröffentlichung."
+        },
+        "homeAutomation": {
+          "title": "Hausautomation",
+          "desc": "Verbinde Smart Locks, damit Gäste Zugang zu deinen Unterkünften erhalten."
         }
       }
+    },
+    "homeAutomation": {
+      "breadcrumb": "Hausautomation",
+      "title": "Hausautomation",
+      "subtitle": "Verbinde RemoteLock, um Smart Locks für deine Gäste zu verwalten.",
+      "provider": "RemoteLock",
+      "lastSync": {
+        "label": "Letzte Synchronisierung",
+        "never": "Noch nicht synchronisiert"
+      },
+      "statuses": {
+        "notConnected": "Nicht verbunden",
+        "connecting": "Verbindung wird hergestellt",
+        "connected": "Verbunden",
+        "authenticationError": "Anmeldung fehlgeschlagen",
+        "connectionError": "Verbindungsproblem",
+        "disconnected": "Getrennt",
+        "expiredCredentials": "Anmeldung abgelaufen",
+        "unknown": "Status unbekannt"
+      },
+      "actions": {
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen"
+      },
+      "modal": {
+        "connect": {
+          "title": "RemoteLock verbinden",
+          "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
+          "confirm": "Verbinden",
+          "confirming": "Wird verbunden..."
+        },
+        "reconnect": {
+          "title": "RemoteLock erneut verbinden",
+          "body": "Du wirst zur Anmeldung zu RemoteLock weitergeleitet.",
+          "confirm": "Erneut verbinden",
+          "confirming": "Wird erneut verbunden..."
+        },
+        "disconnect": {
+          "title": "RemoteLock trennen",
+          "body": "Domits verwaltet die Türcodes deiner Gäste nicht mehr.",
+          "confirm": "Trennen",
+          "confirming": "Wird getrennt..."
+        },
+        "cancel": "Abbrechen",
+        "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+      },
+      "devices": {
+        "title": "Geräte",
+        "notConnected": "Verbinde RemoteLock, um deine Geräte zu sehen",
+        "empty": "In deinem RemoteLock-Konto wurden keine Geräte gefunden.",
+        "loading": "Deine Geräte werden geladen...",
+        "loadError": "Wir konnten deine Geräte nicht laden.",
+        "retry": "Erneut versuchen",
+        "truncated": "Es werden nicht alle Geräte angezeigt.",
+        "notSupported": "Noch nicht unterstützt",
+        "columns": {
+          "name": "Name",
+          "type": "Typ",
+          "status": "Status",
+          "battery": "Batterie",
+          "lastSeen": "Zuletzt gesehen"
+        },
+        "statuses": {
+          "online": "Online",
+          "offline": "Offline",
+          "unknown": "Unbekannt"
+        },
+        "types": {
+          "lock": "Schloss",
+          "zwaveLock": "Z-Wave-Schloss",
+          "connectorLock": "Connector-Schloss",
+          "schlageHomeLock": "Schlage-Home-Schloss",
+          "resortLock": "Resort-Schloss",
+          "other": "Anderes Gerät"
+        }
+      },
+      "errors": {
+        "needsReconnect": "RemoteLock muss neu verbunden werden.",
+        "alreadyConnected": "RemoteLock ist bereits verbunden.",
+        "notConfigured": "RemoteLock ist im Moment nicht verfügbar. Bitte wende dich an den Support.",
+        "tryLater": "RemoteLock ist ausgelastet. Bitte versuche es gleich noch einmal.",
+        "startAgain": "Die Anmeldung ist abgelaufen oder wurde bereits verwendet. Bitte starte neu.",
+        "providerError": "RemoteLock meldet ein Problem. Bitte versuche es später erneut.",
+        "cancelled": "Die Anmeldung bei RemoteLock wurde abgebrochen.",
+        "missingParams": "Diese Seite braucht eine Anmeldung bei RemoteLock. Bitte beginne bei Hausautomation."
+      },
+      "callback": {
+        "title": "RemoteLock verbinden",
+        "working": "Die Verbindung wird abgeschlossen...",
+        "back": "Zurück zu Hausautomation"
+      },
+      "loading": "Deine RemoteLock-Verbindung wird geladen...",
+      "loadError": "Wir konnten deine RemoteLock-Verbindung nicht laden.",
+      "retry": "Erneut versuchen"
     },
     "onboardingHub": {
       "breadcrumb": "Onboarding",
@@ -1235,6 +1392,18 @@
             "title": "Teammitglieder",
             "desc": "Lade dein Team ein und weise Rollen für dein Portfolio zu."
           },
+          "security": {
+            "title": "Sicherheit & Authentifizierung einrichten",
+            "desc": "Schütze dein Konto mit Zwei-Faktor-Authentifizierung."
+          },
+          "owners": {
+            "title": "Eigentümerverwaltung einrichten",
+            "desc": "Füge Eigentümer hinzu und verwalte ihre Eigentumsanteile."
+          },
+          "messaging": {
+            "title": "Nachrichten einrichten",
+            "desc": "Richte automatische Nachrichten für deine Gäste ein."
+          },
           "listProperties": {
             "title": "Unterkünfte eintragen",
             "desc": "Verwalte und füge Unterkünfte in deinem Portfolio hinzu."
@@ -1267,6 +1436,8 @@
       }
     },
     "goLive": {
+      "submittedMessage": "Deine Unterkunft wurde zur Prüfung eingereicht.",
+      "pendingReviewNotice": "Diese Unterkunft wartet auf Prüfung und wird veröffentlicht, sobald sie freigegeben ist.",
       "breadcrumb": "Veröffentlichen",
       "title": "{propertyName} veröffentlichen",
       "subtitle": "Überprüfe die Checkliste unten und veröffentliche anschließend deine Unterkunft.",
@@ -1379,12 +1550,39 @@
         "verified": "Verifiziert",
         "sms": "SMS",
         "authenticatorApp": "Authenticator-App",
-        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS und Authenticator-App.",
+        "comingSoon": "Demnächst verfügbar: Anmeldung per SMS.",
         "loading": "Dein Authentifizierungsstatus wird geladen...",
         "error": "Wir konnten deinen Authentifizierungsstatus nicht laden. Bitte lade die Seite neu."
       },
       "pin": {
         "comingSoon": "Demnächst verfügbar."
+      },
+      "authenticator": {
+        "setUp": "Einrichten",
+        "setupTitle": "Authenticator-App einrichten",
+        "scanInstruction": "Scanne diesen QR-Code mit einer Authenticator-App, zum Beispiel Google Authenticator oder Microsoft Authenticator.",
+        "qrAlt": "QR-Code, um Domits zu deiner Authenticator-App hinzuzufügen",
+        "manualKeyLabel": "Scannen nicht möglich? Gib diesen Schlüssel manuell ein:",
+        "codeLabel": "6-stelliger Code",
+        "verify": "Bestätigen",
+        "verifying": "Wird bestätigt...",
+        "cancel": "Abbrechen",
+        "tryAgain": "Erneut versuchen",
+        "close": "Schließen",
+        "success": "Deine Authenticator-App ist aktiviert. Bei der Anmeldung auf einem neuen Gerät wirst du nach einem Code gefragt.",
+        "turnOff": "Deaktivieren",
+        "disableTitle": "Authenticator-App deaktivieren?",
+        "disableWarning": "Wenn du sie deaktivierst, ist dein Konto weniger sicher. Bei der Anmeldung wirst du nicht mehr nach einem Code aus deiner Authenticator-App gefragt.",
+        "confirmTurnOff": "Deaktivieren",
+        "turningOff": "Wird deaktiviert...",
+        "disabledSuccess": "Deine Authenticator-App ist deaktiviert.",
+        "errors": {
+          "invalidCode": "Dieser Code ist ungültig. Gib den aktuellen 6-stelligen Code aus deiner App ein.",
+          "sessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an und starte die Einrichtung neu.",
+          "tooManyAttempts": "Zu viele Versuche. Bitte warte einen Moment und versuche es erneut.",
+          "enableFailed": "Dein Code wurde akzeptiert, aber die Authenticator-App konnte nicht aktiviert werden. Bitte versuche es erneut.",
+          "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+        }
       }
     },
     "communicationPreferences": {
@@ -1490,18 +1688,16 @@
       "breadcrumb": "Tarifpläne",
       "title": "Tarifpläne",
       "subtitle": "Verwalte deine Tarifpläne.",
-      "standardSection": "Standard-Tarifplan",
-      "additionalSection": "Weitere Pläne",
-      "additionalSubtitle": "Weitere Preisoptionen für Direktbuchungen.",
+      "ratePlansSection": "Tarifpläne",
       "hostOnlyFee": {
-        "title": "Host-exklusive Gebühr",
-        "sub": "10% der Buchungen werden vom Host bezahlt",
+        "title": "Domits.com-Buchungskanal",
+        "sub": "10 % Host-Gebühr auf Buchungen über Domits.com",
         "note": "Ermöglicht Domits den 24/7-Betrieb der Plattform"
       },
       "directBooking": {
-        "cardTitle": "Direct-Booking-Tarifplan",
-        "cardSubtitle": "4,9% pro Reservierung, vom Host bezahlt",
-        "cardNote": "Keine Monats- oder Gebühr pro Unterkunft; Gäste zahlen €0 Domits-Gebühr.",
+        "cardTitle": "Direct-Booking-Website (% pro Reservierung)",
+        "cardSubtitle": "All-inclusive-Reservierungsgebühr",
+        "cardNote": "Keine zusätzlichen Transaktionsgebühren",
         "breadcrumb": "Direct-Booking-Tarifplan",
         "title": "Direct-Booking-Tarifplan",
         "subtitle": "Leistungsbasierte Preise für Reservierungen über deine Direct-Booking-Website.",
@@ -1534,10 +1730,66 @@
         "billingContact": "Abrechnungskontakt",
         "billingContactEmpty": "Die Verwaltung des Abrechnungskontakts wird hier verfügbar, sobald die Abrechnung aktiviert ist."
       },
+      "websitePlan": {
+        "sectionTitle": "Abonnement für die Direct-Booking-Website",
+        "sectionSubtitle": "Wähle den Tarif für deine Buchungswebsite. Der Elite-Preis wird unten angezeigt.",
+        "sectionSubtitleWithoutPayment": "Wähle den Tarif für deine Buchungswebsite.",
+        "loading": "Dein Website-Tarif wird geladen...",
+        "loadError": "Dein aktueller Website-Tarif konnte nicht geladen werden.",
+        "essentials": "Essentials",
+        "essentialsDescription": "Alles Wesentliche für deine Direct-Booking-Website.",
+        "essentialsFeaturesTitle": "Enthalten",
+        "featureBasicWebsite": "Grundlegende Website- und Buchungsfunktionen",
+        "featureBasicCustomization": "Grundlegende Anpassung und SEO",
+        "elite": "Elite",
+        "eliteDescription": "Mehr Tools, um deine Direct-Booking-Website auszubauen und anzupassen.",
+        "eliteFeaturesTitle": "Alles aus Essentials, plus",
+        "featureCustomDomain": "Eigene Domain verbinden",
+        "featureAdvancedBuilder": "Erweiterter Website-Builder und unbegrenzt viele Seiten",
+        "featureLocalization": "Mehrsprachigkeit und mehrere Währungen",
+        "featureGrowthTools": "Erweiterte SEO, Analytics, CRM, KI-Tools, Upsells und Experimente",
+        "currentPlan": "Aktueller Tarif",
+        "scheduled": "Geplant",
+        "status": {
+          "ACTIVE": "Aktiv",
+          "PAST_DUE": "Zahlung überfällig",
+          "TRIALING": "Testphase",
+          "INCOMPLETE": "Zahlung ausstehend",
+          "INCOMPLETE_EXPIRED": "Zahlung abgelaufen",
+          "EXPIRED": "Abgelaufen",
+          "CANCELLED": "Gekündigt"
+        },
+        "perMonth": "pro Monat",
+        "free": "Kostenlos",
+        "upgrade": "Auf Elite upgraden",
+        "restoreElite": "Elite reaktivieren",
+        "switchToEssentials": "Zu Essentials wechseln",
+        "processing": "Wird verarbeitet...",
+        "changeError": "Dein Website-Tarif konnte nicht geändert werden. Bitte versuche es erneut.",
+        "checkoutError": "Stripe Checkout konnte nicht gestartet werden. Bitte versuche es erneut.",
+        "downgradeScheduled": "Der Wechsel zu Essentials ist zum Ende des aktuellen Abrechnungszeitraums geplant.",
+        "downgradeSuccess": "Dein Website-Tarif ist jetzt Essentials.",
+        "upgradeSuccess": "Dein Website-Tarif ist jetzt Elite.",
+        "restoreSuccess": "Dein Elite-Abonnement wurde reaktiviert.",
+        "unchanged": "Dein Website-Tarif ist bereits aktuell.",
+        "effectiveUntil": "Elite bleibt bis zum {date} aktiv.",
+        "priceUnavailable": "Preis nicht verfügbar",
+        "withoutPayment": "Keine Zahlung nötig",
+        "checkoutPending": "Wir bestätigen dein Elite-Abonnement. Das kann einen Moment dauern.",
+        "checkoutSuccess": "Dein Elite-Abonnement ist aktiv.",
+        "checkoutCancelled": "Der Checkout wurde abgebrochen. Dein Tarif wurde nicht geändert.",
+        "checkoutStillPending": "Wir haben noch keine Bestätigung erhalten. Deine Zahlung wird möglicherweise noch verarbeitet. Aktualisiere die Seite in einem Moment und starte keinen weiteren Checkout.",
+        "cardTitle": "Direct-Booking-Website (monatlich)",
+        "cardSubtitle": "Kostenlos starten",
+        "cardNote": "Mit einer Elite-Website wachsen",
+        "breadcrumb": "Direct-Booking-Website-Tarif",
+        "pageTitle": "Direct-Booking-Website-Tarif",
+        "pageSubtitle": "Verwalte das Abonnement für deine Direct-Booking-Website."
+      },
       "enterprise": {
-        "cardTitle": "Enterprise-Tarifplan",
-        "cardSubtitle": "Preis pro aktiver Unterkunft und Monat.",
-        "cardNote": "Skaliert automatisch mit der Anzahl deiner aktiven Unterkünfte.",
+        "cardTitle": "Enterprise-Plan",
+        "cardSubtitle": "Preis pro Unterkunft und Monat",
+        "cardNote": "Wächst mit deinem Portfolio",
         "breadcrumb": "Enterprise-Tarifplan",
         "title": "Enterprise-Tarifplan",
         "subtitle": "Einfache Preise, die mit deinem aktiven Unterkunftsportfolio wachsen.",
@@ -1624,6 +1876,39 @@
         "cancel": "Abbrechen",
         "success": "✓ Einladung gesendet an",
         "error": "Einladung konnte nicht gesendet werden. Bitte versuche es erneut."
+      }
+    },
+    "hostNotificationMatrix": {
+      "title": "Benachrichtigungen",
+      "description": "Wähle aus, wie du die einzelnen Benachrichtigungen erhalten möchtest.",
+      "event": "Benachrichtigung",
+      "required": "Erforderlich",
+      "eventNamesNote": "Die Namen der Benachrichtigungen werden derzeit vom Backend auf Englisch bereitgestellt.",
+      "disableAllEmail": "Alle optionalen E-Mail-Benachrichtigungen deaktivieren",
+      "enableAllEmail": "Alle optionalen E-Mail-Benachrichtigungen aktivieren",
+      "loading": "Benachrichtigungseinstellungen werden geladen...",
+      "retry": "Erneut versuchen",
+      "saved": "Benachrichtigungseinstellungen gespeichert.",
+      "saving": "Speichern...",
+      "save": "Einstellungen speichern",
+      "channels": {
+        "inApp": "In-App",
+        "email": "E-Mail",
+        "sms": "SMS"
+      },
+      "tabs": {
+        "propertyManager": "Property Manager",
+        "bookings": "Buchungen & Reservierungen",
+        "propertyOwner": "Immobilieneigentümer",
+        "finance": "Finanzen",
+        "distribution": "Vertrieb",
+        "compliance": "Compliance",
+        "tasks": "Aufgaben"
+      },
+      "errors": {
+        "loadFailed": "Deine Benachrichtigungseinstellungen konnten nicht geladen werden. Bitte versuche es erneut, bevor du Änderungen vornimmst.",
+        "saveFailed": "Deine Benachrichtigungseinstellungen konnten nicht gespeichert werden. Deine Änderungen sind erhalten geblieben. Bitte versuche es erneut.",
+        "invalidResponse": "Die Antwort zu den Benachrichtigungseinstellungen war ungültig. Bitte versuche es erneut."
       }
     }
   },
@@ -1755,6 +2040,163 @@
       "title": "Fragen zur Sicherheit?",
       "contactButton": "Support kontaktieren",
       "learnMoreButton": "Mehr erfahren"
+    }
+  },
+  "hostOwners": {
+    "title": "Eigentümer",
+    "loading": "Eigentümer werden geladen…",
+    "empty": "Du hast noch keine Eigentümer.",
+    "allArchived": "Alle deine Eigentümer sind archiviert. Aktiviere „Archivierte Eigentümer anzeigen“, um sie zu sehen.",
+    "showArchived": "Archivierte Eigentümer anzeigen",
+    "retry": "Erneut versuchen",
+    "errorSignedOut": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
+    "errorForbidden": "Nur Hosts können Eigentümer verwalten.",
+    "errorGeneric": "Wir konnten deine Eigentümer nicht laden. Bitte versuche es erneut.",
+    "columnName": "Name",
+    "columnType": "Typ",
+    "columnStatus": "Status",
+    "columnProperties": "Aktuelle Unterkünfte",
+    "propertyShare": "{title}, {percent} %",
+    "unknownShare": "{title}, Anteil unbekannt",
+    "unknownProperty": "Unbekannte Unterkunft",
+    "noProperties": "Keine aktuellen Unterkünfte",
+    "ownerTypes": {
+      "individual": "Privatperson",
+      "company": "Unternehmen",
+      "trust": "Trust",
+      "unknown": "Unbekannter Typ"
+    },
+    "statuses": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "pending": "Ausstehend",
+      "archived": "Archiviert",
+      "unknown": "Unbekannter Status"
+    },
+    "addOwner": "Eigentümer hinzufügen",
+    "editOwner": "Bearbeiten",
+    "editOwnerLabel": "{name} bearbeiten",
+    "columnActions": "Aktionen",
+    "form": {
+      "createTitle": "Eigentümer hinzufügen",
+      "editTitle": "Eigentümer bearbeiten",
+      "labels": {
+        "first_name": "Vorname",
+        "last_name": "Nachname",
+        "company_name": "Firmenname",
+        "email": "E-Mail",
+        "phone": "Telefon",
+        "preferred_language": "Bevorzugte Sprache (z. B. en oder nl-NL)",
+        "owner_type": "Eigentümertyp",
+        "status": "Status",
+        "notes": "Notizen"
+      },
+      "chooseOwnerType": "Typ auswählen",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…",
+      "cancel": "Abbrechen",
+      "close": "Schließen",
+      "createdToast": "{name} wurde hinzugefügt.",
+      "updatedToast": "{name} wurde aktualisiert.",
+      "errorNotFound": "Dieser Eigentümer existiert nicht mehr. Schließe das Formular und lade die Seite neu.",
+      "errorGeneric": "Wir konnten den Eigentümer nicht speichern. Bitte versuche es erneut.",
+      "errors": {
+        "required": "Dieses Feld ist erforderlich.",
+        "tooLong": "Verwende höchstens {max} Zeichen.",
+        "invalidCharacters": "Dieses Feld enthält unzulässige Zeichen.",
+        "invalidEmail": "Gib eine gültige E-Mail-Adresse ein.",
+        "invalidPhone": "Verwende mindestens eine Ziffer, und nur Ziffern, Leerzeichen und + ( ) - .",
+        "invalidLanguage": "Verwende einen Sprachcode wie en oder nl-NL.",
+        "invalidOwnerType": "Wähle einen Eigentümertyp.",
+        "invalidStatus": "Wähle einen Status.",
+        "archivedStatus": "Ein Eigentümer kann nur über die Archivierung archiviert werden.",
+        "companyNameRequired": "Für ein Unternehmen oder einen Trust ist ein Firmenname erforderlich."
+      }
+    },
+    "detail": {
+      "backToOwners": "Zurück zu den Eigentümern",
+      "loading": "Eigentümer wird geladen…",
+      "errorNotFound": "Dieser Eigentümer existiert nicht oder gehört nicht zu deinen Eigentümern.",
+      "errorGeneric": "Wir konnten diesen Eigentümer nicht laden. Bitte versuche es erneut.",
+      "detailsTitle": "Angaben",
+      "notProvided": "Nicht angegeben",
+      "labels": {
+        "created_at": "Erstellt",
+        "updated_at": "Zuletzt geändert"
+      },
+      "archive": "Archivieren",
+      "archiving": "Wird archiviert…",
+      "restore": "Wiederherstellen",
+      "restoring": "Wird wiederhergestellt…",
+      "archiveConfirmTitle": "Diesen Eigentümer archivieren?",
+      "archiveConfirmMessage": "{name} wird in deiner Eigentümerliste ausgeblendet. Du kannst diesen Eigentümer später wiederherstellen.",
+      "archivedToast": "{name} wurde archiviert.",
+      "restoredToast": "{name} wurde wiederhergestellt.",
+      "archiveBlocked": "{name} kann noch nicht archiviert werden, weil dieser Eigentümer noch aktuelle oder künftige Eigentumsanteile hat. Entferne {name} zuerst aus den Anteilen dieser Unterkünfte und archiviere dann erneut."
+    },
+    "shares": {
+      "title": "Eigentumsanteile festlegen",
+      "propertyLabel": "Unterkunft",
+      "propertyPlaceholder": "Unterkunft auswählen",
+      "dateLabel": "Anteile gelten ab",
+      "ownerColumn": "Eigentümer",
+      "percentColumn": "Anteil (%)",
+      "chooseOwner": "Eigentümer auswählen",
+      "totalLabel": "Summe",
+      "totalValue": "{percent}% von 100%",
+      "addOwner": "Eigentümer hinzufügen",
+      "removeOwner": "Entfernen",
+      "removeOwnerLabel": "{name} entfernen",
+      "save": "Anteile speichern",
+      "saving": "Wird gespeichert…",
+      "cancel": "Abbrechen",
+      "plannedChangeWarning": "Für diese Unterkunft ist bereits eine Änderung der Eigentumsverhältnisse ab {date} geplant. Beim Speichern wird jede geplante Änderung ab dem gewählten Datum ersetzt.",
+      "savedToast": "Die Anteile von {property} wurden gespeichert. Sie gelten ab {date}.",
+      "upcomingTitle": "Geplant nach dieser Änderung",
+      "errorChangedToday": "Die Eigentumsverhältnisse dieser Unterkunft wurden heute bereits geändert. Wähle morgen oder ein späteres Datum.",
+      "errorArchivedOwner": "Einer dieser Eigentümer ist archiviert, und archivierte Eigentümer können keine Anteile erhalten. Entferne diesen Eigentümer aus der Liste oder stelle ihn zuerst wieder her.",
+      "errorConflict": "Die Eigentumsverhältnisse dieser Unterkunft wurden gleichzeitig geändert. Lade die Seite neu und versuche es noch einmal.",
+      "errors": {
+        "propertyRequired": "Wähle eine Unterkunft aus.",
+        "dateRequired": "Wähle das Datum, ab dem die Anteile gelten.",
+        "dateInvalid": "Gib ein gültiges Datum ein.",
+        "dateBeforeToday": "Das Datum darf nicht vor heute liegen.",
+        "dateTooLate": "Das Datum darf höchstens 5 Jahre nach heute liegen.",
+        "sharesRequired": "Füge mindestens einen Eigentümer hinzu. Eine Unterkunft kann nicht ohne Eigentümer bleiben.",
+        "totalMismatch": "Die Anteile müssen zusammen genau 100% ergeben.",
+        "ownerRequired": "Wähle einen Eigentümer aus.",
+        "ownerDuplicate": "Dieser Eigentümer steht bereits in der Liste.",
+        "percentRequired": "Gib einen Anteil ein.",
+        "percentInvalid": "Gib einen Prozentsatz von 0,01 bis 100 ein, mit höchstens 2 Nachkommastellen.",
+        "percentZero": "Ein Anteil muss mindestens 0,01% betragen. Entferne den Eigentümer stattdessen."
+      }
+    }
+  },
+  "hostIntegrations": {
+    "title": "Integrations-Marktplatz",
+    "subtitle": "Verbinde die Tools, die du schon nutzt, mit Domits und sieh, was als Nächstes kommt.",
+    "listLabel": "Integrationen",
+    "setUpWhatsApp": "WhatsApp einrichten",
+    "talkToSales": "Vertrieb kontaktieren",
+    "statuses": {
+      "available": "Verfügbar",
+      "in_development": "In Entwicklung",
+      "on_request": "Auf Anfrage"
+    },
+    "categories": {
+      "revenue_management": "Revenue Management",
+      "channel_management": "Channel Management",
+      "guest_protection": "Gästeschutz",
+      "smart_locks": "Smarte Schlösser",
+      "guest_communication": "Gästekommunikation"
+    },
+    "descriptions": {
+      "pricelabs": "Optimiere deine Übernachtungspreise mit dynamischer Preisgestaltung auf Basis der Marktnachfrage und der Leistung deiner Unterkunft.",
+      "channex": "Verwalte Verfügbarkeit, Preise und Reservierungen deiner Unterkunft über mehrere Buchungskanäle mit einer einzigen Verbindung.",
+      "siteminder": "Verbinde deine Verwaltungs- und Vertriebsabläufe mit dem Hospitality-Technologie-Ökosystem von SiteMinder.",
+      "truvi": "Sorge für sicherere Buchungen mit Gäste-Screening und Lösungen für das Risikomanagement.",
+      "remotelock": "Vereinfache den Zugang zu deiner Unterkunft mit vernetzten smarten Schlössern und automatischer Zugangsverwaltung.",
+      "whatsapp": "Kommuniziere mit Gästen über WhatsApp als Teil der Verwaltung deiner Unterkunft."
     }
   }
 }

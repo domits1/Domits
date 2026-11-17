@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { sendMessage as sendWebSocketMessage } from "../services/websocket";
-import { sendUnifiedMessage } from "../services/messagingService";
+import { sendUnifiedMessage, retryUnifiedMessage } from "../services/messagingService";
 import { getAccessToken } from "../../../../services/getAccessToken";
 
 const pick = (...vals) => vals.find((v) => v !== undefined && v !== null);
@@ -109,11 +109,22 @@ export const useSendMessage = (userId, accessToken = null) => {
       };
     } catch (err) {
       setError(err);
-      return { success: false, error: err?.message || String(err) };
+      return { success: false, error: err?.message || String(err), saved: err?.savedMessage ?? null };
     } finally {
       setSending(false);
     }
   };
 
-  return { sendMessage: sendMessageHandler, sending, error };
+  const retryMessageHandler = async (messageId) => {
+    try {
+      const token = requireToken(accessToken || (await Promise.resolve(getAccessToken(userId))));
+      const saved = await retryUnifiedMessage({ messageId, token });
+      return { success: true, saved };
+    } catch (err) {
+      setError(err);
+      return { success: false, error: err?.message || String(err), saved: err?.savedMessage ?? null };
+    }
+  };
+
+  return { sendMessage: sendMessageHandler, retryMessage: retryMessageHandler, sending, error };
 };

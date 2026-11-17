@@ -30,6 +30,8 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/connect$/ },
   { methods: ["POST"], pattern: /\/integrations\/channex\/disconnect$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/status$/ },
+  // Shows every Channex account, so admins only (#2869, design note D1).
+  { methods: ["GET"], pattern: /\/integrations\/channex\/health$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/properties$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/room-types$/ },
   { methods: ["GET"], pattern: /\/integrations\/channex\/rate-plans$/ },
@@ -72,10 +74,6 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/sync\/full$/ },
   {
     methods: ["POST"],
-    pattern: /\/integrations\/channex\/certification\/cancel-booking$/,
-  },
-  {
-    methods: ["POST"],
     pattern: /\/integrations\/channex\/bookings\/receive$/,
   },
   {
@@ -95,8 +93,11 @@ const protectedChannexCertificationAdminRoutes = [
   { methods: ["POST"], pattern: /\/integrations\/channex\/rate-plans$/ },
 ];
 
+// endsWith, not includes: the Channex message webhook at /webhooks/channex (#3447) is not ours.
+const CHANNEX_BOOKING_WEBHOOK_PATH = "/webhooks/channex/bookings";
+const isChannexBookingWebhookPath = (path) => String(path || "").endsWith(CHANNEX_BOOKING_WEBHOOK_PATH);
 const isChannelHttpPath = (path) =>
-  /\/integrations\/(?:channex|holidu)(?:\/|$)/.test(String(path || ""));
+  /\/integrations\/(?:channex|holidu)(?:\/|$)/.test(String(path || "")) || isChannexBookingWebhookPath(path);
 const isChannexBookingPollEvent = (event) =>
   event?.source === CHANNEX_BOOKING_POLL_EVENT_SOURCE ||
   event?.action === CHANNEX_BOOKING_POLL_EVENT_ACTION ||
@@ -123,6 +124,8 @@ const internalTokenRoutePaths = [
 const isInternalTokenRoute = (method, path) =>
   method === "POST" &&
   internalTokenRoutePaths.some((routePath) => String(path || "").endsWith(routePath));
+// Called by Channex and authorized by the X-Channex-Webhook-Secret header in the controller, never by a user token.
+const isChannexBookingWebhookRoute = (method, path) => method === "POST" && isChannexBookingWebhookPath(path);
 const shouldRejectChannexCertificationAdminRequest = (event, userId) =>
   isProtectedChannexCertificationAdminRoute(event?.httpMethod, event?.path) &&
   !isChannexCertificationUserAllowed(userId);
@@ -165,6 +168,7 @@ const routeDefinitions = [
   ["POST", "/integrations/channex/connect", "connectChannex"],
   ["GET", "/integrations/holidu/status", "checkHoliduStatus"],
   ["GET", "/integrations/channex/status", "checkChannexStatus"],
+  ["GET", "/integrations/channex/health", "getChannexHealth"],
   [
     "GET",
     "/integrations/channex/admin-access",
@@ -252,11 +256,7 @@ const routeDefinitions = [
   ],
   ["POST", "/integrations/channex/sync/ari", "syncChannexAri"],
   ["POST", "/integrations/channex/sync/full", "syncChannexFull"],
-  [
-    "POST",
-    "/integrations/channex/certification/cancel-booking",
-    "cancelChannexCertificationBooking",
-  ],
+  ["POST", CHANNEX_BOOKING_WEBHOOK_PATH, "receiveChannexBookingWebhook"],
   ["POST", "/integrations/channex/rate-plans", "linkChannexRatePlan"],
   ["POST", "/integrations/channex/room-types", "linkChannexRoomType"],
   ["POST", "/integrations/channex/properties", "linkChannexProperty"],
@@ -368,7 +368,7 @@ export const handleChannelManagementEvent = async (event, context) => {
 
     const routeHandler = findRouteHandler(httpMethod, path);
     if (!routeHandler) return createLambdaResponse(notFound);
-    if (isInternalTokenRoute(httpMethod, path)) {
+    if (isInternalTokenRoute(httpMethod, path) || isChannexBookingWebhookRoute(httpMethod, path)) {
       return createLambdaResponse(await routeHandler(event));
     }
 
@@ -429,7 +429,7 @@ export const handleChannelManagementEvent = async (event, context) => {
           errorName: error?.name ?? null,
           errorMessage:
             error?.message ??
-            "Unhandled Channex full certification sync error.",
+            "Unhandled Channex full sync error.",
           stackSummary: summarizeErrorStack(error),
         })
       );
@@ -439,18 +439,18 @@ export const handleChannelManagementEvent = async (event, context) => {
           fullCertificationSyncVersion:
             CHANNEX_FULL_CERTIFICATION_SYNC_VERSION,
           stage: "handler_catch",
-          error: "Failed to run Channex certification full sync.",
+          error: "Failed to run the Channex full sync.",
           errorCode: "CHANNEX_CERTIFICATION_FULL_SYNC_FAILED",
           errorName: error?.name ?? null,
           errorMessage:
             error?.message ??
-            "Unhandled Channex full certification sync error.",
+            "Unhandled Channex full sync error.",
           stackSummary: summarizeErrorStack(error),
           details: {
             name: error?.name ?? null,
             message:
               error?.message ??
-              "Unhandled Channex full certification sync error.",
+              "Unhandled Channex full sync error.",
           },
         },
       });

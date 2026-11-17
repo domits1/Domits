@@ -27,19 +27,30 @@ const createWorker = (overrides = {}) => {
   const props = { listActiveByDomitsPropertyId: jest.fn(async () => [{ integrationAccountId: "account-1" }]) };
   const accounts = {
     getById: jest.fn(async () => ({ id: "account-1", userId: "owner-1", channel: "CHANNEX", status: "CONNECTED" })),
+    update: jest.fn(async () => null),
   };
   const sync = {
     tryAcquireLock: jest.fn(async () => ({ acquired: true })),
     releaseLock: jest.fn(async () => undefined),
   };
   const syncCalendarChange = jest.fn(async () => sent);
-  const deps = { outbox, props, accounts, sync, syncCalendarChange, now: () => NOW, random: () => 0, log: { error: jest.fn() }, ...overrides };
+  const deps = {
+    outbox,
+    props,
+    accounts,
+    sync,
+    syncCalendarChange,
+    now: () => NOW,
+    random: () => 0,
+    log: { error: jest.fn(), warn: jest.fn() },
+    ...overrides,
+  };
   return { worker: new ChannexAriOutboxWorker(deps), ...deps };
 };
 
 describe("ChannexAriOutboxWorker.processProperty", () => {
   test("sends the claimed change as the account owner, with a timeout, and marks it PROCESSED", async () => {
-    const { worker, syncCalendarChange, outbox } = createWorker();
+    const { worker, syncCalendarChange, outbox, log } = createWorker();
 
     const outcome = await worker.processProperty("property-1", { runStartedAt: NOW });
 
@@ -55,6 +66,7 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     );
     expect(outbox.markProcessed).toHaveBeenCalledWith(["row-1"], { now: NOW, sentSummary: { taskIds: ["task-1"], calls: 1 } });
     expect(outcome).toBe("PROCESSED");
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   test("takes the per-property lock and always releases it", async () => {
@@ -110,15 +122,88 @@ describe("ChannexAriOutboxWorker.processProperty", () => {
     expect(outbox.returnToPending).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_RATE_LIMITED", nextAttemptAt: NOW + 60_000 });
   });
 
-  test("marks the rows FAILED when Channex rejects the API key", async () => {
-    const { worker, syncCalendarChange, outbox } = createWorker();
+  // A 401 means the key itself is rejected: every next call with it would fail too (#3572).
+  // Every change of the property waits the same way, also the one that got the 401: the full
+  // sync after a new key is connected sends the current state of all of them.
+  test("marks the account RECONNECT_REQUIRED, stops sending and skips every change after a 401", async () => {
+    const { worker, syncCalendarChange, outbox, accounts, log } = createWorker();
+    outbox.claim.mockResolvedValue([
+      claimedRow({ id: "row-rates", changeTypes: ["rates"] }),
+      // Other dates, so it goes out in a call of its own.
+      claimedRow({ id: "row-availability", changeTypes: ["availability"], dateFrom: 20261120, dateTo: 20261120 }),
+    ]);
     syncCalendarChange.mockResolvedValue({
       statusCode: 500,
       response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 401, errorCode: "CHANNEX_UNAUTHORIZED" }] }] },
     });
 
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("SKIPPED");
+
+    expect(syncCalendarChange).toHaveBeenCalledTimes(1);
+    expect(accounts.update).toHaveBeenCalledWith(
+      "account-1",
+      expect.objectContaining({ status: "RECONNECT_REQUIRED", lastErrorCode: "CHANNEX_API_KEY_REJECTED" })
+    );
+    expect(outbox.markSkipped).toHaveBeenCalledWith(["row-rates", "row-availability"], {
+      now: NOW,
+      failureReason: "RECONNECT_REQUIRED",
+    });
+    expect(outbox.markFailed).not.toHaveBeenCalled();
+    expect(JSON.parse(log.warn.mock.calls[0][0])).toEqual({
+      event: "CHANNEX_ACCOUNT_RECONNECT_REQUIRED",
+      integrationAccountId: "account-1",
+      source: "ARI_OUTBOX",
+    });
+  });
+
+  // A 403 can mean the key has no access to this one property, so the account stays connected.
+  test("keeps the account connected after a 403", async () => {
+    const { worker, syncCalendarChange, outbox, accounts } = createWorker();
+    syncCalendarChange.mockResolvedValue({
+      statusCode: 500,
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 403, errorCode: "CHANNEX_FORBIDDEN" }] }] },
+    });
+
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
-    expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_UNAUTHORIZED" });
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_FORBIDDEN" });
+    expect(accounts.update).not.toHaveBeenCalled();
+  });
+
+  // The alarm on failed changes (#3620) is a CloudWatch metric filter on this one line.
+  test("logs one alert line when rows end as FAILED", async () => {
+    const { worker, syncCalendarChange, log } = createWorker();
+    syncCalendarChange.mockResolvedValue({
+      statusCode: 500,
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 403, errorCode: "CHANNEX_FORBIDDEN" }] }] },
+    });
+
+    await worker.processProperty("property-1", { runStartedAt: NOW });
+
+    expect(log.error).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(log.error.mock.calls[0][0])).toEqual({
+      event: "CHANNEX_ARI_OUTBOX_ROWS_FAILED",
+      domitsPropertyId: "property-1",
+      count: 1,
+      reason: "CHANNEX_FORBIDDEN",
+    });
+  });
+
+  test("a failing alert line does not change how the FAILED rows are recorded", async () => {
+    const { worker, syncCalendarChange, outbox } = createWorker({
+      log: {
+        error: jest.fn(() => {
+          throw new Error("log unavailable");
+        }),
+      },
+    });
+    syncCalendarChange.mockResolvedValue({
+      statusCode: 500,
+      response: { ready: true, steps: [{ results: [{ success: false, httpStatus: 403, errorCode: "CHANNEX_FORBIDDEN" }] }] },
+    });
+
+    await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
+    expect(outbox.markFailed).toHaveBeenCalledWith(["row-1"], { now: NOW, failureReason: "CHANNEX_FORBIDDEN" });
+    expect(outbox.returnToPending).not.toHaveBeenCalled();
   });
 
   // The first call goes through and the second fails; only the row the first call
@@ -345,7 +430,7 @@ describe("ChannexAriOutboxWorker call limit", () => {
   });
 
   test("a row too wide to ever fit in one run ends as FAILED after its last attempt", async () => {
-    const { worker, outbox } = createWorker();
+    const { worker, outbox, log } = createWorker();
     outbox.claim.mockResolvedValue([
       claimedRow({ id: "row-wide", changeTypes: ["availability"], dateFrom: spanDate(0), dateTo: spanDate(11), attemptCount: 8 }),
     ]);
@@ -353,5 +438,10 @@ describe("ChannexAriOutboxWorker call limit", () => {
     await expect(worker.processProperty("property-1", { runStartedAt: NOW })).resolves.toBe("FAILED");
     expect(outbox.markFailed).toHaveBeenCalledWith(["row-wide"], { now: NOW, failureReason: "MAX_ATTEMPTS_EXCEEDED" });
     expect(outbox.release).not.toHaveBeenCalled();
+    expect(JSON.parse(log.error.mock.calls[0][0])).toMatchObject({
+      event: "CHANNEX_ARI_OUTBOX_ROWS_FAILED",
+      count: 1,
+      reason: "MAX_ATTEMPTS_EXCEEDED",
+    });
   });
 });

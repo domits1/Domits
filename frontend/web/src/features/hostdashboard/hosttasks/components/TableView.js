@@ -113,6 +113,9 @@ const TableView = ({
                                             <div className="truncate-text">
                                                 <strong>{task.title}</strong>
                                             </div>
+                                            {task.source === 'automation' && (
+                                                <span className="badge-auto-created">Auto</span>
+                                            )}
                                         </div>
                                     </td>
                                     <td>{getPropertyLabel(task)}</td>
@@ -128,6 +131,9 @@ const TableView = ({
                                         <span className={`badge-status ${displayStatus.toLowerCase().replace(' ', '-')}`}>
                                             ● {displayStatus}
                                         </span>
+                                        {task.slaStatus === 'AT_RISK' && (
+                                            <span className="badge-sla-at-risk">At risk</span>
+                                        )}
                                     </td>
                                 </tr>
                             )})

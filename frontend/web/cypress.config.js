@@ -4,7 +4,7 @@ module.exports = {
     setupNodeEvents(on, config) {
 
     },
-    specPattern: "src/tests/cypress/**/*.cy.js", 
+    specPattern: ["src/tests/cypress/**/*.cy.js", "src/features/review/tests/cypress/e2e/*.cy.js"],
     supportFile: false, 
   },
 };

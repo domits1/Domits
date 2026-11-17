@@ -53,6 +53,7 @@ export default class IngestionService {
 
     const incoming = Array.isArray(payload?.messages) ? payload.messages : [];
     let inserted = 0;
+    const insertedMessageIds = {};
     let lastSuccessfulItemAt = null;
 
     for (const m of incoming) {
@@ -62,7 +63,7 @@ export default class IngestionService {
       const externalCreatedAt = normalizeExternalCreatedAt(m.externalCreatedAt);
       const direction = m.direction || "INBOUND";
 
-      const didInsert = await this.messageRepo.createMessageIfNotExists({
+      const storedMessage = await this.messageRepo.createMessageIfNotExists({
         threadId: thread.id,
         senderId: m.senderId,
         recipientId: m.recipientId,
@@ -81,8 +82,9 @@ export default class IngestionService {
         attachments: toNullableJsonString(m.attachments),
       });
 
-      if (didInsert) {
+      if (storedMessage) {
         inserted += 1;
+        if (platformMessageId) insertedMessageIds[platformMessageId] = storedMessage.id;
         if (Number.isFinite(externalCreatedAt)) {
           lastSuccessfulItemAt = Math.max(lastSuccessfulItemAt ?? 0, externalCreatedAt);
         }
@@ -101,6 +103,7 @@ export default class IngestionService {
         ok: true,
         threadId: thread.id,
         insertedMessages: inserted,
+        insertedMessageIds,
         lastSuccessfulItemAt,
       },
     };

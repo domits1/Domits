@@ -4,6 +4,9 @@ const mockChannelManagementControllerMethods = {
   syncChannexBookingAvailability: jest.fn(),
   syncChannexCalendarChange: jest.fn(),
   pollLatestChannexBookings: jest.fn(),
+  pullLatestChannexBookings: jest.fn(),
+  receiveChannexBookingWebhook: jest.fn(),
+  getChannexHealth: jest.fn(),
 };
 
 jest.mock("../.shared/channelManagement/controller/channelManagementController.js", () => ({
@@ -127,6 +130,86 @@ describe("ChannelManagement handler contracts", () => {
     expect(response.statusCode).toBe(200);
     expect(parseBody(response)).toEqual(disabledResponse);
     expect(mockChannelManagementControllerMethods.pollLatestChannexBookings).toHaveBeenCalledWith(event);
+  });
+
+  // Channex has no Cognito token; the controller checks the X-Channex-Webhook-Secret header instead.
+  test("POST /webhooks/channex/bookings reaches the controller without Cognito claims", async () => {
+    mockChannelManagementControllerMethods.receiveChannexBookingWebhook.mockResolvedValue({
+      statusCode: 200,
+      response: { outcome: "PROCESSED" },
+    });
+    const event = buildHttpEvent({
+      method: "POST",
+      path: "/default/webhooks/channex/bookings",
+      headers: { "X-Channex-Webhook-Secret": "secret" },
+      body: JSON.stringify({ event: "booking", property_id: "channex-1" }),
+    });
+
+    const response = await handler(event);
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ outcome: "PROCESSED" });
+    expect(mockChannelManagementControllerMethods.receiveChannexBookingWebhook).toHaveBeenCalledWith(event);
+  });
+
+  test("other methods on the webhook path are not found", async () => {
+    const response = await handler(buildHttpEvent({ method: "GET", path: "/default/webhooks/channex/bookings" }));
+
+    expect(response.statusCode).toBe(404);
+    expect(mockChannelManagementControllerMethods.receiveChannexBookingWebhook).not.toHaveBeenCalled();
+  });
+
+  // The webhook exemption must not open any other channel route.
+  test("an existing booking route still requires Cognito claims", async () => {
+    const response = await handler(
+      buildHttpEvent({ method: "POST", path: "/default/integrations/channex/bookings/pull" })
+    );
+
+    expect(response.statusCode).toBe(401);
+    expect(mockChannelManagementControllerMethods.pullLatestChannexBookings).not.toHaveBeenCalled();
+  });
+
+  // #3447 serves Channex message webhooks at /webhooks/channex in UnifiedMessaging; the channel handler
+  // must leave that path alone so UnifiedMessaging's own routes handle it.
+  test("the shared handler does not claim the message webhook path", async () => {
+    const { handleChannelManagementEvent } = require("../.shared/channelManagement/handler/channelManagementHandler.js");
+
+    const response = await handleChannelManagementEvent(
+      buildHttpEvent({ method: "POST", path: "/default/webhooks/channex", body: "{}" })
+    );
+
+    expect(response).toBeNull();
+    expect(mockChannelManagementControllerMethods.receiveChannexBookingWebhook).not.toHaveBeenCalled();
+  });
+
+  // The health view shows every Channex account, so only the Channex admin allowlist may read it (#2869, D1).
+  test("GET /integrations/channex/health answers an allowlisted admin", async () => {
+    mockChannelManagementControllerMethods.getChannexHealth.mockResolvedValue({
+      statusCode: 200,
+      response: { status: "HEALTHY" },
+    });
+
+    const response = await handler(buildHttpEvent({ path: "/default/integrations/channex/health", sub: "host-1" }));
+
+    expect(response.statusCode).toBe(200);
+    expect(parseBody(response)).toEqual({ status: "HEALTHY" });
+    expect(mockChannelManagementControllerMethods.getChannexHealth).toHaveBeenCalledTimes(1);
+  });
+
+  test("GET /integrations/channex/health refuses a signed-in user who is not on the allowlist", async () => {
+    const response = await handler(
+      buildHttpEvent({ path: "/default/integrations/channex/health", sub: "someone-else" })
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(mockChannelManagementControllerMethods.getChannexHealth).not.toHaveBeenCalled();
+  });
+
+  test("GET /integrations/channex/health requires Cognito claims", async () => {
+    const response = await handler(buildHttpEvent({ path: "/default/integrations/channex/health" }));
+
+    expect(response.statusCode).toBe(401);
+    expect(mockChannelManagementControllerMethods.getChannexHealth).not.toHaveBeenCalled();
   });
 
   test("unsupported channel routes return a clean 404 without invoking polling", async () => {

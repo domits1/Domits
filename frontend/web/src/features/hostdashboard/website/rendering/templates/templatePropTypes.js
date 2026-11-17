@@ -138,6 +138,13 @@ export const quoteContextPropType = PropTypes.shape({
   siteId: PropTypes.string,
 });
 
+export const sitePagesPropType = PropTypes.objectOf(
+  PropTypes.shape({
+    enabled: PropTypes.bool,
+    navLabel: PropTypes.string,
+  })
+);
+
 export const templateInteractionPropTypes = {
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,

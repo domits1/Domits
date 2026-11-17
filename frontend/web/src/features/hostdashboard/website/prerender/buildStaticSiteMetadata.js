@@ -1,7 +1,14 @@
+import { S3_ACCOMMODATION_URL } from "../../../../utils/accommodationImage";
+import amenitiesCatalog from "../../../../store/amenities";
+
 const DESCRIPTION_MAX_LENGTH = 160;
 const HOSTNAME_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 const REGIONAL_LOCALE_PATTERN = /^([a-z]{2,3})[_-]([a-z]{2})$/i;
 const EMBEDDED_DATA_URI_PATTERN = /data:[a-z]+\/[a-z0-9+.-]+/i;
+const MAX_STATIC_SITE_GALLERY_IMAGES = 6;
+const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const PHOTO_FILE_PATTERN = /^(web|thumb|original)\.(jpe?g|png|webp|avif|gif)$/i;
 export const MODEL_FALLBACK_TITLE = "Untitled listing";
 
 const cleanText = (value) => {
@@ -14,6 +21,8 @@ const cleanText = (value) => {
 };
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const CATALOG_AMENITY_NAMES = new Map(amenitiesCatalog.map(({ id, amenity }) => [cleanText(id), cleanText(amenity)]));
 
 const truncateAtWordBoundary = (value, maxLength) => {
   if (value.length <= maxLength) {
@@ -38,6 +47,84 @@ export const resolveStaticSiteImageUrl = (value) => {
 
   return candidate;
 };
+
+export const isStaticSiteSectionVisible = (model, sectionKey) => model?.visibility?.[sectionKey] !== false;
+
+export const selectStaticSiteGalleryImages = (model) =>
+  [...new Set(toArray(model?.media?.galleryImages).map(resolveStaticSiteImageUrl).filter(Boolean))].slice(
+    0,
+    MAX_STATIC_SITE_GALLERY_IMAGES
+  );
+
+export const selectStaticSiteAmenities = (model) =>
+  toArray(model?.amenities?.featured)
+    .map((amenity) => cleanText(amenity?.label))
+    .filter(Boolean);
+
+const resolveTimeOfDay = (value) => {
+  const match = TIME_OF_DAY_PATTERN.exec(cleanText(value));
+  return match ? `${match[1]}:${match[2]}:${match[3] ?? "00"}` : "";
+};
+
+const resolveCatalogAmenityName = (amenity) => {
+  const catalogName = CATALOG_AMENITY_NAMES.get(cleanText(amenity?.id));
+  return catalogName && cleanText(amenity?.label) === catalogName ? catalogName : "";
+};
+
+const resolveCount = (value) => (typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0);
+
+const buildAccommodation = (model) => {
+  const guests = resolveCount(model?.stay?.guests);
+  const bedrooms = resolveCount(model?.stay?.bedrooms);
+  const bathrooms = resolveCount(model?.stay?.bathrooms);
+  if (!guests && !bedrooms && !bathrooms) {
+    return null;
+  }
+
+  return {
+    "@type": "Accommodation",
+    ...(guests ? { occupancy: { "@type": "QuantitativeValue", value: guests } } : {}),
+    ...(bedrooms ? { numberOfBedrooms: bedrooms } : {}),
+    ...(bathrooms ? { numberOfBathroomsTotal: bathrooms } : {}),
+  };
+};
+
+const buildAmenityFeatures = (model) => {
+  if (!isStaticSiteSectionVisible(model, "amenitiesPanel")) {
+    return [];
+  }
+
+  return toArray(model?.amenities?.featured)
+    .map(resolveCatalogAmenityName)
+    .filter(Boolean)
+    .map((name) => ({
+      "@type": "LocationFeatureSpecification",
+      name,
+      value: true,
+    }));
+};
+
+const isListingPhotoUrl = (imageUrl) => {
+  if (!imageUrl.startsWith(S3_ACCOMMODATION_URL)) {
+    return false;
+  }
+
+  const [folder, propertyId, imageId, ...rest] = imageUrl.slice(S3_ACCOMMODATION_URL.length).split("/");
+  if (folder !== "images" || !UUID_PATTERN.test(propertyId) || !UUID_PATTERN.test(imageId)) {
+    return false;
+  }
+
+  return rest.length === 0 || (rest.length === 1 && PHOTO_FILE_PATTERN.test(rest[0]));
+};
+
+const selectStaticSiteImages = (model) => [
+  ...new Set(
+    [
+      resolveStaticSiteImageUrl(model?.media?.heroImage),
+      ...(isStaticSiteSectionVisible(model, "gallerySection") ? selectStaticSiteGalleryImages(model) : []),
+    ].filter((imageUrl) => imageUrl && isListingPhotoUrl(imageUrl))
+  ),
+];
 
 export const resolveOpenGraphLocale = (locale) => {
   const match = REGIONAL_LOCALE_PATTERN.exec(cleanText(locale));
@@ -124,12 +211,32 @@ const buildJsonLd = ({ model, name, description, canonicalUrl }) => {
   if (canonicalUrl) {
     jsonLd.url = canonicalUrl;
   }
+  const images = selectStaticSiteImages(model);
+  if (images.length > 0) {
+    jsonLd.image = images;
+  }
   if (city || country) {
     jsonLd.address = {
       "@type": "PostalAddress",
       ...(city ? { addressLocality: city } : {}),
       ...(country ? { addressCountry: country } : {}),
     };
+  }
+  const amenityFeature = buildAmenityFeatures(model);
+  if (amenityFeature.length > 0) {
+    jsonLd.amenityFeature = amenityFeature;
+  }
+  const checkinTime = resolveTimeOfDay(model?.stay?.checkInLabel);
+  if (checkinTime) {
+    jsonLd.checkinTime = checkinTime;
+  }
+  const checkoutTime = resolveTimeOfDay(model?.stay?.checkOutLabel);
+  if (checkoutTime) {
+    jsonLd.checkoutTime = checkoutTime;
+  }
+  const accommodation = buildAccommodation(model);
+  if (accommodation) {
+    jsonLd.containsPlace = accommodation;
   }
 
   return jsonLd;
