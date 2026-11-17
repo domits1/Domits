@@ -50,6 +50,7 @@ const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBas
     title: model.hero.title,
     overviewHref,
     propertyHref: buildSitePropertyHref(pageBasePath, property.slug, SITE_PROPERTY_PAGE_KINDS.property, staySearch),
+    photosHref: buildSitePropertyHref(pageBasePath, property.slug, SITE_PROPERTY_PAGE_KINDS.photos, staySearch),
     navItems: buildSitePropertyNavItems({ sitePages: model.sitePages, overviewHref, pageBasePath, pageSearch }),
     stay,
     booking: quoteSiteId

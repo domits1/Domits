@@ -1032,6 +1032,30 @@ describe("the photos page of a property of an Elite website", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
+  it("follows View all photos and Back with the stay, without loading the site again", async () => {
+    globalThis.fetch = jest.fn(async () => quoteResponse("property-b"));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    const photosLink = await screen.findByRole("link", { name: "View all photos" });
+    expect(photosLink).toHaveAttribute("href", `/properties/villa-b/photos?${STAY_QUERY}`);
+
+    fireEvent.click(photosLink);
+    fireEvent.click(await screen.findByRole("link", { name: "Back to Villa B" }));
+
+    expect(await screen.findByLabelText("Check in")).toHaveValue("2099-01-10");
+    expect(`${globalThis.location.pathname}${globalThis.location.search}`).toBe(`/properties/villa-b?${STAY_QUERY}`);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves View all photos out for a property without photos", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
+    );
+    renderAppAt("/properties/villa-c");
+    await waitForPropertyPage();
+
+    expect(screen.queryByRole("link", { name: "View all photos" })).toBeNull();
+  });
+
   it("keeps only a valid stay in the way back", async () => {
     renderAppAt("/properties/villa-b/photos?checkIn=2000-01-01&checkOut=2000-01-05&guests=3&ref=mail");
 

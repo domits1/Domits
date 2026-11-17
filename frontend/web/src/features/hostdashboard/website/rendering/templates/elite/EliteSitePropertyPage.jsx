@@ -6,7 +6,7 @@ import ElitePageHeader from "./ElitePageHeader";
 import EliteAccommodationPage from "./EliteAccommodationPage";
 import EliteFooter from "./EliteFooter";
 import EliteSitePropertyPhotos from "./EliteSitePropertyPhotos";
-import { resolveEliteLocation } from "./eliteSitePageContent";
+import { hasEliteGalleryPhotos, resolveEliteLocation } from "./eliteSitePageContent";
 import { sitePropertyPagePropType } from "../templatePropTypes";
 import { SITE_PROPERTY_PAGE_KINDS } from "../../websiteSiteProperties";
 
@@ -22,7 +22,7 @@ export default function EliteSitePropertyPage({
   onOpenGalleryBrowser,
   canOpenGalleryBrowser,
 }) {
-  const { kind, title, overviewHref, propertyHref, booking, stay, buildRequestHref } = sitePropertyPage;
+  const { kind, title, overviewHref, propertyHref, photosHref, booking, stay, buildRequestHref } = sitePropertyPage;
   const isPhotosPage = kind === SITE_PROPERTY_PAGE_KINDS.photos;
   const location = resolveEliteLocation(model);
   const overviewLink = (
@@ -58,6 +58,13 @@ export default function EliteSitePropertyPage({
       />
     </Suspense>
   ) : null;
+  const photosLink = hasEliteGalleryPhotos(model.media) ? (
+    <p className={`${styles.eliteSection} ${styles.elitePhotosLink}`}>
+      <PanoramaPageLink href={photosHref} className={styles.eliteTextButton}>
+        View all photos
+      </PanoramaPageLink>
+    </p>
+  ) : null;
 
   return (
     <div
@@ -86,6 +93,7 @@ export default function EliteSitePropertyPage({
           availabilityHref=""
           onShowAllAmenities={onShowAllAmenities}
           bookingPanel={bookingPanel}
+          photosLink={photosLink}
         />
       )}
       <EliteFooter title={model.site.title} location={location} />

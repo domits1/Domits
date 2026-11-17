@@ -39,6 +39,7 @@ const renderPhotosPage = (model, title = "Villa B") =>
           title,
           overviewHref: "/",
           propertyHref: "/properties/villa-b",
+          photosHref: "/properties/villa-b/photos",
           navItems: [],
           stay: { checkIn: null, checkOut: null, guests: null },
           booking: null,
