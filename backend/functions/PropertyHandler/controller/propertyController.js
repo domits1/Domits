@@ -24,7 +24,7 @@ import { DirectBookingWebsiteRatePlanService } from "../business/service/directB
 import { WebsiteElitePageSettings } from "../business/service/websiteElitePageSettings.js";
 import {
     SITE_PROPERTIES_OVERRIDE_KEY,
-    listOtherSitePropertyIds,
+    listNewSitePropertyIds,
     withNormalizedSiteProperties,
 } from "../business/service/websiteSiteProperties.js";
 import { WebsiteSitePropertySnapshots } from "../business/service/websiteSitePropertySnapshots.js";
@@ -1484,9 +1484,9 @@ export class PropertyController {
         );
     }
 
-    async authorizeSitePropertyOwners(accessToken, mainPropertyId, overridesList) {
+    async authorizeSitePropertyOwners(accessToken, mainPropertyId, overridesList, storedOverridesList = []) {
         const sitePropertyIds = new Set(
-            overridesList.flatMap((overrides) => listOtherSitePropertyIds(overrides, mainPropertyId))
+            overridesList.flatMap((overrides) => listNewSitePropertyIds(overrides, mainPropertyId, storedOverridesList))
         );
         for (const sitePropertyId of sitePropertyIds) {
             try {
@@ -2899,11 +2899,13 @@ export class PropertyController {
             const checkedContentOverrides = withNormalizedSiteProperties(contentOverrides, propertyId);
             const checkedPublishedContentOverrides = withNormalizedSiteProperties(publishedContentOverrides, propertyId);
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
-            await this.authorizeSitePropertyOwners(accessToken, propertyId, [
-                checkedContentOverrides,
-                checkedPublishedContentOverrides,
-            ]);
             const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            await this.authorizeSitePropertyOwners(
+                accessToken,
+                propertyId,
+                [checkedContentOverrides, checkedPublishedContentOverrides],
+                [existingDraft?.contentOverrides, existingDraft?.publishedContentOverrides]
+            );
 
             const draft = await this.directBookingWebsiteDraftRepository.upsertDraft({
                 hostId,

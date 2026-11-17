@@ -74,3 +74,13 @@ export const listOtherSitePropertyIds = (overrides, mainPropertyId) => {
     .map((entry) => entry.propertyId)
     .filter((propertyId) => propertyId !== cleanText(mainPropertyId));
 };
+
+const readStoredSitePropertyIds = (overrides) => {
+  const storedList = isPlainObject(overrides) ? overrides[SITE_PROPERTIES_OVERRIDE_KEY] : undefined;
+  return Array.isArray(storedList) ? storedList.filter(isPlainObject).map((entry) => cleanText(entry.propertyId)) : [];
+};
+
+export const listNewSitePropertyIds = (overrides, mainPropertyId, storedOverridesList) => {
+  const storedPropertyIds = new Set(storedOverridesList.flatMap(readStoredSitePropertyIds));
+  return listOtherSitePropertyIds(overrides, mainPropertyId).filter((propertyId) => !storedPropertyIds.has(propertyId));
+};
