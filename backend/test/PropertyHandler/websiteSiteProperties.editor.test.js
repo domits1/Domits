@@ -91,7 +91,26 @@ describe("saving the properties of a website", () => {
     ];
     expect(flow.store.draft.contentOverrides.siteProperties).toEqual(cleaned);
     expect(flow.store.draft.publishedContentOverrides.siteProperties).toEqual(cleaned);
-    expect(flow.controller.authManager.authorizeOwnerRequest.mock.calls.map(([, id]) => id)).toEqual([MAIN, OWN]);
+    expect(flow.controller.authManager.authorizeOwnerRequest.mock.calls).toEqual([
+      ["host-token", MAIN],
+      ["host-token", OWN],
+    ]);
+  });
+
+  it("keeps the checked published list when a later save sends no published overrides", async () => {
+    const flow = buildEditorFlow();
+    await flow.save({ siteProperties: ownList() });
+
+    const saved = await flow.controller.upsertWebsiteDraft(
+      hostEvent({ propertyId: MAIN, templateKey: EXISTING_SITE.templateKey, contentOverrides: { heroTitle: "Villa" } })
+    );
+
+    expect(saved.statusCode).toBe(200);
+    expect(flow.store.draft.contentOverrides).toEqual({ heroTitle: "Villa" });
+    expect(flow.store.draft.publishedContentOverrides.siteProperties.map(({ propertyId }) => propertyId)).toEqual([
+      MAIN,
+      OWN,
+    ]);
   });
 
   it("refuses a property of another host and stores nothing", async () => {
@@ -165,6 +184,7 @@ describe("publishing the properties of a website", () => {
     const published = await flow.publish();
 
     expect(published.statusCode).toBe(200);
+    expect(flow.controller.authManager.authorizeOwnerRequest).toHaveBeenLastCalledWith("host-token", OWN);
     expect(flow.store.site.publishedContentOverrides.siteProperties).toEqual([
       { propertyId: MAIN, slug: "villa-main" },
       { propertyId: OWN, slug: "beach-house" },

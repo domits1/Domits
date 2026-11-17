@@ -138,8 +138,12 @@ export const buildStoringDraftRepository = (store) => ({
       status: input.status,
       contentOverrides: asStored(input.contentOverrides),
       themeOverrides: asStored(input.themeOverrides),
-      publishedContentOverrides: asStored(input.publishedContentOverrides ?? {}),
-      publishedThemeOverrides: asStored(input.publishedThemeOverrides ?? {}),
+      publishedContentOverrides: asStored(
+        input.publishedContentOverrides ?? store.draft?.publishedContentOverrides ?? input.contentOverrides ?? {}
+      ),
+      publishedThemeOverrides: asStored(
+        input.publishedThemeOverrides ?? store.draft?.publishedThemeOverrides ?? input.themeOverrides ?? {}
+      ),
       createdAt: EXISTING_SITE.createdAt,
       updatedAt: EXISTING_SITE.updatedAt,
       lastPreviewBuiltAt: null,
