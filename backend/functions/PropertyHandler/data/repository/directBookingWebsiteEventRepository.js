@@ -634,6 +634,21 @@ export class DirectBookingWebsiteEventRepository {
     );
   }
 
+  async countEventsSince({ hostId, eventType, since }) {
+    const client = await Database.getInstance();
+    const rows = await client.query(
+      `SELECT COUNT(*)::bigint AS total
+       FROM ${eventTableName(resolveSchemaName(client))}
+       WHERE host_id = $1 AND event_type = $2 AND occurred_at >= $3`,
+      [hostId, eventType, since]
+    );
+    const total = Number(rows?.[0]?.total);
+    if (!Number.isFinite(total)) {
+      throw new TypeError("The website event count could not be read.");
+    }
+    return total;
+  }
+
   async getKpiSummary({ hostId = null } = {}) {
     const client = await Database.getInstance();
     const schemaName = resolveSchemaName(client);
