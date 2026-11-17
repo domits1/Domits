@@ -54,6 +54,11 @@ export const toPublicWebsitePropertySnapshotView = (snapshot) => {
   if (isObject(snapshot.calendarAvailability)) {
     view.calendarAvailability = pickFields(snapshot.calendarAvailability, PUBLIC_CALENDAR_FIELDS);
   }
+  if (isObject(snapshot.location)) {
+    view.location = Object.fromEntries(
+      Object.entries(snapshot.location).filter(([field]) => !PRIVATE_LOCATION_FIELDS.includes(field))
+    );
+  }
 
   return view;
 };

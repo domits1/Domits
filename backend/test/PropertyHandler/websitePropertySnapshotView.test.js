@@ -92,6 +92,26 @@ describe("the public property snapshot view", () => {
     expect(JSON.stringify(view)).not.toContain("REG-1");
   });
 
+  it("keeps the location fields the templates read and leaves out the street, house number and postal code", () => {
+    const view = toPublicWebsitePropertySnapshotView({
+      location: {
+        property_id: "property-1",
+        country: "Indonesia",
+        city: "Ubud",
+        street: "Jalan Raya Sayan",
+        houseNumber: 17,
+        houseNumberExtension: "B",
+        postalCode: "80571",
+      },
+    });
+
+    expect(view.location).toEqual({ property_id: "property-1", country: "Indonesia", city: "Ubud" });
+  });
+
+  it("passes a location that is not an object through as before", () => {
+    expect(toPublicWebsitePropertySnapshotView({ location: null })).toEqual({ location: null });
+  });
+
   it("answers an empty object for a missing or malformed snapshot", () => {
     expect(toPublicWebsitePropertySnapshotView(null)).toEqual({});
     expect(toPublicWebsitePropertySnapshotView("snapshot")).toEqual({});
