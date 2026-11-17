@@ -1,8 +1,8 @@
 # feat(property-owners): set the ownership shares of a property from the owner page
 
-Pull request: (to be opened)
+Pull request: #3872
 Issue: #3239
-Reviewed commit: uncommitted changes on top of 2ded7d3f3
+Reviewed commit: 5e27084de and 095a3fab1
 Result: no blocking findings
 
 Covers the new form `hostowners/components/SetSharesModal.js` with its tests, the "Set ownership shares" button on `hostowners/pages/HostOwnerDetail.js`, `isConflictError` in `ownerText.js` and the form styles in `HostOwners.scss`. The form uses the share rules from `shareRules.js` and the `hostOwners.shares` texts from the previous pull request; no texts were added. The summary's Close button reuses `form.close`, and each summary line reuses `propertyShare`.
