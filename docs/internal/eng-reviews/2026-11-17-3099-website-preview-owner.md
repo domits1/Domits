@@ -18,7 +18,7 @@ Reviewed: before the commit, then the change as a whole, then each guard broken 
 
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
-| P2 (7/10) | API Gateway, `OPTIONS /property/website/preview` | The preview now sends `Authorization`, so the browser asks `OPTIONS` first. Before this change it was a plain GET; whether that resource allows `Authorization` in its CORS answer was not read (login expired). | To check before merge with a read of the resource. If the header is not allowed, the API Gateway change is shown to Karim before anything runs. |
+| P2 (7/10) | API Gateway, `OPTIONS /property/website/preview` | The preview now sends `Authorization`, so the browser asks `OPTIONS` first. Before this change it was a plain GET. | Checked 17 Nov, read only: the resource (`Property-API-Develop`, `6pfkmx`) has `OPTIONS` as a MOCK with `Access-Control-Allow-Headers: 'Content-Type,Authorization'`, the same as `/property/website/draft`, and a live preflight answers 200 with that header. No API Gateway change needed. |
 | P3 (8/10) | deploy order | The Lambda and the web app deploy separately. Between the two, the old page sends no token and gets 401. | Accepted: the preview is a host tool and the gap is the time between the two deploys. |
 | P4 (8/10) | `WebsitePublicPreviewPage.jsx` | The host profile now comes from the backend block instead of a lookup by host id. | Same as the live site; tested. |
 
