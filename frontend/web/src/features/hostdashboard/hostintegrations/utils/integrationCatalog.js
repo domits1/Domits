@@ -52,6 +52,6 @@ export const INTEGRATION_CATALOG = Object.freeze([
     id: "whatsapp",
     name: "WhatsApp",
     category: INTEGRATION_CATEGORY.GUEST_COMMUNICATION,
-    status: INTEGRATION_STATUS.IN_DEVELOPMENT,
+    status: INTEGRATION_STATUS.AVAILABLE,
   }),
 ]);
