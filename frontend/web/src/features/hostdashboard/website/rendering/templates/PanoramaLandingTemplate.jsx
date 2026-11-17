@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
-import { Link, useInRouterContext, useLocation } from "react-router-dom";
+import { useInRouterContext, useLocation } from "react-router-dom";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import styles from "../WebsiteTemplatePreview.module.scss";
@@ -16,6 +16,7 @@ import {
   TemplateTopBar,
 } from "./templateSharedSections";
 import PanoramaPageHeader from "./PanoramaPageHeader";
+import PanoramaPageLink from "./PanoramaPageLink";
 import {
   amenityPropType,
   amenitiesSectionPropType,
@@ -136,23 +137,6 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
   onAfterNavigate?.();
 };
 
-function PanoramaPageLink({ href, ariaCurrent, onNavigate, children }) {
-  const isInRouter = useInRouterContext();
-  if (!isInRouter) {
-    return (
-      <a href={href} aria-current={ariaCurrent}>
-        {children}
-      </a>
-    );
-  }
-
-  return (
-    <Link to={href} aria-current={ariaCurrent} onClick={onNavigate}>
-      {children}
-    </Link>
-  );
-}
-
 function PanoramaAvailabilityScrollAfterPageChange({ pageKey }) {
   const { hash } = useLocation();
 
@@ -172,13 +156,6 @@ function PanoramaAvailabilityScrollAfterPageChange({ pageKey }) {
 
 PanoramaAvailabilityScrollAfterPageChange.propTypes = {
   pageKey: PropTypes.string.isRequired,
-};
-
-PanoramaPageLink.propTypes = {
-  href: PropTypes.string.isRequired,
-  ariaCurrent: PropTypes.oneOf(["page"]),
-  onNavigate: PropTypes.func,
-  children: PropTypes.node.isRequired,
 };
 
 const renderPanoramaNavItem = (
