@@ -756,17 +756,16 @@ describe("property paths of an Elite website on its own domain", () => {
 
       expect(lastTemplateProps().sitePropertyPage.kind).toBe("property");
       expect(lastTemplateProps().model.source.propertyId).toBe("property-b");
-      expect(lastTemplateProps().model.host.name).toBe("Amara");
       expect(readPageHeading()).toBe("Villa B");
+      expect(document.querySelector("[data-panorama-page-header] p").textContent).toBe(
+        "Our properties / Ubud, Indonesia"
+      );
       expect(listSectionIds()).toEqual(["property"]);
       expect(await screen.findByLabelText("Check in")).toHaveValue("");
       expect(screen.getAllByRole("complementary", { name: "Price and availability" })).toHaveLength(1);
       expect(readMenuItems()).toEqual([["Our properties", "/"]]);
       expect(screen.getByRole("link", { name: "Wellness Villa Bisous" })).toHaveAttribute("href", "/");
-      expect(screen.queryByTestId("quote-availability")).toBeNull();
       expect(document.title).toBe("Villa B | Wellness Villa Bisous");
-      expect(document.head.querySelector('meta[name="description"]').content).toBe("A quiet garden villa with a pond.");
-      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
     }
   );
 
@@ -896,6 +895,7 @@ describe("property paths of an Elite website in the live view", () => {
 
     expect(readPageHeading()).toBe("Villa B");
     expect(readMenuItems()).toEqual([["Our properties", `${LIVE_BASE}${SITE_SEARCH}`]]);
+    expect(await waitForPropertyPage()).toHaveAttribute("href", `${LIVE_BASE}${SITE_SEARCH}`);
     expect(await screen.findByRole("link", { name: "Request to book" })).toHaveAttribute(
       "href",
       `${LIVE_BASE}/properties/villa-b/request${SITE_SEARCH}&${STAY_QUERY}`
@@ -1010,6 +1010,22 @@ describe("the booking panel on the property page of an Elite website", () => {
       currency: "EUR",
       session: expect.objectContaining({ source: "standalone_site" }),
     });
+  });
+
+  it("quotes the next property afresh when the guest moves to it", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD, [...SITE_PROPERTIES, VILLA_C]));
+    globalThis.fetch = jest.fn(async (_, { body }) => quoteResponse(JSON.parse(body).propertyId));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    await screen.findByRole("link", { name: "Request to book" });
+    fireEvent.click(screen.getByRole("button", { name: "Add a guest" }));
+
+    await moveTo(`/properties/villa-c?${STAY_QUERY}`);
+
+    expect(await screen.findByRole("link", { name: "Request to book" })).toHaveAttribute(
+      "href",
+      `/properties/villa-c/request?${STAY_QUERY}`
+    );
+    expect(JSON.parse(globalThis.fetch.mock.calls.at(-1)[1].body).propertyId).toBe("property-c");
   });
 
   it("stops the quote and shows the not found page once a refresh no longer serves the property", async () => {

@@ -58,7 +58,11 @@ describe("the booking panel of an Elite property page", () => {
     fireEvent.change(screen.getByLabelText("Check out"), { target: { value: STAY.checkOut } });
     fireEvent.click(checkButton());
 
-    expect(await screen.findByRole("link", { name: "Request to book" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Request to book" })).toHaveAttribute(
+      "href",
+      "/properties/villa-b/request?checkIn=2099-01-10&guests=2"
+    );
+    expect(checkButton()).toBeNull();
     expect(requestPublicWebsiteQuote).toHaveBeenCalledWith(expect.objectContaining({ ...STAY, guests: 2 }));
   });
 

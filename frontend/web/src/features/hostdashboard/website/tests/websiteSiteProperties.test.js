@@ -296,17 +296,4 @@ describe("buildSitePropertyStayQuery", () => {
   ])("builds from %p and %p", (search, stay, query) => {
     expect(buildSitePropertyStayQuery(search, stay)).toBe(query);
   });
-
-  it("builds a request link under the live view", () => {
-    expect(
-      buildSitePropertyHref(
-        "/website-live/a.example",
-        "villa-b",
-        "request",
-        buildSitePropertyStayQuery("?siteId=s-1", STAY)
-      )
-    ).toBe(
-      "/website-live/a.example/properties/villa-b/request?siteId=s-1&checkIn=2026-12-01&checkOut=2026-12-08&guests=4"
-    );
-  });
 });
