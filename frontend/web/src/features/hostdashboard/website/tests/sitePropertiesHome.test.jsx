@@ -1,5 +1,5 @@
 import React from "react";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import WebsitePublicSitePage from "../WebsitePublicSitePage";
@@ -242,9 +242,9 @@ describe("the home page of an Elite website with its properties", () => {
   });
 
   it.each([
-    ["365 nights", "2031-01-15", "2030-01-15"],
-    ["366 nights", "2031-01-16", "2030-01-15"],
-  ])("links a stay of %s for 50 guests to the property page, which reads the dates %p", async (_, checkOut, dates) => {
+    ["365 nights", "2031-01-15"],
+    ["366 nights", "2031-01-16"],
+  ])("links a stay of %s for 50 guests to the property page, which quotes that stay", async (_, checkOut) => {
     await openOverview();
     const villaBFree = { propertyId: "property-b", quote: { ...quoteOf("property-b", 100, 50), checkOut } };
     global.fetch.mockResolvedValue(answerOf([MAIN_BOOKED, villaBFree]));
@@ -256,8 +256,13 @@ describe("the home page of an Elite website with its properties", () => {
     fireEvent.click(resultLink);
 
     expect(await screen.findByRole("heading", { level: 1, name: "Villa B" })).toBeInTheDocument();
-    expect(await screen.findByLabelText("Check in")).toHaveValue(dates);
+    expect(await screen.findByLabelText("Check in")).toHaveValue("2030-01-15");
+    expect(screen.getByLabelText("Check out")).toHaveValue(checkOut);
     expect(document.querySelector(".stepperValue").textContent).toBe("50");
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+    expect(readSentBodies()[1]).toEqual(
+      expect.objectContaining({ propertyId: "property-b", checkIn: "2030-01-15", checkOut, guests: 50 })
+    );
   });
 
   it("keeps the newer search when the answer of an older one arrives late", async () => {
