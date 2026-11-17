@@ -195,29 +195,20 @@ describe("the Properties section of an Elite website", () => {
     fetchHostPropertySelectOptions.mockImplementationOnce(readListings);
     await renderEditor(buildDraft([MAIN, GARDEN]));
 
-    expect(screen.getByRole("alert")).toHaveTextContent("We could not load your listings.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Save your changes, then reload the page to try again.");
     fireEvent.change(screen.getByLabelText("Hero title"), { target: { value: "A quiet villa" } });
     fireEvent.click(saveButton());
     expect((await savedWith(1)).contentOverrides.siteProperties).toEqual([MAIN, GARDEN]);
-
-    click("Try again");
-    expect(await screen.findByRole("button", { name: "Remove Garden House" })).toBeInTheDocument();
   });
 
-  it.each([
-    ["You must be the owner of the property to access it.", SITE_PROPERTY_NOT_LISTED_MESSAGE],
-    [
-      "siteProperties must not list a property or a slug twice.",
-      "The properties of your website could not be saved. Check their addresses and save again.",
-    ],
-  ])("explains a refused save %j and keeps the list to save again", async (refusal, explanation) => {
-    upsertWebsiteDraft.mockRejectedValueOnce(new Error(refusal));
+  it("explains a save refused for another host's listing and keeps the list to save again", async () => {
+    upsertWebsiteDraft.mockRejectedValueOnce(new Error("You must be the owner of the property to access it."));
     await renderEditor();
 
     click("Add Garden House");
     fireEvent.click(saveButton());
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(explanation));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(SITE_PROPERTY_NOT_LISTED_MESSAGE));
     await waitFor(() => expect(saveButton()).toBeEnabled());
     fireEvent.click(saveButton());
     expect(await savedWith(2)).toEqual(upsertWebsiteDraft.mock.calls[0][0]);

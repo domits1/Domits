@@ -96,14 +96,10 @@ export function WebsiteEditorPropertiesSection({
         <p className={pageStyles.helperText}>Loading your listings...</p>
       ) : null}
       {listingsStatus === SITE_PROPERTIES_LISTINGS_STATUS.FAILED ? (
-        <div className={pageStyles.collectionStack} role="alert">
-          <p className={pageStyles.errorText}>
-            We could not load your listings. The properties on your website stay as they are.
-          </p>
-          <button type="button" className={pageStyles.secondaryButton} onClick={sitePropertiesEditor.retryListings}>
-            Try again
-          </button>
-        </div>
+        <p className={pageStyles.errorText} role="alert">
+          We could not load your listings. The properties on your website stay as they are. Save your changes, then
+          reload the page to try again.
+        </p>
       ) : null}
       {listingsStatus === SITE_PROPERTIES_LISTINGS_STATUS.READY ? (
         <div className={pageStyles.collectionStack}>
@@ -158,7 +154,6 @@ export const sitePropertiesEditorPropType = PropTypes.shape({
   addSiteProperty: PropTypes.func.isRequired,
   moveSiteProperty: PropTypes.func.isRequired,
   removeSiteProperty: PropTypes.func.isRequired,
-  retryListings: PropTypes.func.isRequired,
   setSitePropertySlug: PropTypes.func.isRequired,
 });
 
