@@ -140,6 +140,7 @@ export const EDITOR_SECTION_KEYS = Object.freeze({
   trustCards: "trustCards",
   journeyStops: "journeyStops",
   pages: "pages",
+  properties: "properties",
 });
 
 export const EDITOR_TARGET_KEYS = Object.freeze({

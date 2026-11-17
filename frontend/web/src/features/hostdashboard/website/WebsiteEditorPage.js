@@ -81,8 +81,10 @@ import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTarget
 import { useWebsiteEditorAssets } from "./editor/hooks/useWebsiteEditorAssets";
 import { useWebsiteEditorCollections } from "./editor/hooks/useWebsiteEditorCollections";
 import { useWebsiteEditorSitePages } from "./editor/hooks/useWebsiteEditorSitePages";
+import { useWebsiteEditorSiteProperties } from "./editor/hooks/useWebsiteEditorSiteProperties";
 import { useWebsiteEntitlements } from "./hooks/useWebsiteEntitlements";
 import { applySitePagesEdit, omitSitePages } from "./editor/websiteEditorSitePages";
+import { applySitePropertiesEdit } from "./editor/websiteEditorSiteProperties";
 import {
   buildWebsiteEditorSectionData,
   getCommonFieldPreviewTargetId,
@@ -288,6 +290,12 @@ function WebsiteEditorPage() {
   });
   const { isEliteHost, menuItems, previewPageKey, resetSitePagesEdit, selectPreviewPage, sitePagesEdit } =
     sitePagesEditor;
+  const sitePropertiesEditor = useWebsiteEditorSiteProperties({
+    draftTemplateKey,
+    hasEntitlement: hasWebsiteEntitlement,
+    mainPropertyId: String(draftRecord?.propertyId || ""),
+    workingOverrides: getDraftWorkingContentOverrides(draftRecord),
+  });
 
   const contentOverridePatch = useMemo(() => {
     if (!baseModel) {
@@ -300,14 +308,18 @@ function WebsiteEditorPage() {
   const mergedContentOverrides = useMemo(
     () =>
       mergeWebsiteDraftContentOverrides(
-        applySitePagesEdit(
-          getDraftWorkingContentOverrides(draftRecord),
-          sitePagesEdit,
+        applySitePropertiesEdit(
+          applySitePagesEdit(
+            getDraftWorkingContentOverrides(draftRecord),
+            sitePagesEdit,
+            getDraftPublishedContentOverrides(draftRecord)
+          ),
+          sitePropertiesEditor.sitePropertiesEdit,
           getDraftPublishedContentOverrides(draftRecord)
         ),
         contentOverridePatch
       ),
-    [contentOverridePatch, draftRecord, sitePagesEdit]
+    [contentOverridePatch, draftRecord, sitePagesEdit, sitePropertiesEditor.sitePropertiesEdit]
   );
 
   const publishedContentOverrides = useMemo(
@@ -853,6 +865,7 @@ function WebsiteEditorPage() {
 
     setDraftRecord(persistedDraft);
     resetSitePagesEdit();
+    sitePropertiesEditor.resetSitePropertiesEdit();
     if (baseModel) {
       setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft, nextTemplateKey));
     }
@@ -866,6 +879,11 @@ function WebsiteEditorPage() {
       throw new Error("Website draft not found.");
     }
 
+    const sitePropertiesProblem = sitePropertiesEditor.findSitePropertiesProblem({ forPublish: syncPublishedState });
+    if (sitePropertiesProblem) {
+      throw new Error(sitePropertiesProblem);
+    }
+
     const persistedDraft = await upsertWebsiteDraft({
       propertyId: draftRecord.propertyId,
       templateKey: draftRecord.templateKey,
@@ -874,6 +892,8 @@ function WebsiteEditorPage() {
       themeOverrides: mergedThemeOverrides,
       publishedContentOverrides: syncPublishedState ? mergedContentOverrides : publishedContentOverrides,
       publishedThemeOverrides: syncPublishedState ? mergedThemeOverrides : publishedThemeOverrides,
+    }).catch((error) => {
+      throw sitePropertiesEditor.explainSitePropertiesSaveError(error);
     });
     const nextDraft = hydratePersistedDraftRecord(persistedDraft);
 
@@ -1287,6 +1307,7 @@ function WebsiteEditorPage() {
               setTargetRef={setTargetRef}
               showWhatsAppSetupHint={showWhatsAppSetupHint}
               sitePagesEditor={sitePagesEditor}
+              sitePropertiesEditor={sitePropertiesEditor}
               standaloneVisibilityFields={standaloneVisibilityFields}
               themeValues={themeValues}
               toggleSection={toggleSection}
