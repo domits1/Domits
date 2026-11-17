@@ -74,7 +74,10 @@ const renderEditor = async (draft = buildDraft()) => {
   );
   await screen.findByTestId("editor-preview");
   await act(async () => {});
-  fireEvent.click(screen.getByRole("button", { name: /^Properties/ }));
+  const sectionToggle = screen.queryByRole("button", { name: /^Properties/ });
+  if (sectionToggle) {
+    fireEvent.click(sectionToggle);
+  }
 };
 
 const click = (name) => fireEvent.click(screen.getByRole("button", { name }));
@@ -174,6 +177,7 @@ describe("the Properties section of an Elite website", () => {
     fireEvent.change(screen.getByLabelText("Hero title"), { target: { value: "A quiet villa" } });
 
     expect(screen.getByText(/This listing is no longer one of yours/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Address of A listing that is no longer yours")).toBeNull();
     fireEvent.click(saveButton());
     await expectRefusal(SITE_PROPERTY_NOT_LISTED_MESSAGE);
     click("Remove A listing that is no longer yours");
@@ -233,5 +237,28 @@ describe("the Properties section of an Elite website", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(12);
     expect(screen.getByRole("button", { name: "Add Home 11" })).toBeDisabled();
     expect(screen.getByText("A website can show at most 12 properties.")).toBeInTheDocument();
+  });
+
+  it("returns the list to the published one on discard", async () => {
+    jest.spyOn(globalThis, "confirm").mockReturnValue(true);
+    await renderEditor(buildDraft([MAIN, GARDEN]));
+
+    click("Move Garden House up");
+    clickMenu("Discard all changes");
+
+    await savedWith(1);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Move Wellness Villa Bisous up" })).toBeDisabled());
+  });
+
+  it("keeps the server's message for a host without the plan", async () => {
+    const refusal = "siteProperties lists a property that does not exist.";
+    getWebsiteEntitlements.mockResolvedValue(["website.basic"]);
+    upsertWebsiteDraft.mockRejectedValueOnce(new Error(refusal));
+    await renderEditor(buildDraft([MAIN, GARDEN]));
+
+    fireEvent.change(screen.getByLabelText("Hero title"), { target: { value: "A quiet villa" } });
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(refusal));
   });
 });
