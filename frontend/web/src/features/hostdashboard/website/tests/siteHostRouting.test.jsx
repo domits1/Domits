@@ -611,3 +611,96 @@ describe("live view routing for a site with site pages", () => {
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
   });
 });
+
+describe("property paths of a site without a served list of properties", () => {
+  const ALL_PAGES_ON = { gallery: { enabled: true }, accommodation: { enabled: true }, contact: { enabled: true } };
+  const PROPERTY_PATHS = [
+    "properties/villa-b",
+    "properties/villa-b/photos",
+    "properties/villa-b/request",
+    "Properties/Villa-B/",
+  ];
+  const withStaleSiteProperties = (payload) => ({
+    ...payload,
+    contentOverrides: {
+      ...payload.contentOverrides,
+      siteProperties: [
+        { propertyId: renderPayload.site.propertyId, slug: "villa-a" },
+        { propertyId: "property-b", slug: "villa-b" },
+      ],
+    },
+  });
+  const SITES = [
+    ["without a list", (payload) => payload],
+    ["with a stale list in its overrides", withStaleSiteProperties],
+  ];
+
+  describe("on the site's own domain", () => {
+    beforeEach(() => {
+      process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    });
+
+    it.each(
+      SITES.flatMap(([name, arrange]) => [...PROPERTY_PATHS, "properties"].map((sitePath) => [sitePath, name, arrange]))
+    )("renders the home page as today on /%s for a site %s", async (sitePath, _, arrange) => {
+      fetchPublicWebsiteRenderModel.mockResolvedValue(arrange(SITE_HOST_PAYLOAD));
+      const todaysHtml = await renderTodaysSiteHtml();
+
+      renderAppAt(`/${sitePath}`);
+
+      expect(await readSiteHtml()).toBe(todaysHtml);
+      expect(lastTemplateProps().activePageKey).toBe("main");
+      expect(document.title).toBe(SITE_TITLE);
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ["gallery", "Gallery"],
+      ["accommodation", "Accommodation"],
+      ["contact-us", "Contact us"],
+    ])(
+      "renders /%s of a site with site pages the same with a stale list in its overrides",
+      async (sitePath, pageTitle) => {
+        fetchPublicWebsiteRenderModel.mockResolvedValue(withSitePages(SITE_HOST_PAYLOAD, ALL_PAGES_ON));
+        const { unmount } = renderAppAt(`/${sitePath}`);
+        await screen.findByRole("link", { name: "Home" });
+        const htmlWithoutList = document.querySelector(".publicPreviewCanvas").innerHTML;
+        unmount();
+
+        fetchPublicWebsiteRenderModel.mockResolvedValue(
+          withStaleSiteProperties(withSitePages(SITE_HOST_PAYLOAD, ALL_PAGES_ON))
+        );
+        renderAppAt(`/${sitePath}`);
+        await screen.findByRole("link", { name: "Home" });
+
+        expect(document.querySelector(".publicPreviewCanvas").innerHTML).toBe(htmlWithoutList);
+        expect(document.title).toBe(`${pageTitle} | Wellness Villa Bisous`);
+      }
+    );
+  });
+
+  describe("in the live view", () => {
+    beforeEach(() => {
+      document.title = INDEX_TITLE;
+    });
+
+    it.each(SITES.flatMap(([name, arrange]) => PROPERTY_PATHS.map((sitePath) => [sitePath, name, arrange])))(
+      "shows the not found page as today on %s for a site %s",
+      async (sitePath, _, arrange) => {
+        fetchPublicWebsiteRenderModel.mockResolvedValue(arrange(renderPayload));
+        const metaTagsBefore = document.head.querySelectorAll("meta").length;
+
+        renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+
+        expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+        expect(document.querySelector(".publicPreviewCanvas")).toBeNull();
+        expect(document.title).toBe("Domits");
+        expect(document.head.querySelectorAll("meta").length).toBe(metaTagsBefore);
+        expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(0);
+      }
+    );
+  });
+});
