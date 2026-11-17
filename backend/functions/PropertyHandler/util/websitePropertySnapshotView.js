@@ -1,5 +1,7 @@
 const PUBLIC_PROPERTY_FIELDS = ["id", "title", "subtitle", "description", "status"];
 
+export const PRIVATE_LOCATION_FIELDS = Object.freeze(["street", "houseNumber", "houseNumberExtension", "postalCode"]);
+
 const PUBLIC_SNAPSHOT_SECTIONS = [
   "amenities",
   "availability",

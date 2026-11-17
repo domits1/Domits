@@ -1,6 +1,7 @@
+import { PRIVATE_LOCATION_FIELDS } from "../../util/websitePropertySnapshotView.js";
+
 const RENDER_SOURCE = "published_site";
 const LIVE_SNAPSHOT_KEYS = ["pricing", "calendarAvailability"];
-const PRIVATE_LOCATION_KEYS = ["street", "houseNumber", "houseNumberExtension", "postalCode"];
 const PUBLIC_SITE_KEYS = "id propertyId hostId siteName primaryLocale status templateKey publishedAt".split(" ");
 
 const withoutKeys = (object, keys) =>
@@ -9,7 +10,7 @@ const withoutKeys = (object, keys) =>
 const stripLiveAndPrivateDetails = (snapshot) => {
   const publicSnapshot = withoutKeys(snapshot, LIVE_SNAPSHOT_KEYS);
   if (publicSnapshot.location && typeof publicSnapshot.location === "object") {
-    publicSnapshot.location = withoutKeys(publicSnapshot.location, PRIVATE_LOCATION_KEYS);
+    publicSnapshot.location = withoutKeys(publicSnapshot.location, PRIVATE_LOCATION_FIELDS);
   }
 
   return publicSnapshot;
