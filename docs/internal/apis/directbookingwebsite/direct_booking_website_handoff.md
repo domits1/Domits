@@ -231,7 +231,8 @@ The published public runtime currently:
 The public website currently includes a WhatsApp-based host contact widget when the host has a usable WhatsApp integration. That widget:
 
 - is driven by shared host contact enrichment
-- can be shown or hidden through visibility controls
+- can be shown or hidden through visibility controls (`visibility.chatWidget`, on unless the host turns it off)
+- when the host turns it off, the public render sends an empty `host.whatsapp` block (no number) and the quote panel shows no WhatsApp link
 - is best-effort presentation only and not a public chat platform
 
 ### Availability surface
