@@ -1,11 +1,13 @@
 import { PROPERTY_API_BASE } from "../../hostproperty/constants";
 import { getApiErrorMessage } from "../../hostproperty/utils/hostPropertyUtils";
-import { fetchWithWebsiteSession } from "./websiteSession";
+import { WebsiteConnectionError, WebsiteSessionExpiredError, fetchWithWebsiteSession } from "./websiteSession";
 
 const buildWebsiteSiteUrl = (propertyId) =>
   `${PROPERTY_API_BASE}/website/site?property=${encodeURIComponent(propertyId)}`;
 const buildWebsiteSitePublishUrl = () => `${PROPERTY_API_BASE}/website/site/publish`;
 const buildWebsiteSiteUnpublishUrl = () => `${PROPERTY_API_BASE}/website/site/unpublish`;
+const PUBLISH_RECOVERY_DELAYS_MS = Object.freeze([0, 250, 750]);
+const PUBLISH_FAILED_MESSAGE = "We could not publish the direct booking website for this listing.";
 
 const normalizeWebsiteSiteSummary = (payload) => {
   if (!payload || typeof payload !== "object") {
@@ -25,18 +27,47 @@ const normalizeWebsiteSiteSummary = (payload) => {
   };
 };
 
-const tryRecoverPublishedWebsiteSiteSummary = async (propertyId) => {
-  try {
-    const siteSummary = await fetchWebsiteSiteByPropertyId(propertyId);
-    if (siteSummary?.site?.status === "PUBLISHED") {
+const pause = (delayMs) =>
+  new Promise((resolve) => {
+    globalThis.setTimeout(resolve, delayMs);
+  });
+
+const isPublishedSince = (siteSummary, draftSavedAt) => {
+  const publishedAt = Number(siteSummary?.site?.publishedAt);
+  return siteSummary?.site?.status === "PUBLISHED" && publishedAt >= draftSavedAt;
+};
+
+const findSiteSummaryPublishedSince = async (propertyId, draftSavedAt) => {
+  const savedAt = Number(draftSavedAt);
+  if (!Number.isFinite(savedAt) || savedAt <= 0) {
+    return null;
+  }
+
+  for (const delayMs of PUBLISH_RECOVERY_DELAYS_MS) {
+    if (delayMs > 0) {
+      await pause(delayMs);
+    }
+    const siteSummary = await fetchWebsiteSiteByPropertyId(propertyId).catch(() => null);
+    if (isPublishedSince(siteSummary, savedAt)) {
       return siteSummary;
     }
-  } catch {
-    // Fall back to the original publish error when recovery is not possible.
   }
 
   return null;
 };
+
+const recoverPublishedSiteSummaryOrThrow = async (propertyId, draftSavedAt, publishError) => {
+  const siteSummary = await findSiteSummaryPublishedSince(propertyId, draftSavedAt);
+  if (siteSummary) {
+    return siteSummary;
+  }
+  throw publishError;
+};
+
+const isSessionError = (error) =>
+  error instanceof WebsiteSessionExpiredError || error instanceof WebsiteConnectionError;
+
+const isPublishOutcomeUnknown = (response) => response.status >= 500;
 
 export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   const normalizedPropertyId = String(propertyId || "").trim();
@@ -64,32 +95,35 @@ export const fetchWebsiteSiteByPropertyId = async (propertyId) => {
   return normalizeWebsiteSiteSummary(await response.json());
 };
 
-export const publishWebsiteSite = async (propertyId) => {
+export const publishWebsiteSite = async (propertyId, { draftSavedAt } = {}) => {
   const normalizedPropertyId = String(propertyId || "").trim();
   if (!normalizedPropertyId) {
     throw new Error("Missing propertyId for website publish.");
   }
 
-  const response = await fetchWithWebsiteSession(buildWebsiteSitePublishUrl(), {
-    method: "POST",
-    cache: "no-store",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      propertyId: normalizedPropertyId,
-    }),
-  });
+  let response;
+  try {
+    response = await fetchWithWebsiteSession(buildWebsiteSitePublishUrl(), {
+      method: "POST",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        propertyId: normalizedPropertyId,
+      }),
+    });
+  } catch (error) {
+    if (isSessionError(error)) {
+      throw error;
+    }
+    return recoverPublishedSiteSummaryOrThrow(normalizedPropertyId, draftSavedAt, error);
+  }
 
   if (!response.ok) {
-    const recoveredSiteSummary = await tryRecoverPublishedWebsiteSiteSummary(normalizedPropertyId);
-    if (recoveredSiteSummary) {
-      return recoveredSiteSummary;
+    const publishError = new Error(await getApiErrorMessage(response, PUBLISH_FAILED_MESSAGE));
+    if (!isPublishOutcomeUnknown(response)) {
+      throw publishError;
     }
-
-    const errorMessage = await getApiErrorMessage(
-      response,
-      "We could not publish the direct booking website for this listing."
-    );
-    throw new Error(errorMessage);
+    return recoverPublishedSiteSummaryOrThrow(normalizedPropertyId, draftSavedAt, publishError);
   }
 
   return normalizeWebsiteSiteSummary(await response.json());

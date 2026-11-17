@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { upsertWebsiteDraft } from "./services/websiteDraftService";
 import {
-  fetchWebsiteSiteByPropertyId,
   publishWebsiteSite,
   unpublishWebsiteSite,
 } from "./services/websiteSiteService";
@@ -802,45 +801,6 @@ function WebsiteEditorPage() {
     saveDraftChanges
   );
 
-  const recoverPublishedSiteSummary = async () => {
-    const normalizedPropertyId = String(draftRecord?.propertyId || "").trim();
-    if (!normalizedPropertyId) {
-      return null;
-    }
-
-    for (const retryDelayMs of [0, 250, 750]) {
-      if (retryDelayMs > 0) {
-        await new Promise((resolve) => {
-          globalThis.setTimeout(resolve, retryDelayMs);
-        });
-      }
-
-      try {
-        const nextSiteSummary = await fetchWebsiteSiteByPropertyId(normalizedPropertyId);
-        if (String(nextSiteSummary?.site?.status || "").trim().toUpperCase() !== "PUBLISHED") {
-          continue;
-        }
-
-        setSiteSummary(nextSiteSummary);
-        setSiteSummaryError("");
-        announceWebsiteLiveSiteUpdate({
-          siteId: nextSiteSummary?.site?.id,
-          domain: nextSiteSummary?.primaryDomain?.domain,
-        });
-        notifyOpenedLiveSiteWindow({
-          nextSiteSummary,
-          openedLiveSiteWindowOriginRef,
-          openedLiveSiteWindowRef,
-        });
-        return nextSiteSummary;
-      } catch {
-        // Keep retrying briefly so the editor can reflect a completed publish without a hard refresh.
-      }
-    }
-
-    return null;
-  };
-
   const hydratePersistedDraftRecord = (persistedDraft) => {
     if (!persistedDraft) {
       throw new Error("Draft update completed, but no website draft was returned.");
@@ -935,8 +895,8 @@ function WebsiteEditorPage() {
     setIsUpdatingLiveSite(true);
 
     try {
-      await persistDraftState({ syncPublishedState: true });
-      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
+      const savedDraft = await persistDraftState({ syncPublishedState: true });
+      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId, { draftSavedAt: savedDraft.updatedAt });
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
       setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, nextSiteSummary));
@@ -968,8 +928,8 @@ function WebsiteEditorPage() {
     setIsPublishingSite(true);
 
     try {
-      await persistDraftState({ syncPublishedState: true });
-      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
+      const savedDraft = await persistDraftState({ syncPublishedState: true });
+      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId, { draftSavedAt: savedDraft.updatedAt });
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
       setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, nextSiteSummary));
@@ -984,13 +944,6 @@ function WebsiteEditorPage() {
       });
       toast.success("Live site published.");
     } catch (error) {
-      const recoveredSiteSummary = await recoverPublishedSiteSummary();
-      if (recoveredSiteSummary) {
-        setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, recoveredSiteSummary));
-        toast.success("Live site published.");
-        return;
-      }
-
       const errorMessage = error?.message || "We could not publish the live site.";
       setSiteSummaryError(errorMessage);
       toast.error(errorMessage);
