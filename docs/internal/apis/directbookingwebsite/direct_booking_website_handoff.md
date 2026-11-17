@@ -474,6 +474,8 @@ Code: `business/service/websiteElitePageSettings.js` and `getCurrentEntitlements
 
 Property paths (web): when the render answer has `siteProperties`, `/properties/<slug>`, `/properties/<slug>/photos` and `/properties/<slug>/request` open that property on the host's domain and in the live view (`rendering/websiteSiteProperties.js`, pages per kind in `SITE_PROPERTY_PAGES`, `rendering/WebsiteSitePropertyPage.jsx`). An unknown slug shows the not found page. The list in the content overrides is never read. Without the list nothing changes, except one background render request in the live view on a property path.
 
+Property page (web): on a Panorama site `/properties/<slug>` shows the Elite property page (`rendering/templates/elite/EliteSitePropertyPage.jsx`) with a booking panel when the site's quote panel is on. The stay comes from `?checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD&guests=N`, after `?siteId=` in the live view (`readSitePropertyStayQuery`, `buildSitePropertyStayQuery`): real dates from today, check-out after check-in, at most 365 nights, guests 1 to 99, anything else left out. The quote sends `propertyId` only for a property that is not the site's own and refuses an answer for another property; "Request to book" opens `/properties/<slug>/request` with the stay of the price shown.
+
 `backend/test/PropertyHandler/__fixtures__/existingSitePublicRender.json` is the public render response of the existing site in `backend/prerender/__fixtures__/renderPayload.json`, captured from the code before page settings existed. `publicWebsiteRender.elitePageSettings.test.js` compares the response with it byte for byte. When the public render response changes on purpose, regenerate that file in the same commit.
 
 ## Environment and runtime assumptions
