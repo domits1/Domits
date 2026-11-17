@@ -39,54 +39,18 @@ function SitePropertyAccommodationPage({ templateId, model, property, quoteConte
   );
 }
 
-export const SITE_PROPERTY_PAGES = Object.freeze({
-  [SITE_PROPERTY_PAGE_KINDS.property]: SitePropertyAccommodationPage,
-  [SITE_PROPERTY_PAGE_KINDS.photos]: SitePropertyAccommodationPage,
-  [SITE_PROPERTY_PAGE_KINDS.request]: SitePropertyAccommodationPage,
-});
-
-const sitePropertyPagePropTypes = {
+SitePropertyAccommodationPage.propTypes = {
   templateId: PropTypes.string.isRequired,
-  model: PropTypes.shape({
-    hero: PropTypes.shape({ title: PropTypes.string }).isRequired,
-    visibility: PropTypes.shape({ chatWidget: PropTypes.bool }),
-    sitePages: PropTypes.object,
-  }).isRequired,
-  property: PropTypes.shape({
-    slug: PropTypes.string.isRequired,
-    isMainProperty: PropTypes.bool.isRequired,
-  }).isRequired,
+  model: PropTypes.shape({ hero: PropTypes.shape({ title: PropTypes.string }).isRequired }).isRequired,
+  property: PropTypes.shape({ slug: PropTypes.string.isRequired, isMainProperty: PropTypes.bool.isRequired })
+    .isRequired,
   quoteContext: PropTypes.shape({ siteId: PropTypes.string }),
   pageBasePath: PropTypes.string.isRequired,
   pageSearch: PropTypes.string.isRequired,
 };
 
-SitePropertyAccommodationPage.propTypes = sitePropertyPagePropTypes;
-
-export default function WebsiteSitePropertyPage({
-  pageKind,
-  templateId,
-  model,
-  property,
-  quoteContext = null,
-  pageBasePath,
-  pageSearch,
-}) {
-  const SitePropertyPage = SITE_PROPERTY_PAGES[pageKind];
-
-  return (
-    <SitePropertyPage
-      templateId={templateId}
-      model={model}
-      property={property}
-      quoteContext={quoteContext}
-      pageBasePath={pageBasePath}
-      pageSearch={pageSearch}
-    />
-  );
-}
-
-WebsiteSitePropertyPage.propTypes = {
-  ...sitePropertyPagePropTypes,
-  pageKind: PropTypes.oneOf(Object.values(SITE_PROPERTY_PAGE_KINDS)).isRequired,
-};
+export const SITE_PROPERTY_PAGES = Object.freeze({
+  [SITE_PROPERTY_PAGE_KINDS.property]: SitePropertyAccommodationPage,
+  [SITE_PROPERTY_PAGE_KINDS.photos]: SitePropertyAccommodationPage,
+  [SITE_PROPERTY_PAGE_KINDS.request]: SitePropertyAccommodationPage,
+});

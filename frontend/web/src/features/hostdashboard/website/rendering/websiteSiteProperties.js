@@ -1,7 +1,7 @@
 import { buildWebsiteTemplateModel } from "./buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides } from "./websiteDraftThemeOverrides";
-import { SITE_PAGES_OVERRIDE_KEY, buildSiteHref } from "./websitePages";
+import { buildSiteHref } from "./websitePages";
 
 export const SITE_PROPERTY_PATH_SEGMENT = "properties";
 export const MAX_SITE_PROPERTY_SLUG_LENGTH = 60;
@@ -11,35 +11,15 @@ export const SITE_PROPERTY_PAGE_KINDS = Object.freeze({
   request: "request",
 });
 
-const SITE_CONTENT_OVERRIDE_KEYS = Object.freeze([
-  "heroContentAlignment",
-  "ctaLabel",
-  "ctaNote",
-  "residenceTitle",
-  "residenceShowPanel",
-  "residencePanelColor",
-  "calendarTitle",
-  "calendarDescription",
-  "calendarShowPanel",
-  "calendarPanelColor",
-  "galleryTitle",
-  "galleryDescription",
-  "galleryBrowseLabel",
-  "galleryShowPanel",
-  "galleryPanelColor",
-  "amenitiesTitle",
-  "amenitiesDescription",
-  "amenitiesIconColor",
-  "contactTitle",
-  "contactLabel",
-  "contactDescription",
-  "contactAvatarMode",
-  "contactAvatarImage",
-  "contactAccentColor",
-  "contactBackgroundColor",
-  "visibility",
-  SITE_PAGES_OVERRIDE_KEY,
-]);
+const SITE_CONTENT_OVERRIDE_KEYS = new Set(
+  [
+    "heroContentAlignment ctaLabel ctaNote residenceTitle residenceShowPanel residencePanelColor visibility sitePages",
+    "calendarTitle calendarDescription calendarShowPanel calendarPanelColor amenitiesTitle amenitiesDescription",
+    "galleryTitle galleryDescription galleryBrowseLabel galleryShowPanel galleryPanelColor amenitiesIconColor",
+    "contactTitle contactLabel contactDescription contactAvatarMode contactAvatarImage contactAccentColor",
+    "contactBackgroundColor",
+  ].flatMap((keys) => keys.split(" "))
+);
 
 const SITE_PROPERTY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const PAGE_KIND_BY_SEGMENT = new Map([
@@ -132,8 +112,8 @@ export const buildSitePropertyModel = ({ siteModel, property, contentOverrides, 
   }
 
   const siteContentOverrides = Object.fromEntries(
-    Object.entries(isPlainObject(contentOverrides) ? contentOverrides : {}).filter(
-      ([key]) => SITE_CONTENT_OVERRIDE_KEYS.includes(key)
+    Object.entries(isPlainObject(contentOverrides) ? contentOverrides : {}).filter(([key]) =>
+      SITE_CONTENT_OVERRIDE_KEYS.has(key)
     )
   );
   const propertyModel = applyWebsiteDraftContentOverrides(

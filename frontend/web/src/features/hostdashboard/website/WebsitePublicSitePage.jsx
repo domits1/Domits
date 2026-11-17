@@ -26,7 +26,7 @@ import {
   resolveSitePropertyPageTitle,
   resolveSitePropertyRoute,
 } from "./rendering/websiteSiteProperties";
-import WebsiteSitePropertyPage from "./rendering/WebsiteSitePropertyPage";
+import { SITE_PROPERTY_PAGES } from "./rendering/WebsiteSitePropertyPage";
 import PageNotFound from "../../../utils/error/404NotFound";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
@@ -467,13 +467,13 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
       isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
     } ${isPanoramaTemplate ? styles.publicPreviewCanvasFlush : ""}`.trim();
     const quoteContext = renderPayload?.site?.id ? { siteId: String(renderPayload.site.id) } : null;
+    const SitePropertyPage = sitePropertyModel ? SITE_PROPERTY_PAGES[sitePropertyRoute.pageKind] : null;
 
     return (
       <main className={publicPreviewPageClassName} style={publishedSitePageStyle}>
         <div className={publicPreviewCanvasClassName}>
-          {sitePropertyModel ? (
-            <WebsiteSitePropertyPage
-              pageKind={sitePropertyRoute.pageKind}
+          {SitePropertyPage ? (
+            <SitePropertyPage
               templateId={templateId}
               model={sitePropertyModel}
               property={activeSiteProperty}

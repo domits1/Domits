@@ -391,15 +391,15 @@ const buildPanoramaPageNavItems = (pageState, pageBasePath, pageSearch, viewStat
   const bookHref = isMainPage ? PANORAMA_AVAILABILITY_ANCHOR : `${mainPageHref}${PANORAMA_AVAILABILITY_ANCHOR}`;
 
   return [
-    ...pageState.menuItems.map((item) => {
-      const isCurrentPage = item.key === pageState.currentPage.key;
-      return {
-        href: isCurrentPage && currentPageHref ? currentPageHref : buildSitePageHref(pageBasePath, item.key, pageSearch),
-        label: item.navLabel,
-        isPageLink: true,
-        isCurrentPage,
-      };
-    }),
+    ...pageState.menuItems.map((item) => ({
+      href:
+        item.key === pageState.currentPage.key && currentPageHref
+          ? currentPageHref
+          : buildSitePageHref(pageBasePath, item.key, pageSearch),
+      label: item.navLabel,
+      isPageLink: true,
+      isCurrentPage: item.key === pageState.currentPage.key,
+    })),
     ...(viewState.showAvailabilityCalendar
       ? [{ href: bookHref, label: PANORAMA_BOOK_NAV_LABEL, isPageLink: !isMainPage }]
       : []),
