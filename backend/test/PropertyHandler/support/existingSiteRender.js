@@ -128,7 +128,9 @@ export const EXISTING_SITE_RENDER_QUERIES = Object.freeze([
 const asStored = (value) => JSON.parse(JSON.stringify(value));
 
 export const buildStoringDraftRepository = (store) => ({
-  getDraftByPropertyIdAndHostId: jest.fn(async () => store.draft),
+  getDraftByPropertyIdAndHostId: jest.fn(async (propertyId, hostId) =>
+    store.draft?.propertyId === propertyId && store.draft?.hostId === hostId ? store.draft : null
+  ),
   getDraftById: jest.fn(async (draftId) => (store.draft?.id === draftId ? store.draft : null)),
   upsertDraft: jest.fn(async (input) => {
     store.draft = {
@@ -152,7 +154,11 @@ export const buildStoringDraftRepository = (store) => ({
 export const buildStoringSiteRepository = (store, { propertyStates = new Map() } = {}) => ({
   getSiteById: jest.fn(async (siteId) => (store.site?.id === siteId ? store.site : null)),
   getSiteByPropertyIdAndHostId: jest.fn(async () => store.site),
-  getPublishedSitePropertySnapshots: jest.fn(async () => store.sitePropertySnapshots ?? []),
+  getPublishedSitePropertySnapshots: jest.fn(async (siteId, staticPageRevision) =>
+    store.site?.id === siteId && store.site.staticPageRevision === staticPageRevision
+      ? (store.sitePropertySnapshots ?? [])
+      : []
+  ),
   getSitePropertyStates: jest.fn(async (propertyIds) =>
     propertyIds.filter((id) => propertyStates.has(id)).map((id) => ({ id, ...propertyStates.get(id) }))
   ),
@@ -166,7 +172,7 @@ export const buildStoringSiteRepository = (store, { propertyStates = new Map() }
       id: EXISTING_SITE.id,
       ...asStored(input),
       previewTokenHash: "",
-      staticPageRevision: 1,
+      staticPageRevision: (store.site?.staticPageRevision ?? 0) + 1,
       createdAt: EXISTING_SITE.createdAt,
       updatedAt: EXISTING_SITE.updatedAt,
     };

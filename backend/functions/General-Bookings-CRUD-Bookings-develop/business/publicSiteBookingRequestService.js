@@ -9,6 +9,7 @@ import ExternalCalendarService from "./externalCalendarService.js";
 import QuoteRevalidationClient from "./quoteRevalidationClient.js";
 import defaultGetHostContactById from "./getHostContactById.js";
 import defaultSendBookingRequestEmails from "./sendBookingRequestEmails.js";
+import { readGuestNote } from "./bookingRequestGuestNote.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 import { generatePublicBookingRef as defaultGeneratePublicBookingRef } from "../util/publicBookingRef.js";
 import ConflictException from "../util/exception/ConflictException.js";
@@ -59,6 +60,9 @@ const cleanText = (value) => String(value ?? "").trim();
 const isUniqueViolationOn = (error, constraintFragment) =>
   error?.code === UNIQUE_VIOLATION_CODE && String(error?.constraint || "").includes(constraintFragment);
 
+const otherPropertyFields = (site, stay) =>
+  stay.propertyId === site.propertyId ? {} : { propertyId: stay.propertyId };
+
 const isAvailabilityConflict = (error) =>
   error instanceof ConflictException || error?.name === "ConflictException" || error?.statusCode === 409;
 
@@ -90,9 +94,10 @@ class PublicSiteBookingRequestService {
     this.quoteTokenSecretPromise = null;
   }
 
-  async createBookingRequest({ siteId, idempotencyKey, quoteToken, guest, session, requestId }) {
+  async createBookingRequest({ siteId, idempotencyKey, quoteToken, guest, message, session, requestId }) {
     const normalizedIdempotencyKey = this.validateIdempotencyKey(idempotencyKey);
     const contact = this.validateGuestContact(guest);
+    const hostNote = readGuestNote({ phone: guest?.phone, message });
     const normalizedSiteId = cleanText(siteId);
     const sessionId = cleanText(session?.sessionId) || null;
 
@@ -104,13 +109,13 @@ class PublicSiteBookingRequestService {
         return this.replayResponse(existing, stay);
       }
 
-      const site = await this.loadPublishedSite(normalizedSiteId, stay.propertyId);
-      const total = await this.confirmLivePrice({ stay, sessionId, requestId });
+      const site = await this.loadPublishedSite(normalizedSiteId);
+      const total = await this.confirmLivePrice({ site, stay, sessionId, requestId });
       await this.assertDatesStillAvailable(stay);
 
       const hostContact = await this.lookupHostContact(site.hostId);
-      const propertyName = await this.lookupPropertyName(site.propertyId);
-      const cancellationPolicy = await this.lookupCancellationPolicy(site.propertyId);
+      const propertyName = await this.lookupPropertyName(stay.propertyId);
+      const cancellationPolicy = await this.lookupCancellationPolicy(stay.propertyId);
 
       const booking = await this.insertBookingRequest({
         stay,
@@ -126,7 +131,14 @@ class PublicSiteBookingRequestService {
       }
 
       await this.recordRequestedEvent({ site, stay, sessionId, requestId, publicBookingRef: booking.publicBookingRef });
-      await this.notifyParties({ site, stay, contact, hostContact, propertyName, publicBookingRef: booking.publicBookingRef });
+      await this.notifyParties({
+        stay,
+        contact,
+        hostContact,
+        propertyName,
+        hostNote,
+        publicBookingRef: booking.publicBookingRef,
+      });
 
       return this.buildResult({ publicBookingRef: booking.publicBookingRef, stay, total });
     } catch (error) {
@@ -189,6 +201,7 @@ class PublicSiteBookingRequestService {
       throw new PublicBookingRequestError(CODES.QUOTE_TOKEN_INVALID, MESSAGES.quoteTokenInvalid);
     }
 
+    const propertyId = cleanText(payload.propertyId);
     const guests = Number(payload.guests);
     const quotedTotal = Number(payload.priceBreakdown?.total);
     let arrivalDateMs;
@@ -199,13 +212,13 @@ class PublicSiteBookingRequestService {
     } catch (error) {
       throw new PublicBookingRequestError(CODES.QUOTE_TOKEN_INVALID, MESSAGES.quoteTokenInvalid);
     }
-    if (!Number.isInteger(guests) || guests < 1 || !Number.isFinite(quotedTotal)) {
+    if (!propertyId || !Number.isInteger(guests) || guests < 1 || !Number.isFinite(quotedTotal)) {
       throw new PublicBookingRequestError(CODES.QUOTE_TOKEN_INVALID, MESSAGES.quoteTokenInvalid);
     }
 
     return {
       siteId,
-      propertyId: cleanText(payload.propertyId),
+      propertyId,
       quoteId: cleanText(payload.quoteId),
       checkIn: payload.checkIn,
       checkOut: payload.checkOut,
@@ -216,7 +229,7 @@ class PublicSiteBookingRequestService {
     };
   }
 
-  async loadPublishedSite(siteId, tokenPropertyId) {
+  async loadPublishedSite(siteId) {
     const site = await this.standaloneSiteRepository.getSiteById(siteId);
     if (!site) {
       throw new PublicBookingRequestError(CODES.SITE_NOT_FOUND, MESSAGES.siteNotFound);
@@ -227,15 +240,13 @@ class PublicSiteBookingRequestService {
     if (site.status !== SITE_STATUS_PUBLISHED) {
       throw new PublicBookingRequestError(CODES.SITE_NOT_PUBLISHED, MESSAGES.siteNotPublished);
     }
-    if (site.propertyId !== tokenPropertyId) {
-      throw new PublicBookingRequestError(CODES.QUOTE_TOKEN_INVALID, MESSAGES.quoteTokenInvalid);
-    }
     return site;
   }
 
-  async confirmLivePrice({ stay, sessionId, requestId }) {
+  async confirmLivePrice({ site, stay, sessionId, requestId }) {
     const requote = await this.quoteRevalidationClient.requoteSite({
       siteId: stay.siteId,
+      ...otherPropertyFields(site, stay),
       checkIn: stay.checkIn,
       checkOut: stay.checkOut,
       guests: stay.guests,
@@ -244,6 +255,10 @@ class PublicSiteBookingRequestService {
     });
     if (!requote.ok) {
       throw publicBookingRequestErrorFromQuoteError({ code: requote.code, message: requote.message });
+    }
+    if (cleanText(requote.quote?.propertyId) !== stay.propertyId) {
+      console.error("Quote revalidation answered for another property.", { siteId: stay.siteId, requestId });
+      throw publicBookingRequestErrorFromQuoteError({ code: CODES.BOOKING_SERVICE_UNAVAILABLE });
     }
 
     const liveTotal = Number(requote.quote?.priceBreakdown?.total);
@@ -311,7 +326,7 @@ class PublicSiteBookingRequestService {
       hostid: site.hostId,
       latepayment: false,
       paymentid: PAYMENT_ID_PLACEHOLDER,
-      property_id: site.propertyId,
+      property_id: stay.propertyId,
       status: BOOKING_STATUS_INQUIRY,
       guestname: contact.name,
       hostname: hostContact.name || HOSTNAME_FALLBACK,
@@ -366,6 +381,7 @@ class PublicSiteBookingRequestService {
   replayResponse(existing, stay) {
     const matchesStay =
       cleanText(existing.site_id) === stay.siteId &&
+      cleanText(existing.property_id) === stay.propertyId &&
       Number(existing.arrivaldate) === stay.arrivalDateMs &&
       Number(existing.departuredate) === stay.departureDateMs &&
       Number(existing.guests) === stay.guests;
@@ -405,6 +421,7 @@ class PublicSiteBookingRequestService {
         payload: {
           requestId,
           siteId: site.id,
+          ...otherPropertyFields(site, stay),
           quoteId: stay.quoteId,
           publicBookingRef,
           sessionId,
@@ -419,15 +436,16 @@ class PublicSiteBookingRequestService {
     }
   }
 
-  async notifyParties({ site, stay, contact, hostContact, propertyName, publicBookingRef }) {
+  async notifyParties({ stay, contact, hostContact, propertyName, hostNote, publicBookingRef }) {
     try {
       await this.sendBookingRequestEmails({
         hostEmail: hostContact.email,
         guestEmail: contact.email,
+        hostNote,
         bookingInfo: {
           publicBookingRef,
           propertyName: propertyName || "the property",
-          propertyId: site.propertyId,
+          propertyId: stay.propertyId,
           guestName: contact.name,
           guestEmail: contact.email,
           guests: stay.guests,
