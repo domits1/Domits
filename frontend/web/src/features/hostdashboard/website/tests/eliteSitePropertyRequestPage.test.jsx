@@ -28,12 +28,7 @@ const QUOTE = {
   quoteToken: "token-1",
 };
 const SENT = { publicBookingRef: "DBW-ABCDEFGHJK", status: "REQUESTED", ...STAY, total: 85000, currency: "EUR" };
-const MODEL = {
-  site: { title: "Wellness Villa Bisous", locationLabel: "Ubud, Indonesia" },
-  stay: { guests: 4 },
-  media: {},
-  host: { whatsapp: { isAvailable: false } },
-};
+const MODEL = { site: { title: "Wellness Villa Bisous", locationLabel: "Ubud, Indonesia" }, stay: { guests: 4 } };
 const PAGE = {
   kind: "request",
   pageKey: "accommodation",
@@ -239,14 +234,25 @@ describe("the request to book page of an Elite property", () => {
     expect(new Set(sentKeys()).size).toBe(2);
   });
 
-  it("holds the send back once the price has expired and checks it again", async () => {
-    requestPublicWebsiteQuote.mockResolvedValueOnce({ ...QUOTE, expiresAt: "2000-01-01T00:00:00.000Z" });
-    renderPage();
+  it.each([
+    [
+      "has expired",
+      () => requestPublicWebsiteQuote.mockResolvedValueOnce({ ...QUOTE, expiresAt: "2000-01-01" }),
+      /^Price expired/,
+    ],
+    [
+      "is refused at the send",
+      () => requestPublicSiteBooking.mockRejectedValueOnce(bookingError("quote_token_invalid")),
+      /^Price needs/,
+    ],
+  ])("holds the send back once the price %s and checks it again", async (_, arrange, notice) => {
+    arrange();
+    await renderFilledForm();
+    await send();
 
-    expect(await screen.findByText(/^Price expired/)).toBeInTheDocument();
+    expect(await screen.findByText(notice)).toBeInTheDocument();
     expect(sendButton()).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Check the price again" }));
-
     await screen.findByText(/^Valid until/);
     expect(sendButton()).toBeEnabled();
   });

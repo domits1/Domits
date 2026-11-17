@@ -1137,17 +1137,28 @@ describe("the request to book page of an Elite website", () => {
     expect(document.querySelector("[data-panorama-top-bar]").className).toContain("panoramaTopBarShellEliteLight");
     expect(readSentBodies("/website/public/quote")).toHaveLength(2);
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+    jest.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function placeElement() {
+      return { top: this.isConnected ? -200 : 0, height: 0 };
+    });
+    globalThis.dispatchEvent(new Event("scroll"));
+    await waitFor(() => expect(document.querySelector("[data-panorama-top-bar]").className).toContain("ShellSolid"));
   });
 
-  it("links the property and the overview under the live view", async () => {
-    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(renderPayload));
-    mockSiteFetch("property-b");
+  it("links under the live view and starts afresh on the request page of the next property", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(renderPayload, [...SITE_PROPERTIES, VILLA_C]));
+    globalThis.fetch = jest.fn(async (_, { body }) => quoteResponse(JSON.parse(body).propertyId));
     renderAppAt(`${LIVE_BASE}/properties/villa-b/request${SITE_SEARCH}&${STAY_QUERY}`);
     await findSendButton();
-
     expect(readCrumbLinks()).toEqual([
       ["Our properties", `${LIVE_BASE}${SITE_SEARCH}`],
       ["Villa B", `${LIVE_BASE}/properties/villa-b${SITE_SEARCH}&${STAY_QUERY}`],
     ]);
+    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana Guest" } });
+
+    await moveTo(`${LIVE_BASE}/properties/villa-c/request${SITE_SEARCH}&checkIn=2099-01-10&checkOut=2099-01-14&guests=2`);
+    await findSendButton();
+
+    expect(screen.getByLabelText("Your name")).toHaveValue("");
+    expect(readSentBodies("/website/public/quote").at(-1)).toMatchObject({ propertyId: "property-c", guests: 2 });
   });
 });
