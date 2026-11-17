@@ -97,7 +97,7 @@ describe("saving the properties of a website", () => {
     ]);
   });
 
-  it("keeps the checked published list when a later save sends no published overrides", async () => {
+  it("publishes the checked content overrides when a later save sends no published overrides", async () => {
     const flow = buildEditorFlow();
     await flow.save({ siteProperties: ownList() });
 
@@ -107,10 +107,7 @@ describe("saving the properties of a website", () => {
 
     expect(saved.statusCode).toBe(200);
     expect(flow.store.draft.contentOverrides).toEqual({ heroTitle: "Villa" });
-    expect(flow.store.draft.publishedContentOverrides.siteProperties.map(({ propertyId }) => propertyId)).toEqual([
-      MAIN,
-      OWN,
-    ]);
+    expect(flow.store.draft.publishedContentOverrides).toEqual({ heroTitle: "Villa" });
   });
 
   it("refuses a property of another host and stores nothing", async () => {
