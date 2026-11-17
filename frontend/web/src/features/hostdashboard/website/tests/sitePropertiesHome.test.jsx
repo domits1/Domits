@@ -243,7 +243,7 @@ describe("the home page of an Elite website with its properties", () => {
 
   it.each([
     ["365 nights", "2031-01-15", "2030-01-15"],
-    ["366 nights", "2031-01-16", ""],
+    ["366 nights", "2031-01-16", "2030-01-15"],
   ])("links a stay of %s for 50 guests to the property page, which reads the dates %p", async (_, checkOut, dates) => {
     await openOverview();
     const villaBFree = { propertyId: "property-b", quote: { ...quoteOf("property-b", 100, 50), checkOut } };

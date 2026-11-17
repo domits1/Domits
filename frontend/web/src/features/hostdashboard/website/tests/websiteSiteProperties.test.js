@@ -248,6 +248,7 @@ describe("readSitePropertyStayQuery", () => {
       "?checkIn=2026-12-01&checkOut=2027-12-01&guests=99",
       { checkIn: "2026-12-01", checkOut: "2027-12-01", guests: 99 },
     ],
+    ["?checkIn=2026-12-01&checkOut=2027-12-02", { checkIn: "2026-12-01", checkOut: "2027-12-02", guests: null }],
     ["?guests=2", { ...NO_DATES, guests: 2 }],
   ])("reads %s", (search, stay) => {
     expect(readSitePropertyStayQuery(search, TODAY)).toEqual(stay);
@@ -260,7 +261,6 @@ describe("readSitePropertyStayQuery", () => {
     ["a day that does not exist", "?checkIn=2027-02-27&checkOut=2027-02-30"],
     ["a year before 100", "?checkIn=0027-02-27&checkOut=0027-03-02"],
     ["another date format", "?checkIn=01-12-2026&checkOut=08-12-2026"],
-    ["a stay of 366 nights", "?checkIn=2026-12-01&checkOut=2027-12-02"],
     ["a stay of 367 nights", "?checkIn=2026-12-01&checkOut=2027-12-03"],
     ["one date only", "?checkIn=2026-12-01"],
     ["a date given twice", "?checkIn=2026-12-01&checkIn=2026-12-02&checkOut=2026-12-08"],

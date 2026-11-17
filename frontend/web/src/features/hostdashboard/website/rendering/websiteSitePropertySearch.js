@@ -1,8 +1,7 @@
 import { placeholderImage } from "../../../../utils/accommodationImage";
-import { buildSitePropertyModel } from "./websiteSiteProperties";
+import { MAX_SITE_PROPERTY_STAY_NIGHTS, buildSitePropertyModel } from "./websiteSiteProperties";
 import { isValidDateKey, quoteMatchesSelection } from "./booking/quoteSelection";
 
-export const MAX_SITE_PROPERTY_SEARCH_NIGHTS = 366;
 export const MAX_SITE_PROPERTY_SEARCH_GUESTS = 50;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -71,8 +70,8 @@ export const validateSitePropertySearch = ({ checkIn, checkOut, guests }, todayK
   if (checkOut <= checkIn) {
     return "Check-out must be after check-in.";
   }
-  if (countSearchNights(checkIn, checkOut) > MAX_SITE_PROPERTY_SEARCH_NIGHTS) {
-    return `A stay can be at most ${MAX_SITE_PROPERTY_SEARCH_NIGHTS} nights.`;
+  if (countSearchNights(checkIn, checkOut) > MAX_SITE_PROPERTY_STAY_NIGHTS) {
+    return `A stay can be at most ${MAX_SITE_PROPERTY_STAY_NIGHTS} nights.`;
   }
   const isGuestCount = Number.isInteger(guests) && guests >= 1 && guests <= MAX_SITE_PROPERTY_SEARCH_GUESTS;
   return isGuestCount ? "" : `Choose 1 to ${MAX_SITE_PROPERTY_SEARCH_GUESTS} guests.`;
