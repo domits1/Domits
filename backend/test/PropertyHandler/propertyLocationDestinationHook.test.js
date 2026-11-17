@@ -6,6 +6,8 @@ const LOCATION = { property_id: "property-1", country: "Spain", city: "Marbella"
 const buildService = (stored) => {
   const service = new PropertyService();
   service.propertyLocationRepository = {
+    // The location exists, so updateLocation updates it instead of creating it.
+    getPropertyLocationById: jest.fn(async () => LOCATION),
     create: jest.fn(async () => stored),
     updatePropertyLocationById: jest.fn(async () => stored),
   };
