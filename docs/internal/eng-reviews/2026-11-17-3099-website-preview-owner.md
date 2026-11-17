@@ -22,6 +22,8 @@ Reviewed: before the commit, then the change as a whole, then each guard broken 
 | P3 (8/10) | deploy order | The Lambda and the web app deploy separately. Between the two, the old page sends no token and gets 401. | Accepted: the preview is a host tool and the gap is the time between the two deploys. |
 | P4 (8/10) | `WebsitePublicPreviewPage.jsx` | The host profile now comes from the backend block instead of a lookup by host id. | Same as the live site; tested. |
 
+Second review: no defect in this change. It removed one unreachable check (`fetchWithWebsiteSession` never answers 401; it throws, and that is mapped to the login message), and confirmed that the editor reads listings through `/hostDashboard/single`, not this route. Two points outside this change: the public render still sends the full address on `acceptance` (fixed by #3933), and the public analytics event answers 204 or 404 for any draft or site id (raised with Karim).
+
 ## Not in scope
 
 - Other website routes without a login: quote, resolve, render, the analytics event, the Stripe webhook and the booking request in General-Bookings. Checked; none sends listing data outside the public views.
