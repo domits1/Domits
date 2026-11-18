@@ -134,6 +134,30 @@ describe("attachmentUrlSigner", () => {
       expect(JSON.parse(signed)).toEqual([{ url: SIGNED_URL, type: "image", name: null }]);
     });
 
+    test("signs a Postgres array literal of JSON objects and returns a JSON array string", async () => {
+      const literal = `{${JSON.stringify(JSON.stringify({ url: RAW_URL, type: "image", name: null }))}}`;
+
+      const signed = await signAttachments(literal);
+
+      expect(typeof signed).toBe("string");
+      expect(JSON.parse(signed)).toEqual([{ url: SIGNED_URL, type: "image", name: null }]);
+    });
+
+    test("signs every object of a Postgres array literal", async () => {
+      const literal = `{${[{ url: RAW_URL }, { url: "https://example.com/b.pdf" }]
+        .map((item) => JSON.stringify(JSON.stringify(item)))
+        .join(",")}}`;
+
+      expect(JSON.parse(await signAttachments(literal))).toEqual([
+        { url: SIGNED_URL },
+        { url: "https://example.com/b.pdf" },
+      ]);
+    });
+
+    test.each([["{abc}"], ['{"hello"}'], ["{"]])("returns the unparseable literal %p unchanged", async (value) => {
+      await expect(signAttachments(value)).resolves.toBe(value);
+    });
+
     test.each([[null], [undefined], [""], ["not json"], ['{"url":"x"}']])("returns %p unchanged", async (value) => {
       await expect(signAttachments(value)).resolves.toBe(value);
     });

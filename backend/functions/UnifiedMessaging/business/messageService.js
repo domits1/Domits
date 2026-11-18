@@ -6,6 +6,7 @@ import { createDefaultProviderAdapters, resolveProviderAdapter } from "./provide
 import publishRealtimeMessage from "./publishRealtimeMessage.js";
 import { badRequest, conflict, forbidden, notFound } from "../util/httpErrors.js";
 import { signMessage, signMessages } from "../util/attachmentUrlSigner.js";
+import { parseStoredAttachments } from "../util/storedAttachments.js";
 
 const isExternalProviderPayload = (payload) => Boolean(payload.platform) && payload.platform !== "DOMITS";
 const resolveParticipantId = (explicitId, fallbackId) => explicitId || fallbackId;
@@ -522,7 +523,7 @@ class MessageService {
       integrationAccountId: thread.integrationAccountId,
       externalThreadId: thread.externalThreadId,
       content: message.content,
-      attachments: message.attachments,
+      attachments: parseStoredAttachments(message.attachments),
       metadata: parseStoredMetadata(message.metadata),
     };
 

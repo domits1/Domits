@@ -113,4 +113,59 @@ describe("MessageService signs attachment URLs on the way out", () => {
     );
     expect(result.response.attachments).toEqual([{ url: SIGNED_URL, type: "image" }]);
   });
+
+  describe("retry of a message whose attachments are stored as text", () => {
+    const storedForms = [
+      ["a JSON string", JSON.stringify([{ url: RAW_URL, type: "image" }])],
+      ["a Postgres array literal", `{${JSON.stringify(JSON.stringify({ url: RAW_URL, type: "image" }))}}`],
+    ];
+
+    test.each(storedForms)("gives the provider an array of attachments when the row holds %s", async (_label, stored) => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        buildThread({ platform: "CHANNEX", integrationAccountId: "integration-1", externalThreadId: "ext-thread-1" })
+      );
+      mockMessageRepository.getMessageById.mockResolvedValue({
+        id: "message-1",
+        threadId: "thread-1",
+        senderId: "host-1",
+        recipientId: "guest-1",
+        content: "photo",
+        attachments: stored,
+        deliveryStatus: "failed",
+        metadata: null,
+      });
+      mockMessageRepository.claimFailedMessageForRetry.mockResolvedValue(1);
+      mockMessageRepository.updateDeliveryResult.mockImplementation(async (id, patch) => ({ id, ...patch }));
+      mockChannexAdapter.sendMessage.mockResolvedValue({ providerMessageId: "provider-1" });
+
+      await buildService().retryMessage("message-1", hostAuth);
+
+      expect(mockChannexAdapter.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ attachments: [{ url: RAW_URL, type: "image" }] })
+      );
+    });
+
+    test("gives the provider no attachments when the row has none", async () => {
+      mockThreadRepository.getThreadById.mockResolvedValue(
+        buildThread({ platform: "CHANNEX", integrationAccountId: "integration-1", externalThreadId: "ext-thread-1" })
+      );
+      mockMessageRepository.getMessageById.mockResolvedValue({
+        id: "message-1",
+        threadId: "thread-1",
+        senderId: "host-1",
+        recipientId: "guest-1",
+        content: "hello",
+        attachments: null,
+        deliveryStatus: "failed",
+        metadata: null,
+      });
+      mockMessageRepository.claimFailedMessageForRetry.mockResolvedValue(1);
+      mockMessageRepository.updateDeliveryResult.mockImplementation(async (id, patch) => ({ id, ...patch }));
+      mockChannexAdapter.sendMessage.mockResolvedValue({ providerMessageId: "provider-1" });
+
+      await buildService().retryMessage("message-1", hostAuth);
+
+      expect(mockChannexAdapter.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ attachments: null }));
+    });
+  });
 });

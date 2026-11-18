@@ -1,5 +1,6 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { parseStoredAttachments } from "./storedAttachments.js";
 
 const BUCKET = process.env.MESSAGING_ATTACHMENTS_BUCKET || "general-messaging-production-attachments";
 const REGION = process.env.MESSAGING_ATTACHMENTS_REGION || "eu-north-1";
@@ -53,20 +54,11 @@ const signAttachmentList = (attachments) =>
     })
   );
 
-const parseAttachmentList = (value) => {
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-};
-
 export const signAttachments = async (attachments) => {
   if (Array.isArray(attachments)) return signAttachmentList(attachments);
 
   if (typeof attachments === "string") {
-    const parsed = parseAttachmentList(attachments);
+    const parsed = parseStoredAttachments(attachments);
     if (!parsed) return attachments;
     return JSON.stringify(await signAttachmentList(parsed));
   }
