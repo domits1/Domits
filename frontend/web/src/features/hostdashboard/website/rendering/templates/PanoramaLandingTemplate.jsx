@@ -15,8 +15,8 @@ import {
   TemplateImageSlotVisual,
   TemplateTopBar,
 } from "./templateSharedSections";
-import PanoramaPageHeader from "./PanoramaPageHeader";
 import PanoramaPageLink from "./PanoramaPageLink";
+import { buildPanoramaContactContent } from "./panoramaContactContent";
 import PanoramaEliteSitePage from "./elite/PanoramaEliteSitePage";
 import { isEliteRestyledPage, resolveEliteHeaderTone } from "./elite/eliteSitePageContent";
 import {
@@ -40,13 +40,8 @@ import {
   quoteContextPropType,
 } from "./templatePropTypes";
 import {
-  DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
   DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
-  DEFAULT_WEBSITE_CONTACT_TITLE,
-  WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
-  WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
-  resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
   resolveWebsiteContactSectionCopy,
 } from "../../config/websiteContactSectionConfig";
@@ -1184,30 +1179,8 @@ const renderPanoramaContactSection = ({
   activeTargetId,
   shouldDeferContent = false,
 }) => {
-  const resolvedContactSectionCopy = resolveWebsiteContactSectionCopy(model.contactSection);
-  const contactTitle =
-    String(resolvedContactSectionCopy.title || "").trim() || DEFAULT_WEBSITE_CONTACT_SECTION_TITLE;
-  const contactCaption =
-    String(resolvedContactSectionCopy.caption || "").trim() || DEFAULT_WEBSITE_CONTACT_TITLE;
-  const contactDescription =
-    String(model.contactSection?.description || "").trim() || DEFAULT_WEBSITE_CONTACT_DESCRIPTION;
-  const hostName = String(model.host?.name || "").trim() || "Host";
-  const hostInitial = String(model.host?.initial || hostName.charAt(0) || "H")
-    .trim()
-    .charAt(0)
-    .toUpperCase() || "H";
-  const avatarMode = resolveWebsiteContactAvatarMode(
-    model.contactSection?.avatarMode,
-    String(model.contactSection?.avatarImage || "").trim()
-      ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-      : WEBSITE_CONTACT_AVATAR_MODE_HOST
-  );
-  let hostProfileImage = "";
-  if (avatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM) {
-    hostProfileImage = String(model.contactSection?.avatarImage || "").trim();
-  } else if (avatarMode === WEBSITE_CONTACT_AVATAR_MODE_HOST) {
-    hostProfileImage = String(model.host?.profileImage || "").trim();
-  }
+  const { contactTitle, contactCaption, contactDescription, hostName, hostInitial, hostProfileImage } =
+    buildPanoramaContactContent(model);
   const accentColor = resolveWebsiteContactAccentColor(model.contactSection?.accentColor);
   const backgroundColor = resolveWebsiteContactBackgroundColor(model.contactSection?.backgroundColor);
   const contactSectionStyle = {
@@ -1299,7 +1272,7 @@ export default function PanoramaLandingTemplate({
   );
   const currentPageKey = pageState?.currentPage.key;
   const elitePageKey = isEliteRestyledPage(currentPageKey) ? currentPageKey : "";
-  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media) : "";
+  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media, elitePageKey) : "";
   const showsPageSection = (section) => !elitePageKey && (!pageState || pageState.sections.includes(section));
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
@@ -1406,17 +1379,12 @@ export default function PanoramaLandingTemplate({
         }
         headerRef={heroSectionRef}
         onShowAllAmenities={() => setShowAmenitiesModal(true)}
+        onOpenGalleryBrowser={handleOpenGalleryBrowser}
+        canOpenGalleryBrowser={canOpenGalleryBrowser}
         onSelectTarget={onSelectTarget}
         activeTargetId={activeTargetId}
       />
-    ) : (
-      <PanoramaPageHeader
-        title={pageState.currentPage.navLabel}
-        siteTitle={model.site.title}
-        headerRef={heroSectionRef}
-        showTopBar={viewState.showTopBar}
-      />
-    );
+    ) : null;
 
   return (
     <>

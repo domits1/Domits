@@ -8,7 +8,7 @@ const DATES = { start: "2026-12-01", end: "2026-12-03" };
 const build = async ({ mapped = true } = {}) => {
   const tables = fakeTables();
   if (mapped) {
-    await new SiteMinderMappingService({
+    const mapping = new SiteMinderMappingService({
       ...tables,
       restClient: { getRoomRates: async () => PMSXTEST1_ROOM_RATES },
       propertyLookup: { getDomitsPropertyContext: async (id) => ({ propertyId: id, hostId: "host-1" }) },
@@ -16,7 +16,9 @@ const build = async ({ mapped = true } = {}) => {
       credentialsRef: "secret",
       now: () => 1,
       newId: () => "account-1",
-    }).syncHotel({ userId: "host-1", domitsPropertyId: "property-1", hotelCode: "PMSXTEST1" });
+    });
+    await mapping.syncRoomType({ userId: "host-1", domitsPropertyId: "property-1", hotelCode: "PMSXTEST1", roomTypeCode: "DORM" });
+    await mapping.syncRoomType({ userId: "host-1", domitsPropertyId: "property-2", hotelCode: "PMSXTEST1", roomTypeCode: "FAM" });
   }
   const pusher = () => ({ push: jest.fn(async () => ({ success: true, echoToken: "e1" })) });
   const pushers = { availabilityPusher: pusher(), restrictionsPusher: pusher(), ratesPusher: pusher() };
@@ -85,6 +87,27 @@ describe("SiteMinderInventoryService", () => {
     await expect(
       service.pushAvailability({ hotelCode: "PMSXTEST1", items: [{ roomTypeCode: "DORM", ...DATES, bookingLimit: 1 }] })
     ).rejects.toMatchObject({ code: "SITEMINDER_HOTEL_NOT_MAPPED" });
+  });
+
+  test("sends availability for the rooms of every Domits property in the hotel, one villa per room", async () => {
+    const { service, tables, availabilityPusher } = await build({ mapped: false });
+    tables.rows.accounts.push({ id: "account-1", channel: "SITEMINDER" });
+    for (const [propertyId, roomTypeCode] of [
+      ["villa-sea", "SEA"],
+      ["villa-wood", "WOOD"],
+    ]) {
+      const base = { integrationAccountId: "account-1", domitsPropertyId: propertyId, externalPropertyId: "PMSXTEST1" };
+      await tables.props.upsert({ ...base, status: "ACTIVE" });
+      await tables.roomTypes.upsert({ ...base, externalRoomTypeId: roomTypeCode, status: "ACTIVE" });
+    }
+    const items = [
+      { roomTypeCode: "SEA", ...DATES, bookingLimit: 1 },
+      { roomTypeCode: "WOOD", ...DATES, bookingLimit: 0 },
+    ];
+
+    await service.pushAvailability({ hotelCode: "PMSXTEST1", items });
+
+    expect(availabilityPusher.push).toHaveBeenCalledWith({ hotelCode: "PMSXTEST1", items });
   });
 
   test("ignores a hotel code that belongs to another channel", async () => {
