@@ -35,7 +35,7 @@ GET (LocationMapping ▶ PropertyLocation): no limits, old rows load ◀┘ not 
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
 | P4 (9/10) | `propertyBuilder.js:156` and `propertyController.js:306` | `throw new Error(\`Missing ${item}.\`)` has no `statusCode`, and the create handler answers `error.statusCode \|\| 500`. House number `0` on create, and every other "Missing ..." field, already answers 500. | Not changed: "Missing houseNumber." stays as decided. Own issue. |
-| P4 (8/10) | `propertyBuilder.js:160-165` | A fractional house number such as `12.5` passes the create checks (no integer check). How the INTEGER column treats it was not verified. | Accepted, not in scope. |
+| P4 (8/10) | `propertyBuilder.js:160-165` | A fractional house number such as `12.5` passed the create checks (no integer check) and reached the INTEGER column. | Fixed after review (Tufan and Enes): `getLocationLimitError` now refuses it with "Location houseNumber must be a whole number." and create answers 400. The update path already truncates. |
 | P4 (8/10) | `propertyService.js:449` | The editor sends the location on every save. A listing already stored with house number 0 now fails every overview save with a 400 until its host changes the number. | Accepted. Recoverable, no data loss, and #3938 already blocks the same value in the editor. |
 | P5 (7/10) | `util/locationLimits.js` | `!(houseNumber <= MAX_HOUSE_NUMBER)` is a negated comparison. It is deliberate: it sends `NaN` and `Infinity` into the "too large" branch. | Accepted, a comment says why. |
 | P5 (6/10) | `test/PropertyHandler/locationLimits.test.js` | The POST 400 test replaces `createPropertyObject`, so it proves the status mapping and not that `body.propertyLocation` reaches `addLocation` (`propertyController.js:3970`, unchanged). | Accepted. |
@@ -43,7 +43,7 @@ GET (LocationMapping ▶ PropertyLocation): no limits, old rows load ◀┘ not 
 ## Not in scope
 
 - The "Missing ..." errors on create answer 500 (first finding). They need their own issue.
-- Fractions on create (`12.5`) and the behaviour of the INTEGER column for them.
+- Fractional house numbers are now refused with a 400 on create (fixed after review, Tufan and Enes). The update path truncates them, as before.
 - Non-string extensions sent to the update path are still ignored and stored as "" (unchanged).
 - Existing rows that break the limits are not migrated or listed. The count was not checked.
 - No frontend file is touched. The messages follow the wording of #3938 with a `Location ` prefix so `isOverviewClientError` answers 400.

@@ -14,6 +14,10 @@ export const getLocationLimitError = ({ houseNumber, houseNumberExtension }) => 
     if (houseNumber < 1) {
       return "Location houseNumber must be at least 1.";
     }
+    // The update path truncates before it gets here; create does not, and the INTEGER column would answer 500.
+    if (!Number.isInteger(houseNumber)) {
+      return "Location houseNumber must be a whole number.";
+    }
   }
   // VARCHAR counts characters, not UTF-16 units, so an emoji is one.
   if (typeof houseNumberExtension === "string" && [...houseNumberExtension].length > MAX_HOUSE_NUMBER_EXTENSION_LENGTH) {

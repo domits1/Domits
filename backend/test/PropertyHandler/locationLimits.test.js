@@ -5,13 +5,32 @@ import { LocationMapping } from "../../functions/PropertyHandler/util/mapping/lo
 import {
   MAX_HOUSE_NUMBER,
   MAX_HOUSE_NUMBER_EXTENSION_LENGTH,
+  getLocationLimitError,
 } from "../../functions/PropertyHandler/util/locationLimits.js";
 
 const ADDRESS = { street: "Damrak", postalCode: "1012 LG", city: "Amsterdam", country: "Netherlands" };
 const TOO_LARGE = `Location houseNumber must be ${MAX_HOUSE_NUMBER} or lower.`;
 const TOO_SMALL = "Location houseNumber must be at least 1.";
-const TOO_LONG = `Location houseNumberExtension must be ${MAX_HOUSE_NUMBER_EXTENSION_LENGTH} characters or fewer.`;
+const NOT_WHOLE = "Location houseNumber must be a whole number.";
+const TOO_LONG =`Location houseNumberExtension must be ${MAX_HOUSE_NUMBER_EXTENSION_LENGTH} characters or fewer.`;
 const LONG_EXTENSION = "x".repeat(MAX_HOUSE_NUMBER_EXTENSION_LENGTH + 1);
+
+describe("getLocationLimitError: whole numbers", () => {
+  it("refuses a fractional house number", () => {
+    expect(getLocationLimitError({ houseNumber: 12.5 })).toBe(NOT_WHOLE);
+  });
+
+  it.each([[Infinity, TOO_LARGE], [NaN, TOO_LARGE], [0.5, TOO_SMALL], [-1.5, TOO_SMALL]])(
+    "keeps the earlier message for %p",
+    (houseNumber, message) => {
+      expect(getLocationLimitError({ houseNumber })).toBe(message);
+    }
+  );
+
+  it("accepts a whole number", () => {
+    expect(getLocationLimitError({ houseNumber: 12 })).toBe("");
+  });
+});
 
 describe("overview update: location values the columns cannot store", () => {
   const controller = new PropertyController();
@@ -35,6 +54,7 @@ describe("overview update: location values the columns cannot store", () => {
     [1, 1],
     [MAX_HOUSE_NUMBER, MAX_HOUSE_NUMBER],
     [12.7, 12],
+    [12.5, 12],
     ["007", 7],
     [String(MAX_HOUSE_NUMBER), MAX_HOUSE_NUMBER],
   ])("keeps house number %p as %p", (houseNumber, stored) => {
@@ -63,7 +83,7 @@ describe("overview update: location values the columns cannot store", () => {
     expect(() => normalize({})).toThrow("Location requires street, houseNumber, postalCode, city and country.");
   });
 
-  it.each([TOO_LARGE, TOO_SMALL, TOO_LONG])("answers %p as a client error", (message) => {
+  it.each([TOO_LARGE, TOO_SMALL, NOT_WHOLE, TOO_LONG])("answers %p as a client error", (message) => {
     expect(controller.isOverviewClientError(new Error(message))).toBe(true);
   });
 
@@ -97,7 +117,7 @@ describe("create: PropertyBuilder.addLocation", () => {
     return builder.addLocation({ ...ADDRESS, houseNumber: 12, houseNumberExtension: "", ...location });
   };
 
-  it.each([[MAX_HOUSE_NUMBER + 1, TOO_LARGE], [-5, TOO_SMALL], [0.5, TOO_SMALL]])(
+  it.each([[MAX_HOUSE_NUMBER + 1, TOO_LARGE], [-5, TOO_SMALL], [0.5, TOO_SMALL], [12.5, NOT_WHOLE]])(
     "rejects house number %p",
     (houseNumber, message) => {
       expect(() => addLocation({ houseNumber })).toThrow(message);
@@ -123,6 +143,7 @@ describe("create: PropertyBuilder.addLocation", () => {
   it.each([
     [{ houseNumber: MAX_HOUSE_NUMBER + 1 }, TOO_LARGE],
     [{ houseNumber: -5 }, TOO_SMALL],
+    [{ houseNumber: 12.5 }, NOT_WHOLE],
     [{ houseNumberExtension: LONG_EXTENSION }, TOO_LONG],
   ])("answers POST /property with 400, not 500, for %p", async (location, message) => {
     const controller = new PropertyController();
