@@ -23,7 +23,7 @@ The note: `docs/partner/integrations/channel_manager/channex/channex_host_self_d
 
 These are design choices, not review findings. The note holds the options and the reasons.
 
-- D1: Channex iframe for v1. Accepted risk: the one-time token is account-wide. Switch trigger: before a second real host connects.
+- D1: Channex iframe. First written as an accepted risk (account-wide token, switch before a second real host). Channex support confirmed on 18 Nov that the token is requested per `property_id` and limits the session to that property, so the risk became a verification step before release: a token for property A must not open property B.
 - D3: only live listings with location, max guests and a price.
 - D4: timezone from the country; the host picks only in multi-timezone countries.
 - D5: toggle off = close (stop_sell), then the worker disconnects after the wait time. No paused state.
@@ -33,7 +33,7 @@ These are design choices, not review findings. The note holds the options and th
 ## Not in scope
 
 - Content sync, creating OTA listings, multiple room types or rate plans (#3568).
-- Our own connect form on the Channel API: only if the D1 switch trigger fires.
+- Our own connect form on the Channel API: only if the D1 verification fails.
 - A separate Lambda for distribution jobs: the caps from #3927 are enough at this volume; revisit when volumes grow.
 - Billing: Stefan's decision, not part of this design.
-- Channex support answers (token per property, hiding Deactivate, sync after deactivate): asked on 18 Nov; the note changes if the answers do.
+- Channex support answers: token per property answered yes on 18 Nov (D1 updated); hiding Deactivate and sync after deactivate still open; the note changes if those answers do.

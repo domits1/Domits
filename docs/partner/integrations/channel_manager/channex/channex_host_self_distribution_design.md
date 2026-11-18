@@ -43,7 +43,7 @@ Goals:
 - G1. A host turns on distribution for a live listing; the Channex side is created and filled with the listing's prices and availability.
 - G2. A host connects Booking.com, Airbnb and Vrbo from the Distribution tab.
 - G3. A host switches one OTA off; the listing closes on that OTA before it is disconnected, so it is never sold on stale availability.
-- G4. A host never sees or changes another host's listings, channels or bookings. For the first version this holds with one accepted, time-limited exception (D1).
+- G4. A host never sees or changes another host's listings, channels or bookings. For the iframe this rests on the token being limited to one property (D1), verified on staging before release.
 - G5. The host always sees the state of each OTA connection (D7).
 
 Non-goals (this design):
@@ -67,16 +67,16 @@ Non-goals (this design):
 
 ## 5. Decisions
 
-### D1. Channex iframe for the first version, with a written switch trigger
+### D1. Channex iframe, with the one-time token limited to the listing's property
 
 | Option | For | Against |
 |---|---|---|
-| **Channex iframe (chosen for v1)** | Least work. Channex's own connect screens for all three OTAs. The Vrbo password goes into Channex's screen, never through Domits (D6). | The one-time token logs in as the account that requested it: Domits' account, which holds every host's property. Channex's iframe page says there is no access policy yet. A host who changes the property in the iframe URL could see another host's Channex data. |
+| **Channex iframe (chosen)** | Least work. Channex's own connect screens for all three OTAs. The Vrbo password goes into Channex's screen, never through Domits (D6). | The session belongs to Domits' account, which holds every host's property, so its scope rests entirely on the token's `property_id` (below). |
 | Own form on the Channel API | The host never gets a Channex session; the backend makes every call after the owner check | More work for Ilan, Rakib and Enes; Vrbo's password would pass through Domits |
 
-Accepted risk: acceptable while there is one real host.
+Scope of the session: Channex support confirmed on 18 Nov that the one-time token is requested with a `property_id` (`POST /api/v1/auth/one_time_token`) and that the iframe session is limited to that property. `connect-session` therefore always requests the token for the host's own Channex property, after the owner check, and never takes a property id from the browser.
 
-**Switch trigger:** before a second real host connects, either Channex confirms that a one-time token can be limited to one property, or we build our own form on the Channel API (`test_connection`, `mapping_details`, `POST /channels`, mappings, `activate`).
+Verification before release (section 9): with a token for property A, change the property in the iframe URL to property B and confirm Channex refuses it. If it does not, the iframe is not released and we build our own form on the Channel API (`test_connection`, `mapping_details`, `POST /channels`, mappings, `activate`).
 
 ### D2. Provisioning: create the Channex side when the host turns on distribution
 
@@ -203,7 +203,7 @@ Responses never contain API keys or other hosts' data.
 
 - Domits' Channex API key stays in the backend. The host only gets a one-time token for the iframe.
 - `connect-session` only returns a token for a listing the host owns.
-- Accepted risk and switch trigger: D1.
+- The one-time token is requested per property; the cross-property check before release: D1.
 - Every route resolves the listing owner from the database and compares it with the token's user, as the existing owner checks do.
 - Domits never handles OTA passwords: Vrbo credentials go into Channex's screen (D6).
 
@@ -220,11 +220,12 @@ Responses never contain API keys or other hosts' data.
 - D7 labels as one pure function (row status, Channex active, waiting rows, stop_sell in; label out), table-tested like `evaluateChannexHealth` in `channexHealthStatus.js`, including "Disconnected outside Domits".
 - D9 reconciliation: a listing that is not live with an active channel goes to `DISCONNECTING`; a live listing is left alone; a live listing's active channel with a leftover stop_sell gets it removed; the cap per run holds.
 - Before building D5: on the staging test property, set stop_sell on the Booking.com test channel, time how long until all dates show closed on that channel only, then deactivate and confirm they stay closed. That sets the wait time. Also check whether the iframe re-activates a deactivated channel or creates a new one.
+- Before releasing the iframe (D1): request a one-time token for property A, change the property in the iframe URL to property B, and confirm Channex refuses it.
 - End to end on staging: the Booking.com test account (shared pool, connect late, test fast), an Airbnb test listing if available. Vrbo has no test account (D6): its first test is a real listing.
 
 ## 10. Open questions
 
-- Q1. Channex support (sent by Enes): (a) can a one-time token be limited to one property, (b) can the iframe hide its Deactivate button, (c) does a queued sync still go out after a channel is deactivated?
+- Q1. Channex support (sent 18 Nov): (a) can a one-time token be limited to one property: answered yes on 18 Nov (D1); (b) can the iframe hide its Deactivate button; (c) does a queued sync still go out after a channel is deactivated? (b) and (c) still open.
 
 ## 11. Order of work
 
