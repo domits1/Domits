@@ -30,6 +30,9 @@ const resolveMinimumStay = (model) => {
 };
 
 const resolveContactHref = (model) => {
+  if (model?.visibility?.chatWidget === false) {
+    return null;
+  }
   const whatsapp = model?.host?.whatsapp;
   const digits = String(whatsapp?.phoneNumberDigits || "").replaceAll(/\D/g, "");
   return whatsapp?.isAvailable && digits ? `https://wa.me/${digits}` : null;

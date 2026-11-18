@@ -64,6 +64,16 @@ describe("downloadReservationReceiptPdf payment section", () => {
     expect(writtenTexts).not.toContain("Cleaning fee:");
   });
 
+  // A receipt without a currency is a Domits booking or one from before #3583, so it stays in euros.
+  test.each([
+    { currency: "GBP", expected: "GBP 300.00" },
+    { currency: undefined, expected: "EUR 300.00" },
+  ])("writes the total with its currency code: $expected", async ({ currency, expected }) => {
+    await downloadReservationReceiptPdf({ ...receipt, currency, showPriceBreakdown: false });
+
+    expect(writtenTexts).toContain(expected);
+  });
+
   test("keeps the price breakdown for a Domits booking", async () => {
     await downloadReservationReceiptPdf(receipt);
 

@@ -75,6 +75,27 @@ describe("HostReservationDetails payment of a Channex booking (#3483)", () => {
     );
   });
 
+  // A booking paid in pounds on the OTA must not show a euro sign, on the page or the receipt (#3583).
+  test("shows the total in the currency the guest paid in", async () => {
+    renderDetailsFor({ ...channexBooking, total_price: 250, currency: "GBP" });
+
+    await screen.findAllByText("Test Apartment");
+    expect(screen.getByText("£250.00")).toBeTruthy();
+    expect(screen.queryByText("€250.00")).toBeNull();
+  });
+
+  test("the receipt carries the currency of the total", async () => {
+    renderDetailsFor({ ...channexBooking, total_price: 250, currency: "GBP" });
+
+    const downloadButton = await screen.findByRole("button", { name: /Download receipt/ });
+    await waitFor(() => expect(downloadButton.disabled).toBe(false));
+    fireEvent.click(downloadButton);
+
+    await waitFor(() =>
+      expect(downloadReservationReceiptPdf).toHaveBeenCalledWith(expect.objectContaining({ total: 250, currency: "GBP" }))
+    );
+  });
+
   test("keeps the card payment texts for a Domits booking", async () => {
     renderDetailsFor({ ...channexBooking, bookingtype: undefined, booking_source: undefined });
 
