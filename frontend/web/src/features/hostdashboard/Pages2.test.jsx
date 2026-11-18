@@ -192,7 +192,7 @@ describe("Pages2 property review navigation", () => {
     renderPages();
 
     const link = await screen.findByRole("link", { name: /review approval/i });
-    expect(link.getAttribute("href")).toBe("/admin/review-approval");
+    expect(link.getAttribute("href")).toBe("/hostdashboard/admin/review-approval");
   });
 
   test("hides the Review approval nav item when the internal admin check denies the user", async () => {
