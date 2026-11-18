@@ -59,7 +59,7 @@ if (typeof globalThis.addEventListener === "function") {
   globalThis.addEventListener("authChanged", clearReviewApprovalAccessCache);
 }
 
-// Cache only the permission answer, never queue rows. Token scoping prevents
+// Cache only confirmed approval access, never denials or queue rows. Token scoping prevents
 // sharing answers across accounts/sessions; the short TTL bounds role staleness.
 export const hasReviewApprovalAccess = async () => {
   const controller = new AbortController();
@@ -71,17 +71,21 @@ export const hasReviewApprovalAccess = async () => {
     const token = await getIdToken();
     if (controller.signal.aborted || !token) return null;
     if (approvalAccessCache?.token === token && approvalAccessCache.expiresAt > Date.now()) {
-      return approvalAccessCache.answer;
+      const shared = approvalAccessCache;
+      const allowed = await Promise.race([shared.answer, timeout]);
+      // The shared request belongs to its first caller. If its deadline expires,
+      // a later caller may retry using the time left on its own deadline.
+      if (!shared.controller.signal.aborted || controller.signal.aborted) return allowed;
+      if (approvalAccessCache === shared) approvalAccessCache = null;
     }
-    const entry = { token, expiresAt: Date.now() + ACCESS_CACHE_MS };
+    const entry = { token, controller, expiresAt: Date.now() + ACCESS_CACHE_MS };
     approvalAccessCache = entry;
-    entry.answer = (async () => {
+    const request = (async () => {
       try {
         const response = await fetch(`${API_REVIEW_BASE}/reviews?scope=pending-approval`, {
           method: "GET", headers: { Authorization: token }, signal: controller.signal,
         });
-        if (response.status === 401) { entry.expiresAt = 0; return false; }
-        if (response.status === 403) return false;
+        if (response.status === 401 || response.status === 403) return false;
         if (!response.ok) return null;
         const payload = await parseResponse(response);
         return Array.isArray(payload) ? true : null;
@@ -89,8 +93,9 @@ export const hasReviewApprovalAccess = async () => {
         return null;
       }
     })();
-    const allowed = await Promise.race([entry.answer, timeout]);
-    if ((allowed === null || controller.signal.aborted) && approvalAccessCache === entry) {
+    entry.answer = Promise.race([request, timeout]);
+    const allowed = await entry.answer;
+    if ((allowed !== true || controller.signal.aborted) && approvalAccessCache === entry) {
       approvalAccessCache = null;
     }
     return allowed;
