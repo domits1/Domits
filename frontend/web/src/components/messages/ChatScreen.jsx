@@ -12,6 +12,7 @@ import { mdiClose } from "@mdi/js";
 import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
 import { getMessageCapabilities } from "./messageCapabilities";
+import { extractFileUrls } from "../../features/hostdashboard/hostmessages/utils/extractFileUrls";
 
 import fallbackAvatar from "./domits-logo.jpg";
 
@@ -45,11 +46,15 @@ const isUnsentMessageOfOtherConversation = (message, contactId, threadId) => {
   return isOtherRecipient || isOtherThread;
 };
 
+const getSignedFileUrls = (result) => extractFileUrls(result?.saved?.attachments);
+
 const buildSettledMessage = (pending, result, fallbackPlatform) => {
   const saved = result?.saved || {};
+  const signedFileUrls = getSignedFileUrls(result);
   return {
     ...pending,
     id: saved.id || pending.id,
+    fileUrls: signedFileUrls.length > 0 ? signedFileUrls : pending.fileUrls,
     createdAt: saved.createdAt ? new Date(saved.createdAt).toISOString() : pending.createdAt,
     threadId: saved.threadId || pending.threadId,
     bookingId: saved.bookingId || pending.bookingId,
@@ -97,6 +102,12 @@ const ChatScreen = ({
   const isPreviewOpen = showPreviewPopover && imageAttachments.length > 0;
   const attachmentsRef = useRef(attachments);
   attachmentsRef.current = attachments;
+  const messagePreviewsRef = useRef(new Map());
+
+  const releaseMessagePreviews = (messageId) => {
+    messagePreviewsRef.current.get(messageId)?.forEach(releasePreview);
+    messagePreviewsRef.current.delete(messageId);
+  };
 
   const [localMessages, setLocalMessages] = useState([]);
   const [retryingIds, setRetryingIds] = useState({});
@@ -120,6 +131,14 @@ const ChatScreen = ({
     setAttachments([]);
     return () => attachmentsRef.current.forEach((attachment) => releasePreview(attachment.previewUrl));
   }, [resolvedContactId, threadId]);
+
+  useEffect(() => {
+    const previews = messagePreviewsRef.current;
+    return () => {
+      previews.forEach((previewUrls) => previewUrls.forEach(releasePreview));
+      previews.clear();
+    };
+  }, []);
 
   useEffect(() => {
     if (!isPreviewOpen) return undefined;
@@ -241,7 +260,7 @@ const ChatScreen = ({
       text: newMessage.trim(),
       content: newMessage.trim(),
       createdAt: nowIso,
-      fileUrls: uploadedFileUrls,
+      fileUrls: attachments.map((attachment) => attachment.previewUrl || attachment.url),
       threadId: threadId || null,
       propertyId: effectivePropertyId,
       bookingId: bookingId || null,
@@ -250,16 +269,20 @@ const ChatScreen = ({
       deliveryStatus: "pending",
     };
 
+    const localPreviewUrls = attachments.map((attachment) => attachment.previewUrl).filter(Boolean);
+    if (localPreviewUrls.length > 0) messagePreviewsRef.current.set(optimisticId, localPreviewUrls);
+
     isNearBottomRef.current = true;
     setLocalMessages((prev) => [...prev, optimistic]);
 
     try {
-      const result = await sendMessage(resolvedContactId, optimistic.text, optimistic.fileUrls, sendOptions);
+      const result = await sendMessage(resolvedContactId, optimistic.text, uploadedFileUrls, sendOptions);
 
       const saved = result?.saved || {};
       if (!result?.success && !saved.id) throw new Error(result?.error || "send failed");
 
       const finalMsg = buildSettledMessage(optimistic, result, resolvedPlatform);
+      if (getSignedFileUrls(result).length > 0) releaseMessagePreviews(optimisticId);
 
       setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? finalMsg : m)));
       handleContactListMessage?.(finalMsg);
@@ -274,7 +297,7 @@ const ChatScreen = ({
         retryPayload: {
           recipientId: resolvedContactId,
           text: optimistic.text,
-          fileUrls: optimistic.fileUrls,
+          fileUrls: uploadedFileUrls,
           options: sendOptions,
         },
       };
@@ -286,7 +309,6 @@ const ChatScreen = ({
 
   const clearComposer = () => {
     setNewMessage("");
-    attachmentsRef.current.forEach((attachment) => releasePreview(attachment.previewUrl));
     setAttachments([]);
     setShowPreviewPopover(false);
   };
@@ -315,6 +337,7 @@ const ChatScreen = ({
     }
 
     const settledMessage = { ...buildSettledMessage(message, result, resolvedPlatform), retryPayload: undefined };
+    if (getSignedFileUrls(result).length > 0) releaseMessagePreviews(message.id);
     setLocalMessages((prev) => prev.map((m) => (m.id === message.id ? settledMessage : m)));
     handleContactListMessage?.(settledMessage);
 

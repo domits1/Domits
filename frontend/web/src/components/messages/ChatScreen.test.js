@@ -4,7 +4,7 @@
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ChatScreen from "./ChatScreen";
 import { getMessageCapabilities } from "./messageCapabilities";
 
@@ -733,15 +733,136 @@ describe("ChatScreen reservation messaging", () => {
         expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
       });
 
-      test("revokes the previews of the chips once the message is sent", async () => {
-        renderHostChat();
-        attach("Attach with preview");
+      describe("after the message is sent", () => {
+        const SIGNED_PHOTO = "https://signed.example.com/photo.jpg?X-Amz-Signature=abc";
+        const savedWithSignedUrl = (patch = {}) => ({
+          success: true,
+          saved: {
+            id: "message-1",
+            threadId: "thread-1",
+            deliveryStatus: "sent",
+            attachments: [{ url: SIGNED_PHOTO, type: "image", name: "photo.jpg" }],
+            ...patch,
+          },
+        });
+        const sendWithPreview = () => {
+          attach("Attach with preview");
+          fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "See photo" } });
+          fireEvent.click(screen.getByTitle("Send"));
+        };
+        const pendingSend = () => {
+          const control = {};
+          mockSendMessage.mockImplementationOnce(
+            () =>
+              new Promise((resolve) => {
+                control.resolve = resolve;
+              })
+          );
+          return control;
+        };
+        const sentImage = () => screen.getByAltText("Attachment");
 
-        fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "See photo" } });
-        fireEvent.click(screen.getByTitle("Send"));
+        test("shows the local preview in the sent message while the server answers, and sends the uploaded url", async () => {
+          pendingSend();
+          renderHostChat();
 
-        await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview"));
-        expect(screen.queryByRole("list", { name: "Attachments" })).not.toBeInTheDocument();
+          sendWithPreview();
+
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", "blob:photo-preview"));
+          expect(mockSendMessage.mock.calls[0][2]).toEqual(["https://example.com/photo.jpg"]);
+          expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        });
+
+        test("clears the chips without revoking the preview the sent message still shows", async () => {
+          const send = pendingSend();
+          renderHostChat();
+          sendWithPreview();
+          await waitFor(() => expect(sentImage()).toBeInTheDocument());
+
+          await act(async () =>
+            send.resolve({ success: true, saved: { id: "message-1", threadId: "thread-1", deliveryStatus: "sent" } })
+          );
+
+          await waitFor(() => expect(screen.queryByRole("list", { name: "Attachments" })).not.toBeInTheDocument());
+          expect(sentImage()).toHaveAttribute("src", "blob:photo-preview");
+          expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        });
+
+        test("switches to the signed url from the send response and revokes the local preview", async () => {
+          const send = pendingSend();
+          renderHostChat();
+          sendWithPreview();
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", "blob:photo-preview"));
+
+          await act(async () => send.resolve(savedWithSignedUrl()));
+
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", SIGNED_PHOTO));
+          expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+          expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+        });
+
+        test("reads signed urls that the response returns as a JSON string", async () => {
+          const send = pendingSend();
+          renderHostChat();
+          sendWithPreview();
+          await waitFor(() => expect(sentImage()).toBeInTheDocument());
+
+          await act(async () =>
+            send.resolve(
+              savedWithSignedUrl({ attachments: JSON.stringify([{ url: SIGNED_PHOTO, type: "image", name: null }]) })
+            )
+          );
+
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", SIGNED_PHOTO));
+        });
+
+        test("keeps the local preview and does not revoke it when the response has no attachments", async () => {
+          const send = pendingSend();
+          renderHostChat();
+          sendWithPreview();
+          await waitFor(() => expect(sentImage()).toBeInTheDocument());
+
+          await act(async () =>
+            send.resolve({ success: true, saved: { id: "message-1", threadId: "thread-1", deliveryStatus: "sent" } })
+          );
+
+          await waitFor(() =>
+            expect(screen.getByText("✓", { selector: ".message-status", exact: true })).toBeInTheDocument()
+          );
+          expect(sentImage()).toHaveAttribute("src", "blob:photo-preview");
+          expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        });
+
+        test("keeps the local preview of a message that failed and resends only the uploaded url", async () => {
+          mockSendMessage
+            .mockResolvedValueOnce({ success: false, error: "network error" })
+            .mockResolvedValueOnce(savedWithSignedUrl());
+          renderHostChat();
+
+          sendWithPreview();
+          await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument());
+          expect(sentImage()).toHaveAttribute("src", "blob:photo-preview");
+          expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+          fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", SIGNED_PHOTO));
+          expect(mockSendMessage.mock.calls[1][2]).toEqual(["https://example.com/photo.jpg"]);
+          expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+          expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+        });
+
+        test("revokes the local preview of a message that never got a signed url when the chat closes", async () => {
+          mockSendMessage.mockResolvedValueOnce({ success: false, error: "network error" });
+          const { unmount } = render(hostChat());
+          sendWithPreview();
+          await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument());
+
+          unmount();
+
+          expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+          expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+        });
       });
     });
   });
