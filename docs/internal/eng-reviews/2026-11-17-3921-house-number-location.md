@@ -1,6 +1,6 @@
 # fix(property): refuse a house number the location cannot store, in the editor and in onboarding (#3921)
 
-Pull request: #TBD (fill in when the pull request is opened)
+Pull request: #3938 (fill in when the pull request is opened)
 Issue: #3921 (related, not closed by this pull request)
 Reviewed commits: `a3cfbfc8e` (backend contract test), `af4295ce1` (editor and shared helper), `a916d65e2` (onboarding)
 Result: no blocking findings
