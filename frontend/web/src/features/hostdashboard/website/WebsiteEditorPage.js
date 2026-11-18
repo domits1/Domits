@@ -886,13 +886,9 @@ function WebsiteEditorPage() {
     }
   };
 
-  const updateLiveSiteChanges = async () => {
-    if (!draftRecord || !hasLiveSite || !canUpdateLiveSite || isMutatingDraft || isMutatingSite) {
-      return;
-    }
-
+  const publishDraftToLiveSite = async ({ setIsBusy, successMessage, fallbackErrorMessage }) => {
     setIsActionMenuOpen(false);
-    setIsUpdatingLiveSite(true);
+    setIsBusy(true);
 
     try {
       const savedDraft = await persistDraftState({ syncPublishedState: true });
@@ -909,14 +905,26 @@ function WebsiteEditorPage() {
         openedLiveSiteWindowOriginRef,
         openedLiveSiteWindowRef,
       });
-      toast.success("Live site updated.");
+      toast.success(successMessage);
     } catch (error) {
-      const errorMessage = error?.message || "We could not update the live site.";
+      const errorMessage = error?.message || fallbackErrorMessage;
       setSiteSummaryError(errorMessage);
       toast.error(errorMessage);
     } finally {
-      setIsUpdatingLiveSite(false);
+      setIsBusy(false);
     }
+  };
+
+  const updateLiveSiteChanges = async () => {
+    if (!draftRecord || !hasLiveSite || !canUpdateLiveSite || isMutatingDraft || isMutatingSite) {
+      return;
+    }
+
+    await publishDraftToLiveSite({
+      setIsBusy: setIsUpdatingLiveSite,
+      successMessage: "Live site updated.",
+      fallbackErrorMessage: "We could not update the live site.",
+    });
   };
 
   const publishLiveSite = async () => {
@@ -924,32 +932,11 @@ function WebsiteEditorPage() {
       return;
     }
 
-    setIsActionMenuOpen(false);
-    setIsPublishingSite(true);
-
-    try {
-      const savedDraft = await persistDraftState({ syncPublishedState: true });
-      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId, { draftSavedAt: savedDraft.updatedAt });
-      setSiteSummary(nextSiteSummary);
-      setSiteSummaryError("");
-      setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, nextSiteSummary));
-      announceWebsiteLiveSiteUpdate({
-        siteId: nextSiteSummary?.site?.id,
-        domain: nextSiteSummary?.primaryDomain?.domain,
-      });
-      notifyOpenedLiveSiteWindow({
-        nextSiteSummary,
-        openedLiveSiteWindowOriginRef,
-        openedLiveSiteWindowRef,
-      });
-      toast.success("Live site published.");
-    } catch (error) {
-      const errorMessage = error?.message || "We could not publish the live site.";
-      setSiteSummaryError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsPublishingSite(false);
-    }
+    await publishDraftToLiveSite({
+      setIsBusy: setIsPublishingSite,
+      successMessage: "Live site published.",
+      fallbackErrorMessage: "We could not publish the live site.",
+    });
   };
 
   const unpublishLiveSite = async () => {
