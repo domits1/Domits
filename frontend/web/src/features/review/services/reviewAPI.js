@@ -50,13 +50,57 @@ export const publishApprovedReview = async (reviewId) => {
   return payload;
 };
 
+const ACCESS_TIMEOUT_MS = 5000;
+const ACCESS_CACHE_MS = 5 * 60 * 1000;
+let approvalAccessCache = null;
+
+export const clearReviewApprovalAccessCache = () => { approvalAccessCache = null; };
+if (typeof globalThis.addEventListener === "function") {
+  globalThis.addEventListener("authChanged", clearReviewApprovalAccessCache);
+}
+
+// Cache only the permission answer, never queue rows. Token scoping prevents
+// sharing answers across accounts/sessions; the short TTL bounds role staleness.
 export const hasReviewApprovalAccess = async () => {
+  const controller = new AbortController();
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => { controller.abort(); resolve(null); }, ACCESS_TIMEOUT_MS);
+  });
+  const check = async () => {
+    const token = await getIdToken();
+    if (controller.signal.aborted || !token) return null;
+    if (approvalAccessCache?.token === token && approvalAccessCache.expiresAt > Date.now()) {
+      return approvalAccessCache.answer;
+    }
+    const entry = { token, expiresAt: Date.now() + ACCESS_CACHE_MS };
+    approvalAccessCache = entry;
+    entry.answer = (async () => {
+      try {
+        const response = await fetch(`${API_REVIEW_BASE}/reviews?scope=pending-approval`, {
+          method: "GET", headers: { Authorization: token }, signal: controller.signal,
+        });
+        if (response.status === 401) { entry.expiresAt = 0; return false; }
+        if (response.status === 403) return false;
+        if (!response.ok) return null;
+        const payload = await parseResponse(response);
+        return Array.isArray(payload) ? true : null;
+      } catch {
+        return null;
+      }
+    })();
+    const allowed = await Promise.race([entry.answer, timeout]);
+    if ((allowed === null || controller.signal.aborted) && approvalAccessCache === entry) {
+      approvalAccessCache = null;
+    }
+    return allowed;
+  };
   try {
-    await getPendingApprovalReviews();
-    return true;
-  } catch (error) {
-    if (error?.status === 401 || error?.status === 403) return false;
+    return await Promise.race([check(), timeout]);
+  } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 };
 

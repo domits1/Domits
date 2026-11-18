@@ -1,14 +1,76 @@
 import { API_REVIEW_BASE, approveReview, publishApprovedReview, getPendingApprovalReviews,
-  getAdminReviews, hasReviewApprovalAccess, submitReviewForApproval } from "../services/reviewAPI";
+  getAdminReviews, hasReviewApprovalAccess, clearReviewApprovalAccessCache, submitReviewForApproval } from "../services/reviewAPI";
+import { getIdToken } from "../../../services/getAccessToken";
 
-jest.mock("../../../services/getAccessToken", () => ({ getIdToken: async () => "token" }));
+jest.mock("../../../services/getAccessToken", () => ({ getIdToken: jest.fn() }));
+
+beforeEach(() => {
+  clearReviewApprovalAccessCache();
+  getIdToken.mockReset().mockResolvedValue("token");
+});
 
 const originalFetch = global.fetch;
 afterEach(() => {
   global.fetch = originalFetch;
+  jest.useRealTimers();
 });
 
 const respond = (status, body) => ({ ok: status < 400, status, text: async () => body });
+
+test.each([200, 403])("shares and caches confirmed access for HTTP %s", async (status) => {
+  global.fetch = jest.fn().mockResolvedValue(respond(status, "[]"));
+  const answers = await Promise.all([hasReviewApprovalAccess(), hasReviewApprovalAccess()]);
+  expect(answers).toEqual([status === 200, status === 200]);
+  await hasReviewApprovalAccess();
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("does not reuse access across authentication tokens", async () => {
+  global.fetch = jest.fn().mockResolvedValueOnce(respond(200, "[]")).mockResolvedValueOnce(respond(403, ""));
+  expect(await hasReviewApprovalAccess()).toBe(true);
+  getIdToken.mockResolvedValue("other-account-token");
+  expect(await hasReviewApprovalAccess()).toBe(false);
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test("expires cached access and clears it on authentication changes", async () => {
+  jest.useFakeTimers();
+  global.fetch = jest.fn().mockResolvedValue(respond(200, "[]"));
+  await hasReviewApprovalAccess();
+  jest.advanceTimersByTime(5 * 60 * 1000);
+  await hasReviewApprovalAccess();
+  globalThis.dispatchEvent(new Event("authChanged"));
+  await hasReviewApprovalAccess();
+  expect(fetch).toHaveBeenCalledTimes(3);
+});
+
+test("does not cache a service outage", async () => {
+  global.fetch = jest.fn().mockResolvedValueOnce(respond(503, "")).mockResolvedValueOnce(respond(200, "[]"));
+  expect(await hasReviewApprovalAccess()).toBeNull();
+  expect(await hasReviewApprovalAccess()).toBe(true);
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test("times out and aborts a stalled request, allowing a fresh retry", async () => {
+  jest.useFakeTimers();
+  let started;
+  const requestStarted = new Promise((resolve) => { started = resolve; });
+  global.fetch = jest.fn().mockImplementationOnce(() => { started(); return new Promise(() => {}); }).mockResolvedValue(respond(200, "[]"));
+  const answer = hasReviewApprovalAccess();
+  await requestStarted;
+  jest.advanceTimersByTime(5000);
+  expect(await answer).toBeNull();
+  expect(fetch.mock.calls[0][1].signal.aborted).toBe(true);
+  expect(await hasReviewApprovalAccess()).toBe(true);
+});
+
+test("bounds loading even when token acquisition stalls", async () => {
+  jest.useFakeTimers();
+  getIdToken.mockReturnValue(new Promise(() => {}));
+  const answer = hasReviewApprovalAccess();
+  jest.advanceTimersByTime(5000);
+  expect(await answer).toBeNull();
+});
 
 test.each(["", "null", "{}", '{"reviews":[]}', "invalid JSON"])(
   "rejects an unexpected successful queue response: %s", async (body) => {

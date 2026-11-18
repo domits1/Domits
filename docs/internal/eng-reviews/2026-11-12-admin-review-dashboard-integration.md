@@ -12,6 +12,6 @@ Login/access outages return unknown; the guard preserves ordinary host access. G
 ## Data flow
 Login/MFA ▶ access probe ▶ host guard ▶ admin page ▶ queue hook ▶ authorized backend; tabs/search/rating/pagination select among at most 100 loaded rows.
 ## Performance and scope
-Queue access probes fetch full queues and can repeat during routing; lightweight access endpoint deferred. Search/pagination are local, not global. Browser/screenshots/viewport evidence and expanded tests remain separate work.
+The first access probe still uses the pending queue; a lightweight access endpoint remains deferred. Concurrent probes share a request, and confirmed allow/deny answers are cached in memory for five minutes per authentication token. Authentication-change events clear the cache; transient failures are not cached. A five-second deadline bounds token retrieval, network and response parsing, returning unknown on timeout and aborting the request. The guard uses a stable account identifier to avoid rechecking when the user object is refreshed. Search/pagination are local, not global. Browser/screenshots/viewport evidence remain separate work.
 ## Validation
 Navigation and ordinary MFA suites passed locally; route suite is also being verified. Full CSS parsed: 103 class-scoped rules; whitespace checks passed. No browser or responsive-readiness claim.
