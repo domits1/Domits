@@ -14,10 +14,9 @@ import {
   buildElitePrice,
   listEliteHighlights,
   listEliteHouseRules,
+  resolveEliteAvailabilityLabel,
   selectEliteAccommodationPhotos,
 } from "./eliteSitePageContent";
-
-const DEFAULT_AVAILABILITY_LABEL = "Check availability";
 
 const keyTexts = (texts, prefix) => {
   let offset = 0;
@@ -132,7 +131,7 @@ export default function EliteAccommodationPage({
   const highlights = viewState.showAmenitiesPanel ? listEliteHighlights(viewState.featuredAmenities) : [];
   const canShowAllAmenities = viewState.allAmenities.length > 0;
   const houseRules = listEliteHouseRules(model.policies);
-  const availabilityLabel = String(model.callToAction?.label || "").trim() || DEFAULT_AVAILABILITY_LABEL;
+  const availabilityLabel = resolveEliteAvailabilityLabel(model);
 
   return (
     <>
