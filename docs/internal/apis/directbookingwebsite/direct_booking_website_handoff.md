@@ -109,7 +109,7 @@ The current website foundation routes inside `PropertyHandler` are:
 - `POST /property/website/site/unpublish`
 - `GET /property/website/public/resolve`
 - `GET /property/website/public/render`
-- `GET /property/website/preview`
+- `GET /property/website/preview` (the logged-in host who owns the draft; answers the listing through the public site view, like the live render)
 - `GET /property/website/kpis`
 
 ## What is not implemented yet
@@ -208,7 +208,8 @@ Panorama Landing currently has the deepest implementation coverage. That is the 
 
 The internal preview route currently:
 
-- loads a saved draft by `draftId`
+- opens only for the logged-in host who owns the draft; anyone else gets a login message or not found
+- loads a saved draft by `draftId`, with the listing through the public site view and the host block of the live site
 - enriches property details before rendering
 - uses the shared template rendering layer
 - subscribes to preview refresh events so an already-open preview can update after editor changes
