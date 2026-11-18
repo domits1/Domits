@@ -31,7 +31,7 @@ fetchMessages ──▶ GET /messages ──▶ storeHistory ──▶ merge int
 
 ## What already exists
 
-- The 12 tests of `useFetchMessages.test.js` that cover the open flow, the merge with live messages and the "already loaded" shortcut. They are the safety net for this refactor.
+- The 14 tests of `useFetchMessages.test.js` that cover the open flow, the merge with live messages and the "already loaded" shortcut. They are the safety net for this refactor.
 
 ## Failure modes
 

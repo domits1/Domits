@@ -180,6 +180,7 @@ export const useFetchMessages = (userId) => {
   const storedIdsRef = useRef({});
   const historyLoadedRef = useRef(new Set());
   const wsSeenRef = useRef(new Set());
+  const wsRefreshedRef = useRef(new Set());
 
   const [activeRecipientId, setActiveRecipientId] = useState(null);
   const [activeThreadId, setActiveThreadId] = useState(null);
@@ -352,6 +353,49 @@ export const useFetchMessages = (userId) => {
     },
     [storeHistory, userId]
   );
+
+  const refreshThread = useCallback(
+    async (partnerId, threadId) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const token = requireToken(await getIdToken());
+        const response = await fetch(`${UNIFIED_API}/messages?threadId=${encodeURIComponent(threadId)}`, {
+          method: "GET",
+          headers: buildAuthHeaders(token),
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Failed to refresh messages: ${response.status}`);
+
+        const rows = await response.json();
+        if (Array.isArray(rows)) storeHistory(partnerId, threadId, rows, new Set());
+      } catch (err) {
+        console.error("Error refreshing messages:", err);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    },
+    [storeHistory]
+  );
+
+  useEffect(() => {
+    if (!Array.isArray(wsMessages)) return;
+
+    const threadsToRefresh = new Map();
+    for (const raw of wsMessages) {
+      const normalized = normalizeWs(raw);
+      if (!normalized || normalized.fileUrls.length === 0 || !normalized.threadId) continue;
+
+      if (wsRefreshedRef.current.has(normalized.id)) continue;
+      wsRefreshedRef.current.add(normalized.id);
+
+      const partnerId = normalized.userId === userId ? normalized.recipientId : normalized.userId;
+      threadsToRefresh.set(normalized.threadId, partnerId);
+    }
+
+    threadsToRefresh.forEach((partnerId, threadId) => refreshThread(partnerId, threadId));
+  }, [wsMessages, userId, refreshThread]);
 
   const addNewMessage = useCallback(
     (newMessage) => {
