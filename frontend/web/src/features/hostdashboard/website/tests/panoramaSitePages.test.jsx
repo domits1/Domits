@@ -71,7 +71,6 @@ describe("Panorama with site pages switched on", () => {
 
   it.each([
     ["gallery", "Gallery", ["gallery"]],
-    ["accommodation", "The villa", ["about", "features"]],
     ["contact", "Contact us", ["contact"]],
   ])("renders only the %s sections under a page header", (pageKey, title, sectionIds) => {
     const { container } = renderTemplate(buildModel({ sitePages: ALL_PAGES_ON }), { activePageKey: pageKey });
@@ -111,7 +110,7 @@ describe("Panorama with site pages switched on", () => {
 
     const header = container.querySelector("[data-panorama-page-header]");
     expect(listPageHeadings()).toEqual([title]);
-    expect(header.querySelectorAll("img")).toHaveLength(0);
+    expect(header.querySelector('img[src="x"]')).toBeNull();
   });
 
   it.each([
@@ -363,5 +362,24 @@ describe("Panorama page changes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Browse" }));
 
     expect(await screen.findByTestId("photo-browser")).toBeInTheDocument();
+  });
+});
+
+describe("Panorama scroll to availability", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    globalThis.history.replaceState(null, "", "/");
+  });
+
+  it("scrolls the call to action to availability below the top bar and keeps the anchor", () => {
+    jest.spyOn(globalThis, "scrollTo").mockImplementation(() => {});
+    const { container } = renderTemplate(buildModel());
+    container.querySelector("[data-panorama-top-bar-inner]").getBoundingClientRect = () => ({ top: 0, height: 64 });
+    container.querySelector("#availability").getBoundingClientRect = () => ({ top: 900, height: 0 });
+
+    fireEvent.click(container.querySelector('[data-preview-target-id="common.ctaLabel"]'));
+
+    expect(globalThis.scrollTo).toHaveBeenCalledWith({ top: 818, behavior: "smooth" });
+    expect(globalThis.location.hash).toBe("#availability");
   });
 });

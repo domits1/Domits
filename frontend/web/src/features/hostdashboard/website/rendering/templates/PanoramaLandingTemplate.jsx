@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
-import { Link, useInRouterContext } from "react-router-dom";
+import { useInRouterContext, useLocation } from "react-router-dom";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import styles from "../WebsiteTemplatePreview.module.scss";
@@ -16,6 +16,9 @@ import {
   TemplateTopBar,
 } from "./templateSharedSections";
 import PanoramaPageHeader from "./PanoramaPageHeader";
+import PanoramaPageLink from "./PanoramaPageLink";
+import PanoramaEliteSitePage from "./elite/PanoramaEliteSitePage";
+import { isEliteRestyledPage, resolveEliteHeaderTone } from "./elite/eliteSitePageContent";
 import {
   amenityPropType,
   amenitiesSectionPropType,
@@ -88,20 +91,7 @@ const hexToRgbChannels = (hexColor) => {
   return `${redChannel} ${greenChannel} ${blueChannel}`;
 };
 
-const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event) => {
-  const normalizedHref = String(href || "").trim();
-  if (!normalizedHref.startsWith("#")) {
-    return;
-  }
-
-  const targetId = normalizedHref.slice(1);
-  const targetElement = globalThis.document?.getElementById(targetId);
-  if (!targetElement) {
-    return;
-  }
-
-  event.preventDefault();
-
+const scrollToPanoramaTarget = (targetElement) => {
   revealDeferredSections(
     globalThis.document,
     styles.panoramaDeferredRenderSection,
@@ -121,40 +111,53 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
     topBarHeight -
     PANORAMA_TOP_BAR_SCROLL_OFFSET_PX;
 
-  if (globalThis.history && typeof globalThis.history.replaceState === "function") {
-    globalThis.history.replaceState(globalThis.history.state, "", normalizedHref);
-  }
-
   globalThis.scrollTo({
     top: Math.max(0, nextScrollTop),
     behavior: prefersReducedMotion ? "auto" : "smooth",
   });
+};
 
+const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event) => {
+  const normalizedHref = String(href || "").trim();
+  if (!normalizedHref.startsWith("#")) {
+    return;
+  }
+
+  const targetId = normalizedHref.slice(1);
+  const targetElement = globalThis.document?.getElementById(targetId);
+  if (!targetElement) {
+    return;
+  }
+
+  event.preventDefault();
+
+  if (globalThis.history && typeof globalThis.history.replaceState === "function") {
+    globalThis.history.replaceState(globalThis.history.state, "", normalizedHref);
+  }
+
+  scrollToPanoramaTarget(targetElement);
   onAfterNavigate?.();
 };
 
-function PanoramaPageLink({ href, ariaCurrent, onNavigate, children }) {
-  const isInRouter = useInRouterContext();
-  if (!isInRouter) {
-    return (
-      <a href={href} aria-current={ariaCurrent}>
-        {children}
-      </a>
-    );
-  }
+function PanoramaAvailabilityScrollAfterPageChange({ pageKey }) {
+  const { hash } = useLocation();
 
-  return (
-    <Link to={href} aria-current={ariaCurrent} onClick={onNavigate}>
-      {children}
-    </Link>
-  );
+  useEffect(() => {
+    if (pageKey !== MAIN_SITE_PAGE_KEY || hash !== PANORAMA_AVAILABILITY_ANCHOR) {
+      return;
+    }
+
+    const availabilityElement = globalThis.document?.getElementById(PANORAMA_AVAILABILITY_SECTION_ID);
+    if (availabilityElement) {
+      scrollToPanoramaTarget(availabilityElement);
+    }
+  }, [pageKey, hash]);
+
+  return null;
 }
 
-PanoramaPageLink.propTypes = {
-  href: PropTypes.string.isRequired,
-  ariaCurrent: PropTypes.oneOf(["page"]),
-  onNavigate: PropTypes.func,
-  children: PropTypes.node.isRequired,
+PanoramaAvailabilityScrollAfterPageChange.propTypes = {
+  pageKey: PropTypes.string.isRequired,
 };
 
 const renderPanoramaNavItem = (
@@ -384,14 +387,14 @@ const buildPanoramaPageState = (sitePages, activePageKey) => {
   };
 };
 
-const buildPanoramaPageNavItems = (pageState, pageBasePath, viewState) => {
+const buildPanoramaPageNavItems = (pageState, pageBasePath, pageSearch, viewState) => {
   const isMainPage = pageState.currentPage.key === MAIN_SITE_PAGE_KEY;
-  const mainPageHref = buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY);
+  const mainPageHref = buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY, pageSearch);
   const bookHref = isMainPage ? PANORAMA_AVAILABILITY_ANCHOR : `${mainPageHref}${PANORAMA_AVAILABILITY_ANCHOR}`;
 
   return [
     ...pageState.menuItems.map((item) => ({
-      href: buildSitePageHref(pageBasePath, item.key),
+      href: buildSitePageHref(pageBasePath, item.key, pageSearch),
       label: item.navLabel,
       isPageLink: true,
       isCurrentPage: item.key === pageState.currentPage.key,
@@ -572,6 +575,7 @@ const renderPanoramaTopBar = ({
   isNavDrawerOpen,
   onToggleNavDrawer,
   onCloseNavDrawer,
+  eliteHeaderTone,
 }) => {
   const isInteractivePreview = Boolean(onSelectTarget);
 
@@ -582,6 +586,8 @@ const renderPanoramaTopBar = ({
         isTopBarSolid ? styles.panoramaTopBarShellSolid : styles.panoramaTopBarShellTransparent
       } ${
         isInteractivePreview ? styles.panoramaTopBarShellInteractive : styles.panoramaTopBarShellPublic
+      } ${eliteHeaderTone ? styles.panoramaTopBarShellElite : ""} ${
+        eliteHeaderTone === "light" && !isTopBarSolid ? styles.panoramaTopBarShellEliteLight : ""
       }`.trim()}
     >
       <div data-panorama-top-bar-inner="true">
@@ -1284,6 +1290,7 @@ export default function PanoramaLandingTemplate({
   quoteContext = null,
   activePageKey = MAIN_SITE_PAGE_KEY,
   pageBasePath = "",
+  pageSearch = "",
 }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const pageState = useMemo(
@@ -1291,7 +1298,9 @@ export default function PanoramaLandingTemplate({
     [model.sitePages, activePageKey]
   );
   const currentPageKey = pageState?.currentPage.key;
-  const showsPageSection = (section) => !pageState || pageState.sections.includes(section);
+  const elitePageKey = isEliteRestyledPage(currentPageKey) ? currentPageKey : "";
+  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media) : "";
+  const showsPageSection = (section) => !elitePageKey && (!pageState || pageState.sections.includes(section));
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
   const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
@@ -1299,10 +1308,12 @@ export default function PanoramaLandingTemplate({
   const isInteractivePreview = Boolean(onSelectTarget);
   const quotePanelSiteId = resolveQuotePanelSiteId({ quoteContext, model, onSelectTarget });
   const canOpenGalleryBrowser = !isInteractivePreview;
+  const isInRouter = useInRouterContext();
+  const canScrollAfterPageChange = Boolean(pageState) && isInRouter && !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar, currentPageKey);
   const navItems = pageState
-    ? buildPanoramaPageNavItems(pageState, pageBasePath, viewState)
+    ? buildPanoramaPageNavItems(pageState, pageBasePath, pageSearch, viewState)
     : buildPanoramaNavItems(model, viewState);
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
     if (!canOpenGalleryBrowser) {
@@ -1380,6 +1391,33 @@ export default function PanoramaLandingTemplate({
     availabilityCalendar
   );
 
+  const renderPageOpening = () =>
+    elitePageKey ? (
+      <PanoramaEliteSitePage
+        pageKey={elitePageKey}
+        pageTitle={pageState.currentPage.navLabel}
+        headerTone={eliteHeaderTone}
+        model={model}
+        viewState={viewState}
+        availabilityHref={
+          viewState.showAvailabilityCalendar
+            ? `${buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY, pageSearch)}${PANORAMA_AVAILABILITY_ANCHOR}`
+            : ""
+        }
+        headerRef={heroSectionRef}
+        onShowAllAmenities={() => setShowAmenitiesModal(true)}
+        onSelectTarget={onSelectTarget}
+        activeTargetId={activeTargetId}
+      />
+    ) : (
+      <PanoramaPageHeader
+        title={pageState.currentPage.navLabel}
+        siteTitle={model.site.title}
+        headerRef={heroSectionRef}
+        showTopBar={viewState.showTopBar}
+      />
+    );
+
   return (
     <>
       <article className={`${styles.templateSite} ${styles.templateSitePanorama}`.trim()}>
@@ -1393,6 +1431,7 @@ export default function PanoramaLandingTemplate({
               isNavDrawerOpen,
               onToggleNavDrawer: () => setIsNavDrawerOpen((currentState) => !currentState),
               onCloseNavDrawer: () => setIsNavDrawerOpen(false),
+              eliteHeaderTone,
             })
           : null}
         {showsPageSection("hero") ? (
@@ -1407,12 +1446,7 @@ export default function PanoramaLandingTemplate({
             featuredTrustCards: viewState.featuredTrustCards,
           })
         ) : (
-          <PanoramaPageHeader
-            title={pageState.currentPage.navLabel}
-            siteTitle={model.site.title}
-            headerRef={heroSectionRef}
-            showTopBar={viewState.showTopBar}
-          />
+          renderPageOpening()
         )}
         {showsPageSection("residence")
           ? renderPanoramaResidenceSection({
@@ -1477,6 +1511,7 @@ export default function PanoramaLandingTemplate({
             })
           : null}
       </article>
+      {canScrollAfterPageChange ? <PanoramaAvailabilityScrollAfterPageChange pageKey={currentPageKey} /> : null}
 
       {isGalleryBrowserOpen ? (
         <Suspense fallback={null}>
@@ -1553,4 +1588,5 @@ PanoramaLandingTemplate.propTypes = {
   quoteContext: quoteContextPropType,
   activePageKey: PropTypes.string,
   pageBasePath: PropTypes.string,
+  pageSearch: PropTypes.string,
 };

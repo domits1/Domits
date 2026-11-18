@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { toPublicWebsitePropertySnapshotView } from "../../functions/PropertyHandler/util/websitePropertySnapshotView.js";
+import { FULL_LOCATION } from "./support/publicLocation.js";
 
 const STORED_SNAPSHOT = {
   property: {
@@ -90,6 +91,21 @@ describe("the public property snapshot view", () => {
     expect(JSON.stringify(view)).not.toContain("host_id");
     expect(JSON.stringify(view)).not.toContain("calendarUrl");
     expect(JSON.stringify(view)).not.toContain("REG-1");
+  });
+
+  it("keeps only the location fields the templates read", () => {
+    const view = toPublicWebsitePropertySnapshotView({ location: FULL_LOCATION });
+
+    expect(view.location).toEqual({ country: "Indonesia", city: "Ubud" });
+  });
+
+  it.each([
+    ["no location", {}, {}],
+    ["a location of null", { location: null }, { location: null }],
+    ["a location that is not an object", { location: "Jalan Raya Sayan 17, Ubud" }, { location: null }],
+    ["an empty location", { location: "" }, { location: null }],
+  ])("keeps %s without any address in it", (_label, snapshot, expected) => {
+    expect(toPublicWebsitePropertySnapshotView(snapshot)).toEqual(expected);
   });
 
   it("answers an empty object for a missing or malformed snapshot", () => {

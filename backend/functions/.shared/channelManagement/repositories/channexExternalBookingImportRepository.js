@@ -140,6 +140,7 @@ class ChannexExternalBookingImportRepository {
     arrivalDateMs,
     departureDateMs,
     totalPrice = null,
+    currency = null,
     guestCount = null,
     bookingSource = null,
     channexChanges = [],
@@ -168,6 +169,8 @@ class ChannexExternalBookingImportRepository {
       // the Domits listing price and a card payment (#3483).
       total_price: totalPrice,
       booking_source: requireStr(bookingSource),
+      // The currency of total_price; without it an amount in pounds would show as euros (#3583).
+      currency,
     };
 
     await this.#saveWithOutbox(client, channexChanges, (db) =>
@@ -175,9 +178,9 @@ class ChannexExternalBookingImportRepository {
         `
           INSERT INTO ${qualifyTableName(client, "booking")}
             (id, arrivaldate, departuredate, createdat, guestid, guests, hostid, latepayment, paymentid,
-             property_id, status, guestname, hostname, cancellation_policy, bookingtype, total_price, booking_source)
+             property_id, status, guestname, hostname, cancellation_policy, bookingtype, total_price, booking_source, currency)
           VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         `,
         [
           row.id,
@@ -197,6 +200,7 @@ class ChannexExternalBookingImportRepository {
           row.bookingtype,
           row.total_price,
           row.booking_source,
+          row.currency,
         ]
       )
     );
@@ -211,12 +215,14 @@ class ChannexExternalBookingImportRepository {
     departureDateMs,
     totalPrice = null,
     guestCount = null,
+    currency = null,
     channexChanges = [],
   }) {
     const normalizedBookingId = requireStr(bookingId);
     if (!normalizedBookingId) return null;
 
     const client = await Database.getInstance();
+    // Amount and currency arrive together or not at all, so the same COALESCE keeps them a pair.
     await this.#saveWithOutbox(client, channexChanges, (db) =>
       db.query(
         `
@@ -226,7 +232,8 @@ class ChannexExternalBookingImportRepository {
               guestname = $4,
               status = $5,
               total_price = COALESCE($6, total_price),
-              guests = COALESCE($7, guests)
+              guests = COALESCE($7, guests),
+              currency = COALESCE($8, currency)
           WHERE id = $1
         `,
         [
@@ -237,6 +244,7 @@ class ChannexExternalBookingImportRepository {
           BOOKING_STATUS_PAID,
           totalPrice,
           guestCount,
+          currency,
         ]
       )
     );
