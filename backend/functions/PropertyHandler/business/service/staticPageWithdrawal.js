@@ -20,6 +20,8 @@ const pathsFor = (hostname, sitePageSlugs = []) => [
   ...sitePageSlugs.flatMap((slug) => ["/" + buildStaticSitePageKey(hostname, slug), "/" + slug]),
 ];
 
+const writtenPagePaths = (hostname) => ["/" + buildStaticPageKey(hostname), "/", "/index.html"];
+
 const withdrawnPathsOf =
   (removedSitePages = {}) =>
   (hostname) =>
@@ -109,6 +111,10 @@ export class StaticPageWithdrawal {
       redirectErrors,
       sitePageErrors,
     };
+  }
+
+  async invalidatePages(hostnames) {
+    return this.#invalidate(hostnames, writtenPagePaths, "publish");
   }
 
   async #listSitePageSlugs({ siteId, hostname, errors }) {
