@@ -42,6 +42,7 @@ import hostReservationDetailsTranslations from "./translations/hostReservationDe
 import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
 import { OTA_DISPLAY_NAMES } from "../../utils/otaDisplayName.js";
 import { isChannexBooking, resolveChannexBookingTotal } from "./utils/reservationCalculations.js";
+import { bookingCurrencyCode, bookingCurrencyPrefix } from "./utils/bookingCurrency.js";
 
 const STATUS_CLASS = {
   PAID: styles.statusPaid,
@@ -800,6 +801,8 @@ const buildReservationReceiptPayload = (reservation, t) => {
     nights,
     cleaningFee: reservation.cleaningFee,
     total,
+    // The code of the total, so the receipt does not print a booking paid in pounds as euros (#3583).
+    currency: bookingCurrencyCode(reservation),
     // The OTA sends only its total; a Domits nightly rate next to it would not add up.
     showPriceBreakdown: (reservation.channelTotal ?? null) === null,
     paymentStatusLabel: isPaidOnChannel
@@ -1401,7 +1404,7 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
         <div className={`${styles.row} ${styles.total}`}>
           <span>{t.labels.totalPaid}</span>
           <span>
-            {"\u20AC"}
+            {bookingCurrencyPrefix(reservation)}
             {formatCurrency(viewModel.total)}
           </span>
         </div>

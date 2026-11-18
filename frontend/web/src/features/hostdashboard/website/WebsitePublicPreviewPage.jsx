@@ -77,7 +77,7 @@ function WebsitePublicPreviewPage() {
         }
 
         const nextPropertyDetails = await enrichWebsitePropertyDetails(nextPayload.propertyDetails, null, {
-          hostSession: true,
+          host: nextPayload.host,
         });
         if (!isMounted || nextPropertyDetails === nextPayload.propertyDetails) {
           return;
