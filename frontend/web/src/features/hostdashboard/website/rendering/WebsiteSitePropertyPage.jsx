@@ -60,6 +60,7 @@ const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBas
           propertyId: property.isMainProperty ? "" : property.propertyId,
         }
       : null,
+    ...(pageKind === SITE_PROPERTY_PAGE_KINDS.request ? { headerTone: "light" } : {}),
     buildRequestHref: (requestStay) =>
       buildSitePropertyHref(
         pageBasePath,
@@ -67,21 +68,6 @@ const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBas
         SITE_PROPERTY_PAGE_KINDS.request,
         buildSitePropertyStayQuery(pageSearch, requestStay)
       ),
-  };
-};
-
-const buildSitePropertyRequestPage = (pageArgs) => {
-  const page = buildSitePropertyPage(pageArgs);
-  const { pageBasePath, pageSearch, property } = pageArgs;
-  return {
-    ...page,
-    headerTone: "light",
-    propertyHref: buildSitePropertyHref(
-      pageBasePath,
-      property.slug,
-      SITE_PROPERTY_PAGE_KINDS.property,
-      buildSitePropertyStayQuery(pageSearch, page.stay)
-    ),
   };
 };
 
@@ -115,11 +101,9 @@ function SitePropertyAccommodationPage({
 function SitePropertyElitePage({ pageKind, templateId, model, property, quoteContext, pageBasePath, pageSearch }) {
   const { search } = useLocation();
   const quoteSiteId = resolveQuotePanelSiteId({ quoteContext, model });
-  const buildPage =
-    pageKind === SITE_PROPERTY_PAGE_KINDS.request ? buildSitePropertyRequestPage : buildSitePropertyPage;
   const sitePropertyPage = useMemo(
-    () => buildPage({ pageKind, model, property, quoteSiteId, pageBasePath, pageSearch, search }),
-    [buildPage, model, pageBasePath, pageKind, pageSearch, property, quoteSiteId, search]
+    () => buildSitePropertyPage({ pageKind, model, property, quoteSiteId, pageBasePath, pageSearch, search }),
+    [model, pageBasePath, pageKind, pageSearch, property, quoteSiteId, search]
   );
 
   return (
