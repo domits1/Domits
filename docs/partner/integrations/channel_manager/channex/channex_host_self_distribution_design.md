@@ -23,7 +23,7 @@ Host: toggle ON for an OTA
    ▼  Channex iframe for this listing: Booking.com, Airbnb or Vrbo connect
    ▼  iframe closes → backend reads the property's channels from Channex, stores them
 Host: toggle OFF
-   ▼  "Are you sure?" → close all dates on that OTA (stop_sell) → status Disconnecting
+   ▼  "Are you sure?" → availability 0, wait a minute → status Disconnecting
    ▼  outbox worker deactivates the channel after the close has synced → Disconnected
 ```
 
@@ -113,23 +113,37 @@ Channex needs a timezone per property; Domits stores none. The backend derives i
 
 | Option | Effect | Chosen |
 |---|---|---|
-| **Close, then disconnect** | `PUT /channels/{id}` with `settings.derived_option.stop_sell = [["set", true]]`. Updating an active connection triggers a full sync, so all dates close on that OTA only. After the close has synced, the channel is deactivated. | Yes |
+| **Availability 0, wait, then disconnect (Channex's advice)** | Availability 0 on the room type for all dates reaches the OTA; about a minute later the channel is deactivated, so that OTA keeps 0. Then a full sync restores the real availability on the listing's other OTAs. | Yes |
+| stop_sell on that one channel | Closes only that OTA, but Channex support advised availability 0 instead (18 Nov) | No |
 | Deactivate at once | Stops the exchange without closing anything. The OTA keeps selling its last availability: dates booked elsewhere stay open there. Channex also stops sending changes to that OTA's existing bookings. | No: double-booking risk |
-| Pause with stop_sell and stay connected | Works, but adds a paused state to keep in step | No: hosts who switch off mostly leave |
+| Pause and stay connected | Works, but adds a paused state to keep in step | No: hosts who switch off mostly leave |
 
 The flow:
 
 ```
 Toggle OFF ─▶ "Are you sure?" ─▶ yes
-   ▼ backend: stop_sell on that channel, row = DISCONNECTING (the request returns at once)
-   ▼ outbox worker, every minute: DISCONNECTING for more than 15 min? ─▶ deactivate, row = DISCONNECTED
+   ▼ backend: row = DISCONNECTING, disconnectRequestedAt = now; availability 0 for the room type
+     (the request returns at once)
+   ▼ outbox worker holds this listing's ARI rows while any of its channels is DISCONNECTING
+   ▼ worker run ≥ 1 minute later: deactivate the channel, row = DISCONNECTED
+   ▼ release the held rows and queue a full sync: the other OTAs reopen with the real calendar
 ```
+
+Accepted cost: the listing's other OTAs are closed for about two minutes while a disconnect runs. That can lose a booking attempt, never cause a double booking. Holding the outbox matters: a price or calendar change in those minutes would otherwise reopen the dates before the channel is deactivated.
+
+Channex support (18 Nov) gave the order and the wait: availability 0, wait about a minute, then deactivate.
+
+A disconnect that keeps failing must not keep the other OTAs closed: when deactivate still fails after the worker's retry limit (#3927), the row goes to `ERROR` ("Needs attention"), which ends the hold, and the full sync reopens the other OTAs.
 
 The confirm text: "Booking.com will be disconnected. Your listing there will be closed for new bookings. Existing bookings stay valid, but changes to them will not reach Domits. To keep selling on Booking.com yourself, reopen your dates in the Booking.com extranet." For Airbnb and Vrbo the last sentence says "in your Airbnb calendar" / "in your Vrbo calendar". When the listing has upcoming bookings from that OTA (`booking_source`), the dialog adds "You have N upcoming bookings from Booking.com."
 
-If the host deactivates the channel inside Channex's own screen instead (Q1b: can that button be hidden), stop_sell is skipped. Domits notices it on the next refresh or reconciliation and shows "Needs attention: disconnected outside Domits", telling the host to close the dates in the OTA themselves. Domits cannot close them once the channel is off.
+Deactivating inside Channex's own screen: Channex confirmed (18 Nov) that the iframe cannot hide its Deactivate button. A host who uses it skips the close step, so that OTA keeps selling the last calendar. Accepted, and the host is told before and during the connection:
 
-The 15 minutes is a first guess. The staging test (section 9) measures how long the close takes, and the number is set from that.
+- The connect checklist has one more checkbox for every OTA: "I will disconnect only with the switch on this page." Continue stays disabled until it is ticked.
+- Under the Channex screen: "To disconnect, use the switch on the Distribution page. If you deactivate here, your listing stays open for sale on [OTA] and you must close your dates there yourself."
+- Domits still detects it on the next refresh or reconciliation and shows "Needs attention: disconnected outside Domits", telling the host to close the dates in the OTA. Domits cannot close them once the channel is off.
+
+Whether the checkbox moves responsibility to the host legally is for the terms of service, not this design. If it happens in practice, the follow-up is our own screens on the Channel API, as Channex recommends.
 
 Toggle on runs the connect flow (D1). A host who comes back connects again.
 
@@ -177,11 +191,11 @@ How it is noticed: reconciliation in the outbox worker, not an event from Proper
 
 ```
 channel row ACTIVE  AND  listing status ≠ ACTIVE
-   ▼ set stop_sell, row = DISCONNECTING, disconnectRequestedAt = now
-   ▼ the normal D5 step deactivates it after the wait time
+   ▼ start the D5 flow: row = DISCONNECTING, disconnectRequestedAt = now, availability 0
+   ▼ the normal D5 step deactivates it after the wait
 ```
 
-The same loop also catches the opposite leftover from D5: a channel that is active in Channex, still carries stop_sell, and belongs to a live listing (for example, an old channel re-activated in the iframe). It removes the rule.
+The same loop also releases held rows: a listing whose channels are no longer `DISCONNECTING` gets its outbox rows released and a full sync, so a failed disconnect never leaves the other OTAs closed.
 
 Each job in the worker has its own cap per run (for example, 10 channels); the rest wait for the next minute, so price syncing never waits behind it (#3927).
 
@@ -200,7 +214,7 @@ All under `/integrations/channex/host/...`, Cognito-authenticated. Every route c
 | GET | `/host/listings` | The host's listings with distribution status, D3 readiness and channels (D7) |
 | POST | `/host/listings/{propertyId}/distribution` | Turn on: D3 check, provisioning (D2), account row (D8). Idempotent. Body carries the timezone only where D4 needs it |
 | POST | `/host/listings/{propertyId}/connect-session` | A one-time token and iframe URL for this listing's Channex property. The frontend calls `refresh` whenever the modal closes, whether or not Channex sends a message when the host finishes |
-| POST | `/host/listings/{propertyId}/channels/refresh` | After the iframe closes, and on Refresh: read the property's channels from Channex (`GET /channels?filter[property_id]=…`) and store or update the rows. An active channel that still carries stop_sell from an earlier disconnect gets the rule removed |
+| POST | `/host/listings/{propertyId}/channels/refresh` | After the iframe closes, and on Refresh: read the property's channels from Channex (`GET /channels?filter[property_id]=…`) and store or update the rows |
 | POST | `/host/channels/{channelId}/disconnect` | Toggle off (D5) |
 
 Responses never contain API keys or other hosts' data.
@@ -212,8 +226,8 @@ Suggested pages were shared in the group chat on 18 Nov; Ilan owns the final des
 - Distribution page: listing picker, one card per OTA (Booking.com, Airbnb, Vrbo) with a switch and one of the D7 states (not connected, Syncing…, Live, Disconnecting…, Needs attention), a Refresh button, and a "Sync status" card (coming soon).
 - Listing not ready (D3): one notice instead of the cards, saying what is missing.
 - Timezone picker (D4): only for listings in a multi-timezone country, on the first switch.
-- Connect checklist per OTA: the prerequisites as checkboxes (Booking.com: Channex chosen as connectivity provider; Airbnb: account owner, no other channel manager; Vrbo: not linked to another PMS, no iCal links).
-- Channex connection screen in a modal; closing it calls `refresh`.
+- Connect checklist per OTA: the prerequisites as checkboxes (Booking.com: Channex chosen as connectivity provider; Airbnb: account owner, no other channel manager; Vrbo: not linked to another PMS, no iCal links), plus for every OTA "I will disconnect only with the switch on this page" (D5).
+- Channex connection screen in a modal, with the D5 warning line under it; closing it calls `refresh`.
 - Disconnect confirm (D5), with the upcoming-bookings line when there are any.
 - Setup failed halfway (D2): "Something went wrong while setting up. Try again." The next attempt resumes.
 
@@ -233,22 +247,22 @@ Suggested pages were shared in the group chat on 18 Nov; Ilan owns the final des
 
 ## 9. Testing and verification
 
-- Unit tests per route: owner check; D3 readiness; idempotent provisioning, including two requests at the same time creating one Channex property; the disconnect confirm data with and without upcoming bookings; a failed step resumes; disconnect sets stop_sell and never deactivates directly; the worker deactivates only rows `DISCONNECTING` for more than the wait time; reconnect resets every row sharing the secret; `refresh` removes a leftover stop_sell from an active channel; a listing-details save writes one outbox row only when distribution is on.
+- Unit tests per route: owner check; D3 readiness; idempotent provisioning, including two requests at the same time creating one Channex property; the disconnect confirm data with and without upcoming bookings; a failed step resumes; disconnect sets availability 0 and never deactivates directly; the worker holds the listing's ARI rows while a channel is `DISCONNECTING`, deactivates only rows older than the wait, then releases the rows and queues a full sync; a deactivate that fails past the retry limit sets `ERROR` and releases the hold; reconnect resets every row sharing the secret; a listing-details save writes one outbox row only when distribution is on.
 - D4 timezone: a single-zone country (Netherlands → `Europe/Amsterdam`); a multi-zone country without the host's choice is refused with "pick a timezone"; with the choice it is used; an unknown country is refused, not guessed.
-- D7 labels as one pure function (row status, Channex active, waiting rows, stop_sell in; label out), table-tested like `evaluateChannexHealth` in `channexHealthStatus.js`, including "Disconnected outside Domits".
-- D9 reconciliation: a listing that is not live with an active channel goes to `DISCONNECTING`; a live listing is left alone; a live listing's active channel with a leftover stop_sell gets it removed; the cap per run holds.
-- Before building D5: on the staging test property, set stop_sell on the Booking.com test channel, time how long until all dates show closed on that channel only, then deactivate and confirm they stay closed. That sets the wait time. Also check whether the iframe re-activates a deactivated channel or creates a new one.
+- D7 labels as one pure function (row status, Channex active, waiting rows in; label out), table-tested like `evaluateChannexHealth` in `channexHealthStatus.js`, including "Disconnected outside Domits".
+- D9 reconciliation: a listing that is not live with an active channel goes to `DISCONNECTING`; a live listing is left alone; held rows are released once no channel of the listing is `DISCONNECTING`; the cap per run holds.
+- Before building D5: on the staging test property, with two test channels, set availability 0, wait a minute, deactivate one channel, run the full sync, and confirm the deactivated channel stays closed while the other reopens.
 - Before releasing the iframe (D1): request a one-time token for property A, change the property in the iframe URL to property B, and confirm Channex refuses it.
 - End to end on staging: the Booking.com test account (shared pool, connect late, test fast), an Airbnb test listing if available. Vrbo has no test account (D6): its first test is a real listing.
 
 ## 10. Open questions
 
-- Q1. Channex support (sent 18 Nov): (a) can a one-time token be limited to one property: answered yes on 18 Nov (D1); (b) can the iframe hide its Deactivate button; (c) does a queued sync still go out after a channel is deactivated? (b) and (c) still open.
+- Q1. Channex support (sent 18 Nov): (a) can a one-time token be limited to one property: answered yes on 18 Nov (D1); (b) can the iframe hide its Deactivate button: no (D5); (c) how to close before deactivating: availability 0, wait about a minute (D5). All answered.
 
 ## 11. Order of work
 
 1. This note reviewed by Rakib, Ilan and Stefan; Q1 sent to Channex support.
-2. Staging test of stop_sell and its timing (section 9).
+2. Staging test of the D5 close-then-disconnect order (section 9).
 3. D3 readiness check, the unique key on the property mapping table, provisioning (D2), timezone (D4), account rows (D8), with tests.
 4. Connect: `connect-session` and `refresh` (D1, D6, D7).
 5. Worker time budget and row caps (#3927), before the worker gets new jobs.
