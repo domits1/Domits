@@ -183,6 +183,8 @@ export const useFetchMessages = (userId) => {
   const wsSeenRef = useRef(new Set());
   const wsRefreshedRef = useRef(new Set());
   const wsPendingRef = useRef(new Set());
+  const expiredRefreshedRef = useRef(new Set());
+  const expiredThreadsRef = useRef(new Set());
   const retryTimersRef = useRef(new Set());
   const refreshControllersRef = useRef(new Set());
   const unmountedRef = useRef(false);
@@ -406,6 +408,23 @@ export const useFetchMessages = (userId) => {
     [storeHistory]
   );
 
+  const refreshAttachments = useCallback(
+    async (partnerId, threadId, messageId) => {
+      if (!partnerId || !threadId || !messageId) return;
+      if (expiredRefreshedRef.current.has(messageId)) return;
+      expiredRefreshedRef.current.add(messageId);
+
+      if (expiredThreadsRef.current.has(threadId)) return;
+      expiredThreadsRef.current.add(threadId);
+      try {
+        await refreshThread(partnerId, threadId, []);
+      } finally {
+        expiredThreadsRef.current.delete(threadId);
+      }
+    },
+    [refreshThread]
+  );
+
   const refreshWithRetry = useCallback(
     (partnerId, threadId, messageIds) => {
       const settle = () => {
@@ -476,6 +495,7 @@ export const useFetchMessages = (userId) => {
     loading,
     error,
     fetchMessages,
+    refreshAttachments,
     addNewMessage,
     messagesByRecipient,
     messagesByThread,

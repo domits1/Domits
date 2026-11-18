@@ -692,3 +692,96 @@ describe("useFetchMessages retry of the live-attachment refetch", () => {
     expect(signal.aborted).toBe(true);
   });
 });
+
+describe("useFetchMessages refresh for an attachment image that failed to load", () => {
+  const OLD_URL = "https://signed.example.com/photo.jpg?X-Amz-Signature=old";
+  const NEW_URL = "https://signed.example.com/photo.jpg?X-Amz-Signature=new";
+  const stored = (id, url) => ({
+    ...historyRow(id, "See photo", "2026-06-01T10:00:00.000Z"),
+    attachments: JSON.stringify([{ url, type: "image", name: null }]),
+  });
+  const urlOf = (hook, id) => hook.result.current.messagesByThread[THREAD_ID]?.find((m) => m.id === id)?.fileUrls;
+  const messagesCalls = () => globalThis.fetch.mock.calls.filter(([url]) => String(url).includes("/messages?"));
+  const refresh = (hook, id) =>
+    act(async () => {
+      await hook.result.current.refreshAttachments("guest-1", THREAD_ID, id);
+    });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Auth.currentSession.mockResolvedValue({ getIdToken: () => ({ getJwtToken: () => "id-token-1" }) });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  const openWithOldUrl = async () => {
+    mockMessagesEndpoint([stored("stored-1", OLD_URL)]);
+    const harness = setupHook();
+    await harness.open();
+    expect(urlOf(harness.hook, "stored-1")).toEqual([OLD_URL]);
+    globalThis.fetch.mockImplementation(async () => jsonResponse([stored("stored-1", NEW_URL)]));
+    return harness;
+  };
+
+  test("refetches the thread and shows the fresh url", async () => {
+    const { hook } = await openWithOldUrl();
+
+    await refresh(hook, "stored-1");
+
+    expect(messagesCalls()).toHaveLength(2);
+    expect(urlOf(hook, "stored-1")).toEqual([NEW_URL]);
+  });
+
+  test("asks only once per message, even when the image fails again", async () => {
+    const { hook } = await openWithOldUrl();
+
+    await refresh(hook, "stored-1");
+    await refresh(hook, "stored-1");
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("makes a single request when several messages of one thread fail together", async () => {
+    mockMessagesEndpoint([stored("stored-1", OLD_URL), stored("stored-2", OLD_URL)]);
+    const { hook } = setupHook();
+    await act(async () => {
+      await hook.result.current.fetchMessages("guest-1", THREAD_ID, OPTIONS);
+    });
+    globalThis.fetch.mockImplementation(() => new Promise(() => {}));
+
+    await act(async () => {
+      hook.result.current.refreshAttachments("guest-1", THREAD_ID, "stored-1");
+      hook.result.current.refreshAttachments("guest-1", THREAD_ID, "stored-2");
+    });
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("does not retry when the refetch fails", async () => {
+    const { hook } = await openWithOldUrl();
+    globalThis.fetch.mockImplementation(async () => ({ ok: false, status: 500, text: async () => "boom" }));
+
+    await refresh(hook, "stored-1");
+    await refresh(hook, "stored-1");
+
+    expect(messagesCalls()).toHaveLength(2);
+    expect(hook.result.current.error).toBeNull();
+  });
+
+  test.each([
+    ["a missing message id", "guest-1", THREAD_ID, undefined],
+    ["a missing thread id", "guest-1", null, "stored-1"],
+    ["a missing partner id", null, THREAD_ID, "stored-1"],
+  ])("does nothing for %s", async (_label, partnerId, threadId, messageId) => {
+    const { hook } = await openWithOldUrl();
+
+    await act(async () => {
+      await hook.result.current.refreshAttachments(partnerId, threadId, messageId);
+    });
+
+    expect(messagesCalls()).toHaveLength(1);
+  });
+});

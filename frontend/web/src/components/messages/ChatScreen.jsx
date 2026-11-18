@@ -115,7 +115,7 @@ const ChatScreen = ({
   const retryingRef = useRef(new Set());
 
   const { sendMessage, retryMessage, sending } = useSendMessage(userId, accessToken);
-  const { fetchMessages, messagesByRecipient, messagesByThread } = useFetchMessages(userId);
+  const { fetchMessages, refreshAttachments, messagesByRecipient, messagesByThread } = useFetchMessages(userId);
 
   const scrollContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -344,6 +344,9 @@ const ChatScreen = ({
     if (!result.success) showSendFailedToast();
   };
 
+  const handleAttachmentError = (message) =>
+    refreshAttachments(resolvedContactId, message?.threadId || threadId || null, message?.id);
+
   const handleRetry = async (message) => {
     if (retryingRef.current.has(message.id)) return;
     retryingRef.current.add(message.id);
@@ -446,6 +449,7 @@ const ChatScreen = ({
               contactName={headerName}
               contactImage={contactImage}
               onRetry={handleRetry}
+              onAttachmentError={handleAttachmentError}
               isRetrying={Boolean(retryingIds[message.id])}
             />
           ))

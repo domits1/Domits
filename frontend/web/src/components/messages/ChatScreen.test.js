@@ -11,6 +11,7 @@ import { getMessageCapabilities } from "./messageCapabilities";
 const mockSendMessage = jest.fn();
 const mockRetryMessage = jest.fn();
 const mockFetchMessages = jest.fn();
+const mockRefreshAttachments = jest.fn();
 let mockMessagesByThread = {};
 
 jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
@@ -38,6 +39,7 @@ jest.mock("../../features/hostdashboard/hostmessages/hooks/useSendMessage", () =
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchMessages", () => ({
   useFetchMessages: () => ({
     fetchMessages: mockFetchMessages,
+    refreshAttachments: mockRefreshAttachments,
     messagesByRecipient: {},
     messagesByThread: mockMessagesByThread,
   }),
@@ -864,6 +866,51 @@ describe("ChatScreen reservation messaging", () => {
           expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
         });
       });
+    });
+  });
+
+  describe("attachment images that fail to load", () => {
+    const withImage = (url) => ({
+      id: "message-9",
+      threadId: "thread-1",
+      userId: "guest-1",
+      senderId: "guest-1",
+      recipientId: "host-1",
+      text: "See photo",
+      createdAt: "2026-01-01T10:00:00.000Z",
+      fileUrls: [url],
+    });
+    const renderChat = () =>
+      render(
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId="thread-1"
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={getMessageCapabilities("host")}
+        />
+      );
+
+    test("asks the hook to refresh the thread for the message of the image", () => {
+      mockMessagesByThread = { "thread-1": [withImage("https://signed.example.com/photo.jpg?X-Amz-Signature=old")] };
+      renderChat();
+
+      fireEvent.error(screen.getByAltText("Attachment"));
+
+      expect(mockRefreshAttachments).toHaveBeenCalledTimes(1);
+      expect(mockRefreshAttachments).toHaveBeenCalledWith("guest-1", "thread-1", "message-9");
+    });
+
+    test("does not refresh the thread for a local preview that fails", () => {
+      mockMessagesByThread = { "thread-1": [withImage("blob:photo-preview")] };
+      renderChat();
+
+      fireEvent.error(screen.getByAltText("Attachment"));
+
+      expect(mockRefreshAttachments).not.toHaveBeenCalled();
     });
   });
 });
