@@ -19,8 +19,9 @@ Docs: https://developer.siteminder.com/pmsxchange-api
 | Asking for, confirming and failing reservations | `util/reservationsMessage.js`, `business/siteMinderReservationsReader.js` | both | `OTA_ReadRQ`, `OTA_NotifReportRQ` |
 | Saving reservations as Domits bookings | `util/reservationBookings.js`, `business/siteMinderReservationImporter.js` | SiteMinder -> Domits | shared booking import |
 | One reservations run: read, save, confirm or fail | `business/siteMinderReservationSync.js` | both | `OTA_ReadRQ`, `OTA_NotifReportRQ` |
+| Lambda handler with a kill switch (`read-reservations` task) | `index.js` | both | - |
 
-Not built yet: saving reservations as bookings, the Lambda handler and schedule, and the host screen.
+Not built yet: the EventBridge schedule itself (set up by hand, see `siteminder-reservations-schedule.md`) and the host screen.
 
 ## Receiving reservations
 
@@ -62,7 +63,7 @@ Each call has its own `EchoToken`. A refused or failed call throws `SiteMinderSo
 
 ## Saving reservations
 
-`SiteMinderReservationSync.run()` does steps 1 to 4 above. `reservationSync` in `createSiteMinderServices` builds it. Nothing calls it on a schedule yet.
+`SiteMinderReservationSync.run()` does steps 1 to 4 above. `reservationSync` in `createSiteMinderServices` builds it. The Lambda handler runs it for the task `read-reservations`, behind the kill switch `SITEMINDER_RESERVATIONS_ENABLED`. How to schedule it is in `siteminder-reservations-schedule.md`.
 
 Every room of a reservation becomes one Domits booking, because one SiteMinder room type is one Domits property (see Mapping). The bookings are written by the shared `ChannexExternalBookingImportRepository` with `SITEMINDER_BOOKING_PROFILE`: host name `SiteMinder`, booking type `siteminder`, guest id `SITEMINDER_GUEST:<room key>` and payment id `SITEMINDER:<room key>`.
 
@@ -99,7 +100,7 @@ Any other error, for example the database, is not reported. The reservation stay
 
 Not built yet:
 
-- The schedule (every 2 to 5 minutes) and the Lambda handler.
+- Turning on the schedule (every 3 minutes): done by hand with `siteminder-reservations-schedule.md`.
 - Step 5: sending the new availability to SiteMinder after a reservation.
 - What to do when the nights are already taken in Domits (an overbooking). The booking is saved like a Channex import; how to warn the host is still a product decision.
 - The frontend shows `bookingtype = siteminder` like any other booking. `isChannexBooking` only knows `channex`.
@@ -166,6 +167,7 @@ Rates go out as `AmountBeforeTax`: the Domits base rate is the net nightly accom
 | `SITEMINDER_CURRENCY` | `EUR` | Currency of every rate |
 | `SITEMINDER_BASE_URL` | pre-production | `https://tpi-pmsx.preprod.siteminderlabs.com` until go-live. Must start with `https://`, because the Basic and WS-Security credentials go with every request; anything else makes `createSiteMinderServices` throw before the secret is read |
 | `SITEMINDER_SECRET_NAME` | `domits/siteminder/pmsxchange` | Secrets Manager secret (eu-north-1) with `{"username": "...", "password": "..."}` |
+| `SITEMINDER_RESERVATIONS_ENABLED` | off | Only `true` lets the handler read and save reservations. Anything else skips the run without reading the secret |
 
 One PMS-level login covers all hotels. It never goes into code, logs or errors.
 
