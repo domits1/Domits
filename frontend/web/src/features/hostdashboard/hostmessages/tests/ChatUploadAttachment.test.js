@@ -81,7 +81,13 @@ describe("ChatUploadAttachment", () => {
 
     dropPhoto();
 
-    await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith(UPLOAD_TARGET.fileUrl));
+    await waitFor(() =>
+      expect(onUploadComplete).toHaveBeenCalledWith({
+        url: UPLOAD_TARGET.fileUrl,
+        name: "photo.jpg",
+        type: "image/jpeg",
+      })
+    );
     expect(onUploadError).not.toHaveBeenCalled();
   });
 
@@ -117,6 +123,35 @@ describe("ChatUploadAttachment", () => {
     await act(async () => {
       pendingUrl.resolve(UPLOAD_TARGET);
     });
+  });
+
+  test("does not report an upload that finishes after it was unmounted", async () => {
+    const pendingUrl = deferred();
+    mockGetUploadUrl.mockReturnValue(pendingUrl.promise);
+    const { unmount, onUploadComplete, onUploadError } = renderAttachment();
+
+    dropPhoto();
+    unmount();
+    await act(async () => {
+      pendingUrl.resolve(UPLOAD_TARGET);
+    });
+
+    expect(onUploadComplete).not.toHaveBeenCalled();
+    expect(onUploadError).not.toHaveBeenCalled();
+  });
+
+  test("does not report a failure that happens after it was unmounted", async () => {
+    const pendingUrl = deferred();
+    mockGetUploadUrl.mockReturnValue(pendingUrl.promise);
+    const { unmount, onUploadError } = renderAttachment();
+
+    dropPhoto();
+    unmount();
+    await act(async () => {
+      pendingUrl.resolve({});
+    });
+
+    expect(onUploadError).not.toHaveBeenCalled();
   });
 
   describe.each([
