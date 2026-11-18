@@ -454,6 +454,7 @@ Important rules:
 - `Update live site` pushes the current draft into published live state
 - `Publish` creates or updates the published standalone site lifecycle
 - `Unpublish` affects live availability, not the host's working draft
+- a publish the server refuses (any 4xx, or a login that cannot be refreshed) is shown as failed with the API message; only after a 5xx, a dropped connection or an answer that cannot be read does `publishWebsiteSite(propertyId, { draftSavedAt })` read the site again, and it counts the publish as done only when the site's `publishedAt` is at or after the `updatedAt` of the draft saved for that publish (both server times)
 - `main.standalone_site_event` owns the KPI and event layer for builder, preview, live-site, and research metrics
 
 Do not collapse draft state and published state back into one model.
