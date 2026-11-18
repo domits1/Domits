@@ -434,6 +434,11 @@ export const useFetchMessages = (userId) => {
         }
       };
 
+      const abandon = (err) => {
+        console.error("Error refreshing messages:", err);
+        settle();
+      };
+
       const attempt = async (retryIndex) => {
         const { ok, complete } = await refreshThread(partnerId, threadId, messageIds);
         if (unmountedRef.current) return;
@@ -444,12 +449,12 @@ export const useFetchMessages = (userId) => {
 
         const timer = setTimeout(() => {
           retryTimersRef.current.delete(timer);
-          attempt(retryIndex + 1);
+          attempt(retryIndex + 1).catch(abandon);
         }, REFRESH_RETRY_DELAYS_MS[retryIndex]);
         retryTimersRef.current.add(timer);
       };
 
-      attempt(0);
+      attempt(0).catch(abandon);
     },
     [refreshThread]
   );

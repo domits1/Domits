@@ -150,3 +150,40 @@ SonarCloud rule `javascript:S9020` flags `waitFor` wrapped around a `getBy` quer
 ### Verification
 
 Full web suite with `--testTimeout=30000`: 270 suites and 3619 tests passed, 6 suites and 47 tests skipped.
+
+## Commit 4: handle the retry promise
+
+Reviewed: the staged diff (`useFetchMessages.js`, its test, this record)
+
+### Decision
+
+SonarCloud failed the quality gate on PR #3948 with `javascript:S9383` (floating promise) for `attempt(0)` and for `attempt(retryIndex + 1)` inside the timer in `refreshWithRetry`. Both calls now end in `.catch(abandon)`. `abandon` logs the error and settles the message: it leaves the pending set and joins the done set, so an unexpected error ends the loop and the message is not left pending for good.
+
+- `refreshThread` already catches request errors, so `abandon` only runs for something unexpected, such as a failure before its `try` block.
+- Options weighed: leave the promise floating (rejected, an unexpected error would be an unhandled rejection and the message would stay pending), retry on an unexpected error (rejected, an unknown failure is not worth more requests), settle and log (chosen, as requested).
+- Consequence accepted: after an unexpected error the message keeps its raw URL, and the image error handler from commit 2 is the remaining way to recover.
+
+### Findings
+
+| Finding | Confidence | Resolution |
+|---|---|---|
+| None blocking. `abandon` logs with `console.error`, in line with the existing refresh error log. | 9/10 | Accepted. |
+
+### Not in scope
+
+- Changing `refreshThread` so that nothing can throw outside its `try` block.
+
+### What already exists
+
+- `settle` and the error log of `refreshThread`, reused.
+
+### Failure modes
+
+| Path | Failure | Test | Handling | User sees |
+|---|---|---|---|---|
+| `refreshThread` throws before its `try` | Unhandled rejection, message pending forever | Yes | `.catch(abandon)` settles it | Raw URL, no more requests |
+| Same error inside a retry timer | Same | Covered by the same handler | Same | Same |
+
+### Verification
+
+The new test was red first: it makes `AbortController` throw, which happens outside the `try` of `refreshThread`, and checks that no further fetch happens and that a later push starts no new loop. `useFetchMessages.test.js`: 41 tests passed. Full web suite with `--testTimeout=30000`: 270 suites and 3620 tests passed, 6 suites and 47 tests skipped.

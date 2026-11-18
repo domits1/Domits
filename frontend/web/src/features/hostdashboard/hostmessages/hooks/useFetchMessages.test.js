@@ -665,6 +665,27 @@ describe("useFetchMessages retry of the live-attachment refetch", () => {
     expect(messagesCalls()).toHaveLength(callsAfterLimit);
   });
 
+  test("settles the message and fetches no more when the refresh throws unexpectedly", async () => {
+    const { push } = await arrive();
+    const callsBefore = messagesCalls().length;
+    const RealAbortController = globalThis.AbortController;
+    globalThis.AbortController = function BrokenAbortController() {
+      throw new Error("unexpected");
+    };
+
+    try {
+      await act(async () => push(live()));
+      globalThis.AbortController = RealAbortController;
+      await runAllRetries();
+      await act(async () => push(livePush("stored-2", "Just text", "2026-06-01T10:01:00.000Z")));
+      await advance(60000);
+    } finally {
+      globalThis.AbortController = RealAbortController;
+    }
+
+    expect(messagesCalls()).toHaveLength(callsBefore);
+  });
+
   test("stops fetching when the chat unmounts during the wait", async () => {
     const { hook, push } = await arrive();
     answerWith(failure());
