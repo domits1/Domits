@@ -1,0 +1,165 @@
+name: Conditional Stale Approval Dismissal
+
+on:
+  pull_request_target:
+    branches: [acceptance]
+    types: [synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: conditional-approval-reset-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dismiss-materially-stale-approvals:
+    name: Dismiss approvals after material changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check changes since each approval
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        env:
+          MAX_CHANGED_LINES_WITHOUT_REAPPROVAL: 20
+        with:
+          script: |
+            const maxChangedLines = Number(process.env.MAX_CHANGED_LINES_WITHOUT_REAPPROVAL);
+            const pullRequest = context.payload.pull_request;
+            const pullNumber = pullRequest?.number;
+            const headSha = pullRequest?.head?.sha;
+            const { owner, repo } = context.repo;
+
+            if (!Number.isInteger(pullNumber) || !headSha) {
+              core.setFailed("The pull request number or head SHA is missing.");
+              return;
+            }
+
+            if (!Number.isInteger(maxChangedLines) || maxChangedLines < 0) {
+              core.setFailed("MAX_CHANGED_LINES_WITHOUT_REAPPROVAL must be a non-negative integer.");
+              return;
+            }
+
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner,
+              repo,
+              pull_number: pullNumber,
+              per_page: 100,
+            });
+
+            const latestSubmittedReviewByUser = new Map();
+
+            for (const review of reviews) {
+              if (!review.submitted_at || !review.user?.login) {
+                continue;
+              }
+
+              latestSubmittedReviewByUser.set(review.user.login, review);
+            }
+
+            const approvedReviews = [...latestSubmittedReviewByUser.values()].filter(
+              (review) => review.state === "APPROVED"
+            );
+
+            if (approvedReviews.length === 0) {
+              core.info("No active approvals need to be checked.");
+              return;
+            }
+
+            const dismissReview = async (review, reason) => {
+              await github.request(
+                "PUT /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/dismissals",
+                {
+                  owner,
+                  repo,
+                  pull_number: pullNumber,
+                  review_id: review.id,
+                  message: reason,
+                  event: "DISMISS",
+                }
+              );
+
+              core.warning(
+                `Dismissed approval from @${review.user.login}: ${reason}`
+              );
+            };
+
+            for (const review of approvedReviews) {
+              if (!review.commit_id) {
+                core.setFailed(
+                  `Approval ${review.id} has no associated commit SHA; it could not be evaluated safely.`
+                );
+                return;
+              }
+
+              if (review.commit_id === headSha) {
+                core.info(`Approval from @${review.user.login} is on the current head commit.`);
+                continue;
+              }
+
+              let comparison;
+
+              try {
+                const response = await github.request(
+                  "GET /repos/{owner}/{repo}/compare/{basehead}",
+                  {
+                    owner,
+                    repo,
+                    basehead: `${review.commit_id}...${headSha}`,
+                    per_page: 1,
+                  }
+                );
+
+                comparison = response.data;
+              } catch (error) {
+                if (error.status === 404 || error.status === 422) {
+                  await dismissReview(
+                    review,
+                    "The reviewed commit is no longer comparable with the current head, so this push is treated as a branch rewrite. Please review and approve the updated pull request."
+                  );
+                  continue;
+                }
+
+                throw error;
+              }
+
+              if (comparison.status !== "ahead") {
+                await dismissReview(
+                  review,
+                  "The pull request branch was rewritten after this approval. Please review and approve the updated pull request."
+                );
+                continue;
+              }
+
+              if (!Array.isArray(comparison.files)) {
+                core.setFailed(
+                  `GitHub did not return file-level diff statistics for approval ${review.id}.`
+                );
+                return;
+              }
+
+              if (comparison.files.length >= 300) {
+                await dismissReview(
+                  review,
+                  "The changes since this approval reach GitHub's 300-file comparison limit, so they are treated as a material rewrite. Please review and approve the updated pull request."
+                );
+                continue;
+              }
+
+              const changedLines = comparison.files.reduce(
+                (total, file) => total + (file.additions || 0) + (file.deletions || 0),
+                0
+              );
+
+              if (changedLines > maxChangedLines) {
+                await dismissReview(
+                  review,
+                  `There are ${changedLines} changed diff lines since this approval, exceeding the ${maxChangedLines}-line allowance. Please review and approve the updated pull request.`
+                );
+                continue;
+              }
+
+              core.info(
+                `Keeping approval from @${review.user.login}: ${changedLines}/${maxChangedLines} changed diff lines since approval.`
+              );
+            }
