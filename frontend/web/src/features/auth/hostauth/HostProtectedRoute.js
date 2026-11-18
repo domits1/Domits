@@ -46,7 +46,6 @@ const HostProtectedRoute = ({ children }) => {
     }
     return <div role="alert">Your account does not have review approval access.</div>;
   }
-  // Review permissions apply only to the approval page, not ordinary host access.
   if (isReviewApprover || hasHostAccess) return children;
 
   return <Navigate to="/" replace />;
