@@ -124,7 +124,7 @@ export const EXISTING_SITE_RENDER_QUERIES = Object.freeze([
   ["site id", { site: EXISTING_SITE.id }],
 ]);
 
-const asStored = (value) => JSON.parse(JSON.stringify(value));
+const asStored = (value) => structuredClone(value);
 
 export const buildStoringDraftRepository = (store) => ({
   getDraftByPropertyIdAndHostId: jest.fn(async (propertyId, hostId) =>
