@@ -27,7 +27,7 @@ The endpoint reads historical ownership assignment periods overlapping the reque
 
 Booking candidates include raw booking amount and currency fields, booking status and dates, payment reference, and stored refund fields. Linked invoice records are returned as supplemental snapshots. Invoice records are not treated as authoritative owner earnings.
 
-An empty booking currency is normalized according to the Booking model: non-Channex bookings are returned with `EUR`, while Channex bookings remain `null` until their source currency is persisted. Only unresolved Channex currency values appear in the missing-currency warning arrays.
+An empty booking currency is resolved using the import contract: non-Channex bookings are returned with `EUR`; Channex bookings with a stored `total_price` are also `EUR` because the importer only stores Channex prices when the revision is in EUR. A Channex booking with no stored price remains `null` and is reported in the missing-currency warning arrays.
 
 ## Response boundaries
 
@@ -40,6 +40,10 @@ The response contains:
 
 The response intentionally contains **no calculated owner earnings, payout amount, commission total, tax total, or statement status**. Pagination is based on booking candidates; the endpoint does not promise a transactional snapshot while the underlying source records are changing.
 
+### Raw amount representations
+
+Amount fields are returned as raw source values rather than normalized calculation inputs. `total_price` is stored as a EUR floating-point amount; `refunded_amount` is stored as integer cents in a PostgreSQL `bigint`; invoice amount fields use PostgreSQL `numeric(10,2)` and are returned by the driver as decimal strings. These values are deliberately not coerced in this preview. The calculation layer must explicitly normalize units and use precision-safe decimal arithmetic before performing financial calculations.
+
 ## Known source-data limitations
 
 1. The booking-versus-stay-versus-transaction period rule has not been approved.
@@ -47,7 +51,7 @@ The response intentionally contains **no calculated owner earnings, payout amoun
 3. The booking table stores a refund summary, not a complete refund transaction ledger.
 4. There is no persisted property-expense ledger in the current model.
 5. Invoice records have no currency field. The current invoice-creation flow applies a fixed 10% commission, so invoice values must not be used as the owner commission policy.
-6. Channex imports currently do not persist the source booking currency; empty Channex values remain null and are reported as missing. Empty non-Channex currency values are interpreted as EUR.
+6. Channex imports do not persist the source currency. The current importer stores `total_price` only for EUR revisions, so an empty currency plus a non-null `total_price` can be interpreted as EUR; an empty currency with a null `total_price` remains unknown.
 7. Tax treatment, fee responsibility, share changes during a stay and rounding rules require Finance/Product decisions.
 8. The property-owner tables are applied manually; verify both `test` and `main` schema readiness using the DSQL runbook before deploying a runtime that queries them.
 

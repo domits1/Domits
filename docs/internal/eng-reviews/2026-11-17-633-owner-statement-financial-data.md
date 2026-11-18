@@ -75,7 +75,7 @@ B. Keep `null` for every empty currency and remove the “missing” interpretat
 
 **Recommendation: A.** It follows the existing Booking model and DSQL runbook semantics, while retaining an explicit warning for the currently incomplete Channex import path.
 
-**Decision: Option A, confirmed by Rakib in the PR review on 2026-11-17.** The service now returns `EUR` for empty non-Channex booking currencies and preserves `null` for empty Channex currencies. A regression test covers both `null` and empty-string values for direct bookings, plus the Channex warning behavior.
+**Decision: Option A, confirmed by Rakib in the PR review on 2026-11-17.** The service now returns `EUR` for empty non-Channex booking currencies and for Channex bookings with a non-null `total_price` (the importer only stores Channex totals for EUR revisions). A Channex booking with no stored price remains `null` and is reported as missing. Regression coverage includes direct bookings, Channex EUR prices, zero-priced Channex bookings and Channex bookings with no stored price.
 
 ## Failure modes
 
@@ -114,6 +114,8 @@ On the reviewed head before the currency-normalization update:
 - SonarCloud Quality Gate: passed, 0 new issues.
 
 The currency change and regression test are now included in the current PR branch; fresh CI and SonarCloud checks must complete on that head.
+
+The response continues to expose raw amounts without coercion. `refunded_amount` is cents, booking `total_price` is euros, and invoice `numeric(10,2)` fields are decimal strings. Normalizing these belongs in the calculation service, where unit conversions and precision requirements can be handled explicitly; coercing them in this discovery endpoint would hide important source semantics.
 
 The ORM wiring was inspected:
 - The backend `database` package is used by this Lambda and its root `Tables.js` registry includes `Booking`, `Invoice`, `Property_Owner` and `Property_Owner_Property`.

@@ -15,11 +15,12 @@ const HELD_SHARES_MESSAGE = "This owner still holds ownership shares. Set new sh
 const DAY_MS = 86400000;
 
 const isChannexBooking = (booking) => String(booking.bookingtype || "").toLowerCase() === "channex";
+const hasStoredBookingPrice = (booking) => booking.total_price !== null && booking.total_price !== undefined;
 const resolveBookingCurrency = (booking) => {
   if (typeof booking.currency === "string" && booking.currency.trim() !== "") {
     return booking.currency;
   }
-  return isChannexBooking(booking) ? null : "EUR";
+  return isChannexBooking(booking) && !hasStoredBookingPrice(booking) ? null : "EUR";
 };
 
 const toShare = ({ owner_id, ownership_basis_points, effective_from, effective_to }) => ({
