@@ -3,6 +3,14 @@ import Icon from "@mdi/react";
 import { mdiLoading, mdiPaperclip } from "@mdi/js";
 import { useUploadUrl } from "../hooks/useUploadURL";
 
+const createLocalPreview = (file) => {
+    const isImage = Boolean(file.type?.startsWith("image/"));
+    if (!isImage || typeof URL.createObjectURL !== "function") {
+        return null;
+    }
+    return URL.createObjectURL(file);
+};
+
 const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
     const [files, setFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
@@ -67,6 +75,7 @@ const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
             name: file.name,
             type: file.type,
             url: response.fileUrl,
+            previewUrl: createLocalPreview(file),
         };
         setFiles((prev) => [...prev, uploadedFile]);
         onUploadComplete(uploadedFile);

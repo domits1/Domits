@@ -4,7 +4,7 @@
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ChatScreen from "./ChatScreen";
 import { getMessageCapabilities } from "./messageCapabilities";
 
@@ -67,6 +67,30 @@ jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttach
             onUploadComplete({ url: "https://example.com/lease.pdf", name: "lease.pdf", type: "application/pdf" })
           }>
           Attach PDF
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onUploadComplete({
+              url: "https://example.com/photo.jpg",
+              name: "photo.jpg",
+              type: "image/jpeg",
+              previewUrl: "blob:photo-preview",
+            })
+          }>
+          Attach with preview
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onUploadComplete({
+              url: "https://example.com/second.jpg",
+              name: "second.jpg",
+              type: "image/jpeg",
+              previewUrl: "blob:second-preview",
+            })
+          }>
+          Attach second with preview
         </button>
         <button type="button" onClick={() => onUploadError()}>
           Fail upload
@@ -609,6 +633,115 @@ describe("ChatScreen reservation messaging", () => {
         attach("Attach PDF");
 
         expect(screen.queryByRole("button", { name: /^Preview/ })).not.toBeInTheDocument();
+      });
+    });
+
+    describe("local previews", () => {
+      const originalRevokeObjectURL = URL.revokeObjectURL;
+      const hostChat = (threadId = "thread-1") => (
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId={threadId}
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={getMessageCapabilities("host")}
+        />
+      );
+
+      beforeEach(() => {
+        URL.revokeObjectURL = jest.fn();
+      });
+
+      afterEach(() => {
+        cleanup();
+        URL.revokeObjectURL = originalRevokeObjectURL;
+      });
+
+      test("shows the local preview in the chip thumbnail", () => {
+        renderHostChat();
+
+        attach("Attach with preview");
+
+        expect(within(chip("photo.jpg")).getByRole("img", { name: "photo.jpg" })).toHaveAttribute(
+          "src",
+          "blob:photo-preview"
+        );
+      });
+
+      test("shows the local preview in the preview card", () => {
+        renderHostChat();
+        attach("Attach with preview");
+
+        fireEvent.click(screen.getByRole("button", { name: "Preview photo.jpg" }));
+
+        const dialog = screen.getByRole("dialog", { name: "Attachment previews" });
+        expect(within(dialog).getByRole("img", { name: "photo.jpg" })).toHaveAttribute("src", "blob:photo-preview");
+      });
+
+      test("sends only the uploaded url, never the local preview", async () => {
+        renderHostChat();
+        attach("Attach with preview");
+
+        fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "See photo" } });
+        fireEvent.click(screen.getByTitle("Send"));
+
+        await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(1));
+        expect(mockSendMessage.mock.calls[0][2]).toEqual(["https://example.com/photo.jpg"]);
+      });
+
+      test("revokes the preview of the chip that is removed and keeps the other one", () => {
+        renderHostChat();
+        attach("Attach with preview");
+        attach("Attach second with preview");
+
+        fireEvent.click(within(chip("second.jpg")).getByRole("button", { name: "Remove attachment" }));
+
+        expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:second-preview");
+      });
+
+      test("revokes nothing when a chip without a preview is removed", () => {
+        renderHostChat();
+        attach("Attach PDF");
+
+        fireEvent.click(within(chip("lease.pdf")).getByRole("button", { name: "Remove attachment" }));
+
+        expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+      });
+
+      test("revokes the previews of the chips when the host opens another thread", () => {
+        const { rerender } = render(hostChat());
+        attach("Attach with preview");
+        attach("Attach second with preview");
+
+        rerender(hostChat("thread-2"));
+
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:second-preview");
+        expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
+      });
+
+      test("revokes the previews of the chips when the chat is closed", () => {
+        const { unmount } = render(hostChat());
+        attach("Attach with preview");
+
+        unmount();
+
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+      });
+
+      test("revokes the previews of the chips once the message is sent", async () => {
+        renderHostChat();
+        attach("Attach with preview");
+
+        fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "See photo" } });
+        fireEvent.click(screen.getByTitle("Send"));
+
+        await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview"));
+        expect(screen.queryByRole("list", { name: "Attachments" })).not.toBeInTheDocument();
       });
     });
   });

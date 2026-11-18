@@ -23,6 +23,10 @@ const getOtherPartyName = (selfUserId, contactId, contactName) => {
 
 const NEAR_BOTTOM_PX = 40;
 
+const releasePreview = (previewUrl) => {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+};
+
 const getMessageKey = (message) => {
   if (!message) return "message-unknown";
   if (message.id) return String(message.id);
@@ -91,6 +95,8 @@ const ChatScreen = ({
     [attachments]
   );
   const isPreviewOpen = showPreviewPopover && imageAttachments.length > 0;
+  const attachmentsRef = useRef(attachments);
+  attachmentsRef.current = attachments;
 
   const [localMessages, setLocalMessages] = useState([]);
   const [retryingIds, setRetryingIds] = useState({});
@@ -112,6 +118,7 @@ const ChatScreen = ({
   // An unsent upload belongs to the thread it was attached in; the next thread may not accept attachments.
   useEffect(() => {
     setAttachments([]);
+    return () => attachmentsRef.current.forEach((attachment) => releasePreview(attachment.previewUrl));
   }, [resolvedContactId, threadId]);
 
   useEffect(() => {
@@ -279,6 +286,7 @@ const ChatScreen = ({
 
   const clearComposer = () => {
     setNewMessage("");
+    attachmentsRef.current.forEach((attachment) => releasePreview(attachment.previewUrl));
     setAttachments([]);
     setShowPreviewPopover(false);
   };
@@ -348,7 +356,10 @@ const ChatScreen = ({
 
   const handleUploadComplete = (attachment) => setAttachments((prev) => [...prev, attachment]);
 
-  const handleRemoveAttachment = (url) => setAttachments((prev) => prev.filter((attachment) => attachment.url !== url));
+  const handleRemoveAttachment = (url) => {
+    releasePreview(attachments.find((attachment) => attachment.url === url)?.previewUrl);
+    setAttachments((prev) => prev.filter((attachment) => attachment.url !== url));
+  };
 
   if (!resolvedContactId) {
     return (
@@ -498,7 +509,7 @@ const ChatScreen = ({
               <ul className="preview-popover-grid">
                 {imageAttachments.map((attachment) => (
                   <li key={attachment.url} className="preview-item">
-                    <img src={attachment.url} alt={attachment.name} />
+                    <img src={attachment.previewUrl || attachment.url} alt={attachment.name} />
                   </li>
                 ))}
               </ul>

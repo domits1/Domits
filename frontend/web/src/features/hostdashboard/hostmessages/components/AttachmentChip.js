@@ -5,7 +5,7 @@ import { mdiClose, mdiFileOutline } from "@mdi/js";
 
 const AttachmentChip = ({ attachment, onRemove, onPreview }) => {
   const [imageFailed, setImageFailed] = useState(false);
-  const { url, name, type } = attachment;
+  const { url, previewUrl, name, type } = attachment;
   const showsThumbnail = Boolean(type?.startsWith("image/")) && !imageFailed;
 
   return (
@@ -16,7 +16,7 @@ const AttachmentChip = ({ attachment, onRemove, onPreview }) => {
           className="attachment-chip__thumbnail"
           aria-label={`Preview ${name}`}
           onClick={onPreview}>
-          <img src={url} alt={name} onError={() => setImageFailed(true)} />
+          <img src={previewUrl || url} alt={name} onError={() => setImageFailed(true)} />
         </button>
       ) : (
         <>
@@ -40,6 +40,7 @@ const AttachmentChip = ({ attachment, onRemove, onPreview }) => {
 AttachmentChip.propTypes = {
   attachment: PropTypes.shape({
     url: PropTypes.string.isRequired,
+    previewUrl: PropTypes.string,
     name: PropTypes.string.isRequired,
     type: PropTypes.string,
   }).isRequired,
