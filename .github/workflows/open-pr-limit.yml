@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   enforce-open-pr-limit:
-    name: Enforce 30 open PR maximum
+    name: Enforce 30 non-exempt open PR maximum
     runs-on: ubuntu-latest
     steps:
       - name: Close newly opened PR when repository limit is exceeded
@@ -18,10 +18,27 @@ jobs:
         with:
           script: |
             const maxOpenPullRequests = 30;
-            const pullNumber = context.payload.pull_request?.number;
+            const pullRequest = context.payload.pull_request;
+            const pullNumber = pullRequest?.number;
 
             if (!Number.isInteger(pullNumber)) {
               core.setFailed("The pull request number is missing from the event payload.");
+              return;
+            }
+
+            const isExemptPullRequest = (candidate) => {
+              const headBranch = String(candidate.head?.ref || "");
+              return (
+                candidate.user?.type === "Bot" ||
+                headBranch.startsWith("hotfix/") ||
+                headBranch.startsWith("release/")
+              );
+            };
+
+            if (isExemptPullRequest(pullRequest)) {
+              core.info(
+                `Skipping the open-PR limit for exempt PR #${pullNumber} (author type: ${pullRequest.user?.type || "unknown"}, head branch: ${pullRequest.head?.ref || "unknown"}).`
+              );
               return;
             }
 
@@ -33,7 +50,7 @@ jobs:
             });
 
             const currentPullRequest = openPullRequests.find(
-              (pullRequest) => pullRequest.number === pullNumber
+              (candidate) => candidate.number === pullNumber
             );
 
             if (!currentPullRequest) {
@@ -41,9 +58,13 @@ jobs:
               return;
             }
 
-            if (openPullRequests.length <= maxOpenPullRequests) {
+            const countableOpenPullRequests = openPullRequests.filter(
+              (candidate) => !isExemptPullRequest(candidate)
+            );
+
+            if (countableOpenPullRequests.length <= maxOpenPullRequests) {
               core.info(
-                `Repository has ${openPullRequests.length}/${maxOpenPullRequests} open pull requests.`
+                `Repository has ${countableOpenPullRequests.length}/${maxOpenPullRequests} non-exempt open pull requests.`
               );
               return;
             }
@@ -51,12 +72,14 @@ jobs:
             const message = [
               "### Repository-wide open pull request limit reached",
               "",
-              `This repository currently has **${openPullRequests.length} open pull requests**, including this one.`,
-              `The maximum is **${maxOpenPullRequests} open pull requests** total across all contributors.`,
+              `This repository currently has **${countableOpenPullRequests.length} non-exempt open pull requests**, including this one.`,
+              `The maximum is **${maxOpenPullRequests} non-exempt open pull requests** across all contributors.`,
+              "",
+              "Exemptions: pull requests opened by GitHub bots, and pull requests whose head branch starts with `hotfix/` or `release/`. Exempt pull requests are not included in the limit.",
               "",
               "This newly opened pull request has been automatically closed. Existing pull requests are not changed by this automation, and the source branch is not deleted.",
               "",
-              "Please merge or close existing pull requests until the repository has **29 or fewer** open pull requests. You can then reopen this pull request or create a new one.",
+              "Please merge or close existing non-exempt pull requests until there are **29 or fewer**. You can then reopen this pull request or create a new one.",
             ].join("\n");
 
             try {
@@ -78,5 +101,5 @@ jobs:
             });
 
             core.warning(
-              `Closed newly opened PR #${pullNumber}: repository has ${openPullRequests.length} open PRs; limit is ${maxOpenPullRequests}.`
+              `Closed newly opened PR #${pullNumber}: repository has ${countableOpenPullRequests.length} non-exempt open PRs; limit is ${maxOpenPullRequests}.`
             );
