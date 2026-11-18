@@ -147,6 +147,37 @@ describe("QuoteAvailabilitySection", () => {
     expect(screen.getByText("Pick a check-in date")).toBeInTheDocument();
   });
 
+  describe("the contact link when the property cannot be booked online", () => {
+    const WHATSAPP_HOST = {
+      name: "Host",
+      whatsapp: { isAvailable: true, phoneNumber: "+31 6 1234 5678", phoneNumberDigits: "31612345678" },
+    };
+    const showUnavailableQuote = async (model) => {
+      requestPublicWebsiteQuote.mockRejectedValue(
+        new WebsitePublicQuoteError({ code: "quote_unavailable", message: "Unavailable.", status: 409, requestId: "req-1" })
+      );
+      renderSection(model);
+      await selectStay();
+      fireEvent.click(screen.getByRole("button", { name: /^check availability$/i }));
+      await screen.findByText("This property can't be booked online right now.");
+    };
+
+    it.each([
+      ["is on", { chatWidget: true }],
+      ["was never changed, which means on", undefined],
+    ])("links to the host's WhatsApp while the WhatsApp widget %s", async (_label, visibility) => {
+      await showUnavailableQuote({ ...MODEL, host: WHATSAPP_HOST, visibility });
+
+      expect(screen.getByRole("link", { name: "Contact the host" })).toHaveAttribute("href", "https://wa.me/31612345678");
+    });
+
+    it("shows no WhatsApp link when the host turned the widget off", async () => {
+      await showUnavailableQuote({ ...MODEL, host: WHATSAPP_HOST, visibility: { chatWidget: false } });
+
+      expect(screen.queryByRole("link", { name: "Contact the host" })).not.toBeInTheDocument();
+    });
+  });
+
   it("renders a reserved date as a disabled, marked cell that cannot start a stay", async () => {
     const reservedKey = toKey(new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 2));
     renderSection({ ...MODEL, availability: { ...MODEL.availability, unavailableDateKeys: [reservedKey] } });
