@@ -7,7 +7,7 @@ Result: no blocking findings
 
 Follow-up of the eng-review of #3938, which left three gaps in the backend. `normalizeLocationPayload` (overview update) and `PropertyBuilder.addLocation` (create) accepted a house number above the INTEGER range, a house number below 1, and an extension over 45 characters (`VARCHAR(45)`). The database rejected them later, and the update path answered 500 with the raw database message.
 
-Decisions from Enes: the checks go in `normalizeLocationPayload` and `PropertyBuilder.addLocation`, not in the `PropertyLocation` model setters; floats are truncated and then checked; a digit string too long for a number is reported as too large; "Missing houseNumber." stays as it is on create; the new create errors answer 400.
+Decisions (made by the author, to be confirmed in review): the checks go in `normalizeLocationPayload` and `PropertyBuilder.addLocation`, not in the `PropertyLocation` model setters; floats are truncated and then checked; a digit string too long for a number is reported as too large; "Missing houseNumber." stays as it is on create; the new create errors answer 400.
 
 Added during implementation, not decided: the checks and the two constants live in one function, `getLocationLimitError`, next to the constants in `util/locationLimits.js`, so the two paths do not repeat three messages. Extension length counts characters (code points), as `VARCHAR` does, not UTF-16 units.
 
