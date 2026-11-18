@@ -177,8 +177,11 @@ const ChatScreen = ({
     const effectivePropertyId = propertyId ?? null;
 
     const isGuest = dashboardType === "guest";
-    const hostId = isGuest ? resolvedContactId : userId;
-    const guestId = isGuest ? userId : resolvedContactId;
+    const rolesComeFromThread = Boolean(threadId);
+    const dashboardHostId = isGuest ? resolvedContactId : userId;
+    const dashboardGuestId = isGuest ? userId : resolvedContactId;
+    const hostId = rolesComeFromThread ? null : dashboardHostId;
+    const guestId = rolesComeFromThread ? null : dashboardGuestId;
 
     const nowIso = new Date().toISOString();
 
@@ -322,6 +325,12 @@ const ChatScreen = ({
     setShowToast(true);
   };
 
+  const showUploadFailedToast = () => {
+    setError("Failed to upload attachment.");
+    setToastText("Attachment failed to upload");
+    setShowToast(true);
+  };
+
   const handleUploadComplete = (url) => setUploadedFileUrls((prev) => [...prev, url]);
 
   if (!resolvedContactId) {
@@ -410,10 +419,6 @@ const ChatScreen = ({
 
         <div className="chat-input">
           <div className="attachment-area">
-            {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
-              <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
-            ) : null}
-
             {uploadedFileUrls.length > 0 && (
               <button
                 className="inline-upload-preview"
@@ -429,6 +434,9 @@ const ChatScreen = ({
 
           <div className="message-input-container">
             <div className="message-input-wrapper">
+              {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
+                <ChatUploadAttachment onUploadComplete={handleUploadComplete} onUploadError={showUploadFailedToast} />
+              ) : null}
               <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
