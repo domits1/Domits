@@ -1,6 +1,6 @@
 # fix(property): refuse location values the columns cannot store, on update and create (#3921)
 
-Pull request: #TBD (fill in when the pull request is opened)
+Pull request: #3957
 Issue: #3921 (related, not closed by this pull request)
 Reviewed commit: `9f579e2e2`
 Result: no blocking findings
