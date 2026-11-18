@@ -106,7 +106,6 @@ jobs:
                     owner,
                     repo,
                     basehead: `${review.commit_id}...${headSha}`,
-                    per_page: 1,
                   }
                 );
 
