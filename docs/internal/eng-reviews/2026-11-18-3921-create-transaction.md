@@ -2,7 +2,7 @@
 
 Pull request: #3958 (part 2 of 2, closes #3921; part 1 is #3935)
 Issue: #3921
-Reviewed commits: `139cfcdcd` (rule probes and upsert), `763b13d81` (precomputed coordinates and image key), `bcbb8a33c` (the transaction)
+Reviewed commits: `9e9e9f57d` (rule probes and upsert), `5798801db` (precomputed coordinates and image key), `e40b964a1` (the transaction)
 Result: no blocking findings
 
 Part 1 let the 13 repository create methods and read-back getters take a transaction manager. Part 2 makes `propertyService.create` pass one. All rows of a listing are written in one transaction with `withDsqlRetry`, the same pair `transitionStatusWithEvent` uses, so a failure in the middle no longer leaves a property row without its children. The goal is prevention only: old broken rows are not cleaned up.
