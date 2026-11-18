@@ -42,11 +42,16 @@
 		"@aws-sdk/signature-v4a": "^3.1009.0",
 		"@aws-sdk/util-dynamodb": "3.817.0",
 		"database": "file:./ORM",
-		"fast-xml-parser": "~5.11.2",
+		"fast-xml-parser": "~5.12.1",
 		"pg": "^8.16.0",
 		"reflect-metadata": "^0.2.2",
-		"sharp": "^0.33.5",
+		"sharp": "^0.35.5",
 		"stripe": "^18.1.1",
-		"typeorm": "^0.3.24"
+		"typeorm": "^0.3.31"
+	},
+	"overrides": {
+		"typeorm": {
+			"glob": "^14.0.2"
+		}
 	}
 }

@@ -3,6 +3,8 @@ import { Auth } from "aws-amplify";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
+import { REVIEW_APPROVAL_ADMIN_PATH } from "../review/navigation/reviewApprovalRoute";
+import { hasReviewApprovalAccess } from "../review/services/reviewAPI";
 import MfaChallengeStep from "./mfaChallenge/MfaChallengeStep";
 import { useMfaChallenge, SOFTWARE_TOKEN_MFA } from "./mfaChallenge/useMfaChallenge";
 
@@ -36,16 +38,24 @@ const Login = () => {
   const inputRef = useRef([]);
 
   useEffect(() => {
+    let active = true;
     const checkAuth = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
+
+        const canApproveReviews = await hasReviewApprovalAccess();
+        if (!active) return;
+        if (canApproveReviews) {
+          navigate(REVIEW_APPROVAL_ADMIN_PATH, { replace: true });
+          return;
+        }
 
         if (redirect) {
           window.location.href = redirect;
           return;
         }
 
-        const group = user.attributes["custom:group"];
+        const group = user.attributes?.["custom:group"];
 
         if (group === "Host") navigate("/hostdashboard");
         else navigate("/guestdashboard");
@@ -53,17 +63,20 @@ const Login = () => {
     };
 
     checkAuth();
+    return () => {
+      active = false;
+    };
   }, [navigate, redirect]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const completeSignIn = () => {
+  const completeSignIn = async () => {
     globalThis.dispatchEvent(new Event("authChanged"));
 
     if (redirect) {
-      window.location.href = redirect;
+      window.location.href = (await hasReviewApprovalAccess()) ? REVIEW_APPROVAL_ADMIN_PATH : redirect;
     } else {
       globalThis.location.reload();
     }
@@ -113,7 +126,7 @@ const Login = () => {
         return;
       }
 
-      completeSignIn();
+      await completeSignIn();
     } catch {
       setErrorMessage("Invalid email or password");
       setIsSigningIn(false);
