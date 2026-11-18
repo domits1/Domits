@@ -1,6 +1,6 @@
 # fix(property): create a listing in one transaction (#3921)
 
-Pull request: not opened yet (part 2 of 2, closes #3921; part 1 is #3935)
+Pull request: #3958 (part 2 of 2, closes #3921; part 1 is #3935)
 Issue: #3921
 Reviewed commits: `139cfcdcd` (rule probes and upsert), `763b13d81` (precomputed coordinates and image key), `bcbb8a33c` (the transaction)
 Result: no blocking findings
