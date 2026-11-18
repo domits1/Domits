@@ -40,6 +40,7 @@ import { ConflictException } from "../../util/exception/ConflictException.js";
 import { TypeException } from "../../util/exception/TypeException.js";
 import { ServiceUnavailableException } from "../../util/exception/ServiceUnavailableException.js";
 import { ALLOWED_PROPERTY_TYPES } from "../../util/constant/propertyTypes.js";
+import { geocodeAddress } from "../../util/geocoding.js";
 import {
   HOST_REQUESTABLE_STATUSES,
   normalizePropertyStatus,
@@ -166,28 +167,70 @@ export class PropertyService {
     }
   }
 
+  // A listing is saved in one transaction: either every row exists afterwards or none does.
+  //
+  //   before   warm probes -> geocode -> upload images     (slow or external, so never inside the transaction)
+  //   inside   property, type, location, details, pricing, check-in, availability,
+  //            restrictions, amenities, rules, test status, technical details, images
+  //   after    destination mapping                          (best effort, needs the committed location row)
+  //
+  // The writes are sequential on purpose. A transaction is one connection, so Promise.all would
+  // gain no speed, and on the first failure it would roll back while sibling writes are still running.
+  // withDsqlRetry may run the transaction callback again after a commit conflict: everything the
+  // callback uses (coordinates, uploaded keys, ids) is therefore fixed before the transaction opens.
   async create(property, { skipImages = false } = {}) {
-    await this.createBasePropertyInfo(property.property);
+    const location = property.propertyLocation;
+    const images = skipImages ? [] : property.propertyImages;
 
-    const tasks = [
-      this.createAmenities(property.propertyAmenities),
-      this.createAvailability(property.propertyAvailabilities),
-      this.createCheckIn(property.propertyCheckIn),
-      this.createGeneralDetail(property.propertyGeneralDetails),
-      this.createLocation(property.propertyLocation),
-      this.createPricing(property.propertyPricing),
-      this.createRules(property.propertyRules),
-      this.createPropertyType(property.propertyType),
-      this.createAvailabilityRestrictions(property.propertyAvailabilityRestrictions),
-      this.createPropertyTestStatus(property.propertyTestStatus),
-    ];
-    if (!skipImages) {
-      tasks.push(this.createImages(property.propertyImages));
+    await this.warmCreateProbes();
+    const coordinates = await geocodeAddress(location);
+    const uploadedKeys = await this.uploadImages(images);
+
+    try {
+      await this.propertyRepository.withTransaction(async (manager) => {
+        await this.createBasePropertyInfo(property.property, manager);
+        await this.createPropertyType(property.propertyType, manager);
+        await this.createLocationInTransaction(location, manager, coordinates);
+        await this.createGeneralDetail(property.propertyGeneralDetails, manager);
+        await this.createPricing(property.propertyPricing, manager);
+        await this.createCheckIn(property.propertyCheckIn, manager);
+        await this.createAvailability(property.propertyAvailabilities, manager);
+        await this.createAvailabilityRestrictions(property.propertyAvailabilityRestrictions, manager);
+        await this.createAmenities(property.propertyAmenities, manager);
+        await this.createRules(property.propertyRules, manager);
+        await this.createPropertyTestStatus(property.propertyTestStatus, manager);
+        if (property.propertyType.property_type === "Boat" || property.propertyType.property_type === "Camper") {
+          await this.createTechnicalDetails(property.propertyTechnicalDetails, manager);
+        }
+        if (!skipImages) {
+          await this.createImages(images, manager, uploadedKeys);
+        }
+      });
+    } catch (error) {
+      if (isDsqlConflict(error)) {
+        const unavailable = new ServiceUnavailableException("The listing could not be saved right now. Please try again.");
+        unavailable.cause = error;
+        throw unavailable;
+      }
+      throw error;
     }
-    await Promise.all(tasks);
-    if (property.propertyType.property_type === "Boat" || property.propertyType.property_type === "Camper") {
-      await this.createTechnicalDetails(property.propertyTechnicalDetails);
+
+    await this.destinationMappingService.mapPropertyLocationSafely(location.property_id);
+  }
+
+  // A probe that fails inside a transaction aborts it, so every probe is answered and cached first.
+  async warmCreateProbes() {
+    await this.propertyRuleRepository.warmProbes();
+    await this.propertyPricingRepository.warmProbes();
+  }
+
+  // Objects uploaded here stay in S3 if the transaction later fails. Cleaning them up is a known follow-up.
+  async uploadImages(images) {
+    const uploadedKeys = [];
+    for (const image of images) {
+      uploadedKeys.push(await this.propertyImageRepository.uploadImageToS3(image.image, image.property_id));
     }
+    return uploadedKeys;
   }
 
   // A host can never write ACTIVE. Asking for it submits the property for review; an
@@ -808,8 +851,8 @@ export class PropertyService {
     return propertyType;
   }
 
-  async createBasePropertyInfo(property) {
-    const result = await this.propertyRepository.create(property);
+  async createBasePropertyInfo(property, transactionManager = null) {
+    const result = await this.propertyRepository.create(property, transactionManager);
     if (!result) {
       throw new DatabaseException(`Failed to register property.`);
     }
@@ -819,9 +862,9 @@ export class PropertyService {
     return await this.propertyRepository.getPropertyById(property);
   }
 
-  async createAmenities(amenities) {
+  async createAmenities(amenities, transactionManager = null) {
     for (const amenity of amenities) {
-      const result = await this.propertyAmenityRepository.create(amenity);
+      const result = await this.propertyAmenityRepository.create(amenity, transactionManager);
       if (!result) {
         throw new DatabaseException(`Failed to register ${amenity.amenityId} to property.`);
       }
@@ -836,10 +879,10 @@ export class PropertyService {
     await this.propertyAmenityRepository.replaceAmenitiesByPropertyId(propertyId, amenityIds);
   }
 
-  async createAvailability(availabilities) {
+  async createAvailability(availabilities, transactionManager = null) {
     const availabilityList = Array.isArray(availabilities) ? availabilities : [];
     for (const availability of availabilityList) {
-      const result = await this.propertyAvailabilityRepository.create(availability);
+      const result = await this.propertyAvailabilityRepository.create(availability, transactionManager);
       if (!result) {
         throw new DatabaseException(`Failed to register property availability.`);
       }
@@ -850,9 +893,9 @@ export class PropertyService {
     return await this.propertyAvailabilityRepository.getAvailabilityByPropertyId(property);
   }
 
-  async createAvailabilityRestrictions(restrictions) {
+  async createAvailabilityRestrictions(restrictions, transactionManager = null) {
     for (const restriction of restrictions) {
-      const result = await this.propertyAvailabilityRestrictionRepository.create(restriction);
+      const result = await this.propertyAvailabilityRestrictionRepository.create(restriction, transactionManager);
       if (!result) {
         throw new DatabaseException(`Failed to register ${restriction.restriction} to property.`);
       }
@@ -863,8 +906,8 @@ export class PropertyService {
     return await this.propertyAvailabilityRestrictionRepository.getAvailabilityRestrictionsByPropertyId(property);
   }
 
-  async createCheckIn(timeslots) {
-    const result = await this.propertyCheckInRepository.create(timeslots);
+  async createCheckIn(timeslots, transactionManager = null) {
+    const result = await this.propertyCheckInRepository.create(timeslots, transactionManager);
     if (!result) {
       throw new DatabaseException(`Failed to register check in timeslots.`);
     }
@@ -882,9 +925,9 @@ export class PropertyService {
     return result;
   }
 
-  async createGeneralDetail(details) {
+  async createGeneralDetail(details, transactionManager = null) {
     for (const detail of details) {
-      const result = await this.propertyGeneralDetailRepository.create(detail);
+      const result = await this.propertyGeneralDetailRepository.create(detail, transactionManager);
       if (!result) {
         throw new DatabaseException(`Failed to register ${detail.detail} to property.`);
       }
@@ -913,11 +956,20 @@ export class PropertyService {
   }
 
   async createLocation(location) {
-    const result = await this.propertyLocationRepository.create(location);
+    this.requireSavedLocation(await this.propertyLocationRepository.create(location));
+    await this.destinationMappingService.mapPropertyLocationSafely(location.property_id);
+  }
+
+  // Inside the create transaction: no geocoding call, and no destination mapping, which runs on
+  // its own connection and could not see the uncommitted row.
+  async createLocationInTransaction(location, transactionManager, coordinates) {
+    this.requireSavedLocation(await this.propertyLocationRepository.create(location, transactionManager, { coordinates }));
+  }
+
+  requireSavedLocation(result) {
     if (!result) {
       throw new DatabaseException(`Failed to register property location.`);
     }
-    await this.destinationMappingService.mapPropertyLocationSafely(location.property_id);
   }
 
   async updateLocation(propertyId, location) {
@@ -943,8 +995,8 @@ export class PropertyService {
     return await this.propertyLocationRepository.getFullPropertyLocationById(property);
   }
 
-  async createPricing(pricing) {
-    const result = await this.propertyPricingRepository.create(pricing);
+  async createPricing(pricing, transactionManager = null) {
+    const result = await this.propertyPricingRepository.create(pricing, transactionManager);
     if (!result) {
       throw new DatabaseException(`Failed to register property pricing.`);
     }
@@ -977,9 +1029,9 @@ export class PropertyService {
     return await this.propertyCalendarOverrideRepository.upsertOverridesByPropertyId(propertyId, overrides, range, channexChanges);
   }
 
-  async createRules(rules) {
+  async createRules(rules, transactionManager = null) {
     for (const rule of rules) {
-      const result = await this.propertyRuleRepository.create(rule);
+      const result = await this.propertyRuleRepository.create(rule, transactionManager);
       if (!result) {
         throw new DatabaseException(`Failed to register ${rule.rule} to property.`);
       }
@@ -1143,16 +1195,18 @@ export class PropertyService {
     return await this.propertyCustomRuleRepository.replaceCustomRulesByPropertyId(propertyId, customRules);
   }
 
-  async createPropertyType(type) {
-    const result = await this.propertyTypeRepository.create(type);
+  async createPropertyType(type, transactionManager = null) {
+    const result = await this.propertyTypeRepository.create(type, transactionManager);
     if (!result) {
       throw new DatabaseException(`Failed to register property type.`);
     }
   }
 
-  async createImages(images) {
-    for (const image of images) {
-      const result = await this.propertyImageRepository.create(image);
+  async createImages(images, transactionManager = null, uploadedKeys = []) {
+    for (const [index, image] of images.entries()) {
+      const result = await this.propertyImageRepository.create(image, transactionManager, {
+        uploadedKey: uploadedKeys[index],
+      });
       if (!result) {
         throw new DatabaseException(`Failed to register ${images.key} to property.`);
       }
@@ -1205,8 +1259,8 @@ export class PropertyService {
     };
   }
 
-  async createTechnicalDetails(details) {
-    const result = await this.propertyTechnicalDetailRepository.create(details);
+  async createTechnicalDetails(details, transactionManager = null) {
+    const result = await this.propertyTechnicalDetailRepository.create(details, transactionManager);
     if (!result) {
       throw new DatabaseException(`Failed to register technical details to property.`);
     }
@@ -1224,7 +1278,7 @@ export class PropertyService {
     return await this.propertyTestStatusRepository.getPropertyTestStatusByPropertyId(property);
   }
 
-  async createPropertyTestStatus(testStatus) {
-    return await this.propertyTestStatusRepository.create(testStatus);
+  async createPropertyTestStatus(testStatus, transactionManager = null) {
+    return await this.propertyTestStatusRepository.create(testStatus, transactionManager);
   }
 }
