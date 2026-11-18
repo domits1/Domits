@@ -14,7 +14,14 @@ const mockFetchMessages = jest.fn();
 let mockMessagesByThread = {};
 
 jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
-jest.mock("./MessageToast", () => () => <div data-testid="message-toast" />);
+jest.mock("./MessageToast", () => ({ message, onClose }) => (
+  <div data-testid="message-toast">
+    {message}
+    <button type="button" onClick={onClose}>
+      Close toast
+    </button>
+  </div>
+));
 
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useAuth", () => ({
   useAuth: () => ({ accessToken: "access-token-1" }),
@@ -39,16 +46,22 @@ jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchMessages", ()
 jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttachment", () => {
   const PropTypes = require("prop-types");
 
-  function MockChatUploadAttachment({ onUploadComplete }) {
+  function MockChatUploadAttachment({ onUploadComplete, onUploadError }) {
     return (
-      <button type="button" onClick={() => onUploadComplete("https://example.com/photo.jpg")}>
-        Attach
-      </button>
+      <>
+        <button type="button" onClick={() => onUploadComplete("https://example.com/photo.jpg")}>
+          Attach
+        </button>
+        <button type="button" onClick={() => onUploadError()}>
+          Fail upload
+        </button>
+      </>
     );
   }
 
   MockChatUploadAttachment.propTypes = {
     onUploadComplete: PropTypes.func.isRequired,
+    onUploadError: PropTypes.func,
   };
 
   return MockChatUploadAttachment;
@@ -358,6 +371,63 @@ describe("ChatScreen reservation messaging", () => {
     });
   });
 
+  describe("sender roles", () => {
+    const sentOptions = (callIndex = 0) => mockSendMessage.mock.calls[callIndex][3];
+
+    test.each([
+      ["a host-dashboard user who is the guest of the thread", "host", "guest-1", "host-1"],
+      ["a host-dashboard user who is the host of the thread", "host", "host-1", "guest-1"],
+      ["a guest-dashboard user", "guest", "guest-1", "host-1"],
+    ])("leaves the roles to the thread for %s", async (_label, dashboardType, userId, contactId) => {
+      renderChatScreen({
+        dashboardType,
+        userId,
+        contactId,
+        threadId: "thread-1",
+        capabilities: getMessageCapabilities(dashboardType),
+      });
+
+      typeAndSend("Hello");
+
+      await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(1));
+      expect(sentOptions()).toEqual(expect.objectContaining({ threadId: "thread-1", hostId: null, guestId: null }));
+    });
+
+    test("sends the roles from the dashboard for a new chat without a thread", async () => {
+      renderChatScreen({
+        dashboardType: "host",
+        userId: "host-1",
+        contactId: "guest-1",
+        capabilities: getMessageCapabilities("host"),
+      });
+
+      typeAndSend("Hello");
+
+      await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(1));
+      expect(sentOptions()).toEqual(expect.objectContaining({ hostId: "host-1", guestId: "guest-1" }));
+    });
+
+    test("resends an unsaved message in a thread with the roles left to the thread", async () => {
+      mockSendMessage
+        .mockResolvedValueOnce({ success: false, error: "network error" })
+        .mockResolvedValueOnce({ success: true, saved: { id: "message-2", threadId: "thread-1" } });
+      renderChatScreen({
+        dashboardType: "host",
+        userId: "guest-1",
+        contactId: "host-1",
+        threadId: "thread-1",
+        capabilities: getMessageCapabilities("host"),
+      });
+      typeAndSend("Hello");
+      const retryButton = await screen.findByRole("button", { name: "Retry" });
+
+      fireEvent.click(retryButton);
+
+      await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(2));
+      expect(sentOptions(1)).toEqual(expect.objectContaining({ hostId: null, guestId: null }));
+    });
+  });
+
   describe("attach button per channel", () => {
     const hostChat = ({ platform = "DOMITS", contactId = "guest-1", threadId = "thread-1" } = {}) => (
       <ChatScreen
@@ -390,6 +460,53 @@ describe("ChatScreen reservation messaging", () => {
       renderHostChat("CHANNEX");
 
       expect(screen.queryByRole("button", { name: "Attach" })).not.toBeInTheDocument();
+    });
+
+    test("does not offer attachments when the capability is missing", () => {
+      render(
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId="thread-1"
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={{ ...getMessageCapabilities("host"), canUseAttachments: false }}
+        />
+      );
+
+      expect(screen.queryByRole("button", { name: "Attach" })).not.toBeInTheDocument();
+    });
+
+    test("places the attach button in the message row, left of the text field", () => {
+      renderHostChat("DOMITS");
+
+      const row = screen.getByPlaceholderText("Type a message").closest(".message-input-wrapper");
+      const attach = within(row).getByRole("button", { name: "Attach" });
+
+      expect(attach.compareDocumentPosition(screen.getByPlaceholderText("Type a message"))).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING
+      );
+    });
+
+    test("removes the failure toast when it asks to close and shows it again on the next failure", () => {
+      renderHostChat("DOMITS");
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close toast" }));
+      expect(screen.queryByTestId("message-toast")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+      expect(screen.getByTestId("message-toast")).toBeInTheDocument();
+    });
+
+    test("tells the host when an upload fails", () => {
+      renderHostChat("DOMITS");
+
+      fireEvent.click(screen.getByRole("button", { name: "Fail upload" }));
+
+      expect(screen.getByTestId("message-toast")).toHaveTextContent("Attachment failed to upload");
     });
 
     test("still offers attachments on a Domits thread", () => {
