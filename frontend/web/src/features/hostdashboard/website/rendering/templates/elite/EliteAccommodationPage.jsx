@@ -1,9 +1,21 @@
-import React from "react";
+import React, { useId, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "./eliteSitePage.module.scss";
-import { getInteractiveTargetProps, getPreviewTargetMarkerProps } from "../templateSharedSections";
+import {
+  getInteractiveTargetProps,
+  getPreviewTargetMarkerProps,
+  TemplateImageSlotVisual,
+} from "../templateSharedSections";
 import EliteAvailabilityLink from "./EliteAvailabilityLink";
-import { buildEliteDescription, buildEliteFacts, buildElitePrice, listEliteHighlights } from "./eliteSitePageContent";
+import EliteHouseRules from "./EliteHouseRules";
+import {
+  buildEliteDescription,
+  buildEliteFacts,
+  buildElitePrice,
+  listEliteHighlights,
+  listEliteHouseRules,
+  selectEliteAccommodationPhotos,
+} from "./eliteSitePageContent";
 
 const DEFAULT_AVAILABILITY_LABEL = "Check availability";
 
@@ -24,6 +36,10 @@ const renderParagraphs = (texts, prefix) =>
   ));
 
 function EliteDescription({ description, onSelectTarget, activeTargetId }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const moreId = useId();
+  const hasMore = description.moreParagraphs.length > 0;
+
   return (
     <div className={styles.eliteDescription}>
       <div
@@ -34,8 +50,23 @@ function EliteDescription({ description, onSelectTarget, activeTargetId }) {
           activeTargetId
         )}>
         {description.lead ? <p className={styles.eliteDescriptionLead}>{description.lead}</p> : null}
-        {renderParagraphs([...description.paragraphs, ...description.moreParagraphs], "shown")}
+        {renderParagraphs(description.paragraphs, "shown")}
+        {hasMore ? (
+          <div id={moreId} hidden={!isOpen} className={styles.eliteDescriptionMore}>
+            {renderParagraphs(description.moreParagraphs, "more")}
+          </div>
+        ) : null}
       </div>
+      {hasMore ? (
+        <button
+          type="button"
+          className={styles.eliteTextButton}
+          aria-expanded={isOpen}
+          aria-controls={moreId}
+          onClick={() => setIsOpen((current) => !current)}>
+          {isOpen ? "Read less" : "Read more"}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -80,6 +111,9 @@ ElitePriceCard.propTypes = {
   isInteractivePreview: PropTypes.bool.isRequired,
 };
 
+const buildPhotoAlt = (title, slot) =>
+  slot.kind === "residence" ? `${title} residence view` : `${title} view ${slot.index + 1}`;
+
 export default function EliteAccommodationPage({
   model,
   viewState,
@@ -93,8 +127,11 @@ export default function EliteAccommodationPage({
   const description = buildEliteDescription(model.hero);
   const price = buildElitePrice(model.stay);
   const hasPriceCard = Boolean(price.amount || availabilityHref);
+  const photos = selectEliteAccommodationPhotos(model.media);
+  const stillPhotoModel = useMemo(() => ({ ...model, media: { ...model.media, imageRotation: {} } }), [model]);
   const highlights = viewState.showAmenitiesPanel ? listEliteHighlights(viewState.featuredAmenities) : [];
   const canShowAllAmenities = viewState.allAmenities.length > 0;
+  const houseRules = listEliteHouseRules(model.policies);
   const availabilityLabel = String(model.callToAction?.label || "").trim() || DEFAULT_AVAILABILITY_LABEL;
 
   return (
@@ -129,6 +166,23 @@ export default function EliteAccommodationPage({
               isInteractivePreview={isInteractivePreview}
             />
           ) : null}
+        </section>
+      ) : null}
+
+      {photos.length > 0 ? (
+        <section className={`${styles.eliteSection} ${styles.elitePhotos}`} data-photo-count={photos.length}>
+          {photos.map((slot) => (
+            <TemplateImageSlotVisual
+              key={`${slot.kind}-${slot.index ?? 0}`}
+              model={stillPhotoModel}
+              slot={slot}
+              frameClassName={styles.elitePhotoFrame}
+              imageClassName={styles.elitePhoto}
+              alt={buildPhotoAlt(model.hero.title, slot)}
+              onSelectTarget={onSelectTarget}
+              activeTargetId={activeTargetId}
+            />
+          ))}
         </section>
       ) : null}
 
@@ -179,6 +233,8 @@ export default function EliteAccommodationPage({
           </div>
         </section>
       ) : null}
+
+      {houseRules.length > 0 ? <EliteHouseRules rules={houseRules} /> : null}
     </>
   );
 }
@@ -187,6 +243,8 @@ EliteAccommodationPage.propTypes = {
   model: PropTypes.shape({
     hero: PropTypes.shape({ title: PropTypes.string }).isRequired,
     stay: PropTypes.object.isRequired,
+    media: PropTypes.object.isRequired,
+    policies: PropTypes.object,
     callToAction: PropTypes.shape({ label: PropTypes.string }),
     amenitiesSection: PropTypes.shape({ title: PropTypes.string, description: PropTypes.string }),
   }).isRequired,
