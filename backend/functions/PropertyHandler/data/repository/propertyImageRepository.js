@@ -178,9 +178,11 @@ export class PropertyImageRepository {
         return result ? result : null;
     }
 
-    async create(image, transactionManager = null) {
+    // `uploadedKey` is the S3 key of a file the caller already uploaded (before a transaction opened).
+    // image.key is not a signal: the request body supplies one for every image, and it is overwritten.
+    async create(image, transactionManager = null, { uploadedKey } = {}) {
         const client = transactionManager || (await Database.getInstance());
-        image.key = await this.uploadImageToS3(image.image, image.property_id);
+        image.key = uploadedKey || (await this.uploadImageToS3(image.image, image.property_id));
         await client
             .createQueryBuilder()
             .insert()

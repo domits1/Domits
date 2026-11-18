@@ -32,11 +32,13 @@ export class PropertyLocationRepository {
         return result ? LocationMapping.mapDatabaseEntryToFullLocation(result) : null;
     }
 
-    async create(location, transactionManager = null) {
+    // `coordinates` is the answer of a geocode the caller already ran (null when it found nothing).
+    // A transaction passes it in so no network call is made while the transaction is open.
+    async create(location, transactionManager = null, { coordinates } = {}) {
         const client = transactionManager || (await Database.getInstance());
         // Derive coordinates from the address (best effort — null on failure).
         // External integrations such as PriceLabs require latitude/longitude.
-        const coords = await geocodeAddress(location);
+        const coords = coordinates === undefined ? await geocodeAddress(location) : coordinates;
         await client
             .createQueryBuilder()
             .insert()
