@@ -1,6 +1,6 @@
 # docs: design note for host self-distribution through Channex (#506)
 
-Pull request: #<number>
+Pull request: #3954
 Issue: #506
 Reviewed commit: working tree on branch `docs/506-host-self-distribution-design`, 17 and 18 Nov 2026
 Result: 1 blocking (P1), fixed in the note; 6 non-blocking, all decided
