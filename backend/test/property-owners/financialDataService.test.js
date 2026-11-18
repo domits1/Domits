@@ -143,7 +143,7 @@ describe("Service.getFinancialSourceData", () => {
         total_price: 100,
         currency: "EUR",
         paymentid: "pi_456",
-        refunded_amount: 5000,
+        refunded_amount: "5000",
         stripe_refund_id: "re_123",
         refund_status: "succeeded",
       },
@@ -156,9 +156,9 @@ describe("Service.getFinancialSourceData", () => {
       property_id: "property-1",
       arrival_date: PERIOD_START,
       departure_date: PERIOD_END,
-      gross_amount: 250,
-      commission_amount: 25,
-      net_amount: 225,
+      gross_amount: "250.00",
+      commission_amount: "25.00",
+      net_amount: "225.00",
       status: "finalized",
       created_at: PERIOD_START,
     }];
@@ -209,7 +209,7 @@ describe("Service.getFinancialSourceData", () => {
     });
     expect(result.bookingCandidates[1]).toMatchObject({
       bookingId: "booking-2",
-      rawRefundedAmount: 5000,
+      rawRefundedAmount: "5000",
       stripeRefundId: "re_123",
       refundStatus: "succeeded",
     });
@@ -220,9 +220,9 @@ describe("Service.getFinancialSourceData", () => {
       propertyId: "property-1",
       arrivalDateMs: PERIOD_START,
       departureDateMs: PERIOD_END,
-      grossAmount: 250,
-      commissionAmount: 25,
-      netAmount: 225,
+      grossAmount: "250.00",
+      commissionAmount: "25.00",
+      netAmount: "225.00",
       status: "finalized",
       createdAtMs: PERIOD_START,
     }]);

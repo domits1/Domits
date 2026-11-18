@@ -62,18 +62,18 @@ The candidate booking predicate is deliberately a union of stay-overlap and book
 - `backend/functions/property-owners/business/service/service.js:188` returns `booking.currency || null`, so a legacy/direct Domits booking with no stored currency is sent to consumers as unknown.
 - `backend/ORM/models/Booking.js:158-159` says: `// Empty means euros: every booking from before this column, and every Domits booking.`
 - `docs/internal/tools/dsql_booking_currency_runbook.md:8` states that the column stores a currency for channel bookings in another currency and that an empty value means euros. Lines 26 and the #3582 backfill note distinguish legacy EUR bookings from imported-channel currency handling.
-- `backend/functions/.shared/channelManagement/repositories/channexExternalBookingImportRepository.js:145-150` currently sets `bookingtype: "channex"` and `total_price`, but does not set `currency`. Therefore a Channex record with an empty field is a real unknown until the currency-import work is complete, unlike a legacy/direct Domits booking.
+- `backend/functions/.shared/channelManagement/repositories/channexExternalBookingImportRepository.js` sets `bookingtype: "channex"` and `total_price`, but does not set `currency`. The upstream `toEuroAmountOrNull()` helper only passes through a total for `EUR` revisions; foreign-currency, missing or unreadable amounts become `null`. Therefore a non-null Channex `total_price` is evidence that the stored amount is EUR, while a null price plus empty currency remains unknown.
 
 **Impact**
 
-The preview incorrectly labels normal EUR bookings as missing currency and returns `currency: null` for them. This produces misleading data-quality warnings and makes the source-data contract ambiguous for the next calculation phase.
+The preview incorrectly labels empty-currency Domits bookings and Channex bookings with an already-stored EUR total as missing. This produces misleading warnings and returns `currency: null` even though the stored Channex amount can only have come from an EUR revision.
 
 **Options**
 
-A. Normalize an empty currency to `EUR` for legacy/direct Domits bookings; preserve `null` and a warning only for Channex records whose source currency is not stored yet. Add tests for both cases.  
+A. Normalize an empty currency to `EUR` for legacy/direct Domits bookings and Channex bookings with a non-null stored `total_price`; preserve `null` and a warning for Channex records whose total price is null. Add tests for both cases.  
 B. Keep `null` for every empty currency and remove the “missing” interpretation from the preview, leaving consumers to infer the documented default themselves.
 
-**Recommendation: A.** It follows the existing Booking model and DSQL runbook semantics, while retaining an explicit warning for the currently incomplete Channex import path.
+**Recommendation: A.** It follows the Booking model and Channex import contract, while retaining an explicit warning only when Channex has not stored a EUR total.
 
 **Decision: Option A, confirmed by Rakib in the PR review on 2026-11-17.** The service now returns `EUR` for empty non-Channex booking currencies and for Channex bookings with a non-null `total_price` (the importer only stores Channex totals for EUR revisions). A Channex booking with no stored price remains `null` and is reported as missing. Regression coverage includes direct bookings, Channex EUR prices, zero-priced Channex bookings and Channex bookings with no stored price.
 
@@ -115,7 +115,7 @@ On the reviewed head before the currency-normalization update:
 
 The currency change and regression test are now included in the current PR branch; fresh CI and SonarCloud checks must complete on that head.
 
-The response continues to expose raw amounts without coercion. `refunded_amount` is cents, booking `total_price` is euros, and invoice `numeric(10,2)` fields are decimal strings. Normalizing these belongs in the calculation service, where unit conversions and precision requirements can be handled explicitly; coercing them in this discovery endpoint would hide important source semantics.
+The response continues to expose raw amounts without coercion. `refunded_amount` is cents, booking `total_price` is euros, and invoice `numeric(10,2)` fields are decimal strings. The service test now uses string fixtures for the bigint and numeric values to protect that API behavior. Normalizing these belongs in the calculation service, where unit conversions and precision requirements can be handled explicitly; coercing them in this discovery endpoint would hide important source semantics.
 
 The ORM wiring was inspected:
 - The backend `database` package is used by this Lambda and its root `Tables.js` registry includes `Booking`, `Invoice`, `Property_Owner` and `Property_Owner_Property`.
