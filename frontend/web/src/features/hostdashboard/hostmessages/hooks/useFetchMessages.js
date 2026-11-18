@@ -238,6 +238,28 @@ export const useFetchMessages = (userId) => {
     }
   }, [wsMessages, upsertIntoStores]);
 
+  const storeHistory = useCallback(
+    (recipientId, threadId, rows, recordedIds) => {
+      const history = rows.map((m) => transformApiMessage(m, userId, threadId));
+
+      setMessagesByRecipient((prev) => ({
+        ...prev,
+        [recipientId]: mergeHistoryWithStore(history, prev[recipientId], recordedIds),
+      }));
+      setMessagesByThread((prev) => ({
+        ...prev,
+        [threadId]: mergeHistoryWithStore(history, prev[threadId], recordedIds),
+      }));
+
+      for (const message of history) {
+        rememberId(recipientId, message.id);
+        rememberId(threadId, message.id);
+      }
+      historyLoadedRef.current.add(threadId);
+    },
+    [rememberId, userId]
+  );
+
   const fetchMessages = useCallback(
     async (recipientId, threadId = null, options = {}) => {
       if (!recipientId) {
@@ -313,22 +335,7 @@ export const useFetchMessages = (userId) => {
         const result = await response.json();
 
         if (Array.isArray(result)) {
-          const history = result.map((m) => transformApiMessage(m, userId, useThreadId));
-
-          setMessagesByRecipient((prev) => ({
-            ...prev,
-            [recipientId]: mergeHistoryWithStore(history, prev[recipientId], recordedIds),
-          }));
-          setMessagesByThread((prev) => ({
-            ...prev,
-            [useThreadId]: mergeHistoryWithStore(history, prev[useThreadId], recordedIds),
-          }));
-
-          for (const message of history) {
-            rememberId(recipientId, message.id);
-            rememberId(useThreadId, message.id);
-          }
-          historyLoadedRef.current.add(useThreadId);
+          storeHistory(recipientId, useThreadId, result, recordedIds);
         } else {
           setError("Unexpected response format");
         }
@@ -343,7 +350,7 @@ export const useFetchMessages = (userId) => {
         setLoading(false);
       }
     },
-    [rememberId, userId]
+    [storeHistory, userId]
   );
 
   const addNewMessage = useCallback(
