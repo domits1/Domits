@@ -166,6 +166,13 @@ export class PropertyRepository {
         return affected;
     }
 
+    // One transaction for a unit of work spanning several repositories. withDsqlRetry may run `work`
+    // more than once after a commit conflict, so `work` must only write rows and nothing outside them.
+    async withTransaction(work) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() => client.transaction(work));
+    }
+
     async transitionStatusWithEvent(
         propertyId,
         {fromStatuses, toStatus, action, actorId, reason = null, expectedUpdatedAt}
