@@ -14,6 +14,7 @@ import {
   isEliteRestyledPage,
   listEliteHighlights,
   listEliteHouseRules,
+  listElitePropertyPhotoSlots,
   resolveEliteGalleryIntro,
   resolveEliteGalleryLayout,
   resolveEliteAvailabilityLabel,
@@ -281,6 +282,19 @@ describe("the photos on Elite site pages", () => {
     expect(selectEliteGallerySlots([galleryPhoto], { galleryImages: [placeholderImage] })).toEqual([]);
     expect(selectEliteGallerySlots([galleryPhoto, secondPhoto], { galleryImages: ["a"] })).toEqual([galleryPhoto]);
     expect(selectEliteGallerySlots(undefined, {})).toEqual([]);
+  });
+
+  it("lists every real gallery photo of a property, past the sixth, with its own index", () => {
+    const galleryImages = ["a", placeholderImage, " ", "b", "c", "d", "e", "f", "g"];
+    const slots = listElitePropertyPhotoSlots({ galleryImages }, "Villa B");
+
+    expect(slots.map(({ slot }) => slot.index)).toEqual([0, 3, 4, 5, 6, 7, 8]);
+    expect(slots[1]).toEqual({
+      key: "photo-3",
+      alt: "Villa B view 2",
+      slot: { kind: "gallery", index: 3, sectionId: "gallery" },
+    });
+    expect(listElitePropertyPhotoSlots({ heroImage: "a" }, "Villa B")).toEqual([]);
   });
 
   it("knows whether the listing has a gallery photo", () => {

@@ -26,6 +26,7 @@ const PAGE = {
   pageKey: "accommodation",
   title: "Villa B",
   overviewHref: "/",
+  photosHref: "/properties/villa-b/photos",
   navItems: [],
   stay: STAY,
 };

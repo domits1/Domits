@@ -12,6 +12,7 @@ import {
 import { resolveQuotePanelSiteId } from "./booking/quotePanelGate";
 
 const ACCOMMODATION_PAGE_KEY = "accommodation";
+const GALLERY_PAGE_KEY = "gallery";
 const CONTACT_PAGE_KEY = "contact";
 const PANORAMA_TEMPLATE_ID = "panorama-landing";
 const OVERVIEW_NAV_LABEL = "Our properties";
@@ -45,9 +46,11 @@ const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBas
 
   return {
     kind: pageKind,
-    pageKey: ACCOMMODATION_PAGE_KEY,
+    pageKey: pageKind === SITE_PROPERTY_PAGE_KINDS.photos ? GALLERY_PAGE_KEY : ACCOMMODATION_PAGE_KEY,
     title: model.hero.title,
     overviewHref,
+    propertyHref: buildSitePropertyHref(pageBasePath, property.slug, SITE_PROPERTY_PAGE_KINDS.property, staySearch),
+    photosHref: buildSitePropertyHref(pageBasePath, property.slug, SITE_PROPERTY_PAGE_KINDS.photos, staySearch),
     navItems: buildSitePropertyNavItems({ sitePages: model.sitePages, overviewHref, pageBasePath, pageSearch }),
     stay,
     booking: quoteSiteId
@@ -160,6 +163,6 @@ SitePropertyPage.propTypes = sitePropertyPagePropTypes;
 
 export const SITE_PROPERTY_PAGES = Object.freeze({
   [SITE_PROPERTY_PAGE_KINDS.property]: SitePropertyPage,
-  [SITE_PROPERTY_PAGE_KINDS.photos]: SitePropertyAccommodationPage,
+  [SITE_PROPERTY_PAGE_KINDS.photos]: SitePropertyPage,
   [SITE_PROPERTY_PAGE_KINDS.request]: SitePropertyPage,
 });

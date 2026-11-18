@@ -311,6 +311,16 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
   object-fit: cover;
 }
 
+.elitePhotosLink {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.elitePhotosLink .eliteTextButton {
+  margin-top: 16px;
+  text-decoration: none;
+}
+
 .eliteHighlights {
   display: flex;
   flex-wrap: wrap;

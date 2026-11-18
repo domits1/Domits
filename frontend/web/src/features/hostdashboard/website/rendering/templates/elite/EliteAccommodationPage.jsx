@@ -121,6 +121,7 @@ export default function EliteAccommodationPage({
   onSelectTarget = undefined,
   activeTargetId = "",
   bookingPanel = null,
+  photosLink = null,
 }) {
   const isInteractivePreview = Boolean(onSelectTarget);
   const facts = buildEliteFacts(model.stay);
@@ -186,6 +187,7 @@ export default function EliteAccommodationPage({
           ))}
         </section>
       ) : null}
+      {photosLink}
 
       {highlights.length > 0 ? (
         <section
@@ -259,4 +261,5 @@ EliteAccommodationPage.propTypes = {
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
   bookingPanel: PropTypes.node,
+  photosLink: PropTypes.node,
 };

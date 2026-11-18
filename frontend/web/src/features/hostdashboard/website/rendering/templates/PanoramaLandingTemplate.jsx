@@ -1402,6 +1402,8 @@ export default function PanoramaLandingTemplate({
           viewState={viewState}
           headerRef={heroSectionRef}
           onShowAllAmenities={() => setShowAmenitiesModal(true)}
+          onOpenGalleryBrowser={handleOpenGalleryBrowser}
+          canOpenGalleryBrowser={canOpenGalleryBrowser}
         />
       );
     }

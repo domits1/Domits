@@ -777,21 +777,15 @@ describe("property paths of an Elite website on its own domain", () => {
   );
 
   it.each([
-    ["/properties/villa-b/photos", "/properties/villa-b/photos"],
-  ])("shows the Accommodation page of the other property on %s", async (url, currentPageHref) => {
+    ["/properties/villa-b/request", "trust-signals"],
+  ])("shows the Accommodation page of the other property on %s of %s", async (url, templateKey) => {
+    const site = { ...SITE_HOST_PAYLOAD.site, templateKey };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...SITE_HOST_PAYLOAD, site }));
     renderAppAt(url);
-    await screen.findByRole("link", { name: "Home" });
+    await screen.findByRole("heading", { level: 1, name: "Villa B" });
 
-    expect(lastTemplateProps().activePageKey).toBe("accommodation");
-    expect(lastTemplateProps().model.source.propertyId).toBe("property-b");
-    expect(lastTemplateProps().model.host.name).toBe("Amara");
-    expect(readPageHeading()).toBe("Villa B");
-    expect(listSectionIds()).toEqual(["accommodation"]);
-    expect(readMenuItems()).toEqual([
-      ["Home", "/"],
-      ["Villa B", currentPageHref],
-    ]);
     expect(screen.queryByTestId("quote-availability")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show next months" })).toBeNull();
     expect(document.title).toBe("Villa B | Wellness Villa Bisous");
     expect(document.head.querySelector('meta[name="description"]').content).toBe("A quiet garden villa with a pond.");
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
@@ -835,14 +829,13 @@ describe("property paths of an Elite website on its own domain", () => {
   });
 
   it.each(["/", "/properties", "/gallery", "/website-live/localhost/properties/villa-b"])(
-    "renders %s as a site without the list",
+    "shows the overview of all properties on %s",
     async (url) => {
-      const todaysHtml = await renderTodaysSiteHtml();
-
       renderAppAt(url);
 
-      expect(await readSiteHtml()).toBe(todaysHtml);
-      expect(lastTemplateProps().activePageKey).toBe("main");
+      expect(await screen.findByRole("heading", { name: "Our properties" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^Villa B/ })).toHaveAttribute("href", "/properties/villa-b");
+      expect(mockTemplateProps.length).toBe(0);
     }
   );
 
@@ -853,6 +846,15 @@ describe("property paths of an Elite website on its own domain", () => {
     const todaysHtml = await renderTodaysSiteHtml();
 
     renderAppAt("/properties/villa-b");
+
+    expect(await readSiteHtml()).toBe(todaysHtml);
+  });
+
+  it("shows the home page as today once fewer than two properties are usable", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0]]));
+    const todaysHtml = await renderTodaysSiteHtml();
+
+    renderAppAt("/");
 
     expect(await readSiteHtml()).toBe(todaysHtml);
   });
@@ -909,18 +911,15 @@ describe("property paths of an Elite website in the live view", () => {
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
   });
 
-  it.each(["properties/villa-b/photos"])(
-    "opens %s after the check and links under the live view",
+  it.each(["properties/villa-b/request"])(
+    "opens %s of another template after the check under the live view",
     async (sitePath) => {
+      const site = { ...renderPayload.site, templateKey: "trust-signals" };
+      fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...renderPayload, site }));
       renderAppAt(`${LIVE_BASE}/${sitePath}${SITE_SEARCH}`);
       expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
-      await screen.findByRole("link", { name: "Home" });
+      await screen.findByRole("heading", { level: 1, name: "Villa B" });
 
-      expect(readPageHeading()).toBe("Villa B");
-      expect(readMenuItems()).toEqual([
-        ["Home", `${LIVE_BASE}${SITE_SEARCH}`],
-        ["Villa B", `${LIVE_BASE}/${sitePath}${SITE_SEARCH}`],
-      ]);
       expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
       expect(fetchPublicWebsiteRenderModel).toHaveBeenLastCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
     }
@@ -955,9 +954,7 @@ describe("property paths of an Elite website in the live view", () => {
 
   it("moves from the home page to a property page without loading the site again", async () => {
     renderAppAt(`${LIVE_BASE}${SITE_SEARCH}`);
-    await screen.findByTestId("quote-availability");
-
-    await moveTo(`${LIVE_BASE}/properties/villa-b${SITE_SEARCH}`);
+    fireEvent.click(await screen.findByRole("link", { name: /^Villa B/ }));
 
     expect(readPageHeading()).toBe("Villa B");
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
@@ -985,6 +982,148 @@ describe("property paths of an Elite website in the live view", () => {
 
     expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
     expect(mockTemplateProps.filter((props) => props.activePageKey === "main").length).toBe(0);
+  });
+});
+
+describe("the photos page of a property of an Elite website", () => {
+  const LIVE_BASE = `/website-live/${SITE_DOMAIN}`;
+  const SITE_SEARCH = `?siteId=${SITE_ID}`;
+  const withPhotos = (count) => ({
+    ...SITE_PROPERTIES[1],
+    propertySnapshot: {
+      ...VILLA_B_SNAPSHOT,
+      images: Array.from({ length: count }, (_, index) => ({
+        ...VILLA_B_SNAPSHOT.images[0],
+        image_id: `image-b${index}`,
+        sort_order: index,
+        web_key: `images/property-b/image-b${index}/web.jpg`,
+      })),
+    },
+  });
+  const readCrumbHrefs = () =>
+    Array.from(document.querySelectorAll("[data-panorama-page-header] p a")).map((link) => link.getAttribute("href"));
+  const listPhotoSources = () =>
+    Array.from(screen.getByRole("region", { name: "Photos" }).querySelectorAll("img"), (image) =>
+      image.getAttribute("src")
+    );
+
+  beforeEach(() => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    globalThis.fetch = jest.fn();
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], withPhotos(5)])
+    );
+  });
+
+  it("shows every photo of the other property, without a quote, and links back with the stay", async () => {
+    renderAppAt(`/properties/villa-b/photos?${STAY_QUERY}`);
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute(
+      "href",
+      `/properties/villa-b?${STAY_QUERY}`
+    );
+    expect(readPageHeading()).toBe("Photos of Villa B");
+    expect(document.querySelector("[data-panorama-page-header]").dataset.eliteHeader).toBe("light");
+    expect(document.querySelector("[data-panorama-page-header] p").textContent).toBe(
+      "Our properties / Villa B / Photos"
+    );
+    expect(readCrumbHrefs()).toEqual(["/", `/properties/villa-b?${STAY_QUERY}`]);
+    expect(listPhotoSources()).toEqual(
+      Array.from({ length: 5 }, (_, index) => expect.stringContaining(`image-b${index}/`))
+    );
+    expect(listSectionIds()).toEqual(["property-photos"]);
+    expect(readMenuItems()).toEqual([["Our properties", "/"]]);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("follows View all photos and Back with the stay, without loading the site again", async () => {
+    globalThis.fetch = jest.fn(async () => quoteResponse("property-b"));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    const photosLink = await screen.findByRole("link", { name: "View all photos" });
+    expect(photosLink).toHaveAttribute("href", `/properties/villa-b/photos?${STAY_QUERY}`);
+
+    fireEvent.click(photosLink);
+    fireEvent.click(await screen.findByRole("link", { name: "Back to Villa B" }));
+
+    expect(await screen.findByLabelText("Check in")).toHaveValue("2099-01-10");
+    expect(`${globalThis.location.pathname}${globalThis.location.search}`).toBe(`/properties/villa-b?${STAY_QUERY}`);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves View all photos out for a property without photos", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
+    );
+    renderAppAt("/properties/villa-c");
+    await waitForPropertyPage();
+
+    expect(screen.queryByRole("link", { name: "View all photos" })).toBeNull();
+  });
+
+  it("keeps only a valid stay in the way back", async () => {
+    renderAppAt("/properties/villa-b/photos?checkIn=2000-01-01&checkOut=2000-01-05&guests=3&ref=mail");
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute(
+      "href",
+      "/properties/villa-b?guests=3"
+    );
+  });
+
+  it("links under the live view and keeps the site id", async () => {
+    delete process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE;
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(renderPayload, [SITE_PROPERTIES[0], withPhotos(2)])
+    );
+    renderAppAt(`${LIVE_BASE}/properties/villa-b/photos${SITE_SEARCH}&${STAY_QUERY}`);
+    const propertyHref = `${LIVE_BASE}/properties/villa-b${SITE_SEARCH}&${STAY_QUERY}`;
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute("href", propertyHref);
+    expect(readCrumbHrefs()).toEqual([`${LIVE_BASE}${SITE_SEARCH}`, propertyHref]);
+  });
+
+  it("shows the main property's own photos still, also when the site rotates them", async () => {
+    const contentOverrides = { ...SITE_HOST_PAYLOAD.contentOverrides, imageRotation: { gallery: [true, true] } };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...SITE_HOST_PAYLOAD, contentOverrides }));
+    renderAppAt("/properties/villa-a/photos");
+    await screen.findByRole("link", { name: /^Back to / });
+
+    expect(listPhotoSources()).toEqual([
+      expect.stringContaining("00000000-0000-4000-8000-000000000001/"),
+      expect.stringContaining("00000000-0000-4000-8000-000000000002/"),
+    ]);
+  });
+
+  it("says so when the property has no photos and keeps the way back", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
+    );
+    renderAppAt("/properties/villa-c/photos");
+
+    expect(await screen.findByRole("link", { name: "Back to Villa C" })).toHaveAttribute("href", "/properties/villa-c");
+    expect(screen.getByText("This property has no photos yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Photos" })).toBeNull();
+  });
+
+  it("stops a running quote when the guest opens the photos", async () => {
+    globalThis.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("link", { name: "View all photos" }));
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toBeInTheDocument();
+    expect(globalThis.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+  });
+
+  it("keeps the temporary page without a calendar on the photos path of another template", async () => {
+    const site = { ...SITE_HOST_PAYLOAD.site, templateKey: "trust-signals" };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...SITE_HOST_PAYLOAD, site }));
+    renderAppAt("/properties/villa-b/photos");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Villa B" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Back to Villa B" })).toBeNull();
+    expect(document.querySelector("[data-elite-page]")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show next months" })).toBeNull();
   });
 });
 

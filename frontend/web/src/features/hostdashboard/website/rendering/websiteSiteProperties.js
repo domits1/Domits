@@ -22,7 +22,7 @@ const SITE_CONTENT_OVERRIDE_KEYS = new Set(
   ].flatMap((keys) => keys.split(" "))
 );
 
-export const MAX_SITE_PROPERTY_STAY_NIGHTS = 365;
+export const MAX_SITE_PROPERTY_STAY_NIGHTS = 366;
 export const SITE_PROPERTY_STAY_QUERY_KEYS = Object.freeze(["checkIn", "checkOut", "guests"]);
 
 const SITE_PROPERTY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

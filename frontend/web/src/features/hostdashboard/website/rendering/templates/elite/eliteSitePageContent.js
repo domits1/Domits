@@ -193,6 +193,16 @@ const readGalleryImages = (media) => (Array.isArray(media?.galleryImages) ? medi
 
 export const hasEliteGalleryPhotos = (media = {}) => readGalleryImages(media).some(isRealImage);
 
+export const listElitePropertyPhotoSlots = (media = {}, title = "") =>
+  readGalleryImages(media)
+    .map((imageUrl, index) => ({ imageUrl, index }))
+    .filter(({ imageUrl }) => isRealImage(imageUrl))
+    .map(({ index }, position) => ({
+      key: `photo-${index}`,
+      alt: `${title} view ${position + 1}`,
+      slot: { kind: "gallery", index, sectionId: "gallery" },
+    }));
+
 export const selectEliteGallerySlots = (gallerySlots, media = {}) =>
   (Array.isArray(gallerySlots) ? gallerySlots : []).filter((gallerySlot) =>
     gallerySlot?.slot?.kind === "hero"
