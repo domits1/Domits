@@ -27,18 +27,18 @@ beforeEach(() => {
 });
 
 test("does not recheck when the same account gets a new user object", async () => {
-  hasReviewApprovalAccess.mockResolvedValue(false);
-  const guard = <MemoryRouter><HostProtectedRoute><div>Host dashboard</div></HostProtectedRoute></MemoryRouter>;
+  hasReviewApprovalAccess.mockResolvedValue(true);
+  const guard = <MemoryRouter initialEntries={["/hostdashboard/admin/review-approval"]}><HostProtectedRoute><div>Review administration</div></HostProtectedRoute></MemoryRouter>;
   const view = render(guard);
-  await screen.findByText("Host dashboard");
+  await screen.findByText("Review administration");
   useUser.mockReturnValue({ user: { username: "host-1" }, role: ROLES.HOST, isLoading: false });
-  view.rerender(<MemoryRouter><HostProtectedRoute><div>Host dashboard</div></HostProtectedRoute></MemoryRouter>);
-  expect(screen.getByText("Host dashboard")).toBeInTheDocument();
+  view.rerender(<MemoryRouter initialEntries={["/hostdashboard/admin/review-approval"]}><HostProtectedRoute><div>Review administration</div></HostProtectedRoute></MemoryRouter>);
+  expect(screen.getByText("Review administration")).toBeInTheDocument();
   expect(hasReviewApprovalAccess).toHaveBeenCalledTimes(1);
   useUser.mockReturnValue({ user: { username: "host-2" }, role: ROLES.HOST, isLoading: false });
-  view.rerender(<MemoryRouter><HostProtectedRoute><div>Host dashboard</div></HostProtectedRoute></MemoryRouter>);
+  view.rerender(<MemoryRouter initialEntries={["/hostdashboard/admin/review-approval"]}><HostProtectedRoute><div>Review administration</div></HostProtectedRoute></MemoryRouter>);
   await waitFor(() => expect(hasReviewApprovalAccess).toHaveBeenCalledTimes(2));
-  expect(await screen.findByText("Host dashboard")).toBeInTheDocument();
+  expect(await screen.findByText("Review administration")).toBeInTheDocument();
 });
 
 test.each([false, null])("preserves ordinary host access when approval access is %s", async (answer) => {
@@ -47,18 +47,18 @@ test.each([false, null])("preserves ordinary host access when approval access is
   expect(await screen.findByText("Host dashboard")).toBeInTheDocument();
 });
 
-test.each([ROLES.GUEST_EXPERIENCE_MANAGER, ROLES.PROPERTY_OPERATIONS_MANAGER, ROLES.RESERVATION_MANAGER, ROLES.GENERAL_MANAGER])("redirects a backend-confirmed %s approver away from the host dashboard", async (role) => {
+test.each([ROLES.GUEST_EXPERIENCE_MANAGER, ROLES.PROPERTY_OPERATIONS_MANAGER, ROLES.RESERVATION_MANAGER, ROLES.GENERAL_MANAGER])("preserves host access for a %s without probing review access", async (role) => {
   useUser.mockReturnValue({ user: {}, role, isLoading: false });
   hasReviewApprovalAccess.mockResolvedValue(true);
   renderGuard();
-  expect(await screen.findByText("Review administration")).toBeInTheDocument();
-  expect(screen.queryByText("Host dashboard")).not.toBeInTheDocument();
+  expect(screen.getByText("Host dashboard")).toBeInTheDocument();
+  expect(hasReviewApprovalAccess).not.toHaveBeenCalled();
 });
 
-test("redirects admins only after ReviewSystem confirms approval access", async () => {
+test("checks Admin approval access when opening review administration", async () => {
   useUser.mockReturnValue({ user: {}, role: ROLES.ADMIN, isLoading: false });
   hasReviewApprovalAccess.mockResolvedValue(true);
-  renderGuard();
+  renderGuard("/hostdashboard/admin/review-approval");
   expect(await screen.findByText("Review administration")).toBeInTheDocument();
   expect(hasReviewApprovalAccess).toHaveBeenCalled();
 });
@@ -124,9 +124,9 @@ test("preserves a nested host page during a review outage", async () => {
   expect(await screen.findByText("Host reservations")).toBeInTheDocument();
 });
 
-test("redirects a host with confirmed approval access away from a nested host page", async () => {
+test("allows a host who can approve reviews to manage reservations without a probe", async () => {
   hasReviewApprovalAccess.mockResolvedValue(true);
   renderGuard("/hostdashboard/reservations");
-  expect(await screen.findByText("Review administration")).toBeInTheDocument();
-  expect(screen.queryByText("Host reservations")).not.toBeInTheDocument();
+  expect(screen.getByText("Host reservations")).toBeInTheDocument();
+  expect(hasReviewApprovalAccess).not.toHaveBeenCalled();
 });
