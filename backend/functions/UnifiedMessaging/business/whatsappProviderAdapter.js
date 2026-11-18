@@ -1,5 +1,6 @@
 import IntegrationAccountRepository from "../.shared/integrations/repositories/integrationAccountRepository.js";
 import WhatsAppCredentialStore from "./whatsappCredentialStore.js";
+import { signAttachments } from "../util/attachmentUrlSigner.js";
 
 const GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v22.0";
 
@@ -75,9 +76,10 @@ const buildTextPayload = ({ to, content }) => ({
 });
 
 export default class WhatsAppProviderAdapter {
-  constructor() {
+  constructor({ attachmentSigner = { signAttachments } } = {}) {
     this.integrationAccounts = new IntegrationAccountRepository();
     this.credentialStore = new WhatsAppCredentialStore();
+    this.attachmentSigner = attachmentSigner;
   }
 
   describeFailure(payload, recipientId, error) {
@@ -187,7 +189,8 @@ export default class WhatsAppProviderAdapter {
       throw badRequest("Invalid WhatsApp recipientId");
     }
 
-    const payload = this.buildPayload({ to, content, attachments });
+    const signedAttachments = await this.attachmentSigner.signAttachments(attachments);
+    const payload = this.buildPayload({ to, content, attachments: signedAttachments });
 
     const response = await fetch(
       `https://graph.facebook.com/${GRAPH_API_VERSION}/${encodeURIComponent(phoneNumberId)}/messages`,

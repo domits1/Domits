@@ -320,7 +320,6 @@ export class ReviewService {
     return { limit, offset };
   }
 
-  // Return the published review feed without exposing private feedback or unreleased drafts.
   async getPublicPropertyReviews(propertyId, query = {}) {
     this.assertId(propertyId, "property ID");
     const reviews = await this.repository.findPublicForProperty(propertyId.trim(), this.parseReviewPagination(query));

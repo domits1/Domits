@@ -1,5 +1,13 @@
 import { useState } from "react";
 
+const runSaveStep = async (save) => {
+    try {
+        return { status: "fulfilled", value: await save() };
+    } catch (reason) {
+        return { status: "rejected", reason };
+    }
+};
+
 export default function usePersonalDataSave({
     user,
     tempUser,
@@ -8,51 +16,56 @@ export default function usePersonalDataSave({
     onSaveUserName,
     onSaveUserEmail,
     onSaveUserPhone,
-    onSaveUserDateOfBirth,
-    onSaveUserPlaceOfBirth,
-    onSaveUserNationality,
-    onSaveUserTitle,
-    onSaveUserSex,
+    onSaveProfileAttributes,
 }) {
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState(false);
 
     const saveAll = async () => {
-        const saves = [];
+        const changedProfileKeys = [];
 
+        if ((tempUser.dateOfBirth || "") !== (user.dateOfBirth || "")) {
+            changedProfileKeys.push("dateOfBirth");
+        }
+        if ((tempUser.placeOfBirth || "") !== (user.placeOfBirth || "")) {
+            changedProfileKeys.push("placeOfBirth");
+        }
+        if ((tempUser.nationality || "").trim() !== (user.nationality || "").trim()) {
+            changedProfileKeys.push("nationality");
+        }
+        if ((tempUser.title || "") !== (user.title || "")) {
+            changedProfileKeys.push("title");
+        }
+        if ((tempUser.sex || "") !== (user.sex || "")) {
+            changedProfileKeys.push("sex");
+        }
+
+        const saveSteps = [];
+
+        if (changedProfileKeys.length > 0) {
+            saveSteps.push(() => onSaveProfileAttributes(changedProfileKeys));
+        }
         if (
             (tempUser.firstName || "").trim() !== (user.firstName || "").trim() ||
             (tempUser.lastName || "").trim() !== (user.lastName || "").trim()
         ) {
-            saves.push(onSaveUserName());
-        }
-        if ((tempUser.email || "").trim() !== (user.email || "").trim()) {
-            saves.push(onSaveUserEmail());
+            saveSteps.push(onSaveUserName);
         }
         const fullPhone = `${selectedCountryCode}${stripPhone || ""}`.trim();
         if (fullPhone !== (user.phone || "").trim()) {
-            saves.push(onSaveUserPhone());
+            saveSteps.push(onSaveUserPhone);
         }
-        if ((tempUser.dateOfBirth || "") !== (user.dateOfBirth || "")) {
-            saves.push(onSaveUserDateOfBirth());
-        }
-        if ((tempUser.placeOfBirth || "") !== (user.placeOfBirth || "")) {
-            saves.push(onSaveUserPlaceOfBirth());
-        }
-        if ((tempUser.nationality || "").trim() !== (user.nationality || "").trim()) {
-            saves.push(onSaveUserNationality());
-        }
-        if ((tempUser.title || "") !== (user.title || "")) {
-            saves.push(onSaveUserTitle());
-        }
-        if ((tempUser.sex || "") !== (user.sex || "")) {
-            saves.push(onSaveUserSex());
+        if ((tempUser.email || "").trim() !== (user.email || "").trim()) {
+            saveSteps.push(onSaveUserEmail);
         }
 
         setIsSaving(true);
         setSaveError(false);
-        const results = await Promise.allSettled(saves);
+        const results = [];
+        for (const saveStep of saveSteps) {
+            results.push(await runSaveStep(saveStep));
+        }
         setIsSaving(false);
 
         const hasFailure = results.some(

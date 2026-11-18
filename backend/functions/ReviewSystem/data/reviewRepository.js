@@ -546,8 +546,6 @@ export class ReviewRepository {
     return this.softDelete(id, reviewerUserId, now);
   }
 
-  // Manual moderation
-
   async createReviewFlag(flag) {
     try {
       return await runTransaction(async (manager) => {
@@ -559,7 +557,6 @@ export class ReviewRepository {
         if (!["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status)) {
           throw new ConflictException("Only submitted reviews can be flagged.");
         }
-        // Serialize flagging with approval and deletion through a shared review write.
         const result = await reviews.update({ id: review.id, updated_at: review.updated_at },
           { updated_at: nextTimestamp(flag.created_at, review.updated_at) });
         if (result.affected !== 1) throw new ConflictException("Review changed. Reload before continuing.");
