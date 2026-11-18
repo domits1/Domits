@@ -1482,16 +1482,17 @@ export class PropertyController {
         const sitePropertyIds = new Set(
             overridesList.flatMap((overrides) => listNewSitePropertyIds(overrides, mainPropertyId, storedOverridesList))
         );
-        for (const sitePropertyId of sitePropertyIds) {
-            try {
-                await this.authManager.authorizeOwnerRequest(accessToken, sitePropertyId);
-            } catch (error) {
-                if (error instanceof NotFoundException) {
-                    throw new TypeError("siteProperties lists a property that does not exist.");
-                }
-                throw error;
-            }
+        const ownerChecks = await Promise.allSettled(
+            [...sitePropertyIds].map((sitePropertyId) => this.authManager.authorizeOwnerRequest(accessToken, sitePropertyId))
+        );
+        const refusal = ownerChecks.find((ownerCheck) => ownerCheck.status === "rejected");
+        if (!refusal) {
+            return;
         }
+        if (refusal.reason instanceof NotFoundException) {
+            throw new TypeError("siteProperties lists a property that does not exist.");
+        }
+        throw refusal.reason;
     }
 
     parseWebsiteOverridePayload(payload, fieldName) {

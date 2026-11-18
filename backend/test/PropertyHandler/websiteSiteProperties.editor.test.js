@@ -130,6 +130,20 @@ describe("saving the properties of a website", () => {
     expect(flow.store.draft).toBeNull();
   });
 
+  it.each([
+    ["another host's property first", [FOREIGN, "property-gone"], 403],
+    ["a missing property first", ["property-gone", FOREIGN], 400],
+  ])("answers for the first refused property in the list with %s", async (_label, refusedIds, statusCode) => {
+    const flow = buildEditorFlow();
+    const refused = refusedIds.map((propertyId, index) => ({ propertyId, slug: `refused-${index}` }));
+
+    const saved = await flow.save({ siteProperties: [...ownList(), ...refused] });
+
+    expect(saved.statusCode).toBe(statusCode);
+    expect(flow.controller.authManager.authorizeOwnerRequest).toHaveBeenCalledTimes(4);
+    expect(flow.store.draft).toBeNull();
+  });
+
   it("checks a property that is only in the live overrides", async () => {
     const flow = buildEditorFlow();
 
