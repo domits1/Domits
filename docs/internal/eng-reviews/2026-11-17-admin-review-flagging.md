@@ -1,5 +1,15 @@
 # Admin review flagging: engineering review
 
+## Deployment follow-up (2026-11-18)
+
+The migration must precede the ReviewSystem deployment because approval and
+publication now query `review_flag`. Added SQL matching all six `up()` statements
+and the [deployment gate/runbook](../tools/dsql_review_flag_runbook.md), including
+verification of both schemas and asynchronous index readiness. The AWS identity
+check returned `NoCredentials`; the migration was not applied and live state
+remains unverified. This deployment gate is still open, not fixed by documentation.
+The three newly introduced code comments called out in review were removed.
+
 Branch: `feat/admin-review-flagging`.
 Base: `origin/acceptance` (`677c6b365`).
 Reviewed commit: `61a782d06`.
