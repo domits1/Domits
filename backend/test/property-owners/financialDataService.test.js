@@ -34,6 +34,44 @@ const createService = ({
 };
 
 describe("Service.getFinancialSourceData", () => {
+  test("defaults empty non-Channex currencies to EUR and only warns for empty Channex currency", async () => {
+    const assignments = [{ owner_id: OWNER_ID, property_id: "property-1" }];
+    const bookings = [
+      {
+        id: "direct-null-currency",
+        property_id: "property-1",
+        bookingtype: "direct",
+        currency: null,
+        createdat: PERIOD_START,
+      },
+      {
+        id: "direct-empty-currency",
+        property_id: "property-1",
+        bookingtype: "direct",
+        currency: "",
+        createdat: PERIOD_START + 1,
+      },
+      {
+        id: "channex-empty-currency",
+        property_id: "property-1",
+        bookingtype: "channex",
+        currency: null,
+        createdat: PERIOD_START + 2,
+      },
+    ];
+    const { service } = createService({ assignments, bookings });
+
+    const result = await service.getFinancialSourceData("host-1", { ...QUERY, limit: "3" });
+
+    expect(result.bookingCandidates.map(({ bookingId, currency }) => ({ bookingId, currency }))).toEqual([
+      { bookingId: "direct-null-currency", currency: "EUR" },
+      { bookingId: "direct-empty-currency", currency: "EUR" },
+      { bookingId: "channex-empty-currency", currency: null },
+    ]);
+    expect(result.dataQuality.missingCurrencyBookingIds).toEqual(["channex-empty-currency"]);
+    expect(result.dataQuality.missingChannexCurrencyBookingIds).toEqual(["channex-empty-currency"]);
+  });
+
   test("returns historical ownership, raw booking fields and linked invoice snapshots without calculating totals", async () => {
     const assignments = [
       {

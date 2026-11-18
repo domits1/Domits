@@ -2,8 +2,8 @@
 
 Date: 2026-11-17  
 Pull request: [#3934](https://github.com/domits1/Domits/pull/3934)  
-Reviewed head: `44e827601148b7d653899b17711a6709e436bd2a`  
-Review status: one confirmed finding is awaiting a decision; do not treat this review as merge approval.
+Review target: current PR head after the currency-normalization update.  
+Review status: currency finding addressed in code; live database verification remains outstanding.
 
 ## What already exists
 
@@ -53,7 +53,7 @@ The candidate booking predicate is deliberately a union of stay-overlap and book
 
 ## Findings
 
-### [P2] (confidence: 9/10) Currency nulls are treated as missing even when the documented meaning is EUR
+### [P2 — addressed] Currency nulls are treated as missing even when the documented meaning is EUR
 
 **Evidence**
 
@@ -75,7 +75,7 @@ B. Keep `null` for every empty currency and remove the “missing” interpretat
 
 **Recommendation: A.** It follows the existing Booking model and DSQL runbook semantics, while retaining an explicit warning for the currently incomplete Channex import path.
 
-**Decision: pending maintainer approval.** No code change for this finding is included in this review record.
+**Decision: Option A, confirmed by Rakib in the PR review on 2026-11-17.** The service now returns `EUR` for empty non-Channex booking currencies and preserves `null` for empty Channex currencies. A regression test covers both `null` and empty-string values for direct bookings, plus the Channex warning behavior.
 
 ## Failure modes
 
@@ -86,7 +86,7 @@ B. Keep `null` for every empty currency and remove the “missing” interpretat
 | Invalid period, UUID or pagination | Validator tests cover malformed and out-of-range values | Returns 400 | Covered |
 | Owner has no ownership periods in the window | Service test covers empty assignments | Returns an empty page and skips booking/invoice queries | Covered |
 | Database tables are absent or query fails | No live database integration test for this endpoint | Controller returns generic 500; the DSQL runbook currently says the owner tables are not applied in test/main | Deployment blocker: verify/apply through the runbook before enabling |
-| Currency is empty | Current tests assert the empty value is reported, but do not distinguish documented EUR defaults from unknown Channex currency | Current response gives false missing-currency warnings for legacy/direct bookings | Finding above |
+| Currency is empty | Service regression test verifies empty non-Channex values resolve to EUR and empty Channex values remain null with warnings | Only unresolved Channex values are reported as missing | Covered |
 | Booking/ownership data changes between separate reads or between offset pages | No concurrent-mutation test | Endpoint is read-only and documents that it is not a transactional snapshot | Acceptable for discovery preview; immutable statement generation must use a consistent snapshot |
 
 ## Performance and access patterns
@@ -108,9 +108,18 @@ B. Keep `null` for every empty currency and remove the “missing” interpretat
 
 ## Verification
 
-On the reviewed head before this review document was added:
+On the reviewed head before the currency-normalization update:
 - `CI - Test Lambda Functions`: passed, including backend Jest and AWS Lambda validation.
 - `Node.js CI`: frontend Jest passed; the frontend release build was still running at the last check.
 - SonarCloud Quality Gate: passed, 0 new issues.
 
-The currency finding above requires a decision and a focused test update. Any resulting code change must be followed by fresh CI and SonarCloud checks.
+The currency change and regression test are now included in the current PR branch; fresh CI and SonarCloud checks must complete on that head.
+
+The ORM wiring was inspected:
+- The backend `database` package is used by this Lambda and its root `Tables.js` registry includes `Booking`, `Invoice`, `Property_Owner` and `Property_Owner_Property`.
+- Every field selected by the financial-data repository exists in the corresponding `Booking` and `Invoice` EntitySchema definitions.
+
+The live database check remains blocked:
+- `docs/internal/tools/dsql_property_owner_runbook.md` records the `test` and `main` owner-table schemas as **Not applied**.
+- No authenticated Aurora DSQL session is available in this review workspace, so no real endpoint call or schema query was performed.
+- Apply and verify the owner-table migration in both schemas using the runbook before making a live request or deploying code that queries those tables.

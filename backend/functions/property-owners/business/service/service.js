@@ -14,6 +14,14 @@ const OWNERSHIP_CHANGED_TODAY_MESSAGE =
 const HELD_SHARES_MESSAGE = "This owner still holds ownership shares. Set new shares for these properties first.";
 const DAY_MS = 86400000;
 
+const isChannexBooking = (booking) => String(booking.bookingtype || "").toLowerCase() === "channex";
+const resolveBookingCurrency = (booking) => {
+  if (typeof booking.currency === "string" && booking.currency.trim() !== "") {
+    return booking.currency;
+  }
+  return isChannexBooking(booking) ? null : "EUR";
+};
+
 const toShare = ({ owner_id, ownership_basis_points, effective_from, effective_to }) => ({
   owner_id,
   ownership_basis_points,
@@ -142,10 +150,10 @@ export class Service {
     const invoiceSnapshots =
       bookingIds.length === 0 ? [] : await this.repository.findInvoiceFinancialSnapshots(bookingIds, hostId);
     const missingCurrencyBookingIds = bookingCandidates
-      .filter((booking) => !booking.currency)
+      .filter((booking) => !resolveBookingCurrency(booking))
       .map((booking) => booking.id);
     const missingChannexCurrencyBookingIds = bookingCandidates
-      .filter((booking) => String(booking.bookingtype || "").toLowerCase() === "channex" && !booking.currency)
+      .filter((booking) => isChannexBooking(booking) && !resolveBookingCurrency(booking))
       .map((booking) => booking.id);
 
     return {
@@ -185,7 +193,7 @@ export class Service {
         checkedOutAtMs: booking.checked_out_at,
         cancelledAtMs: booking.cancelled_at,
         rawTotalPrice: booking.total_price,
-        currency: booking.currency || null,
+        currency: resolveBookingCurrency(booking),
         paymentReference: booking.paymentid || null,
         rawRefundedAmount: booking.refunded_amount,
         stripeRefundId: booking.stripe_refund_id,
