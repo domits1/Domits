@@ -4,11 +4,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { CollapsibleSection, TextField } from "../WebsiteEditorFields";
 import { EDITOR_SECTION_KEYS } from "../../websiteEditorConfig";
 import { SITE_PROPERTIES_LISTINGS_STATUS } from "../hooks/useWebsiteEditorSiteProperties";
-import {
-  MAX_SITE_PROPERTIES,
-  MAX_SITE_PROPERTY_SLUG_LENGTH,
-  cleanSitePropertySlug,
-} from "../websiteEditorSiteProperties";
+import { MAX_SITE_PROPERTY_SLUG_LENGTH } from "../../rendering/websiteSiteProperties";
+import { MAX_SITE_PROPERTIES, cleanSitePropertySlug } from "../websiteEditorSiteProperties";
 import pageStyles from "../../WebsiteEditorPage.module.scss";
 import styles from "./WebsiteEditorPropertiesSection.module.scss";
 

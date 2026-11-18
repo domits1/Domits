@@ -1,10 +1,10 @@
+import { MAX_SITE_PROPERTY_SLUG_LENGTH, isSitePropertySlug } from "../rendering/websiteSiteProperties";
+
 export const SITE_PROPERTIES_OVERRIDE_KEY = "siteProperties";
 export const MAX_SITE_PROPERTIES = 12;
-export const MAX_SITE_PROPERTY_SLUG_LENGTH = 60;
 export const SITE_PROPERTY_NOT_LISTED_MESSAGE =
   "One of the properties on your website is no longer one of your listings. Remove it from Properties, then choose Update live site.";
 
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const NOT_LISTED_REFUSALS = new Set([
   "You must be the owner of the property to access it.",
   "siteProperties lists a property that does not exist.",
@@ -32,7 +32,7 @@ export const suggestSitePropertySlug = (title, takenSlugs = []) => {
 
 export const describeSitePropertySlugProblem = (slug, otherSlugs) => {
   const cleanedSlug = cleanSitePropertySlug(slug);
-  if (cleanedSlug.length > MAX_SITE_PROPERTY_SLUG_LENGTH || !SLUG_PATTERN.test(cleanedSlug)) {
+  if (!isSitePropertySlug(cleanedSlug)) {
     return `Use lowercase letters, digits and single hyphens, at most ${MAX_SITE_PROPERTY_SLUG_LENGTH} characters.`;
   }
   return otherSlugs.includes(cleanedSlug) ? "Another property on this website already has this address." : "";
