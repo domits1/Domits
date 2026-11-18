@@ -1,5 +1,6 @@
 import { placeholderImage } from "../../../../utils/accommodationImage";
 import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
+import { MAIN_SITE_PAGE_KEY, SITE_PAGE_DEFINITIONS } from "../rendering/websitePages";
 import {
   ELITE_LEAD_MAX_LENGTH,
   TEMPLATE_GALLERY_INTRO,
@@ -8,12 +9,15 @@ import {
   buildElitePrice,
   formatEliteClockTime,
   formatEliteNightlyPrice,
+  hasEliteGalleryPhotos,
   hasEliteHeaderPhoto,
   isEliteRestyledPage,
   listEliteHighlights,
   listEliteHouseRules,
+  listElitePropertyPhotoSlots,
   resolveEliteGalleryIntro,
   resolveEliteGalleryLayout,
+  resolveEliteAvailabilityLabel,
   resolveEliteHeaderTone,
   resolveEliteLocation,
   selectEliteAccommodationPhotos,
@@ -267,14 +271,36 @@ describe("the photos on Elite site pages", () => {
     expect(selectEliteAccommodationPhotos(undefined)).toEqual([]);
   });
 
-  it("drops the hero fallback from the gallery when it is the placeholder", () => {
+  it("drops every gallery slot that would show the placeholder", () => {
     const heroFallback = { key: "hero", slot: { kind: "hero", sectionId: "gallery" } };
     const galleryPhoto = { key: "g0", slot: { kind: "gallery", index: 0, sectionId: "gallery" } };
+    const secondPhoto = { key: "g1", slot: { kind: "gallery", index: 1, sectionId: "gallery" } };
 
     expect(selectEliteGallerySlots([heroFallback], { heroImage: placeholderImage })).toEqual([]);
     expect(selectEliteGallerySlots([heroFallback], { heroImage: "a" })).toEqual([heroFallback]);
-    expect(selectEliteGallerySlots([galleryPhoto], { heroImage: placeholderImage })).toEqual([galleryPhoto]);
+    expect(selectEliteGallerySlots([galleryPhoto], { galleryImages: ["a"] })).toEqual([galleryPhoto]);
+    expect(selectEliteGallerySlots([galleryPhoto], { galleryImages: [placeholderImage] })).toEqual([]);
+    expect(selectEliteGallerySlots([galleryPhoto, secondPhoto], { galleryImages: ["a"] })).toEqual([galleryPhoto]);
     expect(selectEliteGallerySlots(undefined, {})).toEqual([]);
+  });
+
+  it("lists every real gallery photo of a property, past the sixth, with its own index", () => {
+    const galleryImages = ["a", placeholderImage, " ", "b", "c", "d", "e", "f", "g"];
+    const slots = listElitePropertyPhotoSlots({ galleryImages }, "Villa B");
+
+    expect(slots.map(({ slot }) => slot.index)).toEqual([0, 3, 4, 5, 6, 7, 8]);
+    expect(slots[1]).toEqual({
+      key: "photo-3",
+      alt: "Villa B view 2",
+      slot: { kind: "gallery", index: 3, sectionId: "gallery" },
+    });
+    expect(listElitePropertyPhotoSlots({ heroImage: "a" }, "Villa B")).toEqual([]);
+  });
+
+  it("knows whether the listing has a gallery photo", () => {
+    expect(hasEliteGalleryPhotos({ galleryImages: ["a"] })).toBe(true);
+    expect(hasEliteGalleryPhotos({ galleryImages: [placeholderImage, ""] })).toBe(false);
+    expect(hasEliteGalleryPhotos(undefined)).toBe(false);
   });
 
   it.each([
@@ -311,11 +337,20 @@ describe("the gallery intro and the location on Elite site pages", () => {
 });
 
 describe("which Elite pages get the new style", () => {
+  it("restyles every page a host can switch on, so no page is left without a header", () => {
+    const configurablePageKeys = SITE_PAGE_DEFINITIONS.map((page) => page.key).filter(
+      (pageKey) => pageKey !== MAIN_SITE_PAGE_KEY
+    );
+
+    expect(configurablePageKeys.filter((pageKey) => !isEliteRestyledPage(pageKey))).toEqual([]);
+  });
+
   it.each([
     ["accommodation", true],
+    ["gallery", true],
+    ["contact", true],
     ["main", false],
-    ["gallery", false],
-    ["contact", false],
+    ["contact-us", false],
     ["", false],
     [undefined, false],
     ["constructor", false],
@@ -323,9 +358,17 @@ describe("which Elite pages get the new style", () => {
     expect(isEliteRestyledPage(pageKey)).toBe(expected);
   });
 
-  it("uses a photo header only with a real photo", () => {
-    expect(resolveEliteHeaderTone({ heroImage: "https://images/one.webp" })).toBe("photo");
-    expect(resolveEliteHeaderTone({ heroImage: placeholderImage })).toBe("light");
+  it("uses a photo header only with a real photo and never on the gallery page", () => {
+    expect(resolveEliteHeaderTone({ heroImage: "https://images/one.webp" }, "accommodation")).toBe("photo");
+    expect(resolveEliteHeaderTone({ heroImage: "https://images/one.webp" }, "contact")).toBe("photo");
+    expect(resolveEliteHeaderTone({ heroImage: "https://images/one.webp" }, "gallery")).toBe("light");
+    expect(resolveEliteHeaderTone({ heroImage: placeholderImage }, "contact")).toBe("light");
     expect(resolveEliteHeaderTone(undefined)).toBe("light");
+  });
+
+  it("labels the availability button with the host's call to action", () => {
+    expect(resolveEliteAvailabilityLabel({ callToAction: { label: "  Book now " } })).toBe("Book now");
+    expect(resolveEliteAvailabilityLabel({ callToAction: { label: " " } })).toBe("Check availability");
+    expect(resolveEliteAvailabilityLabel(undefined)).toBe("Check availability");
   });
 });

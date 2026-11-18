@@ -1,5 +1,5 @@
 import React from "react";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import App from "../../../../App";
@@ -136,8 +136,13 @@ const withSitePages = (payload, sitePages) => ({
 
 const lastTemplateProps = () => mockTemplateProps.at(-1);
 
-const listSectionIds = () =>
-  Array.from(document.querySelectorAll(".publicPreviewCanvas article > section[id]")).map((section) => section.id);
+const listSectionIds = () => {
+  const elitePage = document.querySelector(".publicPreviewCanvas [data-elite-page]");
+  if (elitePage) {
+    return [elitePage.dataset.elitePage];
+  }
+  return Array.from(document.querySelectorAll(".publicPreviewCanvas article > section[id]")).map((section) => section.id);
+};
 
 const getTopMenu = () => document.querySelector(".templateTopBarNav");
 
@@ -158,6 +163,13 @@ const buildModel = (payload) =>
     payload.site.templateKey
   );
 
+const findSettledQuoteStub = async () => {
+  await screen.findByTestId("quote-availability");
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
+
 const renderTodaysSiteHtml = async () => {
   const model = buildModel(renderPayload);
   const { container, unmount } = render(
@@ -172,7 +184,7 @@ const renderTodaysSiteHtml = async () => {
       />
     </MemoryRouter>
   );
-  await screen.findByTestId("quote-availability");
+  await findSettledQuoteStub();
   const html = container.innerHTML;
   unmount();
   return html;
@@ -190,7 +202,7 @@ const moveTo = (url) =>
   });
 
 const readSiteHtml = async () => {
-  await screen.findByTestId("quote-availability");
+  await findSettledQuoteStub();
   return document.querySelector(".publicPreviewCanvas").innerHTML;
 };
 
@@ -204,6 +216,7 @@ beforeEach(() => {
 afterEach(() => {
   jest.restoreAllMocks();
   delete process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE;
+  delete globalThis.fetch;
   globalThis.history.replaceState(null, "", "/");
 });
 
@@ -361,6 +374,7 @@ describe("site host routing for a site with site pages", () => {
     await screen.findByTestId("quote-availability");
 
     fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Gallery" }));
+    fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Home" }));
 
     const revealTargets = Array.from(document.querySelectorAll(".publicPreviewCanvas [data-scroll-reveal]"));
     expect(revealTargets.length).toBeGreaterThan(0);
@@ -596,6 +610,7 @@ describe("live view routing for a site with site pages", () => {
   it("moves between pages under the live view without loading the site again", async () => {
     renderAppAt(`${LIVE_BASE}${SITE_SEARCH}`);
     await screen.findByTestId("quote-availability");
+    await act(async () => {});
 
     fireEvent.click(within(getTopMenu()).getByRole("link", { name: "Reach us" }));
 
@@ -609,5 +624,676 @@ describe("live view routing for a site with site pages", () => {
     expect(await screen.findByTestId("quote-availability")).toBeInTheDocument();
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
+  });
+});
+
+describe("property paths of a site without a served list of properties", () => {
+  const PROPERTY_PATHS = [
+    "properties/villa-b",
+    "properties/villa-b/photos",
+    "properties/villa-b/request",
+    "Properties/Villa-B/",
+  ];
+  const withStaleSiteProperties = (payload) => ({
+    ...payload,
+    contentOverrides: {
+      ...payload.contentOverrides,
+      siteProperties: [
+        { propertyId: renderPayload.site.propertyId, slug: "villa-a" },
+        { propertyId: "property-b", slug: "villa-b" },
+      ],
+    },
+  });
+  const SITES = [
+    ["without a list", (payload) => payload],
+    ["with a stale list in its overrides", withStaleSiteProperties],
+  ];
+
+  describe("on the site's own domain", () => {
+    beforeEach(() => {
+      process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    });
+
+    it.each(
+      SITES.flatMap(([name, arrange]) => [...PROPERTY_PATHS, "properties"].map((sitePath) => [sitePath, name, arrange]))
+    )("renders the home page as today on /%s for a site %s", async (sitePath, _, arrange) => {
+      fetchPublicWebsiteRenderModel.mockResolvedValue(arrange(SITE_HOST_PAYLOAD));
+      const todaysHtml = await renderTodaysSiteHtml();
+
+      renderAppAt(`/${sitePath}`);
+
+      expect(await readSiteHtml()).toBe(todaysHtml);
+      expect(lastTemplateProps().activePageKey).toBe("main");
+      expect(document.title).toBe(SITE_TITLE);
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("in the live view", () => {
+    beforeEach(() => {
+      document.title = INDEX_TITLE;
+    });
+
+    it.each(SITES.flatMap(([name, arrange]) => PROPERTY_PATHS.map((sitePath) => [sitePath, name, arrange])))(
+      "shows the not found page as today on %s for a site %s",
+      async (sitePath, _, arrange) => {
+        fetchPublicWebsiteRenderModel.mockResolvedValue(arrange(renderPayload));
+        const metaTagsBefore = document.head.querySelectorAll("meta").length;
+
+        renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+
+        expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+        expect(document.querySelector(".publicPreviewCanvas")).toBeNull();
+        expect(document.title).toBe("Domits");
+        expect(document.head.querySelectorAll("meta").length).toBe(metaTagsBefore);
+        expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it.each(["properties/villa_b", "properties/villa-b/reviews", "properties/villa-b/photos/2"])(
+      "shows the not found page without a request on %s",
+      (sitePath) => {
+        renderAppAt(`/website-live/${SITE_DOMAIN}/${sitePath}?siteId=${SITE_ID}`);
+
+        expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+        expect(fetchPublicWebsiteRenderModel).not.toHaveBeenCalled();
+      }
+    );
+  });
+});
+
+const VILLA_B_SNAPSHOT = {
+  property: { id: "property-b", title: "Villa B", description: "A quiet garden villa with a pond." },
+  location: { city: "Ubud", country: "Indonesia" },
+  generalDetails: [{ detail: "Guests", value: 4 }],
+  amenities: [{ amenityId: "12" }],
+  images: [{ image_id: "image-b", sort_order: 0, status: "READY", web_key: "images/property-b/image-b/web.jpg" }],
+};
+const SITE_PROPERTIES = [
+  { propertyId: renderPayload.site.propertyId, slug: "villa-a", isMainProperty: true },
+  { propertyId: "property-b", slug: "villa-b", isMainProperty: false, propertySnapshot: VILLA_B_SNAPSHOT },
+];
+const VILLA_C = {
+  propertyId: "property-c",
+  slug: "villa-c",
+  isMainProperty: false,
+  propertySnapshot: { property: { id: "property-c", title: "Villa C" } },
+};
+const withSiteProperties = (payload, siteProperties = SITE_PROPERTIES) => ({ ...payload, siteProperties });
+const readPageHeading = () => document.querySelector("[data-panorama-page-header] h1")?.textContent;
+const readMenuItems = () =>
+  Array.from(getTopMenu().children).map((item) => [item.textContent, item.getAttribute("href")]);
+const sendSiteUpdate = (target) =>
+  act(async () => {
+    globalThis.dispatchEvent(new MessageEvent("message", { data: { type: "website-live-site-update", ...target } }));
+  });
+const STAY_QUERY = "checkIn=2099-01-10&checkOut=2099-01-14&guests=3";
+const quoteResponse = (propertyId) => ({
+  ok: true,
+  status: 200,
+  text: async () =>
+    JSON.stringify({
+      quoteId: "quote-1",
+      propertyId,
+      checkIn: "2099-01-10",
+      checkOut: "2099-01-14",
+      nights: 4,
+      guestCount: 3,
+      priceBreakdown: { currency: "EUR", nightlyBaseTotal: 80000, cleaningFee: 0, total: 80000 },
+      expiresAt: "2099-01-01T10:00:00.000Z",
+      quoteToken: "token-1",
+    }),
+});
+const waitForPropertyPage = () => screen.findByText("Our properties", { selector: "[data-panorama-page-header] a" });
+
+describe("property paths of an Elite website on its own domain", () => {
+  beforeEach(() => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD));
+  });
+
+  it.each(["/properties/villa-b", "/Properties/Villa-B/", "/properties/villa%2Db"])(
+    "shows the page of the other property on %s",
+    async (url) => {
+      renderAppAt(url);
+      await waitForPropertyPage();
+
+      expect(lastTemplateProps().sitePropertyPage.kind).toBe("property");
+      expect(lastTemplateProps().model.source.propertyId).toBe("property-b");
+      expect(readPageHeading()).toBe("Villa B");
+      expect(document.querySelector("[data-panorama-page-header] p").textContent).toBe(
+        "Our properties / Ubud, Indonesia"
+      );
+      expect(listSectionIds()).toEqual(["property"]);
+      expect(await screen.findByLabelText("Check in")).toHaveValue("");
+      expect(screen.getAllByRole("complementary", { name: "Price and availability" })).toHaveLength(1);
+      expect(readMenuItems()).toEqual([["Our properties", "/"]]);
+      expect(screen.getByRole("link", { name: "Wellness Villa Bisous" })).toHaveAttribute("href", "/");
+      expect(document.title).toBe("Villa B | Wellness Villa Bisous");
+    }
+  );
+
+  it.each([
+    ["/properties/villa-b/request", "trust-signals"],
+  ])("shows the Accommodation page of the other property on %s of %s", async (url, templateKey) => {
+    const site = { ...SITE_HOST_PAYLOAD.site, templateKey };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...SITE_HOST_PAYLOAD, site }));
+    renderAppAt(url);
+    await screen.findByRole("heading", { level: 1, name: "Villa B" });
+
+    expect(screen.queryByTestId("quote-availability")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show next months" })).toBeNull();
+    expect(document.title).toBe("Villa B | Wellness Villa Bisous");
+    expect(document.head.querySelector('meta[name="description"]').content).toBe("A quiet garden villa with a pond.");
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the page of the main property from the site's own model", async () => {
+    renderAppAt("/properties/villa-a");
+    await waitForPropertyPage();
+
+    expect(lastTemplateProps().model.source.propertyId).toBe(renderPayload.site.propertyId);
+    expect(readMenuItems()).toEqual([["Our properties", "/"]]);
+    expect(document.title).toBe(SITE_TITLE);
+  });
+
+  it("links the overview and the site's own contact page in the menu of a property page", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(withSitePages(SITE_HOST_PAYLOAD, GALLERY_AND_CONTACT_ON))
+    );
+    renderAppAt("/properties/villa-b");
+    await waitForPropertyPage();
+
+    expect(readMenuItems()).toEqual([
+      ["Our properties", "/"],
+      ["Reach us", "/contact-us"],
+    ]);
+  });
+
+  it.each([
+    "/properties/villa-c",
+    "/properties/villa-b/reviews",
+    "/properties/__proto__",
+    "/properties//photos",
+    "/properties/villa%2Fb",
+  ])("shows the not found page on %s", async (url) => {
+    renderAppAt(url);
+
+    expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(document.querySelector(".publicPreviewCanvas")).toBeNull();
+    expect(document.title).toBe("Domits");
+    expect(document.head.querySelector('meta[property="og:title"]')).toBeNull();
+  });
+
+  it.each(["/", "/properties", "/gallery", "/website-live/localhost/properties/villa-b"])(
+    "shows the overview of all properties on %s",
+    async (url) => {
+      renderAppAt(url);
+
+      expect(await screen.findByRole("heading", { name: "Our properties" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^Villa B/ })).toHaveAttribute("href", "/properties/villa-b");
+      expect(mockTemplateProps.length).toBe(0);
+    }
+  );
+
+  it("routes as a site without the list once fewer than two properties are usable", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], { ...SITE_PROPERTIES[1], propertySnapshot: null }])
+    );
+    const todaysHtml = await renderTodaysSiteHtml();
+
+    renderAppAt("/properties/villa-b");
+
+    expect(await readSiteHtml()).toBe(todaysHtml);
+  });
+
+  it("shows the home page as today once fewer than two properties are usable", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0]]));
+    const todaysHtml = await renderTodaysSiteHtml();
+
+    renderAppAt("/");
+
+    expect(await readSiteHtml()).toBe(todaysHtml);
+  });
+
+  it("shows the not found page once a refresh no longer serves the property, also while it reloads", async () => {
+    renderAppAt("/properties/villa-b");
+    await waitForPropertyPage();
+
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
+    );
+    await sendSiteUpdate({ domain: "localhost" });
+    expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+
+    fetchPublicWebsiteRenderModel.mockReturnValue(new Promise(() => {}));
+    await sendSiteUpdate({ domain: "localhost" });
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+  });
+
+  it("shows the home page as today once a refresh no longer serves the list", async () => {
+    const todaysHtml = await renderTodaysSiteHtml();
+    renderAppAt("/properties/villa-b");
+    await waitForPropertyPage();
+
+    fetchPublicWebsiteRenderModel.mockResolvedValue(SITE_HOST_PAYLOAD);
+    await sendSiteUpdate({ domain: "localhost" });
+
+    expect(await readSiteHtml()).toBe(todaysHtml);
+  });
+});
+
+describe("property paths of an Elite website in the live view", () => {
+  const LIVE_BASE = `/website-live/${SITE_DOMAIN}`;
+  const SITE_SEARCH = `?siteId=${SITE_ID}`;
+
+  beforeEach(() => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(renderPayload));
+  });
+
+  it("opens the property page after the check and links under the live view", async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue(quoteResponse("property-b"));
+    renderAppAt(`${LIVE_BASE}/properties/villa-b${SITE_SEARCH}&${STAY_QUERY}`);
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    await waitForPropertyPage();
+
+    expect(readPageHeading()).toBe("Villa B");
+    expect(readMenuItems()).toEqual([["Our properties", `${LIVE_BASE}${SITE_SEARCH}`]]);
+    expect(await waitForPropertyPage()).toHaveAttribute("href", `${LIVE_BASE}${SITE_SEARCH}`);
+    expect(await screen.findByRole("link", { name: "Request to book" })).toHaveAttribute(
+      "href",
+      `${LIVE_BASE}/properties/villa-b/request${SITE_SEARCH}&${STAY_QUERY}`
+    );
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
+  });
+
+  it.each(["properties/villa-b/request"])(
+    "opens %s of another template after the check under the live view",
+    async (sitePath) => {
+      const site = { ...renderPayload.site, templateKey: "trust-signals" };
+      fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...renderPayload, site }));
+      renderAppAt(`${LIVE_BASE}/${sitePath}${SITE_SEARCH}`);
+      expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+      await screen.findByRole("heading", { level: 1, name: "Villa B" });
+
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
+      expect(fetchPublicWebsiteRenderModel).toHaveBeenLastCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });
+    }
+  );
+
+  it.each([
+    [
+      "an unknown slug",
+      "villa-c",
+      () => fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(renderPayload)),
+    ],
+    [
+      "a property without a snapshot",
+      "villa-b",
+      () =>
+        fetchPublicWebsiteRenderModel.mockResolvedValue(
+          withSiteProperties(renderPayload, [SITE_PROPERTIES[0], { ...SITE_PROPERTIES[1], propertySnapshot: null }])
+        ),
+    ],
+    ["a check that fails", "villa-b", () => fetchPublicWebsiteRenderModel.mockRejectedValue(new TypeError("Failed"))],
+  ])("keeps the not found page after the check for %s", async (_, slug, arrange) => {
+    arrange();
+    renderAppAt(`${LIVE_BASE}/properties/${slug}${SITE_SEARCH}`);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(mockTemplateProps.length).toBe(0);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("moves from the home page to a property page without loading the site again", async () => {
+    renderAppAt(`${LIVE_BASE}${SITE_SEARCH}`);
+    fireEvent.click(await screen.findByRole("link", { name: /^Villa B/ }));
+
+    expect(readPageHeading()).toBe("Villa B");
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the not found page, not the previous site, while another site's property loads", async () => {
+    renderAppAt(`${LIVE_BASE}/properties/villa-b`);
+    await waitForPropertyPage();
+    fetchPublicWebsiteRenderModel.mockReturnValue(new Promise(() => {}));
+    mockTemplateProps.length = 0;
+
+    await moveTo("/website-live/b.example/properties/villa-b");
+
+    expect(screen.getByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(mockTemplateProps.length).toBe(0);
+  });
+
+  it("shows the not found page once a refresh no longer serves the property", async () => {
+    renderAppAt(`${LIVE_BASE}/properties/villa-b${SITE_SEARCH}`);
+    await waitForPropertyPage();
+
+    fetchPublicWebsiteRenderModel.mockResolvedValue(renderPayload);
+    mockTemplateProps.length = 0;
+    await sendSiteUpdate({ siteId: SITE_ID });
+
+    expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(mockTemplateProps.filter((props) => props.activePageKey === "main").length).toBe(0);
+  });
+});
+
+describe("the photos page of a property of an Elite website", () => {
+  const LIVE_BASE = `/website-live/${SITE_DOMAIN}`;
+  const SITE_SEARCH = `?siteId=${SITE_ID}`;
+  const withPhotos = (count) => ({
+    ...SITE_PROPERTIES[1],
+    propertySnapshot: {
+      ...VILLA_B_SNAPSHOT,
+      images: Array.from({ length: count }, (_, index) => ({
+        ...VILLA_B_SNAPSHOT.images[0],
+        image_id: `image-b${index}`,
+        sort_order: index,
+        web_key: `images/property-b/image-b${index}/web.jpg`,
+      })),
+    },
+  });
+  const readCrumbHrefs = () =>
+    Array.from(document.querySelectorAll("[data-panorama-page-header] p a")).map((link) => link.getAttribute("href"));
+  const listPhotoSources = () =>
+    Array.from(screen.getByRole("region", { name: "Photos" }).querySelectorAll("img"), (image) =>
+      image.getAttribute("src")
+    );
+
+  beforeEach(() => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    globalThis.fetch = jest.fn();
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], withPhotos(5)])
+    );
+  });
+
+  it("shows every photo of the other property, without a quote, and links back with the stay", async () => {
+    renderAppAt(`/properties/villa-b/photos?${STAY_QUERY}`);
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute(
+      "href",
+      `/properties/villa-b?${STAY_QUERY}`
+    );
+    expect(readPageHeading()).toBe("Photos of Villa B");
+    expect(document.querySelector("[data-panorama-page-header]").dataset.eliteHeader).toBe("light");
+    expect(document.querySelector("[data-panorama-page-header] p").textContent).toBe(
+      "Our properties / Villa B / Photos"
+    );
+    expect(readCrumbHrefs()).toEqual(["/", `/properties/villa-b?${STAY_QUERY}`]);
+    expect(listPhotoSources()).toEqual(
+      Array.from({ length: 5 }, (_, index) => expect.stringContaining(`image-b${index}/`))
+    );
+    expect(listSectionIds()).toEqual(["property-photos"]);
+    expect(readMenuItems()).toEqual([["Our properties", "/"]]);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("follows View all photos and Back with the stay, without loading the site again", async () => {
+    globalThis.fetch = jest.fn(async () => quoteResponse("property-b"));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    const photosLink = await screen.findByRole("link", { name: "View all photos" });
+    expect(photosLink).toHaveAttribute("href", `/properties/villa-b/photos?${STAY_QUERY}`);
+
+    fireEvent.click(photosLink);
+    fireEvent.click(await screen.findByRole("link", { name: "Back to Villa B" }));
+
+    expect(await screen.findByLabelText("Check in")).toHaveValue("2099-01-10");
+    expect(`${globalThis.location.pathname}${globalThis.location.search}`).toBe(`/properties/villa-b?${STAY_QUERY}`);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves View all photos out for a property without photos", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
+    );
+    renderAppAt("/properties/villa-c");
+    await waitForPropertyPage();
+
+    expect(screen.queryByRole("link", { name: "View all photos" })).toBeNull();
+  });
+
+  it("keeps only a valid stay in the way back", async () => {
+    renderAppAt("/properties/villa-b/photos?checkIn=2000-01-01&checkOut=2000-01-05&guests=3&ref=mail");
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute(
+      "href",
+      "/properties/villa-b?guests=3"
+    );
+  });
+
+  it("links under the live view and keeps the site id", async () => {
+    delete process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE;
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(renderPayload, [SITE_PROPERTIES[0], withPhotos(2)])
+    );
+    renderAppAt(`${LIVE_BASE}/properties/villa-b/photos${SITE_SEARCH}&${STAY_QUERY}`);
+    const propertyHref = `${LIVE_BASE}/properties/villa-b${SITE_SEARCH}&${STAY_QUERY}`;
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toHaveAttribute("href", propertyHref);
+    expect(readCrumbHrefs()).toEqual([`${LIVE_BASE}${SITE_SEARCH}`, propertyHref]);
+  });
+
+  it("shows the main property's own photos still, also when the site rotates them", async () => {
+    const contentOverrides = { ...SITE_HOST_PAYLOAD.contentOverrides, imageRotation: { gallery: [true, true] } };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...SITE_HOST_PAYLOAD, contentOverrides }));
+    renderAppAt("/properties/villa-a/photos");
+    await screen.findByRole("link", { name: /^Back to / });
+
+    expect(listPhotoSources()).toEqual([
+      expect.stringContaining("00000000-0000-4000-8000-000000000001/"),
+      expect.stringContaining("00000000-0000-4000-8000-000000000002/"),
+    ]);
+  });
+
+  it("says so when the property has no photos and keeps the way back", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
+    );
+    renderAppAt("/properties/villa-c/photos");
+
+    expect(await screen.findByRole("link", { name: "Back to Villa C" })).toHaveAttribute("href", "/properties/villa-c");
+    expect(screen.getByText("This property has no photos yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Photos" })).toBeNull();
+  });
+
+  it("stops a running quote when the guest opens the photos", async () => {
+    globalThis.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("link", { name: "View all photos" }));
+
+    expect(await screen.findByRole("link", { name: "Back to Villa B" })).toBeInTheDocument();
+    expect(globalThis.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+  });
+
+  it("keeps the temporary page without a calendar on the photos path of another template", async () => {
+    const site = { ...SITE_HOST_PAYLOAD.site, templateKey: "trust-signals" };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties({ ...SITE_HOST_PAYLOAD, site }));
+    renderAppAt("/properties/villa-b/photos");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Villa B" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Back to Villa B" })).toBeNull();
+    expect(document.querySelector("[data-elite-page]")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show next months" })).toBeNull();
+  });
+});
+
+describe("the booking panel on the property page of an Elite website", () => {
+  const readQuoteBody = () => JSON.parse(globalThis.fetch.mock.calls[0][1].body);
+
+  beforeEach(() => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD));
+  });
+
+  it.each([
+    ["the other property", "villa-b", "property-b", { propertyId: "property-b" }],
+    ["the main property", "villa-a", renderPayload.site.propertyId, {}],
+  ])("quotes %s with the stay of the query and links its request with it", async (_, slug, propertyId, fields) => {
+    globalThis.fetch = jest.fn().mockResolvedValue(quoteResponse(propertyId));
+    renderAppAt(`/properties/${slug}?${STAY_QUERY}`);
+
+    expect(await screen.findByRole("link", { name: "Request to book" })).toHaveAttribute(
+      "href",
+      `/properties/${slug}/request?${STAY_QUERY}`
+    );
+    expect(readQuoteBody()).toEqual({
+      siteId: SITE_ID,
+      ...fields,
+      checkIn: "2099-01-10",
+      checkOut: "2099-01-14",
+      guests: 3,
+      currency: "EUR",
+      session: expect.objectContaining({ source: "standalone_site" }),
+    });
+  });
+
+  it("quotes the next property afresh when the guest moves to it", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD, [...SITE_PROPERTIES, VILLA_C]));
+    globalThis.fetch = jest.fn(async (_, { body }) => quoteResponse(JSON.parse(body).propertyId));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    await screen.findByRole("link", { name: "Request to book" });
+    fireEvent.click(screen.getByRole("button", { name: "Add a guest" }));
+
+    await moveTo(`/properties/villa-c?${STAY_QUERY}`);
+
+    expect(await screen.findByRole("link", { name: "Request to book" })).toHaveAttribute(
+      "href",
+      `/properties/villa-c/request?${STAY_QUERY}`
+    );
+    expect(document.querySelector(".stepperValue").textContent).toBe("3");
+    expect(JSON.parse(globalThis.fetch.mock.calls.at(-1)[1].body).propertyId).toBe("property-c");
+  });
+
+  it("stops the quote and shows the not found page once a refresh no longer serves the property", async () => {
+    globalThis.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties(SITE_HOST_PAYLOAD, [SITE_PROPERTIES[0], VILLA_C])
+    );
+    await sendSiteUpdate({ domain: "localhost" });
+
+    expect(await screen.findByText(NOT_FOUND_TEXT)).toBeInTheDocument();
+    expect(globalThis.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+  });
+
+  it("shows a long title in full and no booking panel when the site has no quote panel", async () => {
+    const longTitle = `Villa B ${"by the quiet rice fields of the valley ".repeat(3).trim()}`;
+    const longProperty = { ...VILLA_B_SNAPSHOT, property: { ...VILLA_B_SNAPSHOT.property, title: longTitle } };
+    const villaB = { ...SITE_PROPERTIES[1], propertySnapshot: longProperty };
+    const contentOverrides = { ...SITE_HOST_PAYLOAD.contentOverrides, visibility: { quotePanel: false } };
+    fetchPublicWebsiteRenderModel.mockResolvedValue(
+      withSiteProperties({ ...SITE_HOST_PAYLOAD, contentOverrides }, [SITE_PROPERTIES[0], villaB])
+    );
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+    await waitForPropertyPage();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(readPageHeading()).toBe(longTitle);
+    expect(screen.queryByLabelText("Check in")).toBeNull();
+  });
+});
+
+describe("the request to book page of an Elite website", () => {
+  const LIVE_BASE = `/website-live/${SITE_DOMAIN}`;
+  const SITE_SEARCH = `?siteId=${SITE_ID}`;
+  const SENT = { publicBookingRef: "DBW-ABCDEFGHJK", status: "REQUESTED", siteId: SITE_ID, total: 80000 };
+  const bookingResponse = { ok: true, status: 201, text: async () => JSON.stringify(SENT) };
+  const mockSiteFetch = (propertyId) => {
+    globalThis.fetch = jest.fn(async (url) =>
+      String(url).endsWith("/bookings") ? bookingResponse : quoteResponse(propertyId)
+    );
+  };
+  const readSentBodies = (path) =>
+    globalThis.fetch.mock.calls.filter(([url]) => String(url).endsWith(path)).map(([, { body }]) => JSON.parse(body));
+  const readCrumbLinks = () =>
+    Array.from(document.querySelectorAll("[data-panorama-page-header] a")).map((link) => [
+      link.textContent,
+      link.getAttribute("href"),
+    ]);
+  const findSendButton = async () => {
+    const button = await screen.findByRole("button", { name: "Send request" });
+    await waitFor(() => expect(button).toBeEnabled());
+    return button;
+  };
+
+  beforeEach(() => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(SITE_HOST_PAYLOAD));
+  });
+
+  it.each([
+    ["the other property", "villa-b", "property-b", "property-b"],
+    ["the main property", "villa-a", renderPayload.site.propertyId, undefined],
+  ])("quotes %s on its request page and sends its request", async (_, slug, propertyId, propertyIdSent) => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    mockSiteFetch(propertyId);
+    renderAppAt(`/properties/${slug}/request?${STAY_QUERY}`);
+    const sendButton = await findSendButton();
+    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana Guest" } });
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "ana@example.com" } });
+
+    fireEvent.click(sendButton);
+
+    expect(await screen.findByText("DBW-ABCDEFGHJK")).toBeInTheDocument();
+    expect(readSentBodies("/website/public/quote").map((body) => body.propertyId)).toEqual([propertyIdSent]);
+    expect(readSentBodies("/bookings")).toEqual([
+      {
+        quoteToken: "token-1",
+        guest: { name: "Ana Guest", email: "ana@example.com" },
+        session: { sessionId: expect.any(String), source: "standalone_site" },
+      },
+    ]);
+  });
+
+  it("opens from the property page with a light header and quotes the stay again", async () => {
+    process.env.REACT_APP_DIRECT_BOOKING_WEBSITE_SURFACE = "true";
+    mockSiteFetch("property-b");
+    renderAppAt(`/properties/villa-b?${STAY_QUERY}`);
+
+    fireEvent.click(await screen.findByRole("link", { name: "Request to book" }));
+    await findSendButton();
+
+    expect(readPageHeading()).toBe("Request to book");
+    expect(listSectionIds()).toEqual(["request"]);
+    expect(document.querySelector("[data-panorama-page-header]").dataset.eliteHeader).toBe("light");
+    expect(document.querySelector("[data-panorama-top-bar]").className).toContain("panoramaTopBarShellEliteLight");
+    expect(readSentBodies("/website/public/quote")).toHaveLength(2);
+    expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
+    jest.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function placeElement() {
+      return { top: this.isConnected ? -200 : 0, height: 0 };
+    });
+    globalThis.dispatchEvent(new Event("scroll"));
+    await waitFor(() => expect(document.querySelector("[data-panorama-top-bar]").className).toContain("ShellSolid"));
+  });
+
+  it("links under the live view and starts afresh on the request page of the next property", async () => {
+    fetchPublicWebsiteRenderModel.mockResolvedValue(withSiteProperties(renderPayload, [...SITE_PROPERTIES, VILLA_C]));
+    globalThis.fetch = jest.fn(async (_, { body }) => quoteResponse(JSON.parse(body).propertyId));
+    renderAppAt(`${LIVE_BASE}/properties/villa-b/request${SITE_SEARCH}&${STAY_QUERY}`);
+    await findSendButton();
+    expect(readCrumbLinks()).toEqual([
+      ["Our properties", `${LIVE_BASE}${SITE_SEARCH}`],
+      ["Villa B", `${LIVE_BASE}/properties/villa-b${SITE_SEARCH}&${STAY_QUERY}`],
+    ]);
+    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana Guest" } });
+
+    await moveTo(`${LIVE_BASE}/properties/villa-c/request${SITE_SEARCH}&checkIn=2099-01-10&checkOut=2099-01-14&guests=2`);
+    await findSendButton();
+
+    expect(screen.getByLabelText("Your name")).toHaveValue("");
+    expect(readSentBodies("/website/public/quote").at(-1)).toMatchObject({ propertyId: "property-c", guests: 2 });
   });
 });

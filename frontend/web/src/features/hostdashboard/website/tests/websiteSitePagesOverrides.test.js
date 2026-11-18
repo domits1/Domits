@@ -62,6 +62,18 @@ describe("site page settings in the template model", () => {
 
     expect(applyWebsiteDraftContentOverrides(buildModel(), overrides, TEMPLATE_KEY)).not.toHaveProperty("sitePages");
   });
+
+  it("builds the preview model of a draft with a list of properties as without it", () => {
+    const overrides = { siteTitle: "Villa Sol", sitePages: STORED_SITE_PAGES };
+    const siteProperties = [
+      { propertyId: "property-a", slug: "villa-a" },
+      { propertyId: "property-b", slug: "villa-b" },
+    ];
+
+    expect(applyWebsiteDraftContentOverrides(buildModel(), { ...overrides, siteProperties }, TEMPLATE_KEY)).toEqual(
+      applyWebsiteDraftContentOverrides(buildModel(), overrides, TEMPLATE_KEY)
+    );
+  });
 });
 
 describe("site page settings in an editor save", () => {

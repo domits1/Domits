@@ -9,6 +9,7 @@ import { getWebsiteTemplateRenderer } from "./templateRegistry";
 import WebsiteContactWidget from "./WebsiteContactWidget";
 import { resolveWebsiteBackgroundColor } from "./websiteDraftThemeOverrides";
 import { MAIN_SITE_PAGE_KEY } from "./websitePages";
+import { sitePropertyPagePropType } from "./templates/templatePropTypes";
 
 const PREVIEW_VIEWPORT_WIDTHS = Object.freeze({
   desktop: 1180,
@@ -191,6 +192,8 @@ export function WebsiteTemplateSurface({
   activePageKey = MAIN_SITE_PAGE_KEY,
   pageBasePath = "",
   pageSearch = "",
+  currentPageHref = "",
+  sitePropertyPage = null,
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
@@ -241,6 +244,8 @@ export function WebsiteTemplateSurface({
             activePageKey={activePageKey}
             pageBasePath={pageBasePath}
             pageSearch={pageSearch}
+            currentPageHref={currentPageHref}
+            sitePropertyPage={sitePropertyPage}
           />
         ) : (
           <UnsupportedTemplatePreview templateName={template.name} />
@@ -271,6 +276,8 @@ WebsiteTemplateSurface.propTypes = {
   activePageKey: PropTypes.string,
   pageBasePath: PropTypes.string,
   pageSearch: PropTypes.string,
+  currentPageHref: PropTypes.string,
+  sitePropertyPage: sitePropertyPagePropType,
 };
 
 export default function WebsiteTemplatePreview({

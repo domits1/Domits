@@ -26,7 +26,7 @@ class QuoteRevalidationClient {
     this.functionName = functionName;
   }
 
-  async requoteSite({ siteId, checkIn, checkOut, guests, sessionId, requestId }) {
+  async requoteSite({ siteId, propertyId, checkIn, checkOut, guests, sessionId, requestId }) {
     let invocation;
     try {
       invocation = await this.invokeLambdaHttpEvent({
@@ -40,6 +40,7 @@ class QuoteRevalidationClient {
           requestContext: { requestId },
           body: JSON.stringify({
             siteId,
+            propertyId,
             checkIn,
             checkOut,
             guests,

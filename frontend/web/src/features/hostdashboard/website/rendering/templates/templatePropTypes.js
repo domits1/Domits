@@ -146,6 +146,20 @@ export const sitePagesPropType = PropTypes.objectOf(
   })
 );
 
+export const sitePropertyPagePropType = PropTypes.shape({
+  kind: PropTypes.string.isRequired,
+  pageKey: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  overviewHref: PropTypes.string.isRequired,
+  propertyHref: PropTypes.string.isRequired,
+  photosHref: PropTypes.string.isRequired,
+  navItems: PropTypes.arrayOf(PropTypes.shape({ href: PropTypes.string, label: PropTypes.string })).isRequired,
+  stay: PropTypes.shape({ checkIn: PropTypes.string, checkOut: PropTypes.string, guests: PropTypes.number }).isRequired,
+  booking: PropTypes.shape({ key: PropTypes.string, siteId: PropTypes.string, propertyId: PropTypes.string }),
+  buildRequestHref: PropTypes.func.isRequired,
+  headerTone: PropTypes.oneOf(["photo", "light"]),
+});
+
 export const templateInteractionPropTypes = {
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,

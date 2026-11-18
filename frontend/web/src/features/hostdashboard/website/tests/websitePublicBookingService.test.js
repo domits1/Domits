@@ -1,3 +1,5 @@
+import { act, renderHook } from "@testing-library/react";
+import { useWebsiteBookingRequest } from "../rendering/booking/useWebsiteBookingRequest";
 import {
   DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE,
   WEBSITE_PUBLIC_BOOKING_CLIENT_ERROR_CODES,
@@ -60,6 +62,44 @@ describe("requestPublicSiteBooking", () => {
       guest: { name: "Guest Name", email: "guest@example.com" },
       session: { sessionId: "visitor-1", source: "standalone_site" },
     });
+  });
+
+  it("sends the request of today's quote panel byte for byte", async () => {
+    mockFetchResponse({ body: BOOKING_RESPONSE });
+    const { result } = renderHook(() => useWebsiteBookingRequest({ siteId: "site-1", sessionId: "visitor-1" }));
+
+    await act(async () => {
+      await result.current.submitBookingRequest({
+        quote: { quoteId: "quote_1", quoteToken: "qtok_abc" },
+        guest: { name: "Guest Name", email: "guest@example.com" },
+      });
+    });
+
+    const [url, options] = global.fetch.mock.calls[0];
+    expect(url).toBe(`${DIRECT_BOOKING_WEBSITE_BOOKINGS_API_BASE}/public/sites/site-1/bookings`);
+    expect(Object.keys(options.headers)).toEqual(["Content-Type", "Idempotency-Key"]);
+    expect(options.body).toBe(
+      '{"quoteToken":"qtok_abc","guest":{"name":"Guest Name","email":"guest@example.com"},' +
+        '"session":{"sessionId":"visitor-1","source":"standalone_site"}}'
+    );
+  });
+
+  it("sends the guest's phone and message when the guest gave them", async () => {
+    mockFetchResponse({ body: BOOKING_RESPONSE });
+    const { result } = renderHook(() => useWebsiteBookingRequest({ siteId: "site-1", sessionId: "visitor-1" }));
+
+    await act(async () => {
+      await result.current.submitBookingRequest({
+        quote: { quoteId: "quote_1", quoteToken: "qtok_abc" },
+        guest: { ...BOOKING_REQUEST.guest, phone: "+31 6 1234 5678" },
+        message: "We arrive late.",
+      });
+    });
+
+    expect(global.fetch.mock.calls[0][1].body).toBe(
+      '{"quoteToken":"qtok_abc","guest":{"name":"Guest Name","email":"guest@example.com","phone":"+31 6 1234 5678"},' +
+        '"message":"We arrive late.","session":{"sessionId":"visitor-1","source":"standalone_site"}}'
+    );
   });
 
   it("encodes the site id in the path", async () => {

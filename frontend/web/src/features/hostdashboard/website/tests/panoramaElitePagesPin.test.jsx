@@ -74,8 +74,8 @@ describe("the Elite home page", () => {
   });
 });
 
-describe("the Elite pages this change leaves alone", () => {
-  it.each(["gallery", "contact"])("renders the %s page as acceptance does", (pageKey) => {
+describe("the restyled Elite site pages", () => {
+  it.each(["accommodation", "gallery", "contact"])("renders the public %s page as the restyle does", (pageKey) => {
     const { container } = renderPublicPage(pageKey);
 
     expect(container.innerHTML).toMatchSnapshot();
