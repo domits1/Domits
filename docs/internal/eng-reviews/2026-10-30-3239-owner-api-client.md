@@ -2,7 +2,7 @@
 
 Pull request: #3744
 Issue: #3239
-Reviewed commit: uncommitted changes on top of c99e5d0bc, fixes included in 276756b33
+Reviewed commit: 276756b33 and e908ad2b3
 Result: no blocking findings
 
 ## Findings

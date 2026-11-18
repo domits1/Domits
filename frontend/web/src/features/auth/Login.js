@@ -4,8 +4,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import { safeReviewDestination } from "./safeReviewDestination";
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
-import { REVIEW_APPROVAL_ADMIN_PATH } from "../review/navigation/reviewApprovalRoute";
-import { hasReviewApprovalAccess } from "../review/services/reviewAPI";
 import MfaChallengeStep from "./mfaChallenge/MfaChallengeStep";
 import { useMfaChallenge, SOFTWARE_TOKEN_MFA } from "./mfaChallenge/useMfaChallenge";
 
@@ -45,14 +43,9 @@ const Login = () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
 
-        const canApproveReviews = await hasReviewApprovalAccess();
         if (!active) return;
         if (returnTo) {
           navigate(returnTo, { replace: true });
-          return;
-        }
-        if (canApproveReviews) {
-          navigate(REVIEW_APPROVAL_ADMIN_PATH, { replace: true });
           return;
         }
 
@@ -84,7 +77,7 @@ const Login = () => {
     if (returnTo) {
       navigate(returnTo, { replace: true });
     } else if (redirect) {
-      window.location.href = (await hasReviewApprovalAccess()) ? REVIEW_APPROVAL_ADMIN_PATH : redirect;
+      window.location.href = redirect;
     } else {
       globalThis.location.reload();
     }

@@ -1,0 +1,4 @@
+{
+  "task": "cancel-cancelled-bookings",
+  "limit": 10
+}
