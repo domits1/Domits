@@ -2,7 +2,7 @@
 
 Pull request: #3957
 Issue: #3921 (related, not closed by this pull request)
-Reviewed commit: `9f579e2e2`
+Reviewed commits: `9f579e2e2`, `5cae8f704` (fractional house number, after review)
 Result: no blocking findings
 
 Follow-up of the eng-review of #3938, which left three gaps in the backend. `normalizeLocationPayload` (overview update) and `PropertyBuilder.addLocation` (create) accepted a house number above the INTEGER range, a house number below 1, and an extension over 45 characters (`VARCHAR(45)`). The database rejected them later, and the update path answered 500 with the raw database message.
@@ -42,7 +42,7 @@ GET (LocationMapping ▶ PropertyLocation): no limits, old rows load ◀┘ not 
 
 ## Not in scope
 
-- The "Missing ..." errors on create answer 500 (first finding). They need their own issue.
+- The "Missing ..." errors on create answer 500 (first finding). Tracked in #3962.
 - Fractional house numbers are now refused with a 400 on create (fixed after review, Tufan and Enes). The update path truncates them, as before.
 - Non-string extensions sent to the update path are still ignored and stored as "" (unchanged).
 - Existing rows that break the limits are not migrated or listed. The count was not checked.
@@ -50,8 +50,8 @@ GET (LocationMapping ▶ PropertyLocation): no limits, old rows load ◀┘ not 
 
 ## Test run
 
-New file `backend/test/PropertyHandler/locationLimits.test.js`, 39 tests: update path (too large, below 1, kept values, extension length, 45 against 46, emoji counted as one, missing number message, client-error predicate, PATCH answers 400 before authorizing or writing), create path (limits, "Missing houseNumber." kept for 0 and NaN, largest accepted, POST answers 400), and reading old rows still works. `normalizeLocationPayload.test.js` (#3938) is not touched.
+New file `backend/test/PropertyHandler/locationLimits.test.js`, 49 tests: update path (too large, below 1, kept values, `12.5` kept as `12`, extension length, 45 against 46, emoji counted as one, missing number message, client-error predicate, PATCH answers 400 before authorizing or writing), create path (limits, `12.5` refused as not a whole number, "Missing houseNumber." kept for 0 and NaN, largest accepted, POST answers 400), and reading old rows still works. `getLocationLimitError` itself: `12.5` gives the whole-number message, `Infinity`, `NaN`, `0.5` and `-1.5` keep their earlier messages, a whole number passes. The fractional cases came with `5cae8f704`; the first commit had 39 tests. `normalizeLocationPayload.test.js` (#3938) is not touched.
 
 Each key test was mutation-checked: removing the update check failed 15 tests, removing the create check failed 7, throwing a plain `Error` on create failed 3, restoring the `Infinity` to null parse failed 1, counting UTF-16 units failed 1.
 
-The full backend suite has the same failures with and without this change: 17 suites and 11 tests that need missing packages or a valid AWS SSO session, or trip on CRLF line endings (not verified). `test/PropertyHandler/end-to-end.test.js` is excluded, as in CI. One run showed `staticPageOutbox.publishController.test.js` failing under full-suite load; it passes alone and in the next full run (timing flake, not investigated). Passing tests went from 5977 to 6016, the 39 new ones.
+The full backend suite has the same failures with and without this change: 17 suites and 11 tests that need missing packages or a valid AWS SSO session, or trip on CRLF line endings (not verified). `test/PropertyHandler/end-to-end.test.js` is excluded, as in CI. One run showed `staticPageOutbox.publishController.test.js` failing under full-suite load; it passes alone and in the next full run (timing flake, not investigated). Passing tests went from 5977 to 6016, the 39 new ones. After `5cae8f704` a full run went from 6021 to 6031 passing against a later baseline, the 10 added tests, with the same failing suites.
