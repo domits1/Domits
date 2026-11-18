@@ -75,6 +75,7 @@ const saveAndPublishThroughTheEditorApi = async (contentOverrides) => {
   controller.propertyService.getFullPropertyAttributesWithFullLocation = jest.fn(
     async () => EXISTING_SITE.publishedPropertySnapshot
   );
+  controller.propertyService.getFullPropertyAttributes = jest.fn(async () => EXISTING_SITE.publishedPropertySnapshot);
 
   const saved = await controller.upsertWebsiteDraft(
     hostEvent({
@@ -90,7 +91,10 @@ const saveAndPublishThroughTheEditorApi = async (contentOverrides) => {
   const published = await controller.publishWebsiteSite(hostEvent({ propertyId: EXISTING_SITE.propertyId }));
   const planReadsBeforeServing = ratePlanRepository.findCurrentByAccountId.mock.calls.length;
   const render = await controller.getPublicWebsiteRenderModel(renderEvent({ domain: EXISTING_DOMAIN.domain }));
-  const preview = await controller.getWebsitePreviewByDraftId(renderEvent({ draft: "draft-1" }));
+  const preview = await controller.getWebsitePreviewByDraftId({
+    ...renderEvent({ draft: "draft-1" }),
+    headers: { Authorization: "host-token" },
+  });
 
   return { saved, published, render, preview, store, planReadsBeforeServing, ratePlanRepository };
 };
