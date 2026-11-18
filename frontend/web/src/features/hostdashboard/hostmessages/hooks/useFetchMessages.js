@@ -3,6 +3,7 @@ import { WebSocketContext } from "../context/webSocketContext";
 import { getIdToken } from "../../../../services/getAccessToken";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const REFRESH_RETRY_DELAYS_MS = [1000, 3000, 6000];
 
 const toIso = (v) => {
   if (!v) return new Date().toISOString();
@@ -181,6 +182,10 @@ export const useFetchMessages = (userId) => {
   const historyLoadedRef = useRef(new Set());
   const wsSeenRef = useRef(new Set());
   const wsRefreshedRef = useRef(new Set());
+  const wsPendingRef = useRef(new Set());
+  const retryTimersRef = useRef(new Set());
+  const refreshControllersRef = useRef(new Set());
+  const unmountedRef = useRef(false);
 
   const [activeRecipientId, setActiveRecipientId] = useState(null);
   const [activeThreadId, setActiveThreadId] = useState(null);
@@ -354,9 +359,25 @@ export const useFetchMessages = (userId) => {
     [storeHistory, userId]
   );
 
+  useEffect(() => {
+    unmountedRef.current = false;
+    const timers = retryTimersRef.current;
+    const controllers = refreshControllersRef.current;
+    const pending = wsPendingRef.current;
+    return () => {
+      unmountedRef.current = true;
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
+      controllers.forEach((controller) => controller.abort());
+      controllers.clear();
+      pending.clear();
+    };
+  }, []);
+
   const refreshThread = useCallback(
-    async (partnerId, threadId) => {
+    async (partnerId, threadId, expectedIds) => {
       const controller = new AbortController();
+      refreshControllersRef.current.add(controller);
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
@@ -369,14 +390,49 @@ export const useFetchMessages = (userId) => {
         if (!response.ok) throw new Error(`Failed to refresh messages: ${response.status}`);
 
         const rows = await response.json();
-        if (Array.isArray(rows)) storeHistory(partnerId, threadId, rows, new Set());
+        if (!Array.isArray(rows) || unmountedRef.current) return { ok: false, complete: false };
+
+        storeHistory(partnerId, threadId, rows, new Set());
+        const returnedIds = new Set(rows.map((row) => row?.id));
+        return { ok: true, complete: expectedIds.every((id) => returnedIds.has(id)) };
       } catch (err) {
-        console.error("Error refreshing messages:", err);
+        if (!unmountedRef.current) console.error("Error refreshing messages:", err);
+        return { ok: false, complete: false };
       } finally {
         clearTimeout(timeoutId);
+        refreshControllersRef.current.delete(controller);
       }
     },
     [storeHistory]
+  );
+
+  const refreshWithRetry = useCallback(
+    (partnerId, threadId, messageIds) => {
+      const settle = () => {
+        for (const id of messageIds) {
+          wsPendingRef.current.delete(id);
+          wsRefreshedRef.current.add(id);
+        }
+      };
+
+      const attempt = async (retryIndex) => {
+        const { ok, complete } = await refreshThread(partnerId, threadId, messageIds);
+        if (unmountedRef.current) return;
+        if ((ok && complete) || retryIndex >= REFRESH_RETRY_DELAYS_MS.length) {
+          settle();
+          return;
+        }
+
+        const timer = setTimeout(() => {
+          retryTimersRef.current.delete(timer);
+          attempt(retryIndex + 1);
+        }, REFRESH_RETRY_DELAYS_MS[retryIndex]);
+        retryTimersRef.current.add(timer);
+      };
+
+      attempt(0);
+    },
+    [refreshThread]
   );
 
   useEffect(() => {
@@ -387,15 +443,17 @@ export const useFetchMessages = (userId) => {
       const normalized = normalizeWs(raw);
       if (!normalized || normalized.fileUrls.length === 0 || !normalized.threadId) continue;
 
-      if (wsRefreshedRef.current.has(normalized.id)) continue;
-      wsRefreshedRef.current.add(normalized.id);
+      if (wsRefreshedRef.current.has(normalized.id) || wsPendingRef.current.has(normalized.id)) continue;
+      wsPendingRef.current.add(normalized.id);
 
       const partnerId = normalized.userId === userId ? normalized.recipientId : normalized.userId;
-      threadsToRefresh.set(normalized.threadId, partnerId);
+      const entry = threadsToRefresh.get(normalized.threadId) || { partnerId, messageIds: [] };
+      entry.messageIds.push(normalized.id);
+      threadsToRefresh.set(normalized.threadId, entry);
     }
 
-    threadsToRefresh.forEach((partnerId, threadId) => refreshThread(partnerId, threadId));
-  }, [wsMessages, userId, refreshThread]);
+    threadsToRefresh.forEach(({ partnerId, messageIds }, threadId) => refreshWithRetry(partnerId, threadId, messageIds));
+  }, [wsMessages, userId, refreshWithRetry]);
 
   const addNewMessage = useCallback(
     (newMessage) => {

@@ -516,3 +516,179 @@ describe("useFetchMessages refetch for live messages with attachments", () => {
     expect(messagesCalls()).toHaveLength(2);
   });
 });
+
+describe("useFetchMessages retry of the live-attachment refetch", () => {
+  const RAW_URL = "https://general-messaging-production-attachments.s3.amazonaws.com/images/abc-123.png";
+  const SIGNED_URL = `${RAW_URL}?X-Amz-Signature=abc`;
+  const MESSAGE_ID = "stored-1";
+  const RETRY_DELAYS = [1000, 3000, 6000];
+
+  const stored = () => ({
+    ...historyRow(MESSAGE_ID, "See photo", "2026-06-01T10:00:00.000Z"),
+    attachments: JSON.stringify([{ url: SIGNED_URL, type: "image", name: null }]),
+  });
+  const live = () =>
+    livePush(MESSAGE_ID, "See photo", "2026-06-01T10:00:00.000Z", { fileUrls: [RAW_URL] });
+  const failure = () => ({ ok: false, status: 500, text: async () => "boom" });
+  const signedUrls = (hook) =>
+    hook.result.current.messagesByThread[THREAD_ID]?.find((m) => m.id === MESSAGE_ID)?.fileUrls;
+  const messagesCalls = () => globalThis.fetch.mock.calls.filter(([url]) => String(url).includes("/messages?"));
+  const advance = (ms) =>
+    act(async () => {
+      jest.advanceTimersByTime(ms);
+      for (let tick = 0; tick < 20; tick += 1) await Promise.resolve();
+    });
+  const runAllRetries = async () => {
+    for (const delay of RETRY_DELAYS) await advance(delay);
+  };
+  const answerWith = (...responses) => {
+    const queue = [...responses];
+    globalThis.fetch.mockImplementation(async () => {
+      const next = queue.length > 1 ? queue.shift() : queue[0];
+      return typeof next === "function" ? next() : next;
+    });
+  };
+  const arrive = async () => {
+    mockMessagesEndpoint([]);
+    const harness = setupHook();
+    await harness.open();
+    return harness;
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+    Auth.currentSession.mockResolvedValue({ getIdToken: () => ({ getJwtToken: () => "id-token-1" }) });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  test("retries after a failed request and stores the signed url", async () => {
+    const { hook, push } = await arrive();
+    answerWith(failure(), jsonResponse([stored()]));
+
+    await act(async () => push(live()));
+    expect(messagesCalls()).toHaveLength(2);
+    expect(signedUrls(hook)).toEqual([RAW_URL]);
+
+    await advance(RETRY_DELAYS[0]);
+
+    expect(messagesCalls()).toHaveLength(3);
+    expect(signedUrls(hook)).toEqual([SIGNED_URL]);
+  });
+
+  test("retries when the rows do not contain the message yet", async () => {
+    const { hook, push } = await arrive();
+    answerWith(jsonResponse([]), jsonResponse([stored()]));
+
+    await act(async () => push(live()));
+    expect(signedUrls(hook)).toEqual([RAW_URL]);
+
+    await advance(RETRY_DELAYS[0]);
+
+    expect(messagesCalls()).toHaveLength(3);
+    expect(signedUrls(hook)).toEqual([SIGNED_URL]);
+  });
+
+  test("waits 1s, 3s and 6s between the attempts", async () => {
+    const { push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    expect(messagesCalls()).toHaveLength(2);
+
+    await advance(RETRY_DELAYS[0] - 1);
+    expect(messagesCalls()).toHaveLength(2);
+    await advance(1);
+    expect(messagesCalls()).toHaveLength(3);
+
+    await advance(RETRY_DELAYS[1] - 1);
+    expect(messagesCalls()).toHaveLength(3);
+    await advance(1);
+    expect(messagesCalls()).toHaveLength(4);
+
+    await advance(RETRY_DELAYS[2] - 1);
+    expect(messagesCalls()).toHaveLength(4);
+    await advance(1);
+    expect(messagesCalls()).toHaveLength(5);
+  });
+
+  test("stops after the first try and three retries", async () => {
+    const { hook, push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    await runAllRetries();
+    await advance(60000);
+
+    expect(messagesCalls()).toHaveLength(5);
+    expect(signedUrls(hook)).toEqual([RAW_URL]);
+    expect(hook.result.current.error).toBeNull();
+  });
+
+  test("does not retry again once the message arrived", async () => {
+    const { push } = await arrive();
+    answerWith(jsonResponse([stored()]));
+
+    await act(async () => push(live()));
+    await advance(60000);
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("a later push does not start a second retry loop for the same message", async () => {
+    const { push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    await act(async () => push(livePush("stored-2", "Just text", "2026-06-01T10:01:00.000Z")));
+    await advance(RETRY_DELAYS[0]);
+
+    expect(messagesCalls()).toHaveLength(3);
+  });
+
+  test("a message that arrives after the first loop ended gets no new loop", async () => {
+    const { push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    await runAllRetries();
+    await advance(60000);
+    const callsAfterLimit = messagesCalls().length;
+    await act(async () => push(livePush("stored-2", "Just text", "2026-06-01T10:01:00.000Z")));
+    await advance(60000);
+
+    expect(messagesCalls()).toHaveLength(callsAfterLimit);
+  });
+
+  test("stops fetching when the chat unmounts during the wait", async () => {
+    const { hook, push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    expect(messagesCalls()).toHaveLength(2);
+    hook.unmount();
+    await advance(60000);
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("aborts a request that is still running when the chat unmounts", async () => {
+    const { hook, push } = await arrive();
+    let signal = null;
+    globalThis.fetch.mockImplementation((_url, init) => {
+      signal = init.signal;
+      return new Promise(() => {});
+    });
+
+    await act(async () => push(live()));
+    expect(signal.aborted).toBe(false);
+    hook.unmount();
+
+    expect(signal.aborted).toBe(true);
+  });
+});
