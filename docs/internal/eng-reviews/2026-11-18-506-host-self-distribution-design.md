@@ -19,6 +19,22 @@ The note: `docs/partner/integrations/channel_manager/channex/channex_host_self_d
 | P3 (7/10) | Rewrite, section 11 | Disconnect, D9 and D10 add Channex calls to the outbox worker, which has no time budget or row caps yet (#3927). Price syncing for every host could wait behind them. | Fixed: #3927 moved before the disconnect step; each new job gets its own cap per run. |
 | P3 (8/10) | Rewrite, section 9 | No tests for D4 (timezone), D7 (labels) and the D9 loop. | Fixed: tests listed; D7 as one pure function, table-tested like `evaluateChannexHealth`. |
 
+## Findings from the PR review (Rakib, Mehedi, Karim, 18 Nov)
+
+| Point | From | Decision |
+|---|---|---|
+| D1 needs a hard guard (allowlist on `connect-session`) until the token scope is settled | Rakib, Mehedi, Karim | Not added. Channex confirmed the token is limited per property after the reviews were written; there are no real hosts yet, and the cross-property check runs during testing before any host is onboarded. Written in D1. |
+| D2: two "turn on" requests at the same time create two Channex properties | Mehedi, Karim | Fixed: claim the listing first with a `PROVISIONING` mapping row under a unique key on `domitsPropertyId` (`ChannelIntegrationProperty` has none today, so a migration adds it). Test added. |
+| D9: does editing a live listing make it non-ACTIVE and disconnect every OTA? | Rakib, Mehedi | No: submit for review only starts from INACTIVE, REJECTED or ARCHIVED (`SUBMITTABLE_FOR_REVIEW_STATUSES`, `propertyStatus.js`). The live and not-live statuses are now listed in D9. |
+| D5: deactivating inside Channex's screen skips stop_sell | Mehedi | Written in D5: detected as "Needs attention", the host is told to close the dates in the OTA; Domits cannot close them once the channel is off. Q1(b) still open with Channex. |
+| How the frontend knows the host finished in the iframe | Rakib | Closing the modal always calls `refresh`, whether or not Channex sends a message. Written in section 6. |
+| A list of screens and states | Rakib | Added to section 6, pointing to the suggested pages shared on 18 Nov. |
+| Show upcoming OTA bookings in the disconnect confirm | Rakib | Added to D5 (count from `booking_source`), with a test. |
+| Country → timezone is wrong for the Canary Islands and the Azores | Mehedi | Fixed: Spain, Portugal, Chile and Ecuador join the countries where the host picks. |
+| D10 should include the property type | Mehedi | Added. |
+| EUR is hard-coded in D2 | Mehedi | No change: Domits prices are in euros. |
+| Who pays the $0.50 per unit | Karim | No change: billing is Stefan's decision, outside this design. |
+
 ## Decisions made while walking through the note (17–18 Nov)
 
 These are design choices, not review findings. The note holds the options and the reasons.

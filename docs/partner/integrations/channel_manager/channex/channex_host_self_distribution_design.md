@@ -78,6 +78,8 @@ Scope of the session: Channex support confirmed on 18 Nov that the one-time toke
 
 Verification before release (section 9): with a token for property A, change the property in the iframe URL to property B and confirm Channex refuses it. If it does not, the iframe is not released and we build our own form on the Channel API (`test_connection`, `mapping_details`, `POST /channels`, mappings, `activate`).
 
+No extra allowlist on `connect-session` meanwhile: there are no real hosts yet, and the check above runs during testing, before any host is onboarded.
+
 ### D2. Provisioning: create the Channex side when the host turns on distribution
 
 When the host turns on distribution for a listing that passes D3, the backend creates, in this order:
@@ -90,7 +92,7 @@ When the host turns on distribution for a listing that passes D3, the backend cr
 
 Then it writes the host's account row if there is none (D8), the three mapping rows, and queues a full sync. Channex's defaults for `allow_availability_autoupdate_on_modification` and `..._on_cancellation` stay off, as Channex recommends for a PMS that pushes availability itself.
 
-Idempotent: a second "turn on" for the same listing finds the existing rows and creates nothing. If a step fails halfway, the next attempt continues from the first missing object (each created id is stored before the next call).
+Idempotent, also under a double click or two tabs: the first step claims the listing by writing its property mapping row with status `PROVISIONING`, under a unique key on `domitsPropertyId` (the entity has none today, so a migration adds it). A second request at the same time fails on that key and gets "already in progress"; a later one finds the existing rows and creates nothing. Only after the claim does the backend call Channex. If a step fails halfway, the next attempt continues from the first missing object (each created id is stored before the next call).
 
 Cost: Channex bills a vacation rental at $0.50 per unit per month, only once the property has an active channel. Creating it ahead costs nothing.
 
@@ -105,7 +107,7 @@ Otherwise the tab shows what is missing ("Publish your listing first", "Add the 
 
 ### D4. Timezone: from the country, the host picks only where a country has several
 
-Channex needs a timezone per property; Domits stores none. The backend derives it from the listing's country. For countries with several timezones (United States, Canada, Australia, Brazil, Mexico, Indonesia, Russia), the host picks one when turning on distribution. No change to the listing form or the database for other hosts.
+Channex needs a timezone per property; Domits stores none. The backend derives it from the listing's country. For countries with several timezones (United States, Canada, Australia, Brazil, Mexico, Indonesia, Russia, and Spain, Portugal, Chile and Ecuador because of the Canary Islands, the Azores and Madeira, Easter Island and the Galápagos), the host picks one when turning on distribution. No change to the listing form or the database for other hosts.
 
 ### D5. Toggle off closes the listing on that OTA first, then disconnects
 
@@ -123,7 +125,9 @@ Toggle OFF ─▶ "Are you sure?" ─▶ yes
    ▼ outbox worker, every minute: DISCONNECTING for more than 15 min? ─▶ deactivate, row = DISCONNECTED
 ```
 
-The confirm text: "Booking.com will be disconnected. Your listing there will be closed for new bookings. Existing bookings stay valid, but changes to them will not reach Domits. To keep selling on Booking.com yourself, reopen your dates in the Booking.com extranet."
+The confirm text: "Booking.com will be disconnected. Your listing there will be closed for new bookings. Existing bookings stay valid, but changes to them will not reach Domits. To keep selling on Booking.com yourself, reopen your dates in the Booking.com extranet." For Airbnb and Vrbo the last sentence says "in your Airbnb calendar" / "in your Vrbo calendar". When the listing has upcoming bookings from that OTA (`booking_source`), the dialog adds "You have N upcoming bookings from Booking.com."
+
+If the host deactivates the channel inside Channex's own screen instead (Q1b: can that button be hidden), stop_sell is skipped. Domits notices it on the next refresh or reconciliation and shows "Needs attention: disconnected outside Domits", telling the host to close the dates in the OTA themselves. Domits cannot close them once the channel is off.
 
 The 15 minutes is a first guess. The staging test (section 9) measures how long the close takes, and the number is set from that.
 
@@ -165,6 +169,8 @@ Extra build step from this decision: reconnect resets all account rows with the 
 
 ### D9. A listing that stops being live is disconnected everywhere
 
+Live means status ACTIVE. Not live: INACTIVE, ARCHIVED, REJECTED, PENDING_REVIEW. Editing a live listing does not change its status: a submit for review only starts from INACTIVE, REJECTED or ARCHIVED (`SUBMITTABLE_FOR_REVIEW_STATUSES` in `PropertyHandler/util/propertyStatus.js`), so a normal edit never disconnects anything.
+
 When a listing leaves ACTIVE (the host deactivates or archives it, or an admin rejects it), every connected OTA goes through the D5 flow: close, then disconnect. A listing that comes back is connected again by the host. Reason: an archived listing must never stay for sale on an OTA, and one flow is simpler than a paused state.
 
 How it is noticed: reconciliation in the outbox worker, not an event from PropertyHandler. Status is written in more than one place (`propertyRepository.updatePropertyStatus`, called for status changes and for archiving, and a second compare-and-swap update in the same repository), and a missed path would leave an archived listing for sale without any symptom. Every minute the worker compares the two states and repairs the difference:
@@ -181,7 +187,7 @@ Each job in the worker has its own cap per run (for example, 10 channels); the r
 
 ### D10. Listing edits reach Channex through the outbox
 
-When a host saves a listing with distribution on and the title, address or max guests changed, PropertyHandler writes one outbox row of a new kind, `LISTING_DETAILS`, in the same save. The worker updates the Channex property, room type and rate plan. The host's save never waits for Channex or fails because of it; a failed update follows the existing retry and back-off and shows in the health view.
+When a host saves a listing with distribution on and the title, address, max guests or property type changed, PropertyHandler writes one outbox row of a new kind, `LISTING_DETAILS`, in the same save. The worker updates the Channex property, room type and rate plan. The host's save never waits for Channex or fails because of it; a failed update follows the existing retry and back-off and shows in the health view.
 
 Open for the build step: outbox rows are built around date ranges today, so the new kind needs a row-kind column or nullable dates.
 
@@ -193,11 +199,23 @@ All under `/integrations/channex/host/...`, Cognito-authenticated. Every route c
 |---|---|---|
 | GET | `/host/listings` | The host's listings with distribution status, D3 readiness and channels (D7) |
 | POST | `/host/listings/{propertyId}/distribution` | Turn on: D3 check, provisioning (D2), account row (D8). Idempotent. Body carries the timezone only where D4 needs it |
-| POST | `/host/listings/{propertyId}/connect-session` | A one-time token and iframe URL for this listing's Channex property |
+| POST | `/host/listings/{propertyId}/connect-session` | A one-time token and iframe URL for this listing's Channex property. The frontend calls `refresh` whenever the modal closes, whether or not Channex sends a message when the host finishes |
 | POST | `/host/listings/{propertyId}/channels/refresh` | After the iframe closes, and on Refresh: read the property's channels from Channex (`GET /channels?filter[property_id]=…`) and store or update the rows. An active channel that still carries stop_sell from an earlier disconnect gets the rule removed |
 | POST | `/host/channels/{channelId}/disconnect` | Toggle off (D5) |
 
 Responses never contain API keys or other hosts' data.
+
+### Screens and states (for frontend and design)
+
+Suggested pages were shared in the group chat on 18 Nov; Ilan owns the final design.
+
+- Distribution page: listing picker, one card per OTA (Booking.com, Airbnb, Vrbo) with a switch and one of the D7 states (not connected, Syncing…, Live, Disconnecting…, Needs attention), a Refresh button, and a "Sync status" card (coming soon).
+- Listing not ready (D3): one notice instead of the cards, saying what is missing.
+- Timezone picker (D4): only for listings in a multi-timezone country, on the first switch.
+- Connect checklist per OTA: the prerequisites as checkboxes (Booking.com: Channex chosen as connectivity provider; Airbnb: account owner, no other channel manager; Vrbo: not linked to another PMS, no iCal links).
+- Channex connection screen in a modal; closing it calls `refresh`.
+- Disconnect confirm (D5), with the upcoming-bookings line when there are any.
+- Setup failed halfway (D2): "Something went wrong while setting up. Try again." The next attempt resumes.
 
 ## 7. Security
 
@@ -215,7 +233,7 @@ Responses never contain API keys or other hosts' data.
 
 ## 9. Testing and verification
 
-- Unit tests per route: owner check; D3 readiness; idempotent provisioning; a failed step resumes; disconnect sets stop_sell and never deactivates directly; the worker deactivates only rows `DISCONNECTING` for more than the wait time; reconnect resets every row sharing the secret; `refresh` removes a leftover stop_sell from an active channel; a listing-details save writes one outbox row only when distribution is on.
+- Unit tests per route: owner check; D3 readiness; idempotent provisioning, including two requests at the same time creating one Channex property; the disconnect confirm data with and without upcoming bookings; a failed step resumes; disconnect sets stop_sell and never deactivates directly; the worker deactivates only rows `DISCONNECTING` for more than the wait time; reconnect resets every row sharing the secret; `refresh` removes a leftover stop_sell from an active channel; a listing-details save writes one outbox row only when distribution is on.
 - D4 timezone: a single-zone country (Netherlands → `Europe/Amsterdam`); a multi-zone country without the host's choice is refused with "pick a timezone"; with the choice it is used; an unknown country is refused, not guessed.
 - D7 labels as one pure function (row status, Channex active, waiting rows, stop_sell in; label out), table-tested like `evaluateChannexHealth` in `channexHealthStatus.js`, including "Disconnected outside Domits".
 - D9 reconciliation: a listing that is not live with an active channel goes to `DISCONNECTING`; a live listing is left alone; a live listing's active channel with a leftover stop_sell gets it removed; the cap per run holds.
@@ -231,7 +249,7 @@ Responses never contain API keys or other hosts' data.
 
 1. This note reviewed by Rakib, Ilan and Stefan; Q1 sent to Channex support.
 2. Staging test of stop_sell and its timing (section 9).
-3. D3 readiness check, provisioning (D2), timezone (D4), account rows (D8), with tests.
+3. D3 readiness check, the unique key on the property mapping table, provisioning (D2), timezone (D4), account rows (D8), with tests.
 4. Connect: `connect-session` and `refresh` (D1, D6, D7).
 5. Worker time budget and row caps (#3927), before the worker gets new jobs.
 6. Disconnect: route plus the worker step (D5), then the D9 reconciliation.
