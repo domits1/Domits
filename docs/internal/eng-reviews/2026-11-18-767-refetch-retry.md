@@ -118,3 +118,35 @@ ChatScreen.handleAttachmentError ──▶ refreshAttachments(contact, thread, m
 ### Verification
 
 New tests were red first (9 failed): the hook refetches and shows the fresh URL, asks once per message, makes one request for several messages of a thread, does not retry a failed refetch, does nothing without a message, thread or partner id; `ChatMessage` reports a failed image and ignores a `blob:` one; `ChatScreen` calls the hook with the contact, thread and message id. Full web suite with `--testTimeout=30000`: 270 suites and 3619 tests passed, 6 suites and 47 tests skipped.
+
+## Commit 3: findBy queries in ChatScreen tests
+
+Reviewed: the staged diff (`ChatScreen.test.js`, this record)
+
+### Decision
+
+SonarCloud rule `javascript:S9020` flags `waitFor` wrapped around a `getBy` query. Three assertions in `ChatScreen.test.js` (the delivered tick and two waits for the Retry button) now use `await screen.findByText` / `findByRole`, which retry the query until it matches. The assertions, the queries and the wait conditions are unchanged. No production code changes.
+
+### Findings
+
+| Finding | Confidence | Resolution |
+|---|---|---|
+| None blocking. `findBy` uses the default 1s timeout, the same as `waitFor`. | 9/10 | All three passed in the full run. |
+
+### Not in scope
+
+- The other `waitFor` calls in the file, which wrap `expect` on state or on mock calls and are not flagged.
+
+### What already exists
+
+- The same replacement was made earlier on `fix/767-send-role-from-thread` (the `findByRole` pattern).
+
+### Failure modes
+
+| Path | Failure | Test | Handling | User sees |
+|---|---|---|---|---|
+| Tick or Retry button never appears | Test passes without the element | Yes | `findBy` rejects after 1s | A failing test |
+
+### Verification
+
+Full web suite with `--testTimeout=30000`: 270 suites and 3619 tests passed, 6 suites and 47 tests skipped.

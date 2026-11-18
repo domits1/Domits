@@ -828,9 +828,7 @@ describe("ChatScreen reservation messaging", () => {
             send.resolve({ success: true, saved: { id: "message-1", threadId: "thread-1", deliveryStatus: "sent" } })
           );
 
-          await waitFor(() =>
-            expect(screen.getByText("✓", { selector: ".message-status", exact: true })).toBeInTheDocument()
-          );
+          expect(await screen.findByText("✓", { selector: ".message-status", exact: true })).toBeInTheDocument();
           expect(sentImage()).toHaveAttribute("src", "blob:photo-preview");
           expect(URL.revokeObjectURL).not.toHaveBeenCalled();
         });
@@ -842,7 +840,7 @@ describe("ChatScreen reservation messaging", () => {
           renderHostChat();
 
           sendWithPreview();
-          await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument());
+          expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
           expect(sentImage()).toHaveAttribute("src", "blob:photo-preview");
           expect(URL.revokeObjectURL).not.toHaveBeenCalled();
 
@@ -858,7 +856,7 @@ describe("ChatScreen reservation messaging", () => {
           mockSendMessage.mockResolvedValueOnce({ success: false, error: "network error" });
           const { unmount } = render(hostChat());
           sendWithPreview();
-          await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument());
+          expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
 
           unmount();
 
