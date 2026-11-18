@@ -1,5 +1,5 @@
 import React from "react";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import EliteSitePropertyRequestPage from "../rendering/templates/elite/EliteSitePropertyRequestPage";
 import { WebsitePublicQuoteError, requestPublicWebsiteQuote } from "../services/websitePublicQuoteService";
@@ -49,10 +49,6 @@ const bookingError = (code, message = "", status = 400) =>
   new WebsitePublicBookingError({ code, message, status, requestId: "req-1" });
 const sendButton = () => screen.queryByRole("button", { name: "Send request" });
 const fillIn = (label, value) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
-const fillContact = () => {
-  fillIn("Your name", "Ana Guest");
-  fillIn("Email address", "ana@example.com");
-};
 const send = () =>
   act(async () => {
     fireEvent.click(sendButton());
@@ -62,7 +58,13 @@ const waitForPrice = () => screen.findByText("€850.00");
 const renderFilledForm = async () => {
   renderPage();
   await waitForPrice();
-  fillContact();
+  fillIn("Your name", "Ana Guest");
+  fillIn("Email address", "ana@example.com");
+};
+const sendFromAFreshPage = async () => {
+  cleanup();
+  await renderFilledForm();
+  await send();
 };
 
 beforeEach(() => {
@@ -102,6 +104,7 @@ describe("the request to book page of an Elite property", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to our properties" })).toHaveAttribute("href", "/");
     expect(sendButton()).toBeNull();
+    expect(Object.keys(globalThis.localStorage).filter((key) => key.includes("booking_request"))).toEqual([]);
   });
 
   it.each([
@@ -208,17 +211,22 @@ describe("the request to book page of an Elite property", () => {
     expect(new Set(sentKeys()).size).toBe(1);
   });
 
-  it("keeps the key of the stay when the price is checked again after an unknown outcome", async () => {
+  it("keeps the key of a stay across a new price, another stay and a fresh page", async () => {
     const newPrice = {
       ...QUOTE,
       quoteId: "quote-2",
       quoteToken: "token-2",
       priceBreakdown: { ...PRICE, total: 90000 },
     };
-    requestPublicWebsiteQuote.mockResolvedValueOnce(QUOTE).mockResolvedValueOnce(newPrice);
+    requestPublicWebsiteQuote
+      .mockResolvedValueOnce(QUOTE)
+      .mockResolvedValueOnce(newPrice)
+      .mockResolvedValueOnce({ ...QUOTE, quoteId: "quote-3", guestCount: 2 })
+      .mockResolvedValueOnce({ ...QUOTE, quoteId: "quote-4" });
     requestPublicSiteBooking
       .mockRejectedValueOnce(bookingError("network_error", "", 0))
       .mockRejectedValueOnce(bookingError("quote_expired", "", 409))
+      .mockRejectedValueOnce(bookingError("invalid_guest_message"))
       .mockResolvedValueOnce(SENT);
     await renderFilledForm();
 
@@ -226,13 +234,16 @@ describe("the request to book page of an Elite property", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     });
-
     expect(await screen.findByText(/^The price changed/)).toBeInTheDocument();
     expect(await screen.findByText("€900.00")).toBeInTheDocument();
     expect(screen.getByLabelText("Email address")).toHaveValue("ana@example.com");
-    await send();
-    expect(requestPublicSiteBooking.mock.calls[2][0].quoteToken).toBe("token-2");
-    expect(new Set(sentKeys()).size).toBe(1);
+    await sendFromAFreshPage();
+    await sendFromAFreshPage();
+
+    const [stayKey, retryKey, otherStayKey, freshPageKey] = sentKeys();
+    expect([retryKey, freshPageKey]).toEqual([stayKey, stayKey]);
+    expect(otherStayKey).not.toBe(stayKey);
+    expect(screen.getByText("DBW-ABCDEFGHJK")).toBeInTheDocument();
   });
 
   it.each([

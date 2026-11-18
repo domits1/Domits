@@ -14,7 +14,6 @@ export default function EliteSitePropertyRequestPage({ sitePropertyPage, headerT
   const { title, overviewHref, propertyHref, booking, stay } = sitePropertyPage;
   const [isSent, setIsSent] = useState(false);
   const markSent = useCallback(() => setIsSent(true), []);
-  const location = resolveEliteLocation(model);
 
   return (
     <div
@@ -51,7 +50,7 @@ export default function EliteSitePropertyRequestPage({ sitePropertyPage, headerT
           />
         </Suspense>
       </section>
-      <EliteFooter title={model.site.title} location={location} />
+      <EliteFooter title={model.site.title} location={resolveEliteLocation(model)} />
     </div>
   );
 }

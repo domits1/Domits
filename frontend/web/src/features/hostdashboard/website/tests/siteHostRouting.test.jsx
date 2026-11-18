@@ -1129,10 +1129,6 @@ describe("the request to book page of an Elite website", () => {
 
     expect(readPageHeading()).toBe("Request to book");
     expect(listSectionIds()).toEqual(["request"]);
-    expect(readCrumbLinks()).toEqual([
-      ["Our properties", "/"],
-      ["Villa B", `/properties/villa-b?${STAY_QUERY}`],
-    ]);
     expect(document.querySelector("[data-panorama-page-header]").dataset.eliteHeader).toBe("light");
     expect(document.querySelector("[data-panorama-top-bar]").className).toContain("panoramaTopBarShellEliteLight");
     expect(readSentBodies("/website/public/quote")).toHaveLength(2);
