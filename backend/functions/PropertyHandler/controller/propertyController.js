@@ -3407,11 +3407,12 @@ export class PropertyController {
     async createPublicWebsiteQuoteBatch({ site, propertyIds, requestBody, requestId }) {
         const servedOtherIds = await this.getWebsiteSitePropertySnapshots().listServedOtherPropertyIds({ site, propertyIds });
         const answers = new Map();
-        const waiting = [...propertyIds];
+        let nextIndex = 0;
         let isPastDeadline = false;
         const quoteWaiting = async () => {
-            while (!isPastDeadline && waiting.length > 0) {
-                const propertyId = waiting.shift();
+            while (!isPastDeadline && nextIndex < propertyIds.length) {
+                const propertyId = propertyIds[nextIndex];
+                nextIndex += 1;
                 answers.set(propertyId, await this.quoteWebsiteBatchEntry({ site, propertyId, servedOtherIds, requestBody, requestId }));
             }
         };
