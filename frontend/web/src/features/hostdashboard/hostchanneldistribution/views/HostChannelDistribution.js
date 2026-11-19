@@ -8,6 +8,8 @@ import {
   MOCK_PREVIEW_SECTIONS_ENABLED,
   getPropertyMappingRows,
 } from "../services/channexDistributionService";
+import { MOCK_HOST_DISTRIBUTION_ENABLED } from "../services/hostDistributionApi";
+import PlatformCardsSection from "../components/PlatformCardsSection";
 import ChannexStatusCard from "../components/ChannexStatusCard";
 import LastSyncCard from "../components/LastSyncCard";
 import ComingSoonCard from "../components/ComingSoonCard";
@@ -43,8 +45,11 @@ function HostChannelDistribution() {
 
   // 403 means the host is outside the Channex allowlist: expected, so it gets the empty state.
   const isOutsideAllowlist = errorStatus === FORBIDDEN_STATUS;
-  const hasBlockingError = Boolean(error) && !isOutsideAllowlist;
-  const isConnectedOrNeedsAttention = Boolean(status) && status.status !== "NOT_CONNECTED";
+  // With the host distribution preview on, the platform cards replace everything account-level: a
+  // host provisioned by the backend has no account row to be "connected" to before the first switch.
+  const showAccountLevel = !MOCK_HOST_DISTRIBUTION_ENABLED;
+  const hasBlockingError = showAccountLevel && Boolean(error) && !isOutsideAllowlist;
+  const isConnectedOrNeedsAttention = showAccountLevel && Boolean(status) && status.status !== "NOT_CONNECTED";
 
   // Real data. Not requested at all until Channex is connected or needs attention.
   const { options: propertyOptions, loadState: propertiesLoadState } = useMappedProperties({
@@ -63,7 +68,7 @@ function HostChannelDistribution() {
   // The unavailable state (HTTP 409) deliberately shows nothing: the status card already explains it.
   const hasNoLinkedProperties = propertiesLoadState === MAPPED_PROPERTIES_STATE.LOADED && propertyOptions.length === 0;
 
-  const showEmptyState = !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
+  const showEmptyState = showAccountLevel && !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
   const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
   const showPropertyPicker = isConnectedOrNeedsAttention && propertyOptions.length > 1;
   // Without a property nothing is queried, so "No sync yet" would claim something we never checked.
@@ -126,6 +131,8 @@ function HostChannelDistribution() {
           + Add channel
         </button>
       </div>
+
+      {MOCK_HOST_DISTRIBUTION_ENABLED && <PlatformCardsSection />}
 
       {hasBlockingError && (
         <div className="host-chdist__error" role="alert">
