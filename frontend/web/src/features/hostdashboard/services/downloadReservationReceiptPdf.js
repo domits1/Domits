@@ -22,7 +22,8 @@ const formatDate = (value) => {
   });
 };
 
-const formatMoney = (amount) => `EUR ${Number(amount || 0).toFixed(2)}`;
+// No currency is a Domits booking or one from before #3583, which are in euros.
+const formatMoney = (amount, currency) => `${currency || "EUR"} ${Number(amount || 0).toFixed(2)}`;
 
 const normalizeText = (value, fallback = "unavailable") => {
   const normalized = String(value || "").trim();
@@ -297,9 +298,12 @@ export async function downloadReservationReceiptPdf(receipt) {
     writeWrappedValue(doc, cursor, "Nights", String(receipt.nights));
     writeWrappedValue(doc, cursor, "Cleaning fee", formatMoney(receipt.cleaningFee));
   }
-  writeWrappedValue(doc, cursor, "Total", formatMoney(receipt.total));
+  writeWrappedValue(doc, cursor, "Total", formatMoney(receipt.total, receipt.currency));
   writeWrappedValue(doc, cursor, "Payment status", receipt.paymentStatusLabel);
-  writeWrappedValue(doc, cursor, "Payment date", formatDate(receipt.paymentDate));
+  if (receipt.refundStatusText) {
+    writeWrappedValue(doc, cursor, receipt.refundStatusLabel || "Refund status", receipt.refundStatusText);
+  }
+  writeWrappedValue(doc, cursor, receipt.paymentDateLabel || "Payment date", formatDate(receipt.paymentDate));
   writeWrappedValue(doc, cursor, "Payment method", receipt.paymentMethod);
 
   writeSectionHeader(doc, cursor, "Policies");

@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
 import { StaticPageWorker } from "../../functions/PropertyHandler/business/service/staticPageWorker.js";
 import { StaticPageStore } from "../../functions/PropertyHandler/data/repository/staticPageStore.js";
 import { StaticPageWithdrawal } from "../../functions/PropertyHandler/business/service/staticPageWithdrawal.js";
@@ -90,6 +90,7 @@ const buildWorker = ({
         hostnames: domains.map((domain) => domain.domain),
         invalidationErrors: [],
       })),
+      invalidatePages: jest.fn(async () => []),
     },
     redirects,
   };
@@ -250,6 +251,17 @@ describe("StaticPageWorker", () => {
       failed: 0,
       errors: [{ siteId: "site-1", revision: 4, message: "connection lost" }],
     });
+  });
+
+  it("reports site pages a withdrawal could not list, so the run fails loudly, without retrying the withdrawal", async () => {
+    const { worker, outbox, withdrawal } = buildWorker({ sites: [buildSite({ status: "PREVIEW" })] });
+    const failure = { siteId: "site-1", hostname: FALLBACK.domain, message: "SITE_PAGES_UNLISTED: AccessDenied" };
+    withdrawal.withdraw.mockResolvedValueOnce({ invalidationErrors: [], sitePageErrors: [failure] });
+
+    const summary = await worker.run();
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "WITHDRAWN" });
+    expect(summary).toEqual({ ...EMPTY_SUMMARY, listed: 1, withdrawn: 1, errors: [{ ...failure, revision: 4 }] });
   });
 
   it("reports an invalidation that failed after a withdrawal, so the run fails loudly, without retrying the withdrawal", async () => {
@@ -565,6 +577,10 @@ const buildBucket = (objects = {}) => {
         bucket.objects.delete(Key);
         return {};
       }
+      if (command instanceof ListObjectsV2Command) {
+        const keys = [...bucket.objects.keys()].filter((key) => key.startsWith(command.input.Prefix));
+        return { Contents: keys.map((key) => ({ Key: key })), IsTruncated: false };
+      }
       throw new Error(`unexpected ${command.constructor.name}`);
     }),
   };
@@ -812,5 +828,106 @@ describe("keeping the redirects of a site in step with its pages", () => {
 
     expect(await worker.run()).toMatchObject({ built: 1 });
     expect(client.state.keys.get(FALLBACK.domain)).toBe(CUSTOM.domain);
+  });
+});
+
+describe("telling CloudFront about a page the worker wrote", () => {
+  beforeEach(() => {
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  it("invalidates every active host of the site only after the page is marked active", async () => {
+    const { worker, outbox, withdrawal } = buildWorker();
+    const statusWhenAsked = [];
+    withdrawal.invalidatePages.mockImplementation(async () => {
+      statusWhenAsked.push(outbox.table.get("site-1").status);
+      return [];
+    });
+
+    const summary = await worker.run();
+
+    expect(withdrawal.invalidatePages.mock.calls).toEqual([[[FALLBACK.domain, CUSTOM.domain]]]);
+    expect(statusWhenAsked).toEqual(["ACTIVE"]);
+    expect(summary).toEqual({ ...EMPTY_SUMMARY, listed: 1, built: 1 });
+  });
+
+  it("invalidates the hosts of each site it built in one run, each after its own page", async () => {
+    const seaView = {
+      domain: "sea-view-site-2.direct.domits.com",
+      domainType: "FALLBACK",
+      status: "ACTIVE",
+      isPrimary: true,
+    };
+    const { worker, domainRepository, withdrawal } = buildWorker({
+      rows: [buildJob(), buildJob({ siteId: "site-2" })],
+      sites: [buildSite(), buildSite({ id: "site-2" })],
+    });
+    domainRepository.listDomainsBySiteId.mockImplementation(async (siteId) =>
+      siteId === "site-2" ? [seaView] : [FALLBACK, CUSTOM]
+    );
+
+    expect(await worker.run()).toMatchObject({ built: 2, errors: [] });
+    expect(withdrawal.invalidatePages.mock.calls).toEqual([[[FALLBACK.domain, CUSTOM.domain]], [[seaView.domain]]]);
+  });
+
+  it("keeps the page active and reports each host or tenant CloudFront could not invalidate", async () => {
+    const { worker, outbox, withdrawal } = buildWorker();
+    withdrawal.invalidatePages.mockResolvedValue([
+      { hostname: FALLBACK.domain, message: "no tenant serves this hostname" },
+      { tenantId: "dt_custom", message: "Throttling" },
+    ]);
+
+    const summary = await worker.run();
+
+    expect(outbox.table.get("site-1").status).toBe("ACTIVE");
+    expect(summary).toEqual({
+      ...EMPTY_SUMMARY,
+      listed: 1,
+      built: 1,
+      errors: [
+        {
+          siteId: "site-1",
+          revision: 4,
+          message: `INVALIDATION_FAILED: ${FALLBACK.domain}: no tenant serves this hostname`,
+        },
+        { siteId: "site-1", revision: 4, message: "INVALIDATION_FAILED: dt_custom: Throttling" },
+      ],
+    });
+  });
+
+  it("keeps the page active when asking CloudFront throws, and reports it", async () => {
+    const { worker, outbox, withdrawal } = buildWorker();
+    withdrawal.invalidatePages.mockImplementation(() => {
+      throw new Error("socket hang up");
+    });
+
+    const summary = await worker.run();
+
+    expect(outbox.table.get("site-1")).toMatchObject({ status: "ACTIVE", attemptCount: 1 });
+    expect(summary).toMatchObject({
+      built: 1,
+      errors: [{ siteId: "site-1", revision: 4, message: "INVALIDATION_FAILED: socket hang up" }],
+    });
+  });
+
+  it("asks CloudFront nothing for a build that failed, so the retry asks once", async () => {
+    const { worker, renderer, withdrawal } = buildWorker();
+    renderer.render.mockRejectedValueOnce(new Error("boom"));
+
+    expect(await worker.run()).toMatchObject({ failed: 1 });
+    expect(withdrawal.invalidatePages).not.toHaveBeenCalled();
+  });
+
+  it("asks CloudFront nothing when the host published again or unpublished during the build; the newer job does", async () => {
+    const { worker, outbox, pageStore, withdrawal } = buildWorker();
+    pageStore.putPage.mockImplementationOnce(async () => {
+      publishAgainWhileBuilding(outbox);
+    });
+
+    const summary = await worker.run();
+
+    expect(summary).toMatchObject({ superseded: 1, built: 0 });
+    expect(outbox.table.get("site-1")).toMatchObject({ revision: 5, status: "PENDING" });
+    expect(withdrawal.invalidatePages).not.toHaveBeenCalled();
   });
 });

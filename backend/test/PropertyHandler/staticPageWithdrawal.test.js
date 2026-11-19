@@ -27,6 +27,7 @@ const buildWithdrawal = ({
   log = [],
 } = {}) => {
   const pageStore = {
+    listSitePages: jest.fn(async () => ({})),
     deletePage: jest.fn(async ({ hostname }) => log.push(`delete:${hostname}`)),
     putSitemap: jest.fn(async () => undefined),
   };
@@ -58,6 +59,7 @@ describe("StaticPageWithdrawal", () => {
       hostnames: [FALLBACK.domain, CUSTOM.domain],
       invalidationErrors: [],
       redirectErrors: [],
+      sitePageErrors: [],
     });
   });
 
@@ -288,6 +290,38 @@ describe("StaticPageWithdrawal", () => {
     expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => [call.tenantId, call.paths])).toEqual([
       ["dt_wildcard", withdrawnPaths(FALLBACK.domain)],
       ["dt_custom", withdrawnPaths(CUSTOM.domain)],
+    ]);
+  });
+});
+
+describe("telling CloudFront that a page was written again", () => {
+  const writtenPaths = (hostname) => [`/sites/by-host/${hostname}/index.html`, "/", "/index.html"];
+
+  it("invalidates the page key, the root and /index.html of each host once, on the tenant that serves it", async () => {
+    const { withdrawal, pageStore, tenantRepository } = buildWithdrawal();
+
+    const errors = await withdrawal.invalidatePages([FALLBACK.domain, CUSTOM.domain, CUSTOM.domain]);
+
+    expect(errors).toEqual([]);
+    expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => [call.tenantId, call.paths])).toEqual([
+      ["dt_wildcard", writtenPaths(FALLBACK.domain)],
+      ["dt_custom", writtenPaths(CUSTOM.domain)],
+    ]);
+    expect(tenantRepository.createInvalidation.mock.calls.map(([call]) => call.callerReference)).toEqual([
+      expect.stringMatching(/^publish-/),
+      expect.stringMatching(/^publish-/),
+    ]);
+    expect(pageStore.deletePage).not.toHaveBeenCalled();
+    expect(pageStore.putSitemap).not.toHaveBeenCalled();
+  });
+
+  it("answers a host no tenant serves and a refused invalidation as errors instead of throwing", async () => {
+    const { withdrawal, tenantRepository } = buildWithdrawal({ tenants: [] });
+    tenantRepository.createInvalidation.mockRejectedValueOnce(new Error("Throttling"));
+
+    expect(await withdrawal.invalidatePages([FALLBACK.domain, CUSTOM.domain])).toEqual([
+      { hostname: FALLBACK.domain, message: "no tenant serves this hostname" },
+      { tenantId: "dt_custom", message: "Throttling" },
     ]);
   });
 });

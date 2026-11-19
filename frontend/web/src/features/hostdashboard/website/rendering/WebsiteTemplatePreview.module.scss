@@ -1,3 +1,5 @@
+@use "./templates/elite/eliteFonts" as elite-fonts;
+
 .previewShell {
   display: grid;
   gap: 18px;
@@ -856,6 +858,16 @@
   box-shadow: inset 0 0 0 1px rgba(31, 78, 121, 0.18);
 }
 
+.panoramaTopBarShell .templateTopBarNav [aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.45em;
+}
+
+.panoramaTopBarDrawerNav [aria-current="page"] {
+  box-shadow: inset 0 0 0 2px rgba(31, 78, 121, 0.36);
+}
+
 .panoramaTopBarShellTransparent .templateTopBar {
   background: transparent;
   box-shadow: none;
@@ -892,6 +904,35 @@
 .panoramaTopBarShellSolid .templateTopBarNav a,
 .panoramaTopBarShellSolid .templateTopBarMeta span {
   color: #334155;
+}
+
+.panoramaTopBarShellElite .templateTopBarBrand {
+  font-family: elite-fonts.$elite-serif-stack;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.panoramaTopBarShellElite .templateTopBarNav span,
+.panoramaTopBarShellElite .templateTopBarNav a {
+  font-family: elite-fonts.$elite-sans-stack;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.panoramaTopBarShellElite.panoramaTopBarShellSolid .templateTopBar {
+  background: #f7f4ee;
+}
+
+.panoramaTopBarShellEliteLight .templateTopBarBrand,
+.panoramaTopBarShellEliteLight .templateTopBarNav span,
+.panoramaTopBarShellEliteLight .templateTopBarNav a,
+.panoramaTopBarShellElite.panoramaTopBarShellSolid .templateTopBarBrand,
+.panoramaTopBarShellElite.panoramaTopBarShellSolid .templateTopBarNav span,
+.panoramaTopBarShellElite.panoramaTopBarShellSolid .templateTopBarNav a {
+  color: #1c1b19;
+  text-shadow: none;
 }
 
 .panoramaEditorialHero {

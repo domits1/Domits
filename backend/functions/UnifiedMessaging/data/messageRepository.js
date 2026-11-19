@@ -1,6 +1,7 @@
 import Database from "../.shared/integrations/ORM/index.js";
 import { UnifiedMessage } from "database/models/unified/messaging/UnifiedMessage";
 import { randomUUID } from "node:crypto";
+import { serializeAttachments } from "../util/storedAttachments.js";
 
 export const PLATFORM_MESSAGE_UNIQUE_INDEX = "idx_unified_message_platform_message_unique";
 
@@ -36,7 +37,7 @@ class MessageRepository {
         createdAt,
         isRead: data.isRead ?? false,
         metadata: data.metadata ?? null,
-        attachments: data.attachments ?? null,
+        attachments: serializeAttachments(data.attachments),
         deliveryStatus: data.deliveryStatus || "pending",
         direction: data.direction ?? null,
         externalCreatedAt: data.externalCreatedAt ?? null,
@@ -75,13 +76,11 @@ class MessageRepository {
     }
 
     try {
-      await this.createMessage(data);
+      return await this.createMessage(data);
     } catch (error) {
       if (isPlatformMessageUniqueError(error)) return false;
       throw error;
     }
-
-    return true;
   }
 
   async findByPlatformMessageId(platformMessageId) {
@@ -254,6 +253,29 @@ class MessageRepository {
       .orderBy("message.createdAt", "DESC")
       .addOrderBy("message.id", "DESC")
       .getOne();
+  }
+
+  async getMessageById(messageId) {
+    if (!messageId) return null;
+    const client = await Database.getInstance();
+    return client.getRepository(UnifiedMessage).findOne({ where: { id: messageId } });
+  }
+
+  async claimFailedMessageForRetry(messageId) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(UnifiedMessage)
+      .set({ deliveryStatus: "pending" })
+      .where({ id: messageId, deliveryStatus: "failed" })
+      .execute();
+    return result?.affected ?? 0;
+  }
+
+  async updateDeliveryResult(messageId, patch) {
+    const client = await Database.getInstance();
+    await client.createQueryBuilder().update(UnifiedMessage).set(patch).where({ id: messageId }).execute();
+    return this.getMessageById(messageId);
   }
 
   async markMessageUnread(messageId) {

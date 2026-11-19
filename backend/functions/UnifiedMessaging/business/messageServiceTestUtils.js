@@ -3,6 +3,9 @@ export const createMockMessageRepository = () => ({
   getMessagesByThreadId: jest.fn(),
   markThreadMessagesRead: jest.fn(),
   getUnreadCountsForThreads: jest.fn(),
+  getMessageById: jest.fn(),
+  claimFailedMessageForRetry: jest.fn(),
+  updateDeliveryResult: jest.fn(),
 });
 
 export const createMockThreadRepository = () => ({

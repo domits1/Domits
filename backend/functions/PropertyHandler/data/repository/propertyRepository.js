@@ -8,9 +8,31 @@ import {Property} from "database/models/Property";
 import {Property_Moderation_Event} from "database/models/Property_Moderation_Event";
 import {randomUUID} from "node:crypto";
 import {withDsqlRetry} from "../../.shared/dsqlRetry.js";
+import {
+    applyListingCursor,
+    joinLatestApproval,
+    orderByListingPosition,
+} from "./listingPosition.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
 const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
+const MODERATION_HISTORY_LIMIT = 50;
+
+const isValidSchemaName = (value) => typeof value === "string" && /^[A-Za-z_]\w*$/.test(value.trim());
+
+const resolveSchemaName = (client) => {
+    if (process.env.TEST === "true") {
+        return "test";
+    }
+    const schema = client?.options?.schema;
+    if (isValidSchemaName(schema)) {
+        const normalized = schema.trim().toLowerCase();
+        return normalized === "public" ? "main" : normalized;
+    }
+    return "main";
+};
+
+const qualifiedPropertyTable = (schemaName) => `"${schemaName}"."property"`;
 
 export class PropertyRepository {
 
@@ -41,13 +63,14 @@ export class PropertyRepository {
         return result ? result : null;
     }
 
-    async getArchiveMetadataColumns(client) {
+    async getArchiveMetadataColumns(client, schemaName) {
         const result = await client.query(
             `SELECT column_name
              FROM information_schema.columns
-             WHERE table_schema = current_schema()
+             WHERE table_schema = $1
                AND table_name = 'property'
-               AND column_name IN ('archivedat', 'archivedby', 'archivereason')`
+               AND column_name IN ('archivedat', 'archivedby', 'archivereason')`,
+            [schemaName]
         );
         const columns = new Set();
         (Array.isArray(result) ? result : []).forEach((row) => {
@@ -96,7 +119,8 @@ export class PropertyRepository {
             .where("id = :id", { id: propertyId })
             .execute();
 
-        const archiveColumns = await this.getArchiveMetadataColumns(client);
+        const schemaName = resolveSchemaName(client);
+        const archiveColumns = await this.getArchiveMetadataColumns(client, schemaName);
         if (archiveColumns.size === 0) {
             return;
         }
@@ -117,34 +141,9 @@ export class PropertyRepository {
         metadataParams.push(propertyId);
 
         await client.query(
-            `UPDATE property SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
+            `UPDATE ${qualifiedPropertyTable(schemaName)} SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
             metadataParams
         );
-    }
-
-    // Compare-and-set: the single UPDATE only matches while the current status is one of fromStatuses,
-    // so a concurrent approval or rejection is never overwritten. Returns the number of rows changed.
-    // Only a move out of ARCHIVED clears the archive metadata; moving into ARCHIVED (which records
-    // who archived) stays with updatePropertyStatus.
-    async transitionStatus(propertyId, fromStatuses, toStatus) {
-        if (!Array.isArray(fromStatuses) || fromStatuses.length === 0) {
-            throw new TypeError("transitionStatus needs at least one from-status.");
-        }
-
-        const client = await Database.getInstance();
-        const now = Date.now();
-        const result = await client
-            .createQueryBuilder()
-            .update(Property)
-            .set({ status: toStatus, updatedat: now })
-            .where("id = :id AND status IN (:...fromStatuses)", { id: propertyId, fromStatuses })
-            .execute();
-
-        const affected = Number(result?.affected) || 0;
-        if (affected > 0 && fromStatuses.includes("ARCHIVED") && toStatus !== "ARCHIVED") {
-            await this.clearArchiveMetadata(client, propertyId, toStatus, now);
-        }
-        return affected;
     }
 
     async transitionStatusWithEvent(
@@ -162,6 +161,7 @@ export class PropertyRepository {
         }
 
         const client = await Database.getInstance();
+        const schemaName = resolveSchemaName(client);
         const eventId = randomUUID();
         const now = Date.now();
 
@@ -200,7 +200,7 @@ export class PropertyRepository {
                 }
 
                 if (currentStatus === "ARCHIVED" && toStatus !== "ARCHIVED") {
-                    await this.clearArchiveMetadata(manager, propertyId, toStatus, now);
+                    await this.clearArchiveMetadata(manager, propertyId, toStatus, now, schemaName);
                 }
 
                 await manager
@@ -224,14 +224,39 @@ export class PropertyRepository {
         );
     }
 
-    async clearArchiveMetadata(client, propertyId, status, now) {
-        const archiveColumns = await this.getArchiveMetadataColumns(client);
+    async getModerationEventsByPropertyId(propertyId) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() =>
+            client
+                .getRepository(Property_Moderation_Event)
+                .createQueryBuilder("event")
+                .select([
+                    "event.id",
+                    "event.action",
+                    "event.fromStatus",
+                    "event.toStatus",
+                    "event.reason",
+                    "event.actorId",
+                    "event.createdAt",
+                ])
+                .where("event.propertyId = :propertyId", {propertyId})
+                .orderBy("event.createdAt", "DESC")
+                .addOrderBy("event.id", "DESC")
+                .limit(MODERATION_HISTORY_LIMIT)
+                .getMany()
+        );
+    }
+
+    async clearArchiveMetadata(client, propertyId, status, now, schemaName) {
+        const archiveColumns = await this.getArchiveMetadataColumns(client, schemaName);
         const clearClauses = this.buildArchiveMetadataUpdateClauses(status, archiveColumns, {}, now, []);
         if (clearClauses.length === 0) {
             return;
         }
 
-        await client.query(`UPDATE property SET ${clearClauses.join(", ")} WHERE id = $1`, [propertyId]);
+        await client.query(`UPDATE ${qualifiedPropertyTable(schemaName)} SET ${clearClauses.join(", ")} WHERE id = $1`, [
+            propertyId,
+        ]);
     }
 
     async updatePropertyOverview(propertyId, title, subtitle, description, bookingType = undefined) {
@@ -288,12 +313,23 @@ export class PropertyRepository {
 
     async getActivePropertiesByType(type) {
         const client = await Database.getInstance();
-        const result = await client
-            .getRepository(Property)
-            .createQueryBuilder("property")
+        const query = client.getRepository(Property).createQueryBuilder("property");
+        const approvedAt = query
+            .subQuery()
+            .select("COALESCE(MAX(event.createdAt), 0)")
+            .from(Property_Moderation_Event, "event")
+            .where("event.propertyId = property.id")
+            .andWhere("event.action = :approved")
+            .getQuery();
+        const result = await query
             .innerJoin("property_type", "pt", "pt.property_id = property.id")
             .where("pt.type = :type", { type: type })
             .andWhere("property.status = :status", { status: "ACTIVE" })
+            .setParameter("approved", "APPROVED")
+            .addSelect(approvedAt, "approved_at")
+            .orderBy("approved_at", "ASC")
+            .addOrderBy("property.createdat", "DESC")
+            .addOrderBy("property.id", "DESC")
             .limit(12)
             .getMany();
 
@@ -307,23 +343,14 @@ export class PropertyRepository {
 
     async getActiveProperties(lastEvaluatedKey) {
         const client = await Database.getInstance();
-        const query = await client
+        let query = client
             .getRepository(Property)
             .createQueryBuilder("property")
-            .where("property.status = :status", { status: "ACTIVE" })
-            .orderBy("property.createdat", "DESC")
-            .addOrderBy("property.id", "DESC")
-            .limit(12)
+            .select(["property.id", "property.createdat"])
+            .where("property.status = :status", { status: "ACTIVE" });
+        query = orderByListingPosition(joinLatestApproval(query)).limit(12);
 
-        if (lastEvaluatedKey?.createdAt && lastEvaluatedKey?.id) {
-            query.andWhere(
-                "(property.createdat < :createdAt OR (property.createdat = :createdAt AND property.id < :id))",
-                {
-                    createdAt: lastEvaluatedKey.createdAt,
-                    id: lastEvaluatedKey.id,
-                }
-            );
-        }
+        query = await applyListingCursor(client, query, lastEvaluatedKey);
 
         const result = await query.getMany();
 
@@ -410,6 +437,19 @@ export class PropertyRepository {
             .getOne();
 
         return result ? PropertyBaseInfoMapping.mapDatabaseEntryToPropertyBaseInfo(result) : null;
+    }
+
+    async getLatestRejection(propertyId) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() =>
+            client
+                .createQueryBuilder(Property_Moderation_Event, "event")
+                .select(["event.reason", "event.createdAt"])
+                .where("event.propertyId = :propertyId AND event.action = :action", {propertyId, action: "REJECTED"})
+                .orderBy("event.createdAt", "DESC")
+                .limit(1)
+                .getOne()
+        );
     }
 
 }

@@ -102,6 +102,11 @@ export const Booking = new EntitySchema({
       name: "refund_error",
       nullable: true,
     },
+    refund_status: {
+      type: "varchar",
+      name: "refund_status",
+      nullable: true,
+    },
     booking_source: {
       type: "varchar",
       name: "booking_source",
@@ -148,6 +153,14 @@ export const Booking = new EntitySchema({
         from: (value) => value !== null && value !== undefined ? Number(value) : null,
         to: (value) => value,
       },
+      nullable: true,
+    },
+    // ISO 4217 code of total_price, for bookings imported from a channel in another currency (#3583).
+    // Empty means euros: every booking from before this column, and every Domits booking.
+    currency: {
+      type: "varchar",
+      length: 3,
+      name: "currency",
       nullable: true,
     },
   },

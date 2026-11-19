@@ -302,6 +302,24 @@ const parseSavedFailedMessage = (text) => {
   }
 };
 
+const postToSend = async (payload, token) => {
+  const res = await fetch(`${UNIFIED_MESSAGING_API}/send`, {
+    method: "POST",
+    headers: buildAuthHeaders(token, { requireAuth: true }),
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    const error = new Error(`UnifiedMessaging /send failed: ${res.status} ${txt}`);
+    const savedMessage = parseSavedFailedMessage(txt);
+    if (savedMessage) error.savedMessage = savedMessage;
+    throw error;
+  }
+
+  return res.json();
+};
+
 export async function sendUnifiedMessage({
   senderId,
   recipientId,
@@ -343,21 +361,11 @@ export async function sendUnifiedMessage({
     externalThreadId,
   };
 
-  const res = await fetch(`${UNIFIED_MESSAGING_API}/send`, {
-    method: "POST",
-    headers: buildAuthHeaders(token, { requireAuth: true }),
-    body: JSON.stringify(payload),
-  });
+  return postToSend(payload, token);
+}
 
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    const error = new Error(`UnifiedMessaging /send failed: ${res.status} ${txt}`);
-    const savedMessage = parseSavedFailedMessage(txt);
-    if (savedMessage) error.savedMessage = savedMessage;
-    throw error;
-  }
-
-  return res.json();
+export async function retryUnifiedMessage({ messageId, token = null }) {
+  return postToSend({ retryMessageId: messageId }, token);
 }
 
 export async function markThreadRead(threadId, idToken = null) {

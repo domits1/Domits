@@ -93,10 +93,11 @@ export class StaticPageWorker {
     }
 
     const errors = [];
+    let activeDomains = [];
     try {
       template ||= await this.pageStore.readAppShell().catch(failWith("SHELL_UNREADABLE"));
       const domains = await this.#loadDomains(site);
-      const activeDomains = this.#activeDomains(domains);
+      activeDomains = this.#activeDomains(domains);
       const mainAddress = selectDirectBookingWebsiteMainAddress(site, domains);
       const redirects = planSiteRedirects({ site, domains });
       await this.redirects.remove(redirects.deletes).catch((error) => {
@@ -118,7 +119,34 @@ export class StaticPageWorker {
       );
     }
 
-    return this.#record(job, "built", () => this.outboxRepository.markPageActive(job.siteId, job.revision), errors);
+    const result = await this.#record(
+      job,
+      "built",
+      () => this.outboxRepository.markPageActive(job.siteId, job.revision),
+      errors
+    );
+    if (result.outcome !== "built") {
+      return result;
+    }
+
+    return { ...result, errors: [...result.errors, ...(await this.#invalidatePages(job, activeDomains))] };
+  }
+
+  async #invalidatePages(job, domains) {
+    let failures;
+    try {
+      failures = await this.withdrawal.invalidatePages(domains.map(({ domain }) => domain));
+    } catch (error) {
+      failures = [{ message: error.message }];
+    }
+
+    return failures.map((failure) => ({
+      siteId: job.siteId,
+      revision: job.revision,
+      message: ["INVALIDATION_FAILED", failure.hostname || failure.tenantId, failure.message]
+        .filter(Boolean)
+        .join(": "),
+    }));
   }
 
   async #withdrawPage(job, site) {
@@ -142,6 +170,7 @@ export class StaticPageWorker {
         message: `INVALIDATION_FAILED: ${failure.hostname || failure.tenantId}: ${failure.message}`,
       })),
       ...(result.redirectErrors || []).map((failure) => ({ ...failure, revision: job.revision })),
+      ...(result.sitePageErrors || []).map((failure) => ({ ...failure, revision: job.revision })),
     ];
     return this.#record(
       job,

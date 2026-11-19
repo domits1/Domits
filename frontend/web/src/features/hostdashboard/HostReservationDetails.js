@@ -40,7 +40,9 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { updateInquiryStatus } from "./services/reservationService.js";
 import hostReservationDetailsTranslations from "./translations/hostReservationDetailsTranslations.js";
 import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
+import { OTA_DISPLAY_NAMES } from "../../utils/otaDisplayName.js";
 import { isChannexBooking, resolveChannexBookingTotal } from "./utils/reservationCalculations.js";
+import { bookingCurrencyCode, bookingCurrencyPrefix } from "./utils/bookingCurrency.js";
 
 const STATUS_CLASS = {
   PAID: styles.statusPaid,
@@ -229,6 +231,33 @@ const isFallbackTitle = (title, propertyId) => {
 
 const normalizeStringValue = (value) => String(value || "").trim();
 
+const resolveRefundStatus = (reservation) => {
+  if (reservation.status !== "CANCELLED") {
+    return null;
+  }
+
+  const hasStoredRefundStatus =
+    Object.prototype.hasOwnProperty.call(reservation, "refund_status") ||
+    Object.prototype.hasOwnProperty.call(reservation, "refundStatus");
+  if (hasStoredRefundStatus) {
+    const storedStatus = normalizeStringValue(
+      firstDefined(reservation.refund_status, reservation.refundStatus)
+    ).toLowerCase();
+    return ["refunded", "not_refunded", "unknown"].includes(storedStatus) ? storedStatus : null;
+  }
+
+  const paymentId = normalizeStringValue(firstDefined(reservation.paymentid, reservation.paymentId));
+  const refundId = normalizeStringValue(firstDefined(reservation.stripe_refund_id, reservation.stripeRefundId));
+  const refundedAmount = Number(firstDefined(reservation.refunded_amount, reservation.refundedAmount, 0));
+  const hasRefundEvidence =
+    (paymentId && !paymentId.startsWith("FAILED")) ||
+    Boolean(refundId) ||
+    (Number.isFinite(refundedAmount) && refundedAmount > 0) ||
+    Boolean(reservation.refund_error);
+
+  return hasRefundEvidence ? "unknown" : null;
+};
+
 const toDisplayValue = (value, fallback = "") => {
   const normalized = normalizeStringValue(value);
   return normalized || fallback;
@@ -259,9 +288,6 @@ const buildChannelLabel = (booking) => {
 
   return rawChannel;
 };
-
-// Channex sends some OTA names as codes; the host knows them by their brand name.
-const OTA_DISPLAY_NAMES = Object.freeze({ BookingCom: "Booking.com" });
 
 // A Channex booking was paid on the OTA, not by card through Domits (#3483).
 const buildPaymentMethod = (booking) => {
@@ -490,6 +516,7 @@ const buildReservationDetailsModel = ({ booking, propertyDetails, guestProfile }
     arrivaldate: firstDefined(booking?.arrivaldate, booking?.arrivalDate),
     departuredate: firstDefined(booking?.departuredate, booking?.departureDate),
     bookedOn: firstDefined(booking?.bookedOn, booking?.createdAt, booking?.createdat),
+    cancelledAt: firstDefined(booking?.cancelledAt, booking?.cancelled_at),
     guests: firstDefined(booking?.guests, booking?.guestCount, 0),
     guestname: normalizeStringValue(firstDefined(booking?.guestname, booking?.guestName, guestProfile?.givenName)),
     guestProfileImage: resolveGuestProfileImage({ booking, guestProfile }),
@@ -540,6 +567,7 @@ const EMPTY_RESERVATION_DETAILS = Object.freeze({
   arrivaldate: "",
   departuredate: "",
   bookedOn: "",
+  cancelledAt: null,
   guests: 0,
   guestname: "",
   guestProfileImage: "",
@@ -639,6 +667,26 @@ const buildBookedOnText = (bookedOn, isShellLoading, t) => {
   return `${t.labels.bookedOn} ${value}`;
 };
 
+// Next to "Reservation cancelled" the date must be the cancel date. Cancellations from
+// before the cancel time was stored have none; the booking date there would be wrong (#3585).
+const resolvePaymentDate = (reservation) =>
+  reservation.status === "CANCELLED" ? reservation.cancelledAt : reservation.bookedOn;
+const resolvePaymentDateLabel = (reservation, t) =>
+  reservation.status === "CANCELLED" ? t.labels.cancelledOn : t.labels.paymentDate;
+
+const buildPaymentDateText = (reservation, isShellLoading, t) => {
+  if (reservation.status === "CANCELLED") {
+    return formatShortDate(resolvePaymentDate(reservation));
+  }
+
+  return buildLoadingAwareText(
+    formatShortDate(reservation.bookedOn),
+    isShellLoading,
+    t.labels.loadingValue,
+    t.labels.unavailable
+  );
+};
+
 const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoading, t }) => {
   const statusConfig = getStatusConfig(t);
   const paymentStatusConfig = getPaymentStatusConfig(t);
@@ -657,6 +705,8 @@ const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoa
   const paymentMeta = isPaidOnChannel
     ? { ...basePaymentMeta, text: t.labels.collectedByChannel }
     : basePaymentMeta;
+  const refundStatus = resolveRefundStatus(reservation);
+  const refundStatusText = refundStatus ? t.refundStatus[refundStatus] : null;
   const title = hasDisplayValue(reservation.title) ? reservation.title : t.pageTitle;
   const guestName = hasDisplayValue(reservation.guestname) ? reservation.guestname : t.labels.guestFallbackName;
 
@@ -667,6 +717,7 @@ const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoa
     total,
     statusMeta,
     paymentMeta,
+    refundStatusText,
     channelText: reservation.channel || DEFAULT_CHANNEL,
     locationLabel: buildLocationLabel(reservation, isShellLoading, t),
     arrivalLabel: buildLoadingAwareText(
@@ -682,12 +733,7 @@ const buildReservationViewModel = ({ reservation, hasReservationData, isShellLoa
       t.labels.unavailable
     ),
     bookedOnText: buildBookedOnText(reservation.bookedOn, isShellLoading, t),
-    paymentDateText: buildLoadingAwareText(
-      formatShortDate(reservation.bookedOn),
-      isShellLoading,
-      t.labels.loadingValue,
-      t.labels.unavailable
-    ),
+    paymentDateText: buildPaymentDateText(reservation, isShellLoading, t),
     paymentMethodLabel: hasReservationData ? buildMaskedPaymentMethodLabel(reservation) : t.labels.loadingValue,
     reservationIdText: buildLoadingAwareText(
       reservation.reservationId,
@@ -726,8 +772,9 @@ const buildMessageContext = (reservation) => ({
   platform: "DOMITS",
 });
 
-const buildReservationReceiptPayload = (reservation) => {
+const buildReservationReceiptPayload = (reservation, t) => {
   const nights = calculateReservationNights(reservation.arrivaldate, reservation.departuredate);
+  const refundStatus = resolveRefundStatus(reservation);
   const total =
     reservation.channelTotal ?? nights * Number(reservation.pricePerNight || 0) + Number(reservation.cleaningFee || 0);
   const isPaidOnChannel = reservation.isChannelBooking && reservation.status === "PAID";
@@ -754,12 +801,17 @@ const buildReservationReceiptPayload = (reservation) => {
     nights,
     cleaningFee: reservation.cleaningFee,
     total,
+    // The code of the total, so the receipt does not print a booking paid in pounds as euros (#3583).
+    currency: bookingCurrencyCode(reservation),
     // The OTA sends only its total; a Domits nightly rate next to it would not add up.
     showPriceBreakdown: (reservation.channelTotal ?? null) === null,
     paymentStatusLabel: isPaidOnChannel
       ? CHANNEL_PAYMENT_STATUS_TEXT
       : RECEIPT_PAYMENT_STATUS_LABELS[reservation.status] || "Payment status unavailable",
-    paymentDate: reservation.bookedOn,
+    paymentDate: resolvePaymentDate(reservation),
+    paymentDateLabel: resolvePaymentDateLabel(reservation, t),
+    refundStatusLabel: refundStatus ? t.refundStatus.label : null,
+    refundStatusText: refundStatus ? t.refundStatus[refundStatus] : null,
     paymentMethod: buildMaskedPaymentMethodLabel(reservation),
     cancellationType: reservation.cancellationType || "Not specified",
     cancellationPolicy: reservation.cancellationPolicy || "No cancellation policy selected.",
@@ -768,6 +820,12 @@ const buildReservationReceiptPayload = (reservation) => {
 };
 
 const reservationTranslationShape = PropTypes.shape({
+  refundStatus: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    refunded: PropTypes.string.isRequired,
+    not_refunded: PropTypes.string.isRequired,
+    unknown: PropTypes.string.isRequired,
+  }).isRequired,
   buttons: PropTypes.shape({
     back: PropTypes.string.isRequired,
     messageGuest: PropTypes.string.isRequired,
@@ -791,6 +849,8 @@ const reservationTranslationShape = PropTypes.shape({
     collectedByChannel: PropTypes.string.isRequired,
     checkIn: PropTypes.string.isRequired,
     bookedOn: PropTypes.string.isRequired,
+    paymentDate: PropTypes.string.isRequired,
+    cancelledOn: PropTypes.string.isRequired,
     reservationId: PropTypes.string.isRequired,
     confirmation: PropTypes.string.isRequired,
     cleaningFee: PropTypes.string.isRequired,
@@ -869,6 +929,7 @@ const reservationShape = PropTypes.shape({
   status: PropTypes.string,
   reservationId: PropTypes.string,
   confirmationCode: PropTypes.string,
+  refund_status: PropTypes.string,
   checked_out_at: PropTypes.number,
 });
 
@@ -882,6 +943,7 @@ const viewModelShape = PropTypes.shape({
   guestCountText: PropTypes.string.isRequired,
   bookedOnText: PropTypes.string.isRequired,
   paymentDateText: PropTypes.string.isRequired,
+  refundStatusText: PropTypes.string,
   paymentMethodLabel: PropTypes.string.isRequired,
   reservationIdText: PropTypes.string.isRequired,
   confirmationText: PropTypes.string.isRequired,
@@ -1342,7 +1404,7 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
         <div className={`${styles.row} ${styles.total}`}>
           <span>{t.labels.totalPaid}</span>
           <span>
-            {"\u20AC"}
+            {bookingCurrencyPrefix(reservation)}
             {formatCurrency(viewModel.total)}
           </span>
         </div>
@@ -1358,6 +1420,13 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
           <span className={viewModel.paymentMeta.className}>{viewModel.paymentMeta.text}</span>
           <span className={styles.date}>{viewModel.paymentDateText}</span>
         </div>
+
+        {viewModel.refundStatusText ? (
+          <div className={styles.paymentStatus}>
+            <span>{t.refundStatus.label}</span>
+            <span className={styles.date}>{viewModel.refundStatusText}</span>
+          </div>
+        ) : null}
 
         <div className={styles.paymentMethod}>
           <span className={viewModel.paymentMeta.className}>{t.labels.method}</span>
@@ -1774,7 +1843,7 @@ const HostReservationDetails = () => {
     setIsDownloadingReceipt(true);
 
     try {
-      await downloadReservationReceiptPdf(buildReservationReceiptPayload(reservationData));
+      await downloadReservationReceiptPdf(buildReservationReceiptPayload(reservationData, t));
     } catch (downloadError) {
       console.error("Failed to download reservation receipt:", downloadError);
     } finally {

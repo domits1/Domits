@@ -64,10 +64,50 @@ describe("downloadReservationReceiptPdf payment section", () => {
     expect(writtenTexts).not.toContain("Cleaning fee:");
   });
 
+  // A receipt without a currency is a Domits booking or one from before #3583, so it stays in euros.
+  test.each([
+    { currency: "GBP", expected: "GBP 300.00" },
+    { currency: undefined, expected: "EUR 300.00" },
+  ])("writes the total with its currency code: $expected", async ({ currency, expected }) => {
+    await downloadReservationReceiptPdf({ ...receipt, currency, showPriceBreakdown: false });
+
+    expect(writtenTexts).toContain(expected);
+  });
+
   test("keeps the price breakdown for a Domits booking", async () => {
     await downloadReservationReceiptPdf(receipt);
 
     expect(writtenTexts).toContain("Rate per night:");
     expect(writtenTexts).toContain("Cleaning fee:");
+  });
+
+  test("labels the date with the label the receipt carries", async () => {
+    await downloadReservationReceiptPdf({ ...receipt, paymentDateLabel: "Cancelled on" });
+
+    expect(writtenTexts).toContain("Cancelled on:");
+    expect(writtenTexts).not.toContain("Payment date:");
+  });
+
+  test("includes refund status when the receipt has one", async () => {
+    await downloadReservationReceiptPdf({
+      ...receipt,
+      refundStatusLabel: "Refund status",
+      refundStatusText: "Partially refunded",
+    });
+
+    expect(writtenTexts).toContain("Refund status:");
+    expect(writtenTexts).toContain("Partially refunded");
+  });
+
+  test("omits refund status when the receipt has none", async () => {
+    await downloadReservationReceiptPdf(receipt);
+
+    expect(writtenTexts).not.toContain("Refund status:");
+  });
+
+  test("falls back to the payment date label", async () => {
+    await downloadReservationReceiptPdf(receipt);
+
+    expect(writtenTexts).toContain("Payment date:");
   });
 });

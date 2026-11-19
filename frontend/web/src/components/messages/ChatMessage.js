@@ -18,7 +18,15 @@ const DELIVERY_STATUS_INDICATORS = {
   failed: "!",
 };
 
-const ChatMessage = ({ message, userId, contactName, contactImage }) => {
+const ChatMessage = ({
+  message,
+  userId,
+  contactName,
+  contactImage,
+  onRetry,
+  onAttachmentError,
+  isRetrying = false,
+}) => {
   const { userId: senderId, text, createdAt, isSent, fileUrls, isAutomated, messageType, deliveryStatus } = message;
 
   const formatTime = (v) => {
@@ -37,6 +45,8 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
     isOutgoing = Boolean(isSent);
   }
   const isIncoming = isOutgoing === false;
+  const shownDeliveryStatus = isRetrying ? "pending" : deliveryStatus;
+  const canRetry = isOutgoing && deliveryStatus === "failed" && typeof onRetry === "function";
   const directionClass = isOutgoing ? "sent" : "received";
 
   const [modalImage, setModalImage] = useState(null);
@@ -63,6 +73,10 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
   const hasText = typeof text === "string" && text.trim().length > 0;
 
   const openImage = (url) => setModalImage(url);
+  const reportAttachmentError = (url) => {
+    if (typeof onAttachmentError !== "function" || url.startsWith("blob:")) return;
+    onAttachmentError(message);
+  };
 
   return (
     <div className={`chat-message-row ${directionClass} ${isAutomatedMessage ? "automated-message" : ""}`}>
@@ -112,7 +126,12 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
                   aria-label="Open attachment"
                   style={{ background: "transparent", border: 0, padding: 0, cursor: "pointer" }}
                 >
-                  <img src={fileUrl} alt="Attachment" className="message-image" />
+                  <img
+                    src={fileUrl}
+                    alt="Attachment"
+                    className="message-image"
+                    onError={() => reportAttachmentError(fileUrl)}
+                  />
                 </button>
               );
             })}
@@ -121,8 +140,13 @@ const ChatMessage = ({ message, userId, contactName, contactImage }) => {
 
         <div className="message-footer">
           <span>{formatTime(createdAt)}</span>
-          {isOutgoing && DELIVERY_STATUS_INDICATORS[deliveryStatus] ? (
-            <span className="message-status">{DELIVERY_STATUS_INDICATORS[deliveryStatus]}</span>
+          {isOutgoing && DELIVERY_STATUS_INDICATORS[shownDeliveryStatus] ? (
+            <span className="message-status">{DELIVERY_STATUS_INDICATORS[shownDeliveryStatus]}</span>
+          ) : null}
+          {canRetry ? (
+            <button type="button" className="message-retry-button" disabled={isRetrying} onClick={() => onRetry(message)}>
+              Retry
+            </button>
           ) : null}
         </div>
       </div>
@@ -152,6 +176,9 @@ ChatMessage.propTypes = {
   userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   contactName: PropTypes.string,
   contactImage: PropTypes.string,
+  onRetry: PropTypes.func,
+  onAttachmentError: PropTypes.func,
+  isRetrying: PropTypes.bool,
   message: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     userId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),

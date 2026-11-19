@@ -17,6 +17,7 @@ export const heroPropType = PropTypes.shape({
   eyebrow: PropTypes.string,
   title: PropTypes.string,
   description: PropTypes.string,
+  isDescriptionGenerated: PropTypes.bool,
   contentAlignment: PropTypes.string,
 });
 
@@ -137,6 +138,13 @@ export const visibilityPropType = PropTypes.shape({
 export const quoteContextPropType = PropTypes.shape({
   siteId: PropTypes.string,
 });
+
+export const sitePagesPropType = PropTypes.objectOf(
+  PropTypes.shape({
+    enabled: PropTypes.bool,
+    navLabel: PropTypes.string,
+  })
+);
 
 export const templateInteractionPropTypes = {
   onSelectTarget: PropTypes.func,

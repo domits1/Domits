@@ -12,6 +12,7 @@ import en from "../../content/en.json";
 import nl from "../../content/nl.json";
 import de from "../../content/de.json";
 import es from "../../content/es.json";
+import { GUEST_FAQ_URL, HOST_FAQ_URL } from "../../constants/externalLinks";
 
 const contentByLanguage = {
   en,
@@ -91,9 +92,9 @@ const Footer = () => {
               </Link>
             </li>
             <li>
-              <Link to="/helpdesk-guest" className="footer-links">
+              <a href={GUEST_FAQ_URL} className="footer-links">
                 {footerContent.guest.helpDeskForGuests}
-              </Link>
+              </a>
             </li>
           </ul>
         </div>
@@ -108,9 +109,9 @@ const Footer = () => {
               </Link>
             </li>
             <li>
-              <Link to="/helpdesk-host" className="footer-links">
-                {footerContent.host.helpDeskForHosts}
-              </Link>
+              <a href={HOST_FAQ_URL} className="footer-links">
+                {footerContent.host.helpdeskForHosts}
+              </a>
             </li>
           </ul>
         </div>

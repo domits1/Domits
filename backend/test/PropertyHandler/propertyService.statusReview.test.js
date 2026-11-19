@@ -19,7 +19,10 @@ const invoke = (service, method, extra = {}) =>
     : service.approveProperty(PROPERTY_ID, { actorId: ACTOR_ID, expectedUpdatedAt: UPDATED_AT, ...extra });
 
 const buildService = (initialStatus) => {
-  const row = initialStatus === null ? null : { id: PROPERTY_ID, status: initialStatus, updatedAt: UPDATED_AT };
+  const row =
+    initialStatus === null
+      ? null
+      : { id: PROPERTY_ID, status: initialStatus, updatedAt: UPDATED_AT, hostId: "host-1", title: "Sea View Cabin" };
   const transitionStatus = jest.fn(async (id, { fromStatuses, toStatus, expectedUpdatedAt }) => {
     if (!row || row.id !== id) {
       return { outcome: "not_found" };
@@ -45,7 +48,9 @@ const buildService = (initialStatus) => {
     row.status = status;
     return { ...row };
   });
-  return { service, row, transitionStatus };
+  const notifyDecision = jest.fn(async () => {});
+  service.listingReviewNotifier = { notifyDecision };
+  return { service, row, transitionStatus, notifyDecision };
 };
 
 describe("PropertyService.requestHostStatusChange", () => {
@@ -306,6 +311,67 @@ describe("PropertyService.rejectProperty reason", () => {
       expect(transitionStatus).not.toHaveBeenCalled();
     }
   );
+});
+
+describe("host notification after a review decision", () => {
+  it("notifies the host once of an approval, without a reason or the reviewer", async () => {
+    const { service, notifyDecision } = buildService(PROPERTY_STATUS.PENDING_REVIEW);
+
+    await invoke(service, "approveProperty");
+
+    expect(notifyDecision).toHaveBeenCalledTimes(1);
+    expect(notifyDecision).toHaveBeenCalledWith({
+      hostId: "host-1",
+      propertyId: PROPERTY_ID,
+      title: "Sea View Cabin",
+      outcome: "APPROVED",
+      reason: undefined,
+    });
+  });
+
+  it("notifies the host of a rejection with the trimmed reason and not the reviewer", async () => {
+    const { service, notifyDecision } = buildService(PROPERTY_STATUS.PENDING_REVIEW);
+
+    await invoke(service, "rejectProperty", { reason: "  Photos are blurry.  " });
+
+    expect(notifyDecision).toHaveBeenCalledWith({
+      hostId: "host-1",
+      propertyId: PROPERTY_ID,
+      title: "Sea View Cabin",
+      outcome: "REJECTED",
+      reason: REASON,
+    });
+    expect(JSON.stringify(notifyDecision.mock.calls)).not.toContain(ACTOR_ID);
+  });
+
+  it.each(["approveProperty", "rejectProperty"])("%s notifies nobody when the review fails", async (method) => {
+    const stale = buildService(PROPERTY_STATUS.PENDING_REVIEW);
+    await invoke(stale.service, method, { expectedUpdatedAt: UPDATED_AT - 1 }).catch(() => {});
+    const wrongStatus = buildService(PROPERTY_STATUS.ACTIVE);
+    await invoke(wrongStatus.service, method).catch(() => {});
+    const missing = buildService(null);
+    await invoke(missing.service, method).catch(() => {});
+
+    expect(stale.notifyDecision).not.toHaveBeenCalled();
+    expect(wrongStatus.notifyDecision).not.toHaveBeenCalled();
+    expect(missing.notifyDecision).not.toHaveBeenCalled();
+  });
+
+  it("does not notify when the reason is invalid, because nothing was decided", async () => {
+    const { service, notifyDecision } = buildService(PROPERTY_STATUS.PENDING_REVIEW);
+
+    await invoke(service, "rejectProperty", { reason: "" }).catch(() => {});
+
+    expect(notifyDecision).not.toHaveBeenCalled();
+  });
+
+  it("does not notify when the host only submits a listing for review", async () => {
+    const { service, notifyDecision } = buildService(PROPERTY_STATUS.INACTIVE);
+
+    await service.requestHostStatusChange(PROPERTY_ID, "ACTIVE", { actorId: "host-1" });
+
+    expect(notifyDecision).not.toHaveBeenCalled();
+  });
 });
 
 describe("a decision after the other decision", () => {

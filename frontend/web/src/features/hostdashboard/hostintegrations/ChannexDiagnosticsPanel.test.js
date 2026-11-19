@@ -39,7 +39,15 @@ jest.mock("./channexApi", () => ({
   syncChannexRestrictions: jest.fn(),
 }));
 
-const fillRequiredInputs = ({ dateTo = "2027-10-05", openActions = true } = {}) => {
+// The health section has its own tests; here it only matters where and when it is shown.
+jest.mock("../channexadmin/health/ChannexHealthSection", () => {
+  const React = require("react");
+  return function MockChannexHealthSection() {
+    return React.createElement("div", null, "Channex health loaded");
+  };
+});
+
+const fillRequiredInputs =({ dateTo = "2027-10-05", openActions = true } = {}) => {
   fireEvent.change(screen.getByLabelText("Domits property ID"), {
     target: { value: "domits-property-1" },
   });
@@ -669,5 +677,33 @@ describe("ChannexDiagnosticsPanel connect form", () => {
     expect(screen.getByLabelText("Channex API key")).toHaveProperty("type", "password");
     fireEvent.click(screen.getByRole("button", { name: "Show API key" }));
     expect(screen.getByLabelText("Channex API key")).toHaveProperty("type", "text");
+  });
+});
+
+describe("ChannexDiagnosticsPanel health tab (#2869)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getChannexStatus.mockResolvedValue({ status: "CONNECTED" });
+    getLatestChannexSyncEvidence.mockResolvedValue({ item: null });
+    listChannexBookingRevisions.mockResolvedValue({ revisions: [], count: 0 });
+  });
+
+  test("opens on the Health tab, the first of the sections", async () => {
+    await renderDiagnosticsPanel();
+
+    const tabs = within(screen.getByRole("navigation", { name: "Channex diagnostics sections" })).getAllByRole("button");
+    expect(tabs[0].textContent).toBe("Health");
+    expect(screen.getByText("Channex health loaded")).toBeTruthy();
+  });
+
+  // The section loads on mount, so leaving the tab also stops it from calling the backend.
+  test("hides the health section on another tab and shows it again on Health", async () => {
+    await renderDiagnosticsPanel();
+
+    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    expect(screen.queryByText("Channex health loaded")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Health" }));
+    expect(screen.getByText("Channex health loaded")).toBeTruthy();
   });
 });

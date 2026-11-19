@@ -12,6 +12,7 @@ Start here, then follow the links for detail:
 |---|---|
 | [ARI outbox design](./channex_ari_outbox_design.md) | How calendar changes are queued, batched, rate-limited and retried |
 | [Booking webhook design](./channex_booking_webhook_design.md) | How bookings arrive, are verified, stored and acknowledged |
+| [Health dashboard design](./channex_health_dashboard_design.md) | The internal admin view of outbox, bookings, alarms and accounts (#2869, not built yet) |
 | [Production switch runbook](./channex_production_switch_runbook.md) | Switching between staging and production, connecting an OTA, alarms, rollback, rotating the webhook secret |
 | [DSQL outbox runbook](./dsql_channex_ari_outbox_runbook.md) | Creating the outbox table in Aurora DSQL |
 | [Booking.com](../booking.com/README.md), [Airbnb](../airbnb/README.md) | Connecting a listing to that OTA through Channex |

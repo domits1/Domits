@@ -169,7 +169,7 @@ const postTaskAction = async (action, taskId, asHostId = null) => {
     return await response.json();
 };
 
-export const escalateTask = async (taskId) => await postTaskAction('escalate', taskId);
+export const escalateTask = async (taskId, asHostId = null) => await postTaskAction('escalate', taskId, asHostId);
 
 export const approveTask = async (taskId, asHostId = null) => await postTaskAction('approve', taskId, asHostId);
 

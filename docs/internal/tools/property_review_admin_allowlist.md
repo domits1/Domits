@@ -38,6 +38,46 @@ On the `PropertyHandler` Lambda in `eu-north-1`. Acceptance and production share
 
 Real user ids are set at deploy time only. Code, tests, docs and pull requests use fake ids such as `admin-1`.
 
+## Guest review approval
+
+Guest review approval also uses this username allowlist on the ReviewSystem Lambda. Configure `PROPERTY_REVIEW_ADMIN_USER_IDS` there before using the moderation endpoints. Viewing the approval queue, approving, and publishing an approved review also require an active `main.team_member` row with one of these roles: Guest Experience Manager, Property Operations Manager, Reservation Manager, or General Manager. Listing someone on this Lambda does not let them approve properties, because PropertyHandler has its own value.
+
+### Endpoint management
+
+The ReviewSystem approval, publication and host-response endpoints were deployed
+manually and are managed directly in API Gateway. The former
+`backend/infrastructure/review-response/template.json` stack is no longer in the
+repository; it is not the deployment path for these routes.
+
+- `POST /reviews/{id}/approve`
+- `POST /reviews/{id}/publish`
+- `POST`, `PATCH` and `DELETE /reviews/{id}/response`
+- `POST /reviews/{id}/response/publish`
+
+When changing these routes, update the API Gateway resource/method and its
+ReviewSystem Lambda integration, retain the authenticated authorization and
+required CORS configuration, and verify API Gateway has permission to invoke
+the Lambda. Redeploy the affected API stage after making changes. Deploying the
+Lambda alone does not create or update the API Gateway routes.
+
+### Approval and publication flow
+
+- Guests use `POST /reviews/{id}/publish` to submit a draft for approval.
+- Authorized approvers list pending reviews with `GET /reviews?scope=pending-approval` and approve them with `POST /reviews/{id}/approve`. Approval sets the status to `APPROVED` and leaves the review unpublished.
+- Authorized approvers list approved reviews with `GET /reviews?scope=approved` and publish them with `POST /reviews/{id}/publish`. Publication makes the review public and completes the review request.
+
+### Approval page
+
+The web app serves the queue at `/hostdashboard/admin/review-approval`. It reads `GET /reviews?scope=pending-approval` and approves with `POST /reviews/{id}/approve`, sending `{ "updated_at" }` from the queue row. A `409` means the review changed after the queue loaded; reload the page.
+
+Each queue item also carries `property_title`, `property_city`, `property_country`, `property_image_key` (thumb variant of the first `READY` image, else web) and `guest_name`. These are `null` when the record is missing. `guest_name` is the booking's guest name, and only when that booking was made by the reviewer. `host_id` and `private_feedback` are never in the payload.
+
+The nav link appears for users who pass the PropertyHandler admin check (`/property/review/access`). That list is separate from this Lambda's. Someone on one list but not the other sees the link and then "Not authorized", so the ReviewSystem check is the one that counts.
+
+The Published, Rejected, and All reviews tabs use the `admin-published`, `admin-rejected`, and `admin-all` scopes on `GET /reviews`. These scopes require the same approver access and return up to 100 guest-to-property reviews each. All reviews includes pending, approved, published, and rejected reviews.
+
+Use the approved queue and publication endpoint above to publish reviews.
+
 ## Read routes
 
 Three admin-only `GET` routes on `PropertyHandler` serve the review queue. Responses carry `Cache-Control: no-store`.

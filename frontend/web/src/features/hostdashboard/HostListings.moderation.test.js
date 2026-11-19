@@ -28,7 +28,7 @@ jest.mock("./hooks/useSetLiveEligibility", () => ({
     liveEligibility: mockLiveEligibility,
     liveEligibilityError: "",
     liveEligibilityLoading: false,
-    fetchVerificationStatus: mockFetchVerificationStatus,
+    fetchLiveEligibility: mockFetchVerificationStatus,
   }),
 }));
 

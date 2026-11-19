@@ -1,5 +1,6 @@
 import React from "react";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import en from "../../../../content/en.json";
 import nl from "../../../../content/nl.json";
 import OwnersTable from "./OwnersTable";
@@ -26,8 +27,16 @@ const share = (overrides = {}) => ({
   ...overrides,
 });
 
-const renderTable = (owners, { texts = t, language = "en" } = {}) =>
-  render(<OwnersTable owners={owners} t={texts} language={language} />);
+const OwnersRoute = ({ children }) => (
+  <MemoryRouter initialEntries={["/hostdashboard/owners"]}>
+    <Routes>
+      <Route path="/hostdashboard/owners" element={children} />
+    </Routes>
+  </MemoryRouter>
+);
+
+const renderTable = (owners, { texts = t, language = "en", onEdit = jest.fn() } = {}) =>
+  render(<OwnersTable owners={owners} t={texts} language={language} onEdit={onEdit} />, { wrapper: OwnersRoute });
 
 const rowFor = (name) => screen.getByRole("row", { name: new RegExp(name) });
 
@@ -36,7 +45,29 @@ describe("OwnersTable", () => {
     renderTable([owner()]);
 
     const headers = screen.getAllByRole("columnheader").map((header) => header.textContent);
-    expect(headers).toEqual([t.columnName, t.columnType, t.columnStatus, t.columnProperties]);
+    expect(headers).toEqual([t.columnName, t.columnType, t.columnStatus, t.columnProperties, t.columnActions]);
+  });
+
+  test("gives every row an Edit button named after the owner that passes the owner on", () => {
+    const onEdit = jest.fn();
+    const second = owner({ id: "owner-2", first_name: "Bram", last_name: "Jansen" });
+    renderTable([owner(), second], { onEdit });
+
+    const editButton = screen.getByRole("button", { name: "Edit Bram Jansen" });
+    expect(editButton.textContent).toBe(t.editOwner);
+    fireEvent.click(editButton);
+
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledWith(second);
+  });
+
+  test("links each owner's name to that owner's detail page", () => {
+    renderTable([owner(), owner({ id: "owner-2", first_name: "Bram", last_name: "Jansen" })]);
+
+    const hrefOf = (name) => screen.getByRole("link", { name }).getAttribute("href");
+    expect(hrefOf("Anna de Vries")).toBe("/hostdashboard/owners/owner-1");
+    expect(hrefOf("Bram Jansen")).toBe("/hostdashboard/owners/owner-2");
+    expect(screen.getByRole("button", { name: "Edit Bram Jansen" })).toBeTruthy();
   });
 
   test("shows the full name, with the company name below it when present", () => {
@@ -79,7 +110,7 @@ describe("OwnersTable", () => {
     const { rerender } = renderTable([owner({ status: "archived" })]);
     expect(screen.getByText("Archived").className).toBe("host-owners-status host-owners-status--archived");
 
-    rerender(<OwnersTable owners={[owner({ status: "something-new" })]} t={t} language="en" />);
+    rerender(<OwnersTable owners={[owner({ status: "something-new" })]} t={t} language="en" onEdit={jest.fn()} />);
     expect(screen.getByText("Unknown status").className).toBe("host-owners-status");
   });
 

@@ -295,11 +295,27 @@ describe("IntegrationService Channex booking pull import", () => {
     jest.restoreAllMocks();
   });
 
-  // A missing or unreadable amount must not become 0, which the pages would show as a
-  // free stay; null makes them fall back to their own calculation.
-  // Every page prints the total in euros, so an amount in another currency would be shown
-  // with the wrong symbol; without it the pages fall back to their own calculation.
-  test.each(["USD", "GBP", null])("stores no total price when the currency is %p instead of EUR", async (currency) => {
+  // The amount is stored with its own currency, so a booking paid in pounds shows pounds (#3583).
+  test.each([
+    { currency: "GBP", expected: "GBP" },
+    { currency: "USD", expected: "USD" },
+    { currency: " eur", expected: "EUR" },
+  ])("stores the amount with its currency $expected when Channex sends $currency", async ({ currency, expected }) => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ currency })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: 200, currency: expected, bookingSource: "Booking.com" })
+    );
+  });
+
+  // An amount without a readable currency could be shown with the wrong symbol, so neither is
+  // stored; the pages then fall back to their own calculation.
+  test.each([null, "", "EURO", "€"])("stores no amount when the currency is %p", async (currency) => {
     const consoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
     const { service, externalBookingImportRepository } = createService({
       feedRevisions: [buildFeedRevision({ currency })],
@@ -309,22 +325,9 @@ describe("IntegrationService Channex booking pull import", () => {
     await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
 
     expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
-      expect.objectContaining({ totalPrice: null, bookingSource: "Booking.com" })
+      expect.objectContaining({ totalPrice: null, currency: null })
     );
-    expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("CHANNEX_BOOKING_AMOUNT_CURRENCY_NOT_EUR"));
-  });
-
-  test("accepts the currency code in any case", async () => {
-    const { service, externalBookingImportRepository } = createService({
-      feedRevisions: [buildFeedRevision({ currency: " eur" })],
-      existingRevision: null,
-    });
-
-    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
-
-    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
-      expect.objectContaining({ totalPrice: 200 })
-    );
+    expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("CHANNEX_BOOKING_AMOUNT_CURRENCY_INVALID"));
   });
 
   test.each([
@@ -343,16 +346,18 @@ describe("IntegrationService Channex booking pull import", () => {
     );
   });
 
+  // A missing or unreadable amount must not become 0, which the pages would show as a
+  // free stay; a currency without an amount would label nothing, so it is dropped too.
   test.each([null, "", "not-a-number"])("stores no total price when Channex sends amount %p", async (amount) => {
     const { service, externalBookingImportRepository } = createService({
-      feedRevisions: [buildFeedRevision({ amount })],
+      feedRevisions: [buildFeedRevision({ amount, currency: "GBP" })],
       existingRevision: null,
     });
 
     await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
 
     expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
-      expect.objectContaining({ totalPrice: null })
+      expect.objectContaining({ totalPrice: null, currency: null })
     );
   });
 
@@ -682,6 +687,7 @@ describe("IntegrationService Channex booking pull import", () => {
       arrivalDateMs: utcDateMs("2026-06-02"),
       departureDateMs: utcDateMs("2026-06-04"),
       totalPrice: 200,
+      currency: "EUR",
       guestCount: 4,
       // The old nights (1-2 June) reopen and the new ones (2-3 June) close: one change per stay.
       channexChanges: [
@@ -758,7 +764,7 @@ describe("IntegrationService Channex booking pull import", () => {
         dateTo: "2026-06-02",
         source: "CHANNEX_IMPORT",
       },
-    ]);
+    ], Date.parse("2026-05-21T10:00:00Z"));
     expect(resLinks.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         externalReservationId: "booking-ota-1",
@@ -773,6 +779,36 @@ describe("IntegrationService Channex booking pull import", () => {
     );
     expectChannexRevisionAcknowledged(channexProviderClient, "revision-cancelled-1");
     expectImportItemWithoutDirectSync(result.response.items[0]);
+  });
+
+  test.each([
+    ["the revision time", "2026-05-21T10:00:00Z", Date.parse("2026-05-21T10:00:00Z")],
+    ["now when the revision time is missing", null, 1792281600000],
+    ["now when the revision time is unreadable", "not-a-date", 1792281600000],
+  ])("a cancelled revision stores %s as the cancel time", async (_name, insertedAt, expectedMs) => {
+    jest.spyOn(Date, "now").mockReturnValue(1792281600000);
+    const { service, externalBookingImportRepository } = createService({
+      existingLink: buildReservationLinkRow(),
+      initialBookings: [buildImportedBookingRow({ id: "domits-booking-1" })],
+      feedRevisions: [
+        buildFeedRevision({
+          revisionId: "revision-cancelled-1",
+          bookingId: "booking-ota-1",
+          status: "cancelled",
+          insertedAt,
+        }),
+      ],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.cancelImportedBooking).toHaveBeenCalledWith(
+      "domits-booking-1",
+      expect.any(Array),
+      expectedMs
+    );
+    Date.now.mockRestore();
   });
 
   test("redacts sensitive payment fields from persisted revision and imported reservation link raw payloads", async () => {

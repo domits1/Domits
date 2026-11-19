@@ -63,6 +63,7 @@ import { Property_Task_Checklist_Item } from "../../models/Property_Task_Checkli
 import { Host_Settings } from "../../models/Host_Settings.js";
 import { Task_Notification } from "../../models/Task_Notification.js";
 import { Communication_Preferences } from "../../models/Communication_Preferences.js";
+import { Host_Notification_Preferences } from "../../models/Host_Notification_Preferences.js";
 import { Company_Profile } from "../../models/Company_Profile.js";
 import { Kpi_Snapshot } from "../../models/Kpi_Snapshot.js";
 import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
@@ -77,6 +78,7 @@ import { Review_Rating } from "../../models/Review_Rating.js";
 import { Review_Category } from "../../models/Review_Category.js";
 import { Review_Request } from "../../models/Review_Request.js";
 import { Review_Response } from "../../models/Review_Response.js";
+import { Review_Flag } from "../../models/Review_Flag.js";
 
 
 export const Tables = [
@@ -143,6 +145,7 @@ export const Tables = [
   Host_Settings,
   Task_Notification,
   Communication_Preferences,
+  Host_Notification_Preferences,
   Company_Profile,
   Kpi_Snapshot,
   PriceLabs_Connection,
@@ -157,5 +160,6 @@ export const Tables = [
   Review_Category,
   Review_Request,
   Review_Response,
+  Review_Flag,
   DirectBookingWebsiteRatePlan,
 ];

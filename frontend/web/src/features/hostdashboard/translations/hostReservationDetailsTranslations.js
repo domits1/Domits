@@ -3,6 +3,20 @@ import nl from "../../../content/nl.json";
 import de from "../../../content/de.json";
 import es from "../../../content/es.json";
 
+const REFUND_STATUS_TRANSLATIONS = Object.freeze({
+  en: { label: "Refund status", refunded: "Refunded", not_refunded: "Not refunded", unknown: "Unknown" },
+  nl: { label: "Terugbetalingsstatus", refunded: "Terugbetaald", not_refunded: "Niet terugbetaald", unknown: "Onbekend" },
+  de: { label: "Erstattungsstatus", refunded: "Erstattet", not_refunded: "Nicht erstattet", unknown: "Unbekannt" },
+  es: { label: "Estado del reembolso", refunded: "Reembolsado", not_refunded: "No reembolsado", unknown: "Desconocido" },
+});
+
+const RECEIPT_DATE_LABEL_TRANSLATIONS = Object.freeze({
+  en: { paymentDate: "Payment date", cancelledOn: "Cancelled on" },
+  nl: { paymentDate: "Betaaldatum", cancelledOn: "Geannuleerd op" },
+  de: { paymentDate: "Zahlungsdatum", cancelledOn: "Storniert am" },
+  es: { paymentDate: "Fecha de pago", cancelledOn: "Fecha de cancelación" },
+});
+
 const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
   pageTitle: "Reservation details",
   buttons: {
@@ -29,6 +43,8 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
     loadingValue: "Loading...",
     unavailable: "Unavailable",
     bookedOn: "Booked on",
+    paymentDate: "Payment date",
+    cancelledOn: "Cancelled on",
     guestFallbackName: "Guest",
     night: "night",
     nights: "nights",
@@ -130,7 +146,7 @@ const DEFAULT_RESERVATION_DETAILS_TRANSLATION = Object.freeze({
   },
 });
 
-const mergeReservationDetailsTranslation = (translation = {}) => ({
+const mergeReservationDetailsTranslation = (translation = {}, locale = "en") => ({
   ...DEFAULT_RESERVATION_DETAILS_TRANSLATION,
   ...translation,
   buttons: {
@@ -143,6 +159,7 @@ const mergeReservationDetailsTranslation = (translation = {}) => ({
   },
   labels: {
     ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.labels,
+    ...RECEIPT_DATE_LABEL_TRANSLATIONS[locale],
     ...translation?.labels,
   },
   loading: {
@@ -156,6 +173,10 @@ const mergeReservationDetailsTranslation = (translation = {}) => ({
   status: {
     ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.status,
     ...translation?.status,
+  },
+  refundStatus: {
+    ...REFUND_STATUS_TRANSLATIONS[locale],
+    ...translation?.refundStatus,
   },
   paymentStatus: {
     ...DEFAULT_RESERVATION_DETAILS_TRANSLATION.paymentStatus,
@@ -200,10 +221,10 @@ const mergeReservationDetailsTranslation = (translation = {}) => ({
 });
 
 const hostReservationDetailsTranslations = {
-  en: mergeReservationDetailsTranslation(en.hostDashboard?.reservationDetails),
-  nl: mergeReservationDetailsTranslation(nl.hostDashboard?.reservationDetails),
-  de: mergeReservationDetailsTranslation(de.hostDashboard?.reservationDetails),
-  es: mergeReservationDetailsTranslation(es.hostDashboard?.reservationDetails),
+  en: mergeReservationDetailsTranslation(en.hostDashboard?.reservationDetails, "en"),
+  nl: mergeReservationDetailsTranslation(nl.hostDashboard?.reservationDetails, "nl"),
+  de: mergeReservationDetailsTranslation(de.hostDashboard?.reservationDetails, "de"),
+  es: mergeReservationDetailsTranslation(es.hostDashboard?.reservationDetails, "es"),
 };
 
 export default hostReservationDetailsTranslations;

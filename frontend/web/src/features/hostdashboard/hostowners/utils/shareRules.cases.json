@@ -1,0 +1,45 @@
+{
+  "percent": [
+    ["one owner at 100%", ["100"], {}],
+    ["three owners at 33.33, 33.33 and 33.34", ["33.33", "33.33", "33.34"], {}],
+    ["two owners at 50.5 and 49.5", ["50.5", "49.5"], {}],
+    ["the smallest share next to the rest", ["0.01", "99.99"], {}],
+    ["spaces around the numbers", [" 60 ", "40"], {}],
+    [
+      "more than 2 decimals",
+      ["33.333", "66.667"],
+      { "rows": { "0": { "percent": "percentInvalid" }, "1": { "percent": "percentInvalid" } } }
+    ],
+    ["0%", ["0", "100"], { "rows": { "0": { "percent": "percentZero" } } }],
+    ["0.00%", ["0.00", "100"], { "rows": { "0": { "percent": "percentZero" } } }],
+    ["a negative share", ["-10", "100"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["a share above 100", ["100.01"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["text instead of a number", ["abc", "100"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["a comma as decimal sign", ["33,33", "66,67"], {}],
+    ["a comma with one decimal", ["50,5", "49,5"], {}],
+    ["a comma next to a dot", ["0,01", "99.99"], {}],
+    ["0% with a comma", ["0,00", "100"], { "rows": { "0": { "percent": "percentZero" } } }],
+    ["a comma with more than 2 decimals", ["33,333", "100"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["a comma as thousands separator", ["1,000", "100"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["a comma and a dot in one value", ["1,000.5", "100"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["two commas in a row", ["33,,33", "100"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["two commas apart", ["33,33,3", "100"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["a comma value above 100", ["100,01"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["a comma without decimals", ["50,", "50"], { "rows": { "0": { "percent": "percentInvalid" } } }],
+    ["an empty share", ["", "100"], { "rows": { "0": { "percent": "percentRequired" } } }],
+    ["a total of 99.99", ["50", "49.99"], { "shares": "totalMismatch" }],
+    ["a total of 100.01", ["50", "50.01"], { "shares": "totalMismatch" }],
+    ["one owner below 100%", ["99"], { "shares": "totalMismatch" }]
+  ],
+  "date": [
+    ["today", "2026-11-10", null],
+    ["tomorrow", "2026-11-11", null],
+    ["yesterday", "2026-11-09", "dateBeforeToday"],
+    ["today plus 1826 days", "2031-11-10", null],
+    ["today plus 1827 days", "2031-11-11", "dateTooLate"],
+    ["an empty value", "", "dateRequired"],
+    ["only spaces", "   ", "dateRequired"],
+    ["a day-month-year value", "10-11-2026", "dateInvalid"],
+    ["a day that does not exist", "2026-02-30", "dateInvalid"]
+  ]
+}

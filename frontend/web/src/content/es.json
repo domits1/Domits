@@ -433,22 +433,50 @@
         "subtitle": "Viajeros apasionados e innovadores tecnológicos que construyen el futuro de la hospitalidad",
         "moreMembers": "+32 miembros",
         "members": [
-          { "name": "Stefan Hopman", "role": "Fundador" },
-          { "name": "Robert Hopman", "role": "Engineering Manager" },
-          { "name": "Chiel van Heerwaarden", "role": "Desarrollador" }
+          {
+            "name": "Stefan Hopman",
+            "role": "Fundador"
+          },
+          {
+            "name": "Robert Hopman",
+            "role": "Engineering Manager"
+          },
+          {
+            "name": "Chiel van Heerwaarden",
+            "role": "Desarrollador"
+          }
         ]
       },
       "stats": [
-        { "icon": "globe", "value": "+10", "label": "Nacionalidades" },
-        { "icon": "users", "value": "+35", "label": "Miembros del equipo" },
-        { "icon": "laptop", "value": "Remote-first", "label": "Trabaja desde cualquier lugar" },
-        { "icon": "handHeart", "value": "People-first", "label": "Una cultura que se preocupa" }
+        {
+          "icon": "globe",
+          "value": "+10",
+          "label": "Nacionalidades"
+        },
+        {
+          "icon": "users",
+          "value": "+35",
+          "label": "Miembros del equipo"
+        },
+        {
+          "icon": "laptop",
+          "value": "Remote-first",
+          "label": "Trabaja desde cualquier lugar"
+        },
+        {
+          "icon": "handHeart",
+          "value": "People-first",
+          "label": "Una cultura que se preocupa"
+        }
       ],
       "cards": {
         "featured": {
           "title": "Construyendo el futuro de los viajes",
           "description": "Estamos reimaginando cómo las personas descubren, reservan y viven los viajes. Únete a nosotros para crear tecnología que acerque al mundo.",
-          "tags": ["Impacto global", "Innovación primero"]
+          "tags": [
+            "Impacto global",
+            "Innovación primero"
+          ]
         },
         "partnerSuccess": {
           "title": "Éxito de los socios",
@@ -458,12 +486,20 @@
         "culture": {
           "title": "Una cultura que se preocupa",
           "description": "Remote-first, inclusiva y humana. Priorizamos el equilibrio entre vida y trabajo y el impacto significativo.",
-          "tags": ["Remoto", "Flexible", "Global"]
+          "tags": [
+            "Remoto",
+            "Flexible",
+            "Global"
+          ]
         },
         "openPositions": {
           "title": "Vacantes abiertas",
           "description": "Estamos contratando en ingeniería, producto, diseño y alianzas.",
-          "tags": ["Senior Engineer", "Product Designer", "Partnership Manager"]
+          "tags": [
+            "Senior Engineer",
+            "Product Designer",
+            "Partnership Manager"
+          ]
         }
       },
       "join": {
@@ -716,18 +752,36 @@
         "eyebrow": "Para huéspedes",
         "heading": "Encuentra tu estancia perfecta en 3 sencillos pasos",
         "steps": [
-          { "title": "Busca tu destino", "description": "Explora alquileres vacacionales con filtros inteligentes por ubicación, fechas, precio y comodidades." },
-          { "title": "Reserva tu estancia", "description": "Elige tu alojamiento preferido y confirma tu reserva en solo unos clics." },
-          { "title": "Vive Domits", "description": "Escribe a tu anfitrión, gestiona tu viaje y disfruta de soporte personalizado." }
+          {
+            "title": "Busca tu destino",
+            "description": "Explora alquileres vacacionales con filtros inteligentes por ubicación, fechas, precio y comodidades."
+          },
+          {
+            "title": "Reserva tu estancia",
+            "description": "Elige tu alojamiento preferido y confirma tu reserva en solo unos clics."
+          },
+          {
+            "title": "Vive Domits",
+            "description": "Escribe a tu anfitrión, gestiona tu viaje y disfruta de soporte personalizado."
+          }
         ]
       },
       "hosts": {
         "eyebrow": "Para anfitriones",
         "heading": "Haz crecer tu negocio de alquiler con facilidad",
         "steps": [
-          { "title": "Publica tu propiedad", "description": "Añade fotos, descripción y comodidades y fija tu precio y disponibilidad en minutos." },
-          { "title": "Gestiona reservas", "description": "Haz seguimiento de las reservas, gestiona tu calendario y comunícate fácilmente con los huéspedes." },
-          { "title": "Cobra de forma segura", "description": "Recibe pagos de forma segura y haz seguimiento de tus ingresos e información en tiempo real." }
+          {
+            "title": "Publica tu propiedad",
+            "description": "Añade fotos, descripción y comodidades y fija tu precio y disponibilidad en minutos."
+          },
+          {
+            "title": "Gestiona reservas",
+            "description": "Haz seguimiento de las reservas, gestiona tu calendario y comunícate fácilmente con los huéspedes."
+          },
+          {
+            "title": "Cobra de forma segura",
+            "description": "Recibe pagos de forma segura y haz seguimiento de tus ingresos e información en tiempo real."
+          }
         ]
       }
     },
@@ -1338,6 +1392,18 @@
             "title": "Miembros del equipo",
             "desc": "Invita a tu equipo y asigna roles en toda tu cartera."
           },
+          "security": {
+            "title": "Configurar seguridad y autenticación",
+            "desc": "Protege tu cuenta con la autenticación en dos pasos."
+          },
+          "owners": {
+            "title": "Configurar gestión de propietarios",
+            "desc": "Añade propietarios y gestiona sus participaciones."
+          },
+          "messaging": {
+            "title": "Configurar mensajes",
+            "desc": "Configura mensajes automáticos para tus huéspedes."
+          },
           "listProperties": {
             "title": "Publicar tus alojamientos",
             "desc": "Gestiona y añade alojamientos en toda tu cartera."
@@ -1667,6 +1733,7 @@
       "websitePlan": {
         "sectionTitle": "Suscripción del sitio web de reserva directa",
         "sectionSubtitle": "Elige el plan para tu sitio web de reservas. El precio de Elite se muestra a continuación.",
+        "sectionSubtitleWithoutPayment": "Elige el plan para tu sitio web de reservas.",
         "loading": "Cargando tu plan del sitio web...",
         "loadError": "No se pudo cargar tu plan actual del sitio web.",
         "essentials": "Essentials",
@@ -1702,10 +1769,12 @@
         "checkoutError": "No se pudo iniciar Stripe Checkout. Inténtalo de nuevo.",
         "downgradeScheduled": "El cambio a Essentials está programado para el final del periodo de facturación actual.",
         "downgradeSuccess": "Tu plan del sitio web ahora es Essentials.",
+        "upgradeSuccess": "Tu plan del sitio web ahora es Elite.",
         "restoreSuccess": "Tu suscripción Elite se ha reactivado.",
         "unchanged": "Tu plan del sitio web ya está actualizado.",
         "effectiveUntil": "Elite seguirá activo hasta el {date}.",
         "priceUnavailable": "Precio no disponible",
+        "withoutPayment": "No se requiere pago",
         "checkoutPending": "Estamos confirmando tu suscripción Elite. Puede tardar unos momentos.",
         "checkoutSuccess": "Tu suscripción Elite está activa.",
         "checkoutCancelled": "Se canceló el pago. Tu plan no ha cambiado.",
@@ -1807,6 +1876,39 @@
         "cancel": "Cancelar",
         "success": "✓ Invitación enviada a",
         "error": "Error al enviar la invitación. Por favor, inténtalo de nuevo."
+      }
+    },
+    "hostNotificationMatrix": {
+      "title": "Notificaciones",
+      "description": "Elige cómo quieres recibir cada notificación.",
+      "event": "Notificación",
+      "required": "Obligatorio",
+      "eventNamesNote": "Los nombres de las notificaciones se reciben actualmente del backend en inglés.",
+      "disableAllEmail": "Desactivar todas las notificaciones opcionales por correo",
+      "enableAllEmail": "Activar todas las notificaciones opcionales por correo",
+      "loading": "Cargando preferencias de notificación...",
+      "retry": "Reintentar",
+      "saved": "Preferencias de notificación guardadas.",
+      "saving": "Guardando...",
+      "save": "Guardar preferencias",
+      "channels": {
+        "inApp": "En la app",
+        "email": "Correo",
+        "sms": "SMS"
+      },
+      "tabs": {
+        "propertyManager": "Property Manager",
+        "bookings": "Reservas",
+        "propertyOwner": "Propietario",
+        "finance": "Finanzas",
+        "distribution": "Distribución",
+        "compliance": "Cumplimiento",
+        "tasks": "Tareas"
+      },
+      "errors": {
+        "loadFailed": "No se pudieron cargar tus preferencias de notificación. Vuelve a intentarlo antes de realizar cambios.",
+        "saveFailed": "No se pudieron guardar tus preferencias de notificación. Se han conservado tus cambios. Vuelve a intentarlo.",
+        "invalidResponse": "La respuesta de preferencias de notificación no es válida. Vuelve a intentarlo."
       }
     }
   },
@@ -1970,6 +2072,143 @@
       "pending": "Pendiente",
       "archived": "Archivado",
       "unknown": "Estado desconocido"
+    },
+    "addOwner": "Añadir propietario",
+    "editOwner": "Editar",
+    "editOwnerLabel": "Editar a {name}",
+    "columnActions": "Acciones",
+    "form": {
+      "createTitle": "Añadir propietario",
+      "editTitle": "Editar propietario",
+      "labels": {
+        "first_name": "Nombre",
+        "last_name": "Apellidos",
+        "company_name": "Nombre de la empresa",
+        "email": "Correo electrónico",
+        "phone": "Teléfono",
+        "preferred_language": "Idioma preferido (como en o nl-NL)",
+        "owner_type": "Tipo de propietario",
+        "status": "Estado",
+        "notes": "Notas"
+      },
+      "chooseOwnerType": "Elige un tipo",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "createdToast": "Se ha añadido a {name}.",
+      "updatedToast": "Se ha actualizado a {name}.",
+      "errorNotFound": "Este propietario ya no existe. Cierra el formulario y vuelve a cargar la página.",
+      "errorGeneric": "No hemos podido guardar el propietario. Inténtalo de nuevo.",
+      "errors": {
+        "required": "Este campo es obligatorio.",
+        "tooLong": "Usa como máximo {max} caracteres.",
+        "invalidCharacters": "Este campo contiene caracteres no permitidos.",
+        "invalidEmail": "Introduce un correo electrónico válido.",
+        "invalidPhone": "Usa al menos un dígito, y solo dígitos, espacios y + ( ) - .",
+        "invalidLanguage": "Usa un código de idioma como en o nl-NL.",
+        "invalidOwnerType": "Elige un tipo de propietario.",
+        "invalidStatus": "Elige un estado.",
+        "archivedStatus": "Un propietario solo se puede archivar con la acción de archivar.",
+        "companyNameRequired": "El nombre de la empresa es obligatorio para una empresa o un fideicomiso."
+      }
+    },
+    "detail": {
+      "backToOwners": "Volver a propietarios",
+      "loading": "Cargando propietario…",
+      "errorNotFound": "Este propietario no existe o no es uno de tus propietarios.",
+      "errorGeneric": "No pudimos cargar este propietario. Inténtalo de nuevo.",
+      "detailsTitle": "Datos",
+      "notProvided": "Sin indicar",
+      "labels": {
+        "created_at": "Creado",
+        "updated_at": "Última modificación"
+      },
+      "archive": "Archivar",
+      "archiving": "Archivando…",
+      "restore": "Restaurar",
+      "restoring": "Restaurando…",
+      "archiveConfirmTitle": "¿Archivar este propietario?",
+      "archiveConfirmMessage": "{name} se ocultará de tu lista de propietarios. Puedes restaurar este propietario más adelante.",
+      "archivedToast": "{name} se ha archivado.",
+      "restoredToast": "{name} se ha restaurado.",
+      "archiveBlocked": "{name} todavía no se puede archivar, porque este propietario aún tiene participaciones de propiedad actuales o futuras. Primero quita a {name} de las participaciones de esos alojamientos y después vuelve a archivar."
+    },
+    "shares": {
+      "title": "Definir participaciones de propiedad",
+      "propertyLabel": "Alojamiento",
+      "propertyPlaceholder": "Elige un alojamiento",
+      "dateLabel": "Las participaciones se aplican desde",
+      "ownerColumn": "Propietario",
+      "percentColumn": "Participación (%)",
+      "chooseOwner": "Elige un propietario",
+      "totalLabel": "Total",
+      "totalValue": "{percent}% de 100%",
+      "addOwner": "Añadir propietario",
+      "removeOwner": "Quitar",
+      "removeOwnerLabel": "Quitar a {name}",
+      "save": "Guardar participaciones",
+      "saving": "Guardando…",
+      "cancel": "Cancelar",
+      "plannedChangeWarning": "Ya hay un cambio de propiedad previsto para este alojamiento a partir del {date}. Al guardar se sustituye cada cambio previsto desde la fecha que elijas.",
+      "savedToast": "Se han guardado las participaciones de {property}. Se aplican desde el {date}.",
+      "upcomingTitle": "Previsto después de este cambio",
+      "errorChangedToday": "La propiedad de este alojamiento ya cambió hoy. Elige mañana o una fecha posterior.",
+      "errorArchivedOwner": "Uno de estos propietarios está archivado, y los propietarios archivados no pueden recibir participaciones. Quita a ese propietario de la lista o restáuralo primero.",
+      "errorConflict": "La propiedad de este alojamiento se cambió al mismo tiempo. Vuelve a cargar la página e inténtalo de nuevo.",
+      "errors": {
+        "propertyRequired": "Elige un alojamiento.",
+        "dateRequired": "Elige la fecha desde la que se aplican las participaciones.",
+        "dateInvalid": "Introduce una fecha válida.",
+        "dateBeforeToday": "La fecha no puede ser anterior a hoy.",
+        "dateTooLate": "La fecha puede ser como máximo 5 años después de hoy.",
+        "sharesRequired": "Añade al menos un propietario. Un alojamiento no puede quedarse sin propietarios.",
+        "totalMismatch": "Las participaciones deben sumar exactamente el 100%.",
+        "ownerRequired": "Elige un propietario.",
+        "ownerDuplicate": "Este propietario ya está en la lista.",
+        "percentRequired": "Introduce una participación.",
+        "percentInvalid": "Introduce un porcentaje de 0,01 a 100, con 2 decimales como máximo.",
+        "percentZero": "Una participación debe ser de al menos 0,01%. Quita al propietario en su lugar."
+      }
+    }
+  },
+  "hostIntegrations": {
+    "title": "Marketplace de integraciones",
+    "subtitle": "Conecta con Domits las herramientas que ya usas y descubre lo que viene.",
+    "listLabel": "Integraciones",
+    "setUpWhatsApp": "Configurar WhatsApp",
+    "filtersLabel": "Buscar una integración",
+    "searchLabel": "Buscar integraciones",
+    "searchPlaceholder": "Buscar por nombre",
+    "categoryLabel": "Categoría",
+    "statusLabel": "Estado",
+    "allCategories": "Todas las categorías",
+    "allStatuses": "Todos los estados",
+    "resultCountOne": "{count} integración",
+    "resultCountOther": "{count} integraciones",
+    "emptyTitle": "No se encontraron integraciones",
+    "emptyText": "Prueba con otro nombre o borra los filtros para ver todas las integraciones.",
+    "clearFilters": "Borrar filtros",
+    "talkToSales": "Hablar con ventas",
+    "statuses": {
+      "available": "Disponible",
+      "in_development": "En desarrollo",
+      "on_request": "Bajo petición"
+    },
+    "categories": {
+      "revenue_management": "Gestión de ingresos",
+      "channel_management": "Gestión de canales",
+      "guest_protection": "Protección de huéspedes",
+      "smart_locks": "Cerraduras inteligentes",
+      "guest_communication": "Comunicación con huéspedes"
+    },
+    "descriptions": {
+      "pricelabs": "Optimiza tus tarifas por noche con precios dinámicos basados en la demanda del mercado y el rendimiento de tu alojamiento.",
+      "channex": "Gestiona la disponibilidad, las tarifas y las reservas de tu alojamiento en varios canales de reserva con una sola conexión.",
+      "siteminder": "Conecta tus procesos de gestión y distribución con el ecosistema de tecnología hotelera de SiteMinder.",
+      "truvi": "Ofrece reservas más seguras con la verificación de huéspedes y soluciones de gestión de riesgos.",
+      "remotelock": "Simplifica el acceso a tu alojamiento con cerraduras inteligentes conectadas y gestión automática de accesos.",
+      "whatsapp": "Comunícate con los huéspedes por WhatsApp como parte de la gestión de tu alojamiento."
     }
   }
 }

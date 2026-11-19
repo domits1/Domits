@@ -11,8 +11,8 @@ const reviews = [
 test("searches property metadata, sorts ratings, and keeps the overall summary based on all received reviews", async () => {
   render(<ReceivedReviews userId="host" reviews={reviews} loading={false} error="" onRetry={() => {}} />);
   await screen.findByText("City studio · Amsterdam");
-  expect(screen.getByText("Sarah Lee")).toBeInTheDocument();
-  expect(screen.getByText("SL")).toBeInTheDocument();
+  expect(screen.getAllByText("Sarah Lee")[0]).toBeInTheDocument();
+  expect(screen.getAllByText("SL")[0]).toBeInTheDocument();
   const list = screen.getByRole("region", { name: "Received reviews (2)" });
   expect(screen.getByText("4.0")).toBeInTheDocument();
   expect(screen.getByText("Verified stay")).toBeInTheDocument();
@@ -30,4 +30,19 @@ test.each(["VERIFIED", "UNVERIFIED", undefined])("does not claim verified stay f
   render(<ReceivedReviews userId="host" reviews={[{ ...reviews[0], verification_status }]} loading={false} error="" onRetry={() => {}} />);
   await screen.findByText("City studio · Amsterdam");
   expect(screen.queryByText("Verified stay")).not.toBeInTheDocument();
+});
+
+test("selects a review and searches guest names", async () => {
+  render(<ReceivedReviews userId="host" reviews={reviews} loading={false} error="" onRetry={() => {}} />);
+  expect(screen.queryByRole("region", { name: "Selected review" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Wonderful stay", exact: true }));
+  const detail = screen.getByRole("region", { name: "Selected review" });
+  expect(within(detail).getByText("Very clean")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Quiet room", exact: true }));
+  expect(within(detail).getByText("Comfortable bed")).toBeInTheDocument();
+  expect(within(detail).queryByText("Very clean")).not.toBeInTheDocument();
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Sarah Lee" } });
+  expect(screen.queryByRole("region", { name: "Selected review" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Wonderful stay", exact: true }));
+  expect(within(screen.getByRole("region", { name: "Selected review" })).getByText("Very clean")).toBeInTheDocument();
 });

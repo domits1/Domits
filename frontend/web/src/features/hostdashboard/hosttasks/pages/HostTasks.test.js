@@ -356,6 +356,7 @@ describe('HostTasks', () => {
 
             await waitFor(() => expect(screen.queryByRole('button', { name: 'Escalate' })).not.toBeInTheDocument());
             expect(escalateTask).toHaveBeenCalledTimes(1);
+            expect(escalateTask).toHaveBeenCalledWith('task-1', null);
         });
 
         test('keeps the button disabled while the request runs, so a double click sends one request', async () => {
@@ -405,7 +406,7 @@ describe('HostTasks', () => {
         test('are linked, uploaded and saved as the co-host the user acts for while showing co-host tasks', async () => {
             uploadTaskAttachment.mockResolvedValue('tasks/host-2/new.svg');
             render(<HostTasks />);
-            fireEvent.click(await screen.findByRole('button', { name: 'Co-host tasks' }));
+            fireEvent.click(await screen.findByRole('button', { name: 'Management tasks' }));
             await waitFor(() => expect(fetchTasks).toHaveBeenLastCalledWith({}, 'host-2'));
             fireEvent.click(await screen.findByText('Clean the villa'));
 

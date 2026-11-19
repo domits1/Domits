@@ -1,0 +1,48 @@
+.page {
+  padding: clamp(16px, 4vw, 24px);
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: clamp(14px, 2vw, 18px);
+  padding: clamp(16px, 4vw, 24px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.8rem, 1.5rem + 1vw, 2.5rem);
+}
+
+.message {
+  margin: 10px 0 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.retryButton {
+  min-height: 44px;
+  margin-top: clamp(12px, 2vw, 16px);
+  padding: 10px clamp(16px, 3vw, 24px);
+  border: 0;
+  border-radius: 999px;
+  background: var(--secondary-color);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.retryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

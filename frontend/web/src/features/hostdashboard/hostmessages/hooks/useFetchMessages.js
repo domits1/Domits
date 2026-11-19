@@ -3,6 +3,7 @@ import { WebSocketContext } from "../context/webSocketContext";
 import { getIdToken } from "../../../../services/getAccessToken";
 
 const UNIFIED_API = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default";
+const REFRESH_RETRY_DELAYS_MS = [1000, 3000, 6000];
 
 const toIso = (v) => {
   if (!v) return new Date().toISOString();
@@ -159,20 +160,45 @@ const transformApiMessage = (msg, selfUserId, threadIdFallback) => {
   };
 };
 
+const byCreatedAt = (a, b) => new Date(a.createdAt) - new Date(b.createdAt);
+
+const mergeHistoryWithStore = (history, storeMessages, recordedIds) => {
+  const merged = new Map();
+  for (const message of history) merged.set(message.id, message);
+  for (const message of storeMessages || []) {
+    if (recordedIds.has(message.id) || merged.has(message.id)) continue;
+    merged.set(message.id, message);
+  }
+  return [...merged.values()].sort(byCreatedAt);
+};
+
 export const useFetchMessages = (userId) => {
   const wsCtx = useContext(WebSocketContext);
   const wsMessages = wsCtx?.messages || [];
 
   const [messagesByRecipient, setMessagesByRecipient] = useState({});
   const [messagesByThread, setMessagesByThread] = useState({});
-  const cacheRef = useRef({});
+  const storedIdsRef = useRef({});
+  const historyLoadedRef = useRef(new Set());
   const wsSeenRef = useRef(new Set());
+  const wsRefreshedRef = useRef(new Set());
+  const wsPendingRef = useRef(new Set());
+  const expiredRefreshedRef = useRef(new Set());
+  const expiredThreadsRef = useRef(new Set());
+  const retryTimersRef = useRef(new Set());
+  const refreshControllersRef = useRef(new Set());
+  const unmountedRef = useRef(false);
 
   const [activeRecipientId, setActiveRecipientId] = useState(null);
   const [activeThreadId, setActiveThreadId] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const rememberId = useCallback((key, id) => {
+    if (!storedIdsRef.current[key]) storedIdsRef.current[key] = new Set();
+    storedIdsRef.current[key].add(id);
+  }, []);
 
   const upsertIntoStores = useCallback(
     (newMessage) => {
@@ -183,14 +209,14 @@ export const useFetchMessages = (userId) => {
 
       const threadKey = newMessage.threadId || null;
 
+      rememberId(partnerId, newMessage.id);
+      if (threadKey) rememberId(threadKey, newMessage.id);
+
       setMessagesByRecipient((prev) => {
         const current = prev[partnerId] || [];
         if (current.some((m) => m.id === newMessage.id)) return prev;
 
-        const nextForPartner = [...current, newMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        const next = { ...prev, [partnerId]: nextForPartner };
-        cacheRef.current[partnerId] = nextForPartner;
-        return next;
+        return { ...prev, [partnerId]: [...current, newMessage].sort(byCreatedAt) };
       });
 
       if (threadKey) {
@@ -198,14 +224,11 @@ export const useFetchMessages = (userId) => {
           const current = prev[threadKey] || [];
           if (current.some((m) => m.id === newMessage.id)) return prev;
 
-          const nextForThread = [...current, newMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          const next = { ...prev, [threadKey]: nextForThread };
-          cacheRef.current[threadKey] = nextForThread;
-          return next;
+          return { ...prev, [threadKey]: [...current, newMessage].sort(byCreatedAt) };
         });
       }
     },
-    [userId]
+    [rememberId, userId]
   );
 
   useEffect(() => {
@@ -222,6 +245,28 @@ export const useFetchMessages = (userId) => {
       upsertIntoStores(normalized);
     }
   }, [wsMessages, upsertIntoStores]);
+
+  const storeHistory = useCallback(
+    (recipientId, threadId, rows, recordedIds) => {
+      const history = rows.map((m) => transformApiMessage(m, userId, threadId));
+
+      setMessagesByRecipient((prev) => ({
+        ...prev,
+        [recipientId]: mergeHistoryWithStore(history, prev[recipientId], recordedIds),
+      }));
+      setMessagesByThread((prev) => ({
+        ...prev,
+        [threadId]: mergeHistoryWithStore(history, prev[threadId], recordedIds),
+      }));
+
+      for (const message of history) {
+        rememberId(recipientId, message.id);
+        rememberId(threadId, message.id);
+      }
+      historyLoadedRef.current.add(threadId);
+    },
+    [rememberId, userId]
+  );
 
   const fetchMessages = useCallback(
     async (recipientId, threadId = null, options = {}) => {
@@ -247,9 +292,7 @@ export const useFetchMessages = (userId) => {
         return;
       }
 
-      const cacheKey = threadId || options.bookingId || recipientId;
-      const cached = cacheRef.current[cacheKey];
-      if (Array.isArray(cached) && cached.length > 0) {
+      if (threadId && historyLoadedRef.current.has(threadId)) {
         setLoading(false);
         return;
       }
@@ -271,11 +314,18 @@ export const useFetchMessages = (userId) => {
 
         if (!useThreadId) {
           clearTimeout(timeoutId);
-          setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: [] }));
-          cacheRef.current[cacheKey] = [];
+          setMessagesByRecipient((prev) => ({
+            ...prev,
+            [recipientId]: (prev[recipientId] || []).filter((message) => !message.threadId),
+          }));
           setLoading(false);
           return;
         }
+
+        const recordedIds = new Set([
+          ...(storedIdsRef.current[recipientId] || []),
+          ...(storedIdsRef.current[useThreadId] || []),
+        ]);
 
         const response = await fetch(`${UNIFIED_API}/messages?threadId=${encodeURIComponent(useThreadId)}`, {
           method: "GET",
@@ -293,14 +343,7 @@ export const useFetchMessages = (userId) => {
         const result = await response.json();
 
         if (Array.isArray(result)) {
-          const transformed = result.map((m) => transformApiMessage(m, userId, useThreadId));
-          const sorted = transformed.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-          setMessagesByRecipient((prev) => ({ ...prev, [recipientId]: sorted }));
-          setMessagesByThread((prev) => ({ ...prev, [useThreadId]: sorted }));
-
-          cacheRef.current[recipientId] = sorted;
-          cacheRef.current[useThreadId] = sorted;
+          storeHistory(recipientId, useThreadId, result, recordedIds);
         } else {
           setError("Unexpected response format");
         }
@@ -315,8 +358,126 @@ export const useFetchMessages = (userId) => {
         setLoading(false);
       }
     },
-    [userId]
+    [storeHistory, userId]
   );
+
+  useEffect(() => {
+    unmountedRef.current = false;
+    const timers = retryTimersRef.current;
+    const controllers = refreshControllersRef.current;
+    const pending = wsPendingRef.current;
+    return () => {
+      unmountedRef.current = true;
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
+      controllers.forEach((controller) => controller.abort());
+      controllers.clear();
+      pending.clear();
+    };
+  }, []);
+
+  const refreshThread = useCallback(
+    async (partnerId, threadId, expectedIds) => {
+      const controller = new AbortController();
+      refreshControllersRef.current.add(controller);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const token = requireToken(await getIdToken());
+        const response = await fetch(`${UNIFIED_API}/messages?threadId=${encodeURIComponent(threadId)}`, {
+          method: "GET",
+          headers: buildAuthHeaders(token),
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Failed to refresh messages: ${response.status}`);
+
+        const rows = await response.json();
+        if (!Array.isArray(rows) || unmountedRef.current) return { ok: false, complete: false };
+
+        storeHistory(partnerId, threadId, rows, new Set());
+        const returnedIds = new Set(rows.map((row) => row?.id));
+        return { ok: true, complete: expectedIds.every((id) => returnedIds.has(id)) };
+      } catch (err) {
+        if (!unmountedRef.current) console.error("Error refreshing messages:", err);
+        return { ok: false, complete: false };
+      } finally {
+        clearTimeout(timeoutId);
+        refreshControllersRef.current.delete(controller);
+      }
+    },
+    [storeHistory]
+  );
+
+  const refreshAttachments = useCallback(
+    async (partnerId, threadId, messageId) => {
+      if (!partnerId || !threadId || !messageId) return;
+      if (expiredRefreshedRef.current.has(messageId)) return;
+      expiredRefreshedRef.current.add(messageId);
+
+      if (expiredThreadsRef.current.has(threadId)) return;
+      expiredThreadsRef.current.add(threadId);
+      try {
+        await refreshThread(partnerId, threadId, []);
+      } finally {
+        expiredThreadsRef.current.delete(threadId);
+      }
+    },
+    [refreshThread]
+  );
+
+  const refreshWithRetry = useCallback(
+    (partnerId, threadId, messageIds) => {
+      const settle = () => {
+        for (const id of messageIds) {
+          wsPendingRef.current.delete(id);
+          wsRefreshedRef.current.add(id);
+        }
+      };
+
+      const abandon = (err) => {
+        console.error("Error refreshing messages:", err);
+        settle();
+      };
+
+      const attempt = async (retryIndex) => {
+        const { ok, complete } = await refreshThread(partnerId, threadId, messageIds);
+        if (unmountedRef.current) return;
+        if ((ok && complete) || retryIndex >= REFRESH_RETRY_DELAYS_MS.length) {
+          settle();
+          return;
+        }
+
+        const timer = setTimeout(() => {
+          retryTimersRef.current.delete(timer);
+          attempt(retryIndex + 1).catch(abandon);
+        }, REFRESH_RETRY_DELAYS_MS[retryIndex]);
+        retryTimersRef.current.add(timer);
+      };
+
+      attempt(0).catch(abandon);
+    },
+    [refreshThread]
+  );
+
+  useEffect(() => {
+    if (!Array.isArray(wsMessages)) return;
+
+    const threadsToRefresh = new Map();
+    for (const raw of wsMessages) {
+      const normalized = normalizeWs(raw);
+      if (!normalized || normalized.fileUrls.length === 0 || !normalized.threadId) continue;
+
+      if (wsRefreshedRef.current.has(normalized.id) || wsPendingRef.current.has(normalized.id)) continue;
+      wsPendingRef.current.add(normalized.id);
+
+      const partnerId = normalized.userId === userId ? normalized.recipientId : normalized.userId;
+      const entry = threadsToRefresh.get(normalized.threadId) || { partnerId, messageIds: [] };
+      entry.messageIds.push(normalized.id);
+      threadsToRefresh.set(normalized.threadId, entry);
+    }
+
+    threadsToRefresh.forEach(({ partnerId, messageIds }, threadId) => refreshWithRetry(partnerId, threadId, messageIds));
+  }, [wsMessages, userId, refreshWithRetry]);
 
   const addNewMessage = useCallback(
     (newMessage) => {
@@ -339,6 +500,7 @@ export const useFetchMessages = (userId) => {
     loading,
     error,
     fetchMessages,
+    refreshAttachments,
     addNewMessage,
     messagesByRecipient,
     messagesByThread,

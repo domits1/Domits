@@ -34,7 +34,7 @@ describe("SiteMinderSoapClient", () => {
     expect(options.body).toContain("<wsse:Username>user</wsse:Username>");
     expect(options.body).toContain("<SOAP-ENV:Body><OTA_HotelAvailNotifRQ/></SOAP-ENV:Body>");
     expect(options.body).not.toContain("\n");
-    expect(result).toEqual({ success: true, echoToken: "e1" });
+    expect(result).toEqual({ success: true, echoToken: "e1", xml: SUCCESS });
   });
 
   test("throws a non-retryable error with every OTA error when SiteMinder refuses the message", async () => {
@@ -52,6 +52,13 @@ describe("SiteMinderSoapClient", () => {
 
     expect(error.status).toBe(500);
     expect(error.message).toBe("Authentication failed");
+  });
+
+  test("does not retry a SOAP fault, even when it comes with status 500", async () => {
+    const error = await client(answer(500, FAULT)).send("<X/>").catch((e) => e);
+
+    expect(error.errors[0].type).toBe("SoapFault");
+    expect(error.retryable).toBe(false);
   });
 
   test("marks a 5xx without an OTA answer as retryable", async () => {

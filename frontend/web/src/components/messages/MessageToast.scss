@@ -27,6 +27,17 @@
         margin-left: 2px;
     }
 
+    &__close {
+        flex-shrink: 0;
+        padding: 4px 6px;
+        border: 0;
+        background: transparent;
+        color: #e5e5e5;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+    }
+
     &__body {
         font-size: 13px;
         color: #b3b3b3;

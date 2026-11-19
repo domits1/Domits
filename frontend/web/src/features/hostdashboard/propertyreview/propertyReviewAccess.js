@@ -1,22 +1,21 @@
-import { PROPERTY_API_BASE } from "../../../services/propertyApiConfig";
 import { getAccessToken } from "../../../services/getAccessToken";
+import { requestPropertyReview } from "./services/propertyReviewApi";
 
-export const PROPERTY_REVIEW_ADMIN_ROUTE = "admin/property-review";
+export { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyReviewPaths";
+
+export const PROPERTY_REVIEW_ACCESS = Object.freeze({
+  ALLOWED: "allowed",
+  DENIED: "denied",
+  UNAVAILABLE: "unavailable",
+});
 
 export const checkPropertyReviewAccess = async () => {
-  const accessToken = getAccessToken();
-  if (!accessToken) return false;
+  if (!getAccessToken()) return PROPERTY_REVIEW_ACCESS.DENIED;
 
   try {
-    const response = await fetch(`${PROPERTY_API_BASE}/review/access`, {
-      method: "GET",
-      headers: { Authorization: accessToken },
-    });
-    if (!response.ok) return false;
-
-    const body = await response.json();
-    return body?.allowed === true;
+    const body = await requestPropertyReview("/review/access");
+    return body.allowed === true ? PROPERTY_REVIEW_ACCESS.ALLOWED : PROPERTY_REVIEW_ACCESS.DENIED;
   } catch {
-    return false;
+    return PROPERTY_REVIEW_ACCESS.UNAVAILABLE;
   }
 };

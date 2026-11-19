@@ -22,6 +22,7 @@ const CATALOG_COLUMNS = [
   "refunded_amount",
   "stripe_refund_id",
   "refund_error",
+  "refund_status",
   "total_price",
   "booking_source",
   "site_id",
@@ -31,6 +32,7 @@ const CATALOG_COLUMNS = [
   "checked_out_at",
   "special_request",
   "cancelled_at",
+  "currency",
 ];
 
 const CATALOG_NOT_NULL_COLUMNS = [
@@ -93,6 +95,21 @@ describe("Booking entity", () => {
     });
   });
 
+  // An empty currency means euros, so the bookings from before that column keep showing in euros (#3583).
+  it.each(["refund_status", "currency"])("maps %s as a nullable varchar with no default", async (columnName) => {
+    const metadata = await loadBookingMetadata();
+    const column = metadata.findColumnWithDatabaseName(columnName);
+    expect(column).toBeDefined();
+    expect(column.type).toBe("varchar");
+    expect(column.isNullable).toBe(true);
+    expect(column.default).toBeUndefined();
+  });
+
+  it("limits currency to a 3-letter ISO code", async () => {
+    const metadata = await loadBookingMetadata();
+    expect(metadata.findColumnWithDatabaseName("currency").length).toBe("3");
+  });
+
   it("reads cancelled_at as a number and keeps an empty one empty", async () => {
     const metadata = await loadBookingMetadata();
     const { transformer } = metadata.findColumnWithDatabaseName("cancelled_at");
@@ -103,11 +120,17 @@ describe("Booking entity", () => {
   it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
 });
 
-describe("cancelled_at migration", () => {
-  it("adds the column to both schemas, because the entity selects it on every booking read", () => {
-    const sql = loadMigrationSql("20261030_booking_cancelled_at.sql");
-    expect(sql).toContain("ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
-    expect(sql).toContain("ALTER TABLE main.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;");
+// The entity selects every column on every booking read, so each migration must reach both schemas.
+describe("booking column migrations", () => {
+  it.each([
+    ["20261030_booking_cancelled_at.sql", "cancelled_at BIGINT"],
+    ["20261110_booking_refund_status.sql", "refund_status VARCHAR(32)"],
+    ["20261113_booking_currency.sql", "currency VARCHAR(3)"],
+  ])("%s adds %s to both booking schemas", (fileName, columnDefinition) => {
+    const sql = loadMigrationSql(fileName);
+    ["test", "main"].forEach((schema) => {
+      expect(sql).toContain(`ALTER TABLE ${schema}.booking ADD COLUMN IF NOT EXISTS ${columnDefinition};`);
+    });
   });
 });
 

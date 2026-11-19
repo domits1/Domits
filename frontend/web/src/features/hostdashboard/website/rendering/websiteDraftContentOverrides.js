@@ -44,6 +44,7 @@ import {
   normalizeWebsiteImageRotationSettings,
 } from "./websiteImageSlotUtils";
 import { buildAccommodationImageAssetFromUrl } from "../../../../utils/accommodationImage";
+import { SITE_PAGES_OVERRIDE_KEY, normalizeSitePages } from "./websitePages";
 
 const MANAGED_OVERRIDE_KEYS = Object.freeze([
   "siteTitle",
@@ -499,6 +500,9 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
     contactAvatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
       ? contactAvatarImage || modelContactAvatarImage
       : "";
+  const sitePagesModel = Object.prototype.hasOwnProperty.call(overrides, SITE_PAGES_OVERRIDE_KEY)
+    ? { sitePages: normalizeSitePages(overrides[SITE_PAGES_OVERRIDE_KEY]) }
+    : {};
 
   return {
     ...model,
@@ -512,6 +516,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
       eyebrow: heroEyebrow || model.hero.eyebrow,
       title: heroTitle || model.hero.title,
       description: heroDescription || model.hero.description,
+      isDescriptionGenerated: heroDescription ? false : model.hero.isDescriptionGenerated === true,
       contentAlignment: resolveWebsiteHeroContentAlignment(
         heroContentAlignment,
         model?.hero?.contentAlignment
@@ -595,6 +600,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
     trustCards: mergedTrustCards,
     journeyStops: mergedJourneyStops,
     visibility: mergedVisibility,
+    ...sitePagesModel,
   };
 };
 

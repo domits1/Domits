@@ -109,7 +109,7 @@ The current website foundation routes inside `PropertyHandler` are:
 - `POST /property/website/site/unpublish`
 - `GET /property/website/public/resolve`
 - `GET /property/website/public/render`
-- `GET /property/website/preview`
+- `GET /property/website/preview` (the logged-in host who owns the draft; answers the listing through the public site view, like the live render)
 - `GET /property/website/kpis`
 
 ## What is not implemented yet
@@ -208,7 +208,8 @@ Panorama Landing currently has the deepest implementation coverage. That is the 
 
 The internal preview route currently:
 
-- loads a saved draft by `draftId`
+- opens only for the logged-in host who owns the draft; anyone else gets a login message or not found
+- loads a saved draft by `draftId`, with the listing through the public site view and the host block of the live site
 - enriches property details before rendering
 - uses the shared template rendering layer
 - subscribes to preview refresh events so an already-open preview can update after editor changes
@@ -231,7 +232,8 @@ The published public runtime currently:
 The public website currently includes a WhatsApp-based host contact widget when the host has a usable WhatsApp integration. That widget:
 
 - is driven by shared host contact enrichment
-- can be shown or hidden through visibility controls
+- can be shown or hidden through visibility controls (`visibility.chatWidget`, on unless the host turns it off)
+- when the host turns it off, the public render sends an empty `host.whatsapp` block (no number) and the quote panel shows no WhatsApp link
 - is best-effort presentation only and not a public chat platform
 
 ### Availability surface
@@ -452,9 +454,29 @@ Important rules:
 - `Update live site` pushes the current draft into published live state
 - `Publish` creates or updates the published standalone site lifecycle
 - `Unpublish` affects live availability, not the host's working draft
+- a publish the server refuses (any 4xx, or a login that cannot be refreshed) is shown as failed with the API message; only after a 5xx, a dropped connection or an answer that cannot be read does `publishWebsiteSite(propertyId, { draftSavedAt })` read the site again, and it counts the publish as done only when the site's `publishedAt` is at or after the `updatedAt` of the draft saved for that publish (both server times)
 - `main.standalone_site_event` owns the KPI and event layer for builder, preview, live-site, and research metrics
 
 Do not collapse draft state and published state back into one model.
+
+## Site page settings and the Elite plan
+
+Elite websites can have more than one page. The page settings live in the content overrides under one key, `sitePages`, in the draft (`contentOverrides`, `publishedContentOverrides`) and in the published site (`publishedContentOverrides`). No migration is needed.
+
+- Saving a draft accepts the key like any other override and never reads the plan. A host whose Elite has ended can still save, and his settings stay in the draft.
+- `siteProperties` (the properties of an Elite website, `business/service/websiteSiteProperties.js`): saving cleans the whole list (at most 12, main property included, one-segment lowercase slugs, no id or slug twice, else 400) and checks existence and owner only of the properties that the host's stored draft does not hold yet in `contentOverrides` or `publishedContentOverrides` (400 "siteProperties lists a property that does not exist.", 403). A stored property is kept without that check, so a host whose listing was deleted or moved, or whose Elite has ended, can still save. Publishing checks every listed property.
+- `GET /property/website/public/render` and `GET /property/website/preview` serve the key only when the site's own host has the `website.unlimited_pages` entitlement. For every other host the key is removed from the response and everything else is unchanged.
+- The check runs only when the key is present. Overrides without `sitePages` are returned as they are and no plan is read, so existing sites answer exactly as before.
+- The host comes from the site or draft row, never from the request.
+- The plan is read with `getCurrentEntitlements` in `directBookingWebsiteRatePlanService.js`, which never writes: no current row, or a row whose end date has passed, reads as Essentials.
+- A failed plan read, or one that does not answer within 3 seconds (`WEBSITE_PLAN_READ_TIMEOUT_MS`), drops the key and logs a `[WebsitePageSettings]` line. The guest still gets the site with status 200.
+- When Elite ends, the next request no longer serves the key.
+
+`GET /property/website/rate-plan?view=entitlements` answers `{ plan, entitlements, effectiveUntil }` for the host in the token, read only. An Elite plan without a Stripe subscription or an end date reads like any other Elite plan. Without `view=entitlements` the route answers the full plan as before, including the Essentials row it creates for a new host.
+
+Code: `business/service/websiteElitePageSettings.js` and `getCurrentEntitlements`. The static page worker does not apply the check yet; its renderer ignores `sitePages`.
+
+`backend/test/PropertyHandler/__fixtures__/existingSitePublicRender.json` is the public render response of the existing site in `backend/prerender/__fixtures__/renderPayload.json`, captured from the code before page settings existed. `publicWebsiteRender.elitePageSettings.test.js` compares the response with it byte for byte. When the public render response changes on purpose, regenerate that file in the same commit.
 
 ## Environment and runtime assumptions
 
@@ -560,6 +582,7 @@ The most realistic next-step roadmap for this feature is:
 - Do not assume all real-rendered templates are currently builder-enabled.
 - Do not treat KPI labels as proof that every research KPI is fully instrumented; some are still proxy or not-yet-instrumented states.
 - Do not forget that the KPI page is currently platform-wide, so host-specific product decisions should not be made from it without further filtering.
+- Do not use `requireEntitlement` or `getCurrentPlan` on a public or unauthenticated path: both create an Essentials plan row when none exists. Use `getCurrentEntitlements`.
 
 ## Related docs
 

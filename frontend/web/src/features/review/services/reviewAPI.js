@@ -4,6 +4,123 @@ import { getIdToken } from "../../../services/getAccessToken";
 export const API_REVIEW_BASE =
   "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
+export const saveHostResponse = async (reviewId, message) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response/publish`, {
+    method: "POST", headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not save your response. Please try again.");
+  return payload.response;
+};
+
+export const deleteHostResponse = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response`, {
+    method: "DELETE", headers: { Authorization: await getIdToken() },
+  });
+  if (!response.ok) {
+    const payload = await parseResponse(response);
+    throw new Error(payload?.message || "Could not delete your response. Please try again.");
+  }
+};
+
+// The status lets the admin page tell "no approver role" apart from a failed request.
+const reviewApprovalError = (response, payload, fallback) =>
+  Object.assign(new Error(payload?.message || fallback), { status: response.status });
+
+export const getAdminReviews = async (scope) => {
+  const response = await requestReview("GET", { scope });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not load reviews.");
+  if (!Array.isArray(payload)) {
+    throw reviewApprovalError(response, null, "Could not load reviews. The server returned an unexpected response. Please try again.");
+  }
+  return payload;
+};
+
+export const getPendingApprovalReviews = () => getAdminReviews("pending-approval");
+
+export const publishApprovedReview = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken() },
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not publish this review. Please try again.");
+  return payload;
+};
+
+const ACCESS_TIMEOUT_MS = 5000;
+const ACCESS_CACHE_MS = 5 * 60 * 1000;
+let approvalAccessCache = null;
+
+export const clearReviewApprovalAccessCache = () => { approvalAccessCache = null; };
+if (typeof globalThis.addEventListener === "function") {
+  globalThis.addEventListener("authChanged", clearReviewApprovalAccessCache);
+}
+
+// Cache only confirmed approval access, never denials or queue rows. Token scoping prevents
+// sharing answers across accounts/sessions; the short TTL bounds role staleness.
+export const hasReviewApprovalAccess = async () => {
+  const controller = new AbortController();
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => { controller.abort(); resolve(null); }, ACCESS_TIMEOUT_MS);
+  });
+  const check = async () => {
+    const token = await getIdToken();
+    if (controller.signal.aborted || !token) return null;
+    if (approvalAccessCache?.token === token && approvalAccessCache.expiresAt > Date.now()) {
+      const shared = approvalAccessCache;
+      const allowed = await Promise.race([shared.answer, timeout]);
+      // The shared request belongs to its first caller. If its deadline expires,
+      // a later caller may retry using the time left on its own deadline.
+      if (!shared.controller.signal.aborted || controller.signal.aborted) return allowed;
+      if (approvalAccessCache === shared) approvalAccessCache = null;
+    }
+    const entry = { token, controller, expiresAt: Date.now() + ACCESS_CACHE_MS };
+    approvalAccessCache = entry;
+    const request = (async () => {
+      try {
+        const response = await fetch(`${API_REVIEW_BASE}/reviews?scope=pending-approval`, {
+          method: "GET", headers: { Authorization: token }, signal: controller.signal,
+        });
+        if (response.status === 401 || response.status === 403) return false;
+        if (!response.ok) return null;
+        const payload = await parseResponse(response);
+        return Array.isArray(payload) ? true : null;
+      } catch {
+        return null;
+      }
+    })();
+    entry.answer = Promise.race([request, timeout]);
+    const allowed = await entry.answer;
+    if ((allowed !== true || controller.signal.aborted) && approvalAccessCache === entry) {
+      approvalAccessCache = null;
+    }
+    return allowed;
+  };
+  try {
+    return await Promise.race([check(), timeout]);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// updatedAt is the version the admin saw; the backend refuses the approval if the review changed since.
+export const approveReview = async (reviewId, updatedAt) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/approve`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
+    body: JSON.stringify({ updated_at: updatedAt }),
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, "Could not approve this review. Please try again.");
+  return payload;
+};
+
 export const getPropertyRatingTrends = async (query) => {
   const response = await requestReview("GET", { ...query, scope: "property-trends" });
   const payload = await parseResponse(response);
@@ -134,6 +251,16 @@ export const requestReview = async (method = "GET", query = {}) => {
       },
     }
   );
+};
+
+export const submitReviewForApproval = async (reviewId) => {
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`, {
+    method: "POST",
+    headers: { Authorization: await getIdToken() },
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(getReviewErrorMessage(response.status, payload));
+  return payload;
 };
 
 // Create a new review

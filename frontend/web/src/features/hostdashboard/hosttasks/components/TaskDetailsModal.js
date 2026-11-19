@@ -170,10 +170,6 @@ const TaskDetailsModal = ({
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label htmlFor='task-booking-ref'>Booking Reference</label>
-                                <input id='task-booking-ref' type="text" name="bookingRef" value={editedTask.bookingRef || ''} placeholder="Coming soon" disabled />
-                            </div>
-                            <div className="form-group">
                                 <label htmlFor='task-due-date'>Due Date</label>
                                 <input id='task-due-date' type="date" name="dueDate" value={editedTask.dueDate || ''} min={getTodayString()} onChange={onEditChange} onClick={(e) => e.target.showPicker?.()} />
                             </div>

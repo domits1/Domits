@@ -67,6 +67,7 @@ export class StaticPageReconciler {
     const expected = entries.filter(isPublishedOnActiveDomain);
     const expectedHostnames = new Set(expected.map((entry) => entry.domain));
     const storedHostnames = new Set(listed.hostnames);
+    const hostnamesWithAPage = new Set([...listed.hostnames, ...Object.keys(listed.sitePages)]);
     const summary = {
       stored: storedHostnames.size,
       expected: expectedHostnames.size,
@@ -76,18 +77,19 @@ export class StaticPageReconciler {
       errors: listed.rejected.map((key) => ({ key, message: "not a page key" })),
     };
 
-    if (entries.length === 0 && storedHostnames.size > 0) {
+    if (entries.length === 0 && hostnamesWithAPage.size > 0) {
       summary.errors.push({
-        message: `The database lists no website domain while ${storedHostnames.size} pages are stored; nothing was removed.`,
+        message: `The database lists no website domain while ${hostnamesWithAPage.size} pages are stored; nothing was removed.`,
       });
       return summary;
     }
 
-    const orphans = [...storedHostnames].filter((hostname) => !expectedHostnames.has(hostname)).slice(0, budget);
+    const orphans = [...hostnamesWithAPage].filter((hostname) => !expectedHostnames.has(hostname)).slice(0, budget);
     const repairs = new Set();
     if (orphans.length > 0) {
       const removal = await this.withdrawal.removePages(orphans, {
         etags: listed.etags,
+        sitePages: listed.sitePages,
         keep: async (hostname) =>
           isPublishedOnActiveDomain(await this.domainRepository.getDomainWithSiteByName(hostname)),
       });

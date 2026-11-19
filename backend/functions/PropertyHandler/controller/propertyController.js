@@ -21,6 +21,13 @@ import { WebsiteUnpublisher } from "../business/service/websiteUnpublisher.js";
 import { WebsiteCleanupService } from "../business/service/websiteCleanupService.js";
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
+import { WebsiteElitePageSettings } from "../business/service/websiteElitePageSettings.js";
+import {
+    SITE_PROPERTIES_OVERRIDE_KEY,
+    listNewSitePropertyIds,
+    withNormalizedSiteProperties,
+} from "../business/service/websiteSiteProperties.js";
+import { WebsiteSitePropertySnapshots } from "../business/service/websiteSitePropertySnapshots.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
@@ -35,6 +42,7 @@ import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
 import { WebsitePublishNotAllowedError } from "../util/exception/WebsitePublishNotAllowedError.js";
+import { WebsiteSitePropertyNotAllowedError } from "../util/exception/WebsiteSitePropertyNotAllowedError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
@@ -42,7 +50,11 @@ import {
 import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
 import { toPublicWebsiteSiteView } from "../util/websiteSiteView.js";
 import { toPublicWebsitePropertySnapshotView } from "../util/websitePropertySnapshotView.js";
-import { WebsitePublicHostService, buildEmptyPublicWebsiteHost } from "../business/service/websitePublicHostService.js";
+import {
+    WebsitePublicHostService,
+    buildEmptyPublicWebsiteHost,
+    servePublicWebsiteHostForSite,
+} from "../business/service/websitePublicHostService.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -1476,6 +1488,23 @@ export class PropertyController {
         );
     }
 
+    async authorizeSitePropertyOwners(accessToken, mainPropertyId, overridesList, storedOverridesList = []) {
+        const sitePropertyIds = new Set(
+            overridesList.flatMap((overrides) => listNewSitePropertyIds(overrides, mainPropertyId, storedOverridesList))
+        );
+        const ownerChecks = await Promise.allSettled(
+            [...sitePropertyIds].map((sitePropertyId) => this.authManager.authorizeOwnerRequest(accessToken, sitePropertyId))
+        );
+        const refusal = ownerChecks.find((ownerCheck) => ownerCheck.status === "rejected");
+        if (!refusal) {
+            return;
+        }
+        if (refusal.reason instanceof NotFoundException) {
+            throw new TypeError("siteProperties lists a property that does not exist.");
+        }
+        throw refusal.reason;
+    }
+
     parseWebsiteOverridePayload(payload, fieldName) {
         if (payload === undefined || payload === null) {
             return {};
@@ -1734,14 +1763,19 @@ export class PropertyController {
         domain,
         propertySnapshot = undefined,
         primaryDomain = null,
-        host = null
+        host = null,
+        contentOverrides = site?.publishedContentOverrides,
+        siteProperties = []
     ) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
         }
 
-        return {
+        const publicContentOverrides = Object.fromEntries(
+            Object.entries(contentOverrides || {}).filter(([key]) => key !== SITE_PROPERTIES_OVERRIDE_KEY)
+        );
+        const payload = {
             resolution,
             site: toPublicWebsiteSiteView(site),
             domain: toPublicWebsiteDomainView(domain),
@@ -1752,10 +1786,11 @@ export class PropertyController {
                     ? propertySnapshot
                     : site.publishedPropertySnapshot || {}
             ),
-            contentOverrides: site.publishedContentOverrides || {},
+            contentOverrides: publicContentOverrides,
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
         };
+        return siteProperties.length > 0 ? { ...payload, siteProperties } : payload;
     }
 
     async buildPublicPropertySnapshotForWebsiteRender(site) {
@@ -1940,7 +1975,11 @@ export class PropertyController {
     async withdrawStaticPageSafely(site) {
         try {
             const withdrawn = await this.createStaticPageWithdrawal().withdrawSite(site.id);
-            [...withdrawn.invalidationErrors, ...(withdrawn.redirectErrors || [])].forEach((failure) => {
+            [
+                ...withdrawn.invalidationErrors,
+                ...(withdrawn.redirectErrors || []),
+                ...(withdrawn.sitePageErrors || []),
+            ].forEach((failure) => {
                 console.error(`[StaticPage] withdrawing site ${site.id} left a failure:`, failure);
             });
         } catch (error) {
@@ -2072,13 +2111,16 @@ export class PropertyController {
         return buildLiveSiteDomain(site.siteName, site.id) === normalizedDomain ? site : null;
     }
 
-    async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId }) {
+    async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId, sitePropertyIds = null }) {
         const publishStartedAt = Date.now();
         const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
             propertyId,
             { includeCalendarAvailability: true }
         );
         this.ensureDirectBookingWebsitePublishEligibility(propertyDetails);
+        const sitePropertySnapshots = sitePropertyIds
+            ? await this.getWebsiteSitePropertySnapshots().buildForPublish(sitePropertyIds)
+            : undefined;
 
         const siteName = this.buildDirectBookingWebsiteName({
             draft,
@@ -2097,6 +2139,7 @@ export class PropertyController {
             publishedThemeOverrides: draft.publishedThemeOverrides || {},
             publishedAt: Date.now(),
             suspendedAt: null,
+            sitePropertySnapshots,
         });
 
         const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(
@@ -2163,6 +2206,7 @@ export class PropertyController {
             error?.message?.startsWith("Missing eventType") ||
             error?.message?.startsWith("Missing templateKey") ||
             error?.message?.includes("must be a plain object") ||
+            error?.message?.startsWith("siteProperties ") ||
             error?.message?.includes("deleteReasons must be an array") ||
             error?.message?.includes("Unsupported website eventType") ||
             error?.message?.includes("Listing data could not be loaded for this live site.") ||
@@ -2607,8 +2651,8 @@ export class PropertyController {
         try {
             const country = event.queryStringParameters.country;
             const lastEvaluatedKey = {
-                id: event.queryStringParameters?.lastEvaluatedKeyId,
-                city: event.queryStringParameters?.lastEvaluatedKeyCity
+                createdAt: parseFloat(event.queryStringParameters?.lastEvaluatedKeyCreatedAt),
+                id: event.queryStringParameters?.lastEvaluatedKeyId
             }
             const properties = await this.propertyService.getActivePropertyCardsByCountry(country, lastEvaluatedKey)
             return {
@@ -2857,17 +2901,25 @@ export class PropertyController {
                 return this.badRequest("Missing templateKey.");
             }
 
+            const checkedContentOverrides = withNormalizedSiteProperties(contentOverrides, propertyId);
+            const checkedPublishedContentOverrides = withNormalizedSiteProperties(publishedContentOverrides, propertyId);
             await this.authManager.authorizeOwnerRequest(accessToken, propertyId);
             const existingDraft = await this.directBookingWebsiteDraftRepository.getDraftByPropertyIdAndHostId(propertyId, hostId);
+            await this.authorizeSitePropertyOwners(
+                accessToken,
+                propertyId,
+                [checkedContentOverrides, checkedPublishedContentOverrides],
+                [existingDraft?.contentOverrides, existingDraft?.publishedContentOverrides]
+            );
 
             const draft = await this.directBookingWebsiteDraftRepository.upsertDraft({
                 hostId,
                 propertyId,
                 templateKey,
                 status,
-                contentOverrides,
+                contentOverrides: checkedContentOverrides,
                 themeOverrides,
-                publishedContentOverrides,
+                publishedContentOverrides: checkedPublishedContentOverrides,
                 publishedThemeOverrides,
             });
 
@@ -3061,10 +3113,19 @@ export class PropertyController {
                 };
             }
 
+            const sitePropertyIds = await this.getWebsiteSitePropertySnapshots().listForPublish({
+                hostId,
+                mainPropertyId: propertyId,
+                overrides: draft.publishedContentOverrides,
+            });
+            if (sitePropertyIds) {
+                await this.authorizeSitePropertyOwners(accessToken, propertyId, [draft.publishedContentOverrides]);
+            }
             const siteSummary = await this.publishDirectBookingWebsiteForDraft({
                 draft,
                 hostId,
                 propertyId,
+                sitePropertyIds,
             });
 
             return {
@@ -3077,7 +3138,11 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            if (error instanceof WebsitePublishConflictError || error instanceof WebsitePublishNotAllowedError) {
+            if (
+                error instanceof WebsitePublishConflictError ||
+                error instanceof WebsitePublishNotAllowedError ||
+                error instanceof WebsiteSitePropertyNotAllowedError
+            ) {
                 return {
                     statusCode: error.statusCode,
                     headers: draftResponseHeaders,
@@ -3226,11 +3291,19 @@ export class PropertyController {
                 },
             });
 
-            const [propertySnapshot, primaryDomain, host] = await Promise.all([
+            const [propertySnapshot, primaryDomain, host, contentOverrides] = await Promise.all([
                 this.buildPublicPropertySnapshotForWebsiteRender(resolutionResult.site),
                 this.loadPublicDirectBookingWebsiteMainAddress(resolutionResult.site, resolutionResult.siteDomains),
                 this.loadPublicWebsiteHostSafely(resolutionResult.site),
+                this.getWebsiteElitePageSettings().servePageSettingsForHost({
+                    hostId: resolutionResult.site.hostId,
+                    overrides: resolutionResult.site.publishedContentOverrides,
+                }),
             ]);
+            const siteProperties = await this.getWebsiteSitePropertySnapshots().serveForRender({
+                site: resolutionResult.site,
+                overrides: contentOverrides,
+            });
 
             return {
                 statusCode: 200,
@@ -3240,7 +3313,9 @@ export class PropertyController {
                     resolutionResult.domain,
                     propertySnapshot,
                     primaryDomain,
-                    host
+                    servePublicWebsiteHostForSite(host, contentOverrides),
+                    contentOverrides,
+                    siteProperties
                 )),
             };
         } catch (error) {
@@ -3525,6 +3600,20 @@ export class PropertyController {
         return this.websitePublicHostService;
     }
 
+    getWebsiteSitePropertySnapshots() {
+        this.websiteSitePropertySnapshots ??= new WebsiteSitePropertySnapshots({
+            propertyService: this.propertyService,
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            pageSettings: this.getWebsiteElitePageSettings(),
+        });
+        return this.websiteSitePropertySnapshots;
+    }
+
+    getWebsiteElitePageSettings() {
+        this.websiteElitePageSettings ??= new WebsiteElitePageSettings(this.directBookingWebsiteRatePlanService);
+        return this.websiteElitePageSettings;
+    }
+
     async loadPublicWebsiteHostSafely(site) {
         try {
             return await this.getWebsitePublicHostService().loadPublicHost(site?.hostId);
@@ -3577,6 +3666,8 @@ export class PropertyController {
     // -------------------------
     async getWebsitePreviewByDraftId(event) {
         try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
             const draftId = String(
                 event.queryStringParameters?.draft ||
                 event.queryStringParameters?.draftId ||
@@ -3588,18 +3679,20 @@ export class PropertyController {
             }
 
             const draft = await this.directBookingWebsiteDraftRepository.getDraftById(draftId);
-            if (!draft || draft.status === "SUSPENDED") {
+            if (!draft || draft.status === "SUSPENDED" || draft.hostId !== hostId) {
                 return {
                     statusCode: 404,
                     headers: draftResponseHeaders,
                     body: JSON.stringify({ message: "Website preview not found." }),
                 };
             }
+            await this.authManager.authorizeOwnerRequest(accessToken, draft.propertyId);
 
-            const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
-                draft.propertyId,
-                { includeCalendarAvailability: true }
-            );
+            const [propertyDetails, servedDraft, host] = await Promise.all([
+                this.propertyService.getFullPropertyAttributes(draft.propertyId, { includeCalendarAvailability: true }),
+                this.getWebsiteElitePageSettings().servePageSettingsOnDraft(draft),
+                this.loadPublicWebsiteHostSafely(draft),
+            ]);
 
             await this.recordStandaloneWebsiteEventSafely({
                 draftId: draft.id,
@@ -3615,8 +3708,9 @@ export class PropertyController {
                 statusCode: 200,
                 headers: draftResponseHeaders,
                 body: JSON.stringify({
-                    draft,
-                    propertyDetails,
+                    draft: servedDraft,
+                    propertyDetails: toPublicWebsitePropertySnapshotView(propertyDetails),
+                    host,
                 }),
             };
         } catch (error) {
@@ -3624,7 +3718,14 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            if (error instanceof NotFoundException) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website preview not found." }),
+                };
+            }
+            return this.websiteFailureResponse(error);
         }
     }
 
@@ -3834,7 +3935,10 @@ export class PropertyController {
         try {
             const accessToken = event.headers?.Authorization || event.headers?.authorization;
             const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
-            const plan = await this.directBookingWebsiteRatePlanService.getCurrentPlan(hostId);
+            const wantsEntitlementsOnly = event.queryStringParameters?.view === "entitlements";
+            const plan = wantsEntitlementsOnly
+                ? await this.directBookingWebsiteRatePlanService.getCurrentEntitlements(hostId)
+                : await this.directBookingWebsiteRatePlanService.getCurrentPlan(hostId);
             return {
                 statusCode: 200,
                 headers: responseHeaders,
@@ -3884,6 +3988,7 @@ export class PropertyController {
                 accountId: user.Username,
                 targetPlan: body.plan,
                 customerEmail: user.UserAttributes?.find((attribute) => attribute.Name === "email")?.Value || "",
+                withoutPayment: body.withoutPayment,
             });
 
             return {
