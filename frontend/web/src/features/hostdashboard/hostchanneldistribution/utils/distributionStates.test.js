@@ -19,8 +19,16 @@ const listing = (overrides = {}) => ({
 describe("describeListingView", () => {
   test.each([
     ["a ready, provisioned listing", listing(), LISTING_VIEW.CARDS],
-    ["a listing that is not ready", listing({ readiness: { ready: false, missing: ["PRICE_MISSING"] } }), LISTING_VIEW.NOT_READY],
-    ["a listing whose setup failed", listing({ distribution: { status: "PROVISIONING_FAILED" } }), LISTING_VIEW.SETUP_FAILED],
+    [
+      "a listing that is not ready",
+      listing({ readiness: { ready: false, missing: ["PRICE_MISSING"] } }),
+      LISTING_VIEW.NOT_READY,
+    ],
+    [
+      "a listing whose setup failed",
+      listing({ distribution: { status: "PROVISIONING_FAILED" } }),
+      LISTING_VIEW.SETUP_FAILED,
+    ],
     ["a listing that is being set up", listing({ distribution: { status: "PROVISIONING" } }), LISTING_VIEW.CARDS],
     ["a listing not turned on yet", listing({ distribution: { status: "NOT_ENABLED" } }), LISTING_VIEW.CARDS],
   ])("%s", (_name, input, expected) => {
@@ -94,7 +102,9 @@ describe("describePlatformCard", () => {
       "Vrbo"
     );
 
-    expect(state.note).toBe("Disconnected outside Domits. Close your dates on Vrbo yourself: Domits can no longer close them.");
+    expect(state.note).toBe(
+      "Disconnected outside Domits. Close your dates on Vrbo yourself: Domits can no longer close them."
+    );
   });
 
   test("shows a plain sentence, never the raw error code, for other attention states", () => {
@@ -113,12 +123,9 @@ describe("describePlatformCard", () => {
 
 describe("describeMissingItems", () => {
   test("turns readiness codes into one sentence each, in the order the backend gave", () => {
-    expect(describeMissingItems(["STATUS_NOT_ACTIVE", "LOCATION_MISSING", "MAX_GUESTS_MISSING", "PRICE_MISSING"])).toEqual([
-      "Publish your listing first",
-      "Add the address",
-      "Add the maximum number of guests",
-      "Add a price",
-    ]);
+    expect(
+      describeMissingItems(["STATUS_NOT_ACTIVE", "LOCATION_MISSING", "MAX_GUESTS_MISSING", "PRICE_MISSING"])
+    ).toEqual(["Publish your listing first", "Add the address", "Add the maximum number of guests", "Add a price"]);
   });
 
   test("falls back to one generic sentence when no code is known", () => {

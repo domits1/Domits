@@ -41,7 +41,11 @@ describe("PlatformCard", () => {
 
   test("shows the note when there is one, and nothing when there is none", () => {
     const { rerender } = render(
-      <PlatformCard platform={PLATFORM} state={state({ tone: "error", note: "Close your dates yourself." })} onToggle={jest.fn()} />
+      <PlatformCard
+        platform={PLATFORM}
+        state={state({ tone: "error", note: "Close your dates yourself." })}
+        onToggle={jest.fn()}
+      />
     );
     expect(screen.getByText("Close your dates yourself.")).toBeInTheDocument();
 
@@ -64,7 +68,9 @@ describe("PlatformCard", () => {
   test("reports the requested direction with the OTA code when the host flips the switch", async () => {
     const user = userEvent.setup();
     const onToggle = jest.fn();
-    const { rerender } = render(<PlatformCard platform={PLATFORM} state={state({ switchOn: false })} onToggle={onToggle} />);
+    const { rerender } = render(
+      <PlatformCard platform={PLATFORM} state={state({ switchOn: false })} onToggle={onToggle} />
+    );
 
     await user.click(screen.getByRole("switch"));
     expect(onToggle).toHaveBeenLastCalledWith({ otaCode: "BookingCom", turnOn: true });

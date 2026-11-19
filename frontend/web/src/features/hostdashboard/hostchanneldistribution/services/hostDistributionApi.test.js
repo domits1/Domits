@@ -42,7 +42,11 @@ describe("hostDistributionApi (mock)", () => {
       ["Airbnb", "LIVE"],
     ]);
     const mixed = await refreshChannels({ propertyId: "mock-listing-mixed" });
-    expect(mixed.listing.channels.map((c) => c.displayState)).toEqual(["DISCONNECTING", "DISCONNECTED", "NEEDS_ATTENTION"]);
+    expect(mixed.listing.channels.map((c) => c.displayState)).toEqual([
+      "DISCONNECTING",
+      "DISCONNECTED",
+      "NEEDS_ATTENTION",
+    ]);
   });
 
   test("refresh of an unknown listing rejects with a 404 shaped like a real request error", async () => {
