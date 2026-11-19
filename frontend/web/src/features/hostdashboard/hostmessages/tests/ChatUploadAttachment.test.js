@@ -41,14 +41,27 @@ const deferred = () => {
   return { promise, resolve };
 };
 
+const PREVIEW_URL = "blob:http://localhost/local-photo";
+const report = (patch = {}) => ({
+  url: UPLOAD_TARGET.fileUrl,
+  name: "photo.jpg",
+  type: "image/jpeg",
+  previewUrl: PREVIEW_URL,
+  ...patch,
+});
+
 describe("ChatUploadAttachment", () => {
+  const originalCreateObjectURL = URL.createObjectURL;
+
   beforeEach(() => {
     mockGetUploadUrl.mockReset();
     global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => "" });
+    URL.createObjectURL = jest.fn(() => PREVIEW_URL);
     jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
+    URL.createObjectURL = originalCreateObjectURL;
     jest.restoreAllMocks();
   });
 
@@ -81,14 +94,79 @@ describe("ChatUploadAttachment", () => {
 
     dropPhoto();
 
-    await waitFor(() =>
-      expect(onUploadComplete).toHaveBeenCalledWith({
-        url: UPLOAD_TARGET.fileUrl,
-        name: "photo.jpg",
-        type: "image/jpeg",
-      })
-    );
+    await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith(report()));
     expect(onUploadError).not.toHaveBeenCalled();
+  });
+
+  describe("local preview", () => {
+    test("keeps a local preview of an image next to its uploaded url", async () => {
+      mockGetUploadUrl.mockResolvedValue(UPLOAD_TARGET);
+      const { onUploadComplete } = renderAttachment();
+
+      dropPhoto();
+
+      await waitFor(() => expect(onUploadComplete).toHaveBeenCalledTimes(1));
+      expect(URL.createObjectURL).toHaveBeenCalledWith(photo);
+      expect(onUploadComplete.mock.calls[0][0]).toEqual(report());
+    });
+
+    test("never uses the local preview as the uploaded url", async () => {
+      mockGetUploadUrl.mockResolvedValue(UPLOAD_TARGET);
+      const { onUploadComplete } = renderAttachment();
+
+      dropPhoto();
+
+      await waitFor(() => expect(onUploadComplete).toHaveBeenCalledTimes(1));
+      expect(onUploadComplete.mock.calls[0][0].url).toBe(UPLOAD_TARGET.fileUrl);
+    });
+
+    test("creates no preview for a file that is not an image", async () => {
+      mockGetUploadUrl.mockResolvedValue({ ...UPLOAD_TARGET, fileUrl: "https://files.example.com/lease.pdf" });
+      const { onUploadComplete } = renderAttachment();
+      const lease = new File(["x"], "lease.pdf", { type: "application/pdf" });
+
+      fireEvent.drop(attachButton(), { dataTransfer: { files: [lease] } });
+
+      await waitFor(() => expect(onUploadComplete).toHaveBeenCalledTimes(1));
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+      expect(onUploadComplete.mock.calls[0][0]).toEqual(
+        report({ url: "https://files.example.com/lease.pdf", name: "lease.pdf", type: "application/pdf", previewUrl: null })
+      );
+    });
+
+    test("creates no preview when the upload fails", async () => {
+      mockGetUploadUrl.mockResolvedValue({});
+      const { onUploadError } = renderAttachment();
+
+      dropPhoto();
+
+      await waitFor(() => expect(onUploadError).toHaveBeenCalledTimes(1));
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
+    test("creates no preview for an upload that finishes after it was unmounted", async () => {
+      const pendingUrl = deferred();
+      mockGetUploadUrl.mockReturnValue(pendingUrl.promise);
+      const { unmount } = renderAttachment();
+
+      dropPhoto();
+      unmount();
+      await act(async () => {
+        pendingUrl.resolve(UPLOAD_TARGET);
+      });
+
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
+    test("still reports the upload when the browser cannot create a preview", async () => {
+      URL.createObjectURL = undefined;
+      mockGetUploadUrl.mockResolvedValue(UPLOAD_TARGET);
+      const { onUploadComplete } = renderAttachment();
+
+      dropPhoto();
+
+      await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith(report({ previewUrl: null })));
+    });
   });
 
   test("shows a spinner and disables the button while the upload runs, then restores it", async () => {

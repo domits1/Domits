@@ -474,6 +474,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
 }
 
@@ -504,6 +505,7 @@
   align-items: flex-end;
   gap: 10px;
   margin: 10px 0;
+  min-width: 0;
 
   &.sent {
     justify-content: flex-end;
@@ -524,6 +526,7 @@
 
 .messages-v2 .chat-message {
   max-width: min(72%, 640px);
+  min-width: 0;
   border-radius: 18px;
   padding: 10px 12px;
   border: 1px solid rgba(15, 23, 42, 0.06);
@@ -552,6 +555,75 @@
   color: #0f172a;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.messages-v2 .message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  min-width: 0;
+}
+
+.messages-v2 .chat-message.sent .message-attachments {
+  justify-content: flex-end;
+}
+
+.messages-v2 .chat-message.received .message-attachments {
+  justify-content: flex-start;
+}
+
+.messages-v2 .message-image-button {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  line-height: 0;
+  cursor: zoom-in;
+
+  &:focus-visible {
+    outline: 2px solid var(--domits-green);
+    outline-offset: 2px;
+  }
+}
+
+.messages-v2 .message-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(240px, 100%);
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #f1f5f9;
+}
+
+.messages-v2 .message-video {
+  display: block;
+  max-width: min(240px, 100%);
+  max-height: 240px;
+  border-radius: 12px;
+  background: #0f172a;
+}
+
+.messages-v2 .image-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  cursor: zoom-out;
+}
+
+.messages-v2 .image-modal-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 .messages-v2 .message-retry-button {
