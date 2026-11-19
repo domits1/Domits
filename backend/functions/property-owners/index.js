@@ -7,7 +7,10 @@ const METHOD_NOT_ALLOWED_MESSAGE = "Method not allowed.";
 const NO_ACTION = Symbol("no-action");
 
 const ROUTES = new Map([
-  ["GET", new Map([[NO_ACTION, { withId: "getOwner", withoutId: "listOwners" }]])],
+  ["GET", new Map([
+    [NO_ACTION, { withId: "getOwner", withoutId: "listOwners" }],
+    ["financial-data", { withId: "getFinancialSourceData", withoutId: null }],
+  ])],
   ["POST", new Map([[NO_ACTION, { withId: null, withoutId: "createOwner" }]])],
   ["PUT", new Map([["set-shares", { withId: null, withoutId: "setShares" }]])],
   [
