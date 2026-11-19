@@ -1,6 +1,6 @@
 # feat(distribution): show the platform cards behind the host distribution flag (#506)
 
-Pull request: not opened yet (stacked on #3923, which is stacked on #3920)
+Pull request: #3978 (stacked on #3923, which is stacked on #3920)
 Issue: #506
 Reviewed commits: `a3e2e6320`, `671560afc`, `1350440f2`, `87bdfba69` (formatting only)
 Result: no blocking findings
