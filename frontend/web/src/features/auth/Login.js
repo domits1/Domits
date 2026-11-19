@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
+import { hasReviewApprovalAccess } from "../review/services/reviewAPI";
+import { REVIEW_APPROVAL_ADMIN_PATH } from "../review/navigation/reviewApprovalRoute";
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
 import MfaChallengeStep from "./mfaChallenge/MfaChallengeStep";
 import { useMfaChallenge, SOFTWARE_TOKEN_MFA } from "./mfaChallenge/useMfaChallenge";
@@ -35,6 +37,15 @@ const Login = () => {
 
   const inputRef = useRef([]);
 
+  const getAdminLanding = useCallback(async () => {
+    if (redirect && !["/hostdashboard", "/guestdashboard", "/"].includes(redirect)) return null;
+    try {
+      return (await hasReviewApprovalAccess()) === true ? REVIEW_APPROVAL_ADMIN_PATH : null;
+    } catch {
+      return null;
+    }
+  }, [redirect]);
+
   useEffect(() => {
     let active = true;
     const checkAuth = async () => {
@@ -42,6 +53,13 @@ const Login = () => {
         const user = await Auth.currentAuthenticatedUser();
 
         if (!active) return;
+
+        const adminLanding = await getAdminLanding();
+        if (!active) return;
+        if (adminLanding) {
+          navigate(adminLanding);
+          return;
+        }
 
         if (redirect) {
           window.location.href = redirect;
@@ -59,7 +77,7 @@ const Login = () => {
     return () => {
       active = false;
     };
-  }, [navigate, redirect]);
+  }, [navigate, redirect, getAdminLanding]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -68,7 +86,10 @@ const Login = () => {
   const completeSignIn = async () => {
     globalThis.dispatchEvent(new Event("authChanged"));
 
-    if (redirect) {
+    const adminLanding = await getAdminLanding();
+    if (adminLanding) {
+      window.location.href = adminLanding;
+    } else if (redirect) {
       window.location.href = redirect;
     } else {
       globalThis.location.reload();
