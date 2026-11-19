@@ -3410,7 +3410,10 @@ export class PropertyController {
         let nextIndex = 0;
         let isPastDeadline = false;
         const quoteWaiting = async () => {
-            while (!isPastDeadline && nextIndex < propertyIds.length) {
+            while (nextIndex < propertyIds.length) {
+                if (isPastDeadline) {
+                    return;
+                }
                 const propertyId = propertyIds[nextIndex];
                 nextIndex += 1;
                 answers.set(propertyId, await this.quoteWebsiteBatchEntry({ site, propertyId, servedOtherIds, requestBody, requestId }));
