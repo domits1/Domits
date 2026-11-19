@@ -286,3 +286,6 @@
 .chdist-switch input:focus-visible + .chdist-switch__track { outline: 2px solid var(--chdist-primary); outline-offset: 2px; }
 
 .chdist-notice__list { margin: 0; padding: 0; list-style: none; text-align: center; }
+
+.chdist-modal--wide { max-width: 720px; }
+.chdist-iframe { display: block; width: 100%; height: clamp(360px, 65vh, 640px); margin-bottom: 1rem; border: 1px solid var(--chdist-border); border-radius: 8px; }
