@@ -19,19 +19,18 @@ beforeEach(() => {
 });
 afterEach(() => Object.defineProperty(globalThis, "location", { configurable: true, value: originalLocation }));
 
-test.each(["/guestdashboard", "/hostdashboard/admin/review-approval"])("preserves a guest's requested destination %s without probing", async (destination) => {
+test.each(["/guestdashboard/messages", "/hostdashboard/admin/review-approval"])("preserves a guest's requested destination %s without probing", async (destination) => {
   Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { "custom:group": "Traveler" } });
   renderLogin(`/login?redirect=${encodeURIComponent(destination)}`);
   await waitFor(() => expect(globalThis.location.href).toBe(destination));
   expect(hasReviewApprovalAccess).not.toHaveBeenCalled();
 });
 
-test("preserves an authenticated approver's requested host page without a probe", async () => {
+test("sends an authenticated approver to the admin dashboard", async () => {
   Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { "custom:group": "Host" } });
   hasReviewApprovalAccess.mockResolvedValue(true);
   renderLogin();
-  await waitFor(() => expect(globalThis.location.href).toBe("/hostdashboard"));
-  expect(hasReviewApprovalAccess).not.toHaveBeenCalled();
+  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/hostdashboard/admin/review-approval"));
 });
 
 test.each([false, null])("preserves an authenticated host's redirect when approval access is %s", async (answer) => {
@@ -50,11 +49,11 @@ test.each([true, false, null])("applies the approval policy after password sign-
   fireEvent.change(screen.getByPlaceholderText("Email"), { target: { value: "host@example.com" } });
   fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "password" } });
   fireEvent.click(screen.getByRole("button", { name: "Login" }));
-  await waitFor(() => expect(globalThis.location.href).toBe("/hostdashboard"));
-  expect(hasReviewApprovalAccess).not.toHaveBeenCalled();
+  await waitFor(() => expect(globalThis.location.href).toBe(answer === true ? "/hostdashboard/admin/review-approval" : "/hostdashboard"));
+  expect(hasReviewApprovalAccess).toHaveBeenCalled();
 });
 
-test("preserves the requested redirect after completing MFA without a probe", async () => {
+test("lands on the admin dashboard after completing MFA", async () => {
   Auth.currentAuthenticatedUser.mockRejectedValue(new Error("Signed out"));
   Auth.signIn.mockResolvedValue({ username: "user-1", challengeName: "SOFTWARE_TOKEN_MFA" });
   Auth.confirmSignIn.mockResolvedValue({ username: "user-1" });
@@ -66,6 +65,13 @@ test("preserves the requested redirect after completing MFA without a probe", as
   await screen.findByRole("heading", { name: /two-factor authentication/i });
   screen.getAllByRole("textbox").forEach((input) => fireEvent.change(input, { target: { value: "1" } }));
   fireEvent.click(screen.getByRole("button", { name: /verify/i }));
-  await waitFor(() => expect(globalThis.location.href).toBe("/hostdashboard"));
-  expect(hasReviewApprovalAccess).not.toHaveBeenCalled();
+  await waitFor(() => expect(globalThis.location.href).toBe("/hostdashboard/admin/review-approval"));
+  expect(hasReviewApprovalAccess).toHaveBeenCalled();
+});
+
+test.each(["Host", "Traveler"])("routes a %s admin without a redirect", async (group) => {
+  Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { "custom:group": group } });
+  hasReviewApprovalAccess.mockResolvedValue(true);
+  renderLogin("/login");
+  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/hostdashboard/admin/review-approval"));
 });
