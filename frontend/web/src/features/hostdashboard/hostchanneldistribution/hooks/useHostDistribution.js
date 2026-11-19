@@ -47,6 +47,13 @@ export function useHostDistribution() {
   const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
   // Replaces the one listing the backend answered with, so the other listings keep what they show.
+  const applyListing = useCallback((propertyId, listing) => {
+    setResult((previous) => ({
+      ...previous,
+      listings: previous.listings.map((candidate) => (candidate.propertyId === propertyId ? listing : candidate)),
+    }));
+  }, []);
+
   const refresh = useCallback(async (propertyId) => {
     setRefreshingPropertyId(propertyId);
     setRefreshFailedPropertyId(null);
@@ -55,17 +62,14 @@ export function useHostDistribution() {
       // A body without a listing must not replace one with nothing: that would crash the section.
       if (!listing?.propertyId) throw new Error("The refresh response did not contain a listing.");
       if (!mountedRef.current) return;
-      setResult((previous) => ({
-        ...previous,
-        listings: previous.listings.map((candidate) => (candidate.propertyId === propertyId ? listing : candidate)),
-      }));
+      applyListing(propertyId, listing);
     } catch (err) {
       console.error("Failed to refresh the channels of a listing:", err);
       if (mountedRef.current) setRefreshFailedPropertyId(propertyId);
     } finally {
       if (mountedRef.current) setRefreshingPropertyId(null);
     }
-  }, []);
+  }, [applyListing]);
 
   return {
     listings: result.listings,
