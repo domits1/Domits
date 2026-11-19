@@ -24,7 +24,7 @@ The note: `docs/partner/integrations/channel_manager/channex/channex_host_self_d
 | Point | From | Decision |
 |---|---|---|
 | D1 needs a hard guard (allowlist on `connect-session`) until the token scope is settled | Rakib, Mehedi, Karim | Not added. Channex confirmed the token is limited per property after the reviews were written; there are no real hosts yet, and the cross-property check runs during testing before any host is onboarded. Written in D1. |
-| D2: two "turn on" requests at the same time create two Channex properties | Mehedi, Karim | Fixed: claim the listing first with a `PROVISIONING` mapping row under a unique key on `domitsPropertyId` (`ChannelIntegrationProperty` has none today, so a migration adds it). Test added. |
+| D2: two "turn on" requests at the same time create two Channex properties | Mehedi, Karim | Fixed: claim the listing first with a `PROVISIONING` mapping row under a unique key on `domitsPropertyId` (`ChannelIntegrationProperty` has none today, so a migration adds it). Test added. The key changed on 19 Nov to account plus listing, see Karim's re-review below. |
 | D9: does editing a live listing make it non-ACTIVE and disconnect every OTA? | Rakib, Mehedi | No: submit for review only starts from INACTIVE, REJECTED or ARCHIVED (`SUBMITTABLE_FOR_REVIEW_STATUSES`, `propertyStatus.js`). The live and not-live statuses are now listed in D9. |
 | D5: deactivating inside Channex's screen skips stop_sell | Mehedi | Written in D5: detected as "Needs attention", the host is told to close the dates in the OTA; Domits cannot close them once the channel is off. Channex later confirmed the button cannot be hidden; see "Channex answers" below. |
 | How the frontend knows the host finished in the iframe | Rakib | Closing the modal always calls `refresh`, whether or not Channex sends a message. Written in section 6. |
@@ -34,6 +34,7 @@ The note: `docs/partner/integrations/channel_manager/channex/channex_host_self_d
 | D10 should include the property type | Mehedi | Added. |
 | EUR is hard-coded in D2 | Mehedi | No change: Domits prices are in euros. |
 | Who pays the $0.50 per unit | Karim | No change: billing is Stefan's decision, outside this design. |
+| Re-review (19 Nov): a unique key on `domitsPropertyId` alone blocks a listing on Channex and SiteMinder at once (same table, `integrationPropertyRepository`), and the index build fails on existing duplicates | Karim | Fixed in D2: unique on `integrationAccountId` plus `domitsPropertyId`; still catches the double click because both requests use the host's one account row (D8). Duplicate check on the current rows before the migration. Verified: `SiteMinder-Integration/business/createSiteMinderServices.js:3` imports the shared repository. |
 
 ## Channex answers (18 Nov) and what changed
 
