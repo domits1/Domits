@@ -9,6 +9,11 @@ export const APPROVED_VARIABLES = Object.freeze([
   "propertyName",
   "checkInDate",
   "checkOutDate",
+  "checkInTime",
+  "checkOutTime",
+  "propertyAddress",
+  "propertyCity",
+  "numberOfGuests",
 ]);
 
 export const SAFE_PREVIEW_VALUES = Object.freeze({
@@ -16,4 +21,9 @@ export const SAFE_PREVIEW_VALUES = Object.freeze({
   propertyName: "Canal Loft",
   checkInDate: "20 Jun 2026",
   checkOutDate: "23 Jun 2026",
+  checkInTime: "15:00",
+  checkOutTime: "11:00",
+  propertyAddress: "Keizersgracht 12, 1015 CJ",
+  propertyCity: "Amsterdam",
+  numberOfGuests: "2",
 });
