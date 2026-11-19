@@ -1,6 +1,7 @@
 import Database from "../.shared/integrations/ORM/index.js";
 import { UnifiedMessage } from "database/models/unified/messaging/UnifiedMessage";
 import { randomUUID } from "node:crypto";
+import { serializeAttachments } from "../util/storedAttachments.js";
 
 export const PLATFORM_MESSAGE_UNIQUE_INDEX = "idx_unified_message_platform_message_unique";
 
@@ -36,7 +37,7 @@ class MessageRepository {
         createdAt,
         isRead: data.isRead ?? false,
         metadata: data.metadata ?? null,
-        attachments: data.attachments ?? null,
+        attachments: serializeAttachments(data.attachments),
         deliveryStatus: data.deliveryStatus || "pending",
         direction: data.direction ?? null,
         externalCreatedAt: data.externalCreatedAt ?? null,

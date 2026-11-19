@@ -9,6 +9,7 @@ import {
   getVerificationLabel,
   getReviewStatusLabel,
   isVerifiedStatus,
+  getReviewRating,
 } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
@@ -18,7 +19,7 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
   const submitted = formatSubmittedAt(review.created_at);
   const location = formatPropertyLocation(review);
   const verificationClassName = isVerifiedStatus(review.verification_status) ? styles.pillVerified : styles.pillNeutral;
-  const rating = Number(review.overall_rating);
+  const rating = getReviewRating(review.overall_rating);
 
   return (
     <aside className={styles.details} aria-labelledby="review-details-heading">
@@ -47,8 +48,8 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
             </span>
           </p>
           <p className={styles.detailsRating}>
-            <RatingStars value={rating} size={20} className={styles.stars} />
-            <span>{rating.toFixed(1)}</span>
+            {rating !== null && <RatingStars value={rating} size={20} className={styles.stars} />}
+            <span>{rating === null ? "Rating unavailable" : rating.toFixed(1)}</span>
           </p>
         </div>
       </div>

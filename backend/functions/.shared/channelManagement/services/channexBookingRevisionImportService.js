@@ -83,24 +83,28 @@ const toAmountOrNull = (value) => {
   const amount = Number(value);
   return Number.isFinite(amount) ? amount : null;
 };
-// Every page shows the total in euros, so an amount in another currency is not stored;
-// the pages then fall back to their own price instead of showing a wrong currency.
-const toEuroAmountOrNull = (revision) => {
+const ISO_CURRENCY_CODE = /^[A-Z]{3}$/;
+const NO_BOOKING_AMOUNT = Object.freeze({ totalPrice: null, currency: null });
+
+// The amount is stored with its own currency, so a booking paid in pounds shows pounds (#3583).
+// An amount without a readable currency could get the wrong symbol, and a currency without an
+// amount labels nothing: in both cases neither is stored and the pages use their own price.
+const toBookingAmount = (revision) => {
   const amount = toAmountOrNull(revision?.amount);
-  if (amount === null) return null;
+  if (amount === null) return NO_BOOKING_AMOUNT;
 
   const currency = requireStr(revision?.currency)?.toUpperCase() ?? null;
-  if (currency !== "EUR") {
+  if (!ISO_CURRENCY_CODE.test(currency ?? "")) {
     console.warn(
       JSON.stringify({
-        event: "CHANNEX_BOOKING_AMOUNT_CURRENCY_NOT_EUR",
+        event: "CHANNEX_BOOKING_AMOUNT_CURRENCY_INVALID",
         revisionId: requireStr(revision?.revisionId),
         currency,
       })
     );
-    return null;
+    return NO_BOOKING_AMOUNT;
   }
-  return amount;
+  return { totalPrice: amount, currency };
 };
 const parseIsoDateParam = (value) => {
   const normalized = requireStr(value);
@@ -1035,7 +1039,7 @@ export default class ChannexBookingRevisionImportService {
         guestName: requireStr(revision?.guestName) || "Channex guest",
         arrivalDateMs: dates.arrivalDateMs,
         departureDateMs: dates.departureDateMs,
-        totalPrice: toEuroAmountOrNull(revision),
+        ...toBookingAmount(revision),
         guestCount: revision?.guestCount ?? null,
         bookingSource: requireStr(revision?.otaName),
         channexChanges: [
@@ -1214,7 +1218,7 @@ export default class ChannexBookingRevisionImportService {
       guestName: requireStr(revision?.guestName) || "Channex guest",
       arrivalDateMs: dates.arrivalDateMs,
       departureDateMs: dates.departureDateMs,
-      totalPrice: toEuroAmountOrNull(revision),
+      ...toBookingAmount(revision),
       guestCount: revision?.guestCount ?? null,
       // The old nights reopen and the new ones close: one change per stay, so the nights
       // between them are not resent (design D9).

@@ -1,5 +1,22 @@
 # Admin review approval test branch: review follow-up
 
+## Routing follow-up (2026-11-18)
+
+The current branch now also fixes runtime routing behavior: approval access is
+checked only on `/hostdashboard/admin/review-approval`. Ordinary host pages use
+existing host entitlements without a review-service request, and staff with host
+access retain those pages. Login and MFA preserve supplied redirects without a
+review-access probe; default group-based destinations are unchanged. This
+supersedes the historical approver-only navigation policy described below.
+
+The PR should describe both regression coverage and this routing correction,
+and link this file instead of an empty `file:` reference. The deleted endpoint
+template and manual API Gateway management were already inherited from the
+base; see `../tools/property_review_admin_allowlist.md`. No new endpoint
+provisioning changes are made here. Browser screenshot evidence and team
+confirmation of manual infrastructure ownership remain unverified; this record
+does not assert either is complete.
+
 Branch: `testt/admin-review-approval`.
 Checked commit: `de82e09ae668007081c45f57fa41c3ccb63cd4ec`.
 Recorded: 2026-11-13. No associated GitHub PR was found.

@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import PulseBarsLoader from "../../../components/loaders/PulseBarsLoader";
 import { upsertWebsiteDraft } from "./services/websiteDraftService";
 import {
-  fetchWebsiteSiteByPropertyId,
   publishWebsiteSite,
   unpublishWebsiteSite,
 } from "./services/websiteSiteService";
@@ -70,6 +69,7 @@ import { WebsitePreviewSkeleton } from "./rendering/WebsitePreviewSkeleton";
 import WebsiteIconPickerDialog from "./WebsiteIconPickerDialog";
 import WebsiteImagePickerDialog from "./WebsiteImagePickerDialog";
 import { WebsiteEditorSidebar } from "./editor/WebsiteEditorSidebar";
+import { WebsiteEditorPagePicker } from "./editor/sections/WebsiteEditorPagesSection";
 import {
   WebsiteEditorActionMenu,
   WebsiteEditorErrorState,
@@ -79,6 +79,8 @@ import {
 import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTargeting";
 import { useWebsiteEditorAssets } from "./editor/hooks/useWebsiteEditorAssets";
 import { useWebsiteEditorCollections } from "./editor/hooks/useWebsiteEditorCollections";
+import { useWebsiteEditorSitePages } from "./editor/hooks/useWebsiteEditorSitePages";
+import { applySitePagesEdit, omitSitePages } from "./editor/websiteEditorSitePages";
 import {
   buildWebsiteEditorSectionData,
   getCommonFieldPreviewTargetId,
@@ -276,6 +278,12 @@ function WebsiteEditorPage() {
     setImagePickerState,
     setPreviewTargetId,
   });
+  const sitePagesEditor = useWebsiteEditorSitePages({
+    draftTemplateKey,
+    workingOverrides: getDraftWorkingContentOverrides(draftRecord),
+  });
+  const { isEliteHost, menuItems, previewPageKey, resetSitePagesEdit, selectPreviewPage, sitePagesEdit } =
+    sitePagesEditor;
 
   const contentOverridePatch = useMemo(() => {
     if (!baseModel) {
@@ -286,8 +294,16 @@ function WebsiteEditorPage() {
   }, [baseModel, draftTemplateKey, editorValues]);
 
   const mergedContentOverrides = useMemo(
-    () => mergeWebsiteDraftContentOverrides(getDraftWorkingContentOverrides(draftRecord), contentOverridePatch),
-    [contentOverridePatch, draftRecord]
+    () =>
+      mergeWebsiteDraftContentOverrides(
+        applySitePagesEdit(
+          getDraftWorkingContentOverrides(draftRecord),
+          sitePagesEdit,
+          getDraftPublishedContentOverrides(draftRecord)
+        ),
+        contentOverridePatch
+      ),
+    [contentOverridePatch, draftRecord, sitePagesEdit]
   );
 
   const publishedContentOverrides = useMemo(
@@ -313,8 +329,9 @@ function WebsiteEditorPage() {
     }
 
     const themedModel = applyWebsiteDraftThemeOverrides(baseModel, mergedThemeOverrides);
-    return applyWebsiteDraftContentOverrides(themedModel, mergedContentOverrides, draftTemplateKey);
-  }, [baseModel, draftTemplateKey, mergedContentOverrides, mergedThemeOverrides]);
+    const previewContentOverrides = isEliteHost ? mergedContentOverrides : omitSitePages(mergedContentOverrides);
+    return applyWebsiteDraftContentOverrides(themedModel, previewContentOverrides, draftTemplateKey);
+  }, [baseModel, draftTemplateKey, isEliteHost, mergedContentOverrides, mergedThemeOverrides]);
 
   const hasUnsavedChanges = useMemo(() => {
     const persistedOverrides = getDraftWorkingContentOverrides(draftRecord);
@@ -784,45 +801,6 @@ function WebsiteEditorPage() {
     saveDraftChanges
   );
 
-  const recoverPublishedSiteSummary = async () => {
-    const normalizedPropertyId = String(draftRecord?.propertyId || "").trim();
-    if (!normalizedPropertyId) {
-      return null;
-    }
-
-    for (const retryDelayMs of [0, 250, 750]) {
-      if (retryDelayMs > 0) {
-        await new Promise((resolve) => {
-          globalThis.setTimeout(resolve, retryDelayMs);
-        });
-      }
-
-      try {
-        const nextSiteSummary = await fetchWebsiteSiteByPropertyId(normalizedPropertyId);
-        if (String(nextSiteSummary?.site?.status || "").trim().toUpperCase() !== "PUBLISHED") {
-          continue;
-        }
-
-        setSiteSummary(nextSiteSummary);
-        setSiteSummaryError("");
-        announceWebsiteLiveSiteUpdate({
-          siteId: nextSiteSummary?.site?.id,
-          domain: nextSiteSummary?.primaryDomain?.domain,
-        });
-        notifyOpenedLiveSiteWindow({
-          nextSiteSummary,
-          openedLiveSiteWindowOriginRef,
-          openedLiveSiteWindowRef,
-        });
-        return nextSiteSummary;
-      } catch {
-        // Keep retrying briefly so the editor can reflect a completed publish without a hard refresh.
-      }
-    }
-
-    return null;
-  };
-
   const hydratePersistedDraftRecord = (persistedDraft) => {
     if (!persistedDraft) {
       throw new Error("Draft update completed, but no website draft was returned.");
@@ -831,6 +809,7 @@ function WebsiteEditorPage() {
     const nextTemplateKey = String(persistedDraft.templateKey || draftTemplateKey).trim();
 
     setDraftRecord(persistedDraft);
+    resetSitePagesEdit();
     if (baseModel) {
       setEditorValues(buildEditorValuesFromDraft(baseModel, persistedDraft, nextTemplateKey));
     }
@@ -907,17 +886,13 @@ function WebsiteEditorPage() {
     }
   };
 
-  const updateLiveSiteChanges = async () => {
-    if (!draftRecord || !hasLiveSite || !canUpdateLiveSite || isMutatingDraft || isMutatingSite) {
-      return;
-    }
-
+  const publishDraftToLiveSite = async ({ setIsBusy, successMessage, fallbackErrorMessage }) => {
     setIsActionMenuOpen(false);
-    setIsUpdatingLiveSite(true);
+    setIsBusy(true);
 
     try {
-      await persistDraftState({ syncPublishedState: true });
-      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
+      const savedDraft = await persistDraftState({ syncPublishedState: true });
+      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId, { draftSavedAt: savedDraft.updatedAt });
       setSiteSummary(nextSiteSummary);
       setSiteSummaryError("");
       setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, nextSiteSummary));
@@ -930,14 +905,26 @@ function WebsiteEditorPage() {
         openedLiveSiteWindowOriginRef,
         openedLiveSiteWindowRef,
       });
-      toast.success("Live site updated.");
+      toast.success(successMessage);
     } catch (error) {
-      const errorMessage = error?.message || "We could not update the live site.";
+      const errorMessage = error?.message || fallbackErrorMessage;
       setSiteSummaryError(errorMessage);
       toast.error(errorMessage);
     } finally {
-      setIsUpdatingLiveSite(false);
+      setIsBusy(false);
     }
+  };
+
+  const updateLiveSiteChanges = async () => {
+    if (!draftRecord || !hasLiveSite || !canUpdateLiveSite || isMutatingDraft || isMutatingSite) {
+      return;
+    }
+
+    await publishDraftToLiveSite({
+      setIsBusy: setIsUpdatingLiveSite,
+      successMessage: "Live site updated.",
+      fallbackErrorMessage: "We could not update the live site.",
+    });
   };
 
   const publishLiveSite = async () => {
@@ -945,39 +932,11 @@ function WebsiteEditorPage() {
       return;
     }
 
-    setIsActionMenuOpen(false);
-    setIsPublishingSite(true);
-
-    try {
-      await persistDraftState({ syncPublishedState: true });
-      const nextSiteSummary = await publishWebsiteSite(draftRecord.propertyId);
-      setSiteSummary(nextSiteSummary);
-      setSiteSummaryError("");
-      setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, nextSiteSummary));
-      announceWebsiteLiveSiteUpdate({
-        siteId: nextSiteSummary?.site?.id,
-        domain: nextSiteSummary?.primaryDomain?.domain,
-      });
-      notifyOpenedLiveSiteWindow({
-        nextSiteSummary,
-        openedLiveSiteWindowOriginRef,
-        openedLiveSiteWindowRef,
-      });
-      toast.success("Live site published.");
-    } catch (error) {
-      const recoveredSiteSummary = await recoverPublishedSiteSummary();
-      if (recoveredSiteSummary) {
-        setListingDetails(await reloadListingDetailsAfterPublish(draftRecord.propertyId, recoveredSiteSummary));
-        toast.success("Live site published.");
-        return;
-      }
-
-      const errorMessage = error?.message || "We could not publish the live site.";
-      setSiteSummaryError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsPublishingSite(false);
-    }
+    await publishDraftToLiveSite({
+      setIsBusy: setIsPublishingSite,
+      successMessage: "Live site published.",
+      fallbackErrorMessage: "We could not publish the live site.",
+    });
   };
 
   const unpublishLiveSite = async () => {
@@ -1101,6 +1060,7 @@ function WebsiteEditorPage() {
         viewport={previewViewport}
         onSelectTarget={handlePreviewTargetSelect}
         activeTargetId={activePreviewTargetId}
+        activePageKey={previewPageKey}
       />
     );
   }
@@ -1263,6 +1223,7 @@ function WebsiteEditorPage() {
               setSectionRef={setSectionRef}
               setTargetRef={setTargetRef}
               showWhatsAppSetupHint={showWhatsAppSetupHint}
+              sitePagesEditor={sitePagesEditor}
               standaloneVisibilityFields={standaloneVisibilityFields}
               themeValues={themeValues}
               toggleSection={toggleSection}
@@ -1296,6 +1257,11 @@ function WebsiteEditorPage() {
                 </div>
               </div>
 
+              <WebsiteEditorPagePicker
+                activePageKey={previewPageKey}
+                menuItems={menuItems}
+                onSelectPage={selectPreviewPage}
+              />
               {previewPanelContent}
             </section>
           </div>
