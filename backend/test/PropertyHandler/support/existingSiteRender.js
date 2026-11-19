@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PropertyController } from "../../../functions/PropertyHandler/controller/propertyController.js";
 import { DirectBookingWebsiteRatePlanService } from "../../../functions/PropertyHandler/business/service/directBookingWebsiteRatePlanService.js";
+import { WebsiteSitePropertyNotAllowedError } from "../../../functions/PropertyHandler/util/exception/WebsiteSitePropertyNotAllowedError.js";
 
 const FIXTURE_PAYLOAD = JSON.parse(
   readFileSync(join(process.cwd(), "prerender", "__fixtures__", "renderPayload.json"), "utf8")
@@ -123,3 +124,60 @@ export const EXISTING_SITE_RENDER_QUERIES = Object.freeze([
   ["domain", { domain: EXISTING_DOMAIN.domain }],
   ["site id", { site: EXISTING_SITE.id }],
 ]);
+
+const asStored = (value) => structuredClone(value);
+
+export const buildStoringDraftRepository = (store) => ({
+  getDraftByPropertyIdAndHostId: jest.fn(async (propertyId, hostId) =>
+    store.draft?.propertyId === propertyId && store.draft?.hostId === hostId ? store.draft : null
+  ),
+  getDraftById: jest.fn(async (draftId) => (store.draft?.id === draftId ? store.draft : null)),
+  upsertDraft: jest.fn(async (input) => {
+    store.draft = {
+      id: "draft-1",
+      propertyId: input.propertyId,
+      hostId: input.hostId,
+      templateKey: input.templateKey,
+      status: input.status,
+      contentOverrides: asStored(input.contentOverrides),
+      themeOverrides: asStored(input.themeOverrides),
+      publishedContentOverrides: asStored(input.publishedContentOverrides ?? input.contentOverrides ?? {}),
+      publishedThemeOverrides: asStored(input.publishedThemeOverrides ?? input.themeOverrides ?? {}),
+      createdAt: EXISTING_SITE.createdAt,
+      updatedAt: EXISTING_SITE.updatedAt,
+      lastPreviewBuiltAt: null,
+    };
+    return store.draft;
+  }),
+});
+
+export const buildStoringSiteRepository = (store, { propertyStates = new Map() } = {}) => ({
+  getSiteById: jest.fn(async (siteId) => (store.site?.id === siteId ? store.site : null)),
+  getSiteByPropertyIdAndHostId: jest.fn(async () => store.site),
+  getPublishedSitePropertySnapshots: jest.fn(async () => store.sitePropertySnapshots ?? []),
+  getSitePropertyStates: jest.fn(async (propertyIds) =>
+    propertyIds.filter((id) => propertyStates.has(id)).map((id) => ({ id, ...propertyStates.get(id) }))
+  ),
+  upsertSiteWithStaticPageOutbox: jest.fn(async ({ sitePropertySnapshots, ...input }) => {
+    for (const { propertyId } of sitePropertySnapshots ?? []) {
+      const state = propertyStates.get(propertyId);
+      if (state?.hostId !== input.hostId || state?.status !== "ACTIVE") throw new WebsiteSitePropertyNotAllowedError();
+    }
+    if (sitePropertySnapshots !== undefined) store.sitePropertySnapshots = asStored(sitePropertySnapshots);
+    store.site = {
+      id: EXISTING_SITE.id,
+      ...asStored(input),
+      previewTokenHash: "",
+      staticPageRevision: 1,
+      createdAt: EXISTING_SITE.createdAt,
+      updatedAt: EXISTING_SITE.updatedAt,
+    };
+    return store.site;
+  }),
+});
+
+export const hostEvent = (body) => ({
+  httpMethod: "POST",
+  headers: { Authorization: "host-token" },
+  body: JSON.stringify(body),
+});
