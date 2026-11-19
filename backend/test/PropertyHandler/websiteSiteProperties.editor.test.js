@@ -20,6 +20,8 @@ const MAIN = EXISTING_SITE.propertyId;
 const OWN = "property-own-2";
 const FOREIGN = "property-foreign";
 const SITE_PAGES = { gallery: { enabled: true } };
+const PUBLIC_LOCATION = { city: "Bergen", country: "Norway" };
+const FULL_LOCATION = { ...PUBLIC_LOCATION, street: "Strandgata", houseNumber: "4", postalCode: "5013" };
 const ownList = () => [
   { propertyId: MAIN, slug: " Villa-Main " },
   { propertyId: OWN, slug: "beach-house" },
@@ -32,6 +34,7 @@ const buildEditorFlow = ({ ratePlanRow: planRow = PAID_ELITE_ROW } = {}) => {
     [OWN, HOST],
     [FOREIGN, "host-other"],
   ]);
+  const listings = new Map([[OWN, { hostId: HOST, status: "ACTIVE", title: "Beach house" }]]);
   const ratePlanRepository = buildRatePlanRepository(planRow);
   const controller = buildExistingSiteController({ ratePlanRepository });
   controller.authManager = {
@@ -43,11 +46,19 @@ const buildEditorFlow = ({ ratePlanRow: planRow = PAID_ELITE_ROW } = {}) => {
     }),
   };
   controller.directBookingWebsiteDraftRepository = buildStoringDraftRepository(store);
-  controller.directBookingWebsiteSiteRepository = buildStoringSiteRepository(store);
+  controller.directBookingWebsiteSiteRepository = buildStoringSiteRepository(store, { propertyStates: listings });
   controller.directBookingWebsiteDomainRepository.getFallbackDomainBySiteId = jest.fn(async () => null);
   controller.directBookingWebsiteDomainRepository.ensureDomain = jest.fn(async () => EXISTING_DOMAIN);
-  controller.propertyService.getFullPropertyAttributesWithFullLocation = jest.fn(
-    async () => EXISTING_SITE.publishedPropertySnapshot
+  const listingDetails = (propertyId, location) => ({
+    property: { id: propertyId, ...listings.get(propertyId) },
+    images: [{ key: `${propertyId}.jpg` }],
+    location,
+  });
+  controller.propertyService.getFullPropertyAttributesWithFullLocation = jest.fn(async (propertyId) =>
+    listings.has(propertyId) ? listingDetails(propertyId, FULL_LOCATION) : EXISTING_SITE.publishedPropertySnapshot
+  );
+  controller.propertyService.getFullPropertyAttributes = jest.fn(async (propertyId) =>
+    listings.has(propertyId) ? listingDetails(propertyId, PUBLIC_LOCATION) : null
   );
 
   const save = (contentOverrides) =>
@@ -65,7 +76,12 @@ const buildEditorFlow = ({ ratePlanRow: planRow = PAID_ELITE_ROW } = {}) => {
   const publish = () => controller.publishWebsiteSite(hostEvent({ propertyId: MAIN }));
   const render = () => controller.getPublicWebsiteRenderModel(renderEvent({ domain: EXISTING_DOMAIN.domain }));
 
-  return { controller, store, owners, save, publish, render };
+  const loadedListings = () => ({
+    withAddress: controller.propertyService.getFullPropertyAttributesWithFullLocation.mock.calls.map(([id]) => id),
+    withoutAddress: controller.propertyService.getFullPropertyAttributes.mock.calls.map(([id]) => id),
+  });
+
+  return { controller, store, owners, listings, save, publish, render, loadedListings };
 };
 
 const servedOverrides = (response) => JSON.parse(response.body).contentOverrides;
@@ -341,19 +357,143 @@ describe("publishing the properties of a website", () => {
   });
 });
 
-describe("serving the properties of a live website", () => {
-  it("serves the list of an Elite host", async () => {
+describe("publishing the properties of a website for a host without the plan", () => {
+  it("publishes as before, without checking or snapshotting the list it does not serve", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: ratePlanRow() });
+    await flow.save({ siteProperties: ownList() });
+    flow.owners.set(OWN, "host-other");
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), status: "INACTIVE" });
+
+    const published = await flow.publish();
+
+    expect(published.statusCode).toBe(200);
+    expect(flow.store.sitePropertySnapshots).toBeUndefined();
+    expect(flow.loadedListings().withoutAddress).toEqual([]);
+  });
+
+  it("publishes the rest of the site and leaves the property snapshots alone when the plan cannot be read", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
     const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
     await flow.save({ heroTitle: "Villa", siteProperties: ownList() });
     await flow.publish();
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), title: "Beach house, renovated" });
+    await flow.save({ heroTitle: "Villa by the sea", siteProperties: ownList() });
+    jest
+      .spyOn(flow.controller.directBookingWebsiteRatePlanService, "getCurrentEntitlements")
+      .mockRejectedValue(new Error("connection timed out"));
+
+    const published = await flow.publish();
+
+    expect(published.statusCode).toBe(200);
+    expect(flow.store.site.publishedContentOverrides.heroTitle).toBe("Villa by the sea");
+    expect(flow.store.sitePropertySnapshots.map(({ propertySnapshot }) => propertySnapshot.property.title)).toEqual([
+      "Beach house",
+    ]);
+    expect(flow.loadedListings().withoutAddress).toEqual([OWN]);
+    expect(consoleError).toHaveBeenCalled();
+  });
+});
+
+describe("serving the properties of a live website", () => {
+  const servedTitles = (response) =>
+    (JSON.parse(response.body).siteProperties ?? []).map(({ propertyId, propertySnapshot }) => [
+      propertyId,
+      propertySnapshot?.property?.title ?? null,
+    ]);
+
+  it("serves the snapshots taken at publish next to the overrides, without loading a listing at render", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ heroTitle: "Villa", siteProperties: ownList() });
+    await flow.publish();
+    const loadedAtPublish = flow.loadedListings();
+
+    const rendered = await flow.render();
+    const body = JSON.parse(rendered.body);
+
+    expect(loadedAtPublish).toEqual({ withAddress: [MAIN], withoutAddress: [OWN] });
+    expect(flow.loadedListings()).toEqual(loadedAtPublish);
+    expect(rendered.statusCode).toBe(200);
+    expect(body.contentOverrides).toEqual({ heroTitle: "Villa" });
+    expect(body.siteProperties).toEqual([
+      { propertyId: MAIN, slug: "villa-main", isMainProperty: true },
+      {
+        propertyId: OWN,
+        slug: "beach-house",
+        isMainProperty: false,
+        propertySnapshot: {
+          property: { id: OWN, status: "ACTIVE", title: "Beach house" },
+          images: [{ key: `${OWN}.jpg` }],
+          location: PUBLIC_LOCATION,
+        },
+      },
+    ]);
+  });
+
+  it("keeps serving the published version of a property edited after publish, until the next publish", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), title: "Beach house, renovated" });
+
+    expect(servedTitles(await flow.render())).toEqual([[MAIN, null], [OWN, "Beach house"]]);
+
+    await flow.publish();
+
+    expect(servedTitles(await flow.render())).toEqual([[MAIN, null], [OWN, "Beach house, renovated"]]);
+  });
+
+  it("stops serving the properties when the host loses the plan after publish, without a new publish", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+    jest
+      .spyOn(flow.controller.directBookingWebsiteRatePlanService, "getCurrentEntitlements")
+      .mockResolvedValue({ entitlements: ["website.unlimited_pages"] });
 
     const rendered = await flow.render();
 
     expect(rendered.statusCode).toBe(200);
-    expect(servedOverrides(rendered).siteProperties).toEqual([
-      { propertyId: MAIN, slug: "villa-main" },
-      { propertyId: OWN, slug: "beach-house" },
+    expect(flow.store.sitePropertySnapshots).toHaveLength(1);
+    expect(JSON.parse(rendered.body)).not.toHaveProperty("siteProperties");
+  });
+
+  it("stops serving a property deactivated after publish, and the site falls back to one property", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), status: "INACTIVE" });
+
+    const rendered = await flow.render();
+
+    expect(rendered.statusCode).toBe(200);
+    expect(JSON.parse(rendered.body)).not.toHaveProperty("siteProperties");
+  });
+
+  it("refuses to publish while a listed property is not active, and keeps the last published version", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+    flow.listings.set(OWN, { ...flow.listings.get(OWN), status: "INACTIVE", title: "Closed" });
+
+    const published = await flow.publish();
+
+    expect(published.statusCode).toBe(400);
+    expect(JSON.parse(published.body).code).toBe("site_property_not_active");
+    expect(flow.store.sitePropertySnapshots.map(({ propertySnapshot }) => propertySnapshot.property.title)).toEqual([
+      "Beach house",
     ]);
+  });
+
+  it("replaces the snapshots when the host removes a property and publishes again", async () => {
+    const flow = buildEditorFlow({ ratePlanRow: PAID_ELITE_ROW });
+    await flow.save({ siteProperties: ownList() });
+    await flow.publish();
+
+    await flow.save({ siteProperties: [{ propertyId: MAIN, slug: "villa-main" }] });
+    await flow.publish();
+
+    expect(flow.store.sitePropertySnapshots).toEqual([]);
+    expect(JSON.parse((await flow.render()).body)).not.toHaveProperty("siteProperties");
   });
 
   it("leaves the list out for an Essentials host and keeps every other override", async () => {
@@ -365,6 +505,7 @@ describe("serving the properties of a live website", () => {
 
     expect(rendered.statusCode).toBe(200);
     expect(servedOverrides(rendered)).toEqual({ heroTitle: "Villa" });
+    expect(JSON.parse(rendered.body)).not.toHaveProperty("siteProperties");
   });
 });
 

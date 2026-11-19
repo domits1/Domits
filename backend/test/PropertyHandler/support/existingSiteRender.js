@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PropertyController } from "../../../functions/PropertyHandler/controller/propertyController.js";
 import { DirectBookingWebsiteRatePlanService } from "../../../functions/PropertyHandler/business/service/directBookingWebsiteRatePlanService.js";
+import { WebsiteSitePropertyNotAllowedError } from "../../../functions/PropertyHandler/util/exception/WebsiteSitePropertyNotAllowedError.js";
 
 const FIXTURE_PAYLOAD = JSON.parse(
   readFileSync(join(process.cwd(), "prerender", "__fixtures__", "renderPayload.json"), "utf8")
@@ -150,10 +151,19 @@ export const buildStoringDraftRepository = (store) => ({
   }),
 });
 
-export const buildStoringSiteRepository = (store) => ({
+export const buildStoringSiteRepository = (store, { propertyStates = new Map() } = {}) => ({
   getSiteById: jest.fn(async (siteId) => (store.site?.id === siteId ? store.site : null)),
   getSiteByPropertyIdAndHostId: jest.fn(async () => store.site),
-  upsertSiteWithStaticPageOutbox: jest.fn(async (input) => {
+  getPublishedSitePropertySnapshots: jest.fn(async () => store.sitePropertySnapshots ?? []),
+  getSitePropertyStates: jest.fn(async (propertyIds) =>
+    propertyIds.filter((id) => propertyStates.has(id)).map((id) => ({ id, ...propertyStates.get(id) }))
+  ),
+  upsertSiteWithStaticPageOutbox: jest.fn(async ({ sitePropertySnapshots, ...input }) => {
+    for (const { propertyId } of sitePropertySnapshots ?? []) {
+      const state = propertyStates.get(propertyId);
+      if (state?.hostId !== input.hostId || state?.status !== "ACTIVE") throw new WebsiteSitePropertyNotAllowedError();
+    }
+    if (sitePropertySnapshots !== undefined) store.sitePropertySnapshots = asStored(sitePropertySnapshots);
     store.site = {
       id: EXISTING_SITE.id,
       ...asStored(input),
