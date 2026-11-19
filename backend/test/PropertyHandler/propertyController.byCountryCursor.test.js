@@ -1,11 +1,40 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { PropertyController } from "../../functions/PropertyHandler/controller/propertyController.js";
+import responseHeaders from "../../functions/PropertyHandler/util/constant/responseHeader.json" with { type: "json" };
+import { TypeException } from "../../functions/PropertyHandler/util/exception/TypeException.js";
 
 const CREATED_AT = 1700000000123;
 
 const buildEvent = (queryStringParameters) => ({
   httpMethod: "GET",
   queryStringParameters: { country: "Netherlands", ...queryStringParameters },
+});
+
+// The documented contract: a 400 on a request that carries a cursor means the cursor row is gone, and the client
+// restarts from page 1. The body stays the bare message string, with no error code, header or object.
+describe.each([
+  ["getActivePropertiesCard", "getActivePropertyCards"],
+  ["getActivePropertiesCardByCountry", "getActivePropertyCardsByCountry"],
+])("PropertyController %s with a cursor whose row is gone", (controllerMethod, serviceMethod) => {
+  it("answers 400 with the bare message string", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const controller = new PropertyController();
+    controller.propertyService = {
+      [serviceMethod]: jest.fn().mockRejectedValue(new TypeException("Unknown pagination cursor.")),
+    };
+
+    const response = await controller[controllerMethod](
+      buildEvent({ lastEvaluatedKeyCreatedAt: String(CREATED_AT), lastEvaluatedKeyId: "deleted-property" })
+    );
+
+    expect(response.statusCode).toBe(400);
+    expect(JSON.parse(response.body)).toBe("Unknown pagination cursor.");
+    expect(response.headers).toEqual(responseHeaders);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 });
 
 describe("PropertyController getActivePropertiesCardByCountry cursor", () => {

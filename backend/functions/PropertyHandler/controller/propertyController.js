@@ -54,7 +54,11 @@ import {
 import { toHostWebsiteDomainView, toPublicWebsiteDomainView } from "../util/websiteDomainView.js";
 import { toPublicWebsiteSiteView } from "../util/websiteSiteView.js";
 import { toPublicWebsitePropertySnapshotView } from "../util/websitePropertySnapshotView.js";
-import { WebsitePublicHostService, buildEmptyPublicWebsiteHost } from "../business/service/websitePublicHostService.js";
+import {
+    WebsitePublicHostService,
+    buildEmptyPublicWebsiteHost,
+    servePublicWebsiteHostForSite,
+} from "../business/service/websitePublicHostService.js";
 import {
     getDirectBookingWebsiteFallbackDomainSuffix,
     isDirectBookingWebsiteFallbackDomain,
@@ -1511,16 +1515,17 @@ export class PropertyController {
         const sitePropertyIds = new Set(
             overridesList.flatMap((overrides) => listNewSitePropertyIds(overrides, mainPropertyId, storedOverridesList))
         );
-        for (const sitePropertyId of sitePropertyIds) {
-            try {
-                await this.authManager.authorizeOwnerRequest(accessToken, sitePropertyId);
-            } catch (error) {
-                if (error instanceof NotFoundException) {
-                    throw new TypeError("siteProperties lists a property that does not exist.");
-                }
-                throw error;
-            }
+        const ownerChecks = await Promise.allSettled(
+            [...sitePropertyIds].map((sitePropertyId) => this.authManager.authorizeOwnerRequest(accessToken, sitePropertyId))
+        );
+        const refusal = ownerChecks.find((ownerCheck) => ownerCheck.status === "rejected");
+        if (!refusal) {
+            return;
         }
+        if (refusal.reason instanceof NotFoundException) {
+            throw new TypeError("siteProperties lists a property that does not exist.");
+        }
+        throw refusal.reason;
     }
 
     parseWebsiteOverridePayload(payload, fieldName) {
@@ -3331,7 +3336,7 @@ export class PropertyController {
                     resolutionResult.domain,
                     propertySnapshot,
                     primaryDomain,
-                    host,
+                    servePublicWebsiteHostForSite(host, contentOverrides),
                     contentOverrides,
                     siteProperties
                 )),
@@ -3770,6 +3775,8 @@ export class PropertyController {
     // -------------------------
     async getWebsitePreviewByDraftId(event) {
         try {
+            const accessToken = event.headers?.Authorization || event.headers?.authorization;
+            const hostId = await this.authManager.authorizeGroupRequest(accessToken, "Host");
             const draftId = String(
                 event.queryStringParameters?.draft ||
                 event.queryStringParameters?.draftId ||
@@ -3781,20 +3788,19 @@ export class PropertyController {
             }
 
             const draft = await this.directBookingWebsiteDraftRepository.getDraftById(draftId);
-            if (!draft || draft.status === "SUSPENDED") {
+            if (!draft || draft.status === "SUSPENDED" || draft.hostId !== hostId) {
                 return {
                     statusCode: 404,
                     headers: draftResponseHeaders,
                     body: JSON.stringify({ message: "Website preview not found." }),
                 };
             }
+            await this.authManager.authorizeOwnerRequest(accessToken, draft.propertyId);
 
-            const [propertyDetails, servedDraft] = await Promise.all([
-                this.propertyService.getFullPropertyAttributesWithFullLocation(
-                    draft.propertyId,
-                    { includeCalendarAvailability: true }
-                ),
+            const [propertyDetails, servedDraft, host] = await Promise.all([
+                this.propertyService.getFullPropertyAttributes(draft.propertyId, { includeCalendarAvailability: true }),
                 this.getWebsiteElitePageSettings().servePageSettingsOnDraft(draft),
+                this.loadPublicWebsiteHostSafely(draft),
             ]);
 
             await this.recordStandaloneWebsiteEventSafely({
@@ -3812,7 +3818,8 @@ export class PropertyController {
                 headers: draftResponseHeaders,
                 body: JSON.stringify({
                     draft: servedDraft,
-                    propertyDetails,
+                    propertyDetails: toPublicWebsitePropertySnapshotView(propertyDetails),
+                    host,
                 }),
             };
         } catch (error) {
@@ -3820,7 +3827,14 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            return this.websiteServerError();
+            if (error instanceof NotFoundException) {
+                return {
+                    statusCode: 404,
+                    headers: draftResponseHeaders,
+                    body: JSON.stringify({ message: "Website preview not found." }),
+                };
+            }
+            return this.websiteFailureResponse(error);
         }
     }
 
