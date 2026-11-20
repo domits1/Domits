@@ -2,7 +2,12 @@ import React from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PlatformCardsSection from "./PlatformCardsSection";
-import { createConnectSession, getHostListings, refreshChannels } from "../services/hostDistributionApi";
+import {
+  createConnectSession,
+  enableDistribution,
+  getHostListings,
+  refreshChannels,
+} from "../services/hostDistributionApi";
 
 jest.mock("../services/hostDistributionApi");
 
@@ -94,15 +99,134 @@ describe("PlatformCardsSection", () => {
       expect(switchOf("Vrbo")).toBeEnabled();
     });
 
-    test("keeps every switch disabled for a listing whose distribution is not turned on yet", async () => {
-      getHostListings.mockResolvedValue({
-        listings: [listing("p2", "City Loft", { distribution: { status: "NOT_ENABLED" } })],
+    describe("a listing that is not turned on", () => {
+      const NOT_ENABLED = listing("p2", "City Loft", { distribution: { status: "NOT_ENABLED" } });
+      const NEEDS_TIMEZONE = listing("p3", "Ubud Retreat", {
+        distribution: { status: "NOT_ENABLED" },
+        timezone: { required: true, options: ["Asia/Jakarta", "Asia/Makassar"] },
+      });
+      const ENABLED = listing("p2", "City Loft");
+
+      const openChecklistFor = async (user, notEnabledListing) => {
+        getHostListings.mockResolvedValue({ listings: [notEnabledListing] });
+        render(<PlatformCardsSection />);
+        await screen.findByText("Booking.com");
+        await user.click(switchOf("Vrbo"));
+      };
+
+      test("has usable switches, and a switch starts the checklist without any request", async () => {
+        const user = userEvent.setup();
+
+        await openChecklistFor(user, NOT_ENABLED);
+
+        expect(screen.getByRole("dialog", { name: "Connect Vrbo" })).toBeInTheDocument();
+        expect(enableDistribution).not.toHaveBeenCalled();
+        expect(createConnectSession).not.toHaveBeenCalled();
       });
 
-      render(<PlatformCardsSection />);
-      await screen.findByText("Booking.com");
+      test("Continue turns it on with the listing id only, and only then asks for the session", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockResolvedValue({ listing: ENABLED });
+        createConnectSession.mockResolvedValue({ url: URL_OK });
+        await openChecklistFor(user, NOT_ENABLED);
+        await tickAll(user);
 
-      screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        await screen.findByTitle("Connect Vrbo through Channex");
+        expect(enableDistribution).toHaveBeenCalledTimes(1);
+        expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p2" });
+        expect(createConnectSession).toHaveBeenCalledWith({ propertyId: "p2" });
+        expect(enableDistribution.mock.invocationCallOrder[0]).toBeLessThan(
+          createConnectSession.mock.invocationCallOrder[0]
+        );
+      });
+
+      test("says it is setting up while the request is pending, with all switches locked", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockReturnValue(deferred().promise);
+        await openChecklistFor(user, NOT_ENABLED);
+        await tickAll(user);
+
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        expect(screen.getByText("Setting up your listing…").tagName).toBe("OUTPUT");
+        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+      });
+
+      test("stops at the card's Setting up when the answer is not READY, with no Channex screen", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockResolvedValue({
+          listing: listing("p2", "City Loft", { distribution: { status: "PROVISIONING" } }),
+        });
+        await openChecklistFor(user, NOT_ENABLED);
+        await tickAll(user);
+
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        await waitFor(() => expect(within(cardFor("Vrbo")).getByText("Setting up…")).toBeInTheDocument());
+        expect(createConnectSession).not.toHaveBeenCalled();
+        expect(screen.queryByTitle("Connect Vrbo through Channex")).not.toBeInTheDocument();
+        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+      });
+
+      test("asks for the timezone after the checklist, without enabling, and enables with the picked zone", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockResolvedValue({ listing: listing("p3", "Ubud Retreat") });
+        createConnectSession.mockResolvedValue({ url: URL_OK });
+        await openChecklistFor(user, NEEDS_TIMEZONE);
+        await tickAll(user);
+
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        expect(screen.getByRole("dialog", { name: "Choose a timezone" })).toBeInTheDocument();
+        expect(enableDistribution).not.toHaveBeenCalled();
+        expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+
+        await user.selectOptions(screen.getByRole("combobox", { name: "Timezone" }), "Asia/Makassar");
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        await screen.findByTitle("Connect Vrbo through Channex");
+        expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p3", timezone: "Asia/Makassar" });
+      });
+
+      test("cancelling the timezone modal sends nothing and changes nothing", async () => {
+        const user = userEvent.setup();
+        await openChecklistFor(user, NEEDS_TIMEZONE);
+        await tickAll(user);
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+        expect(enableDistribution).not.toHaveBeenCalled();
+        expect(createConnectSession).not.toHaveBeenCalled();
+        expect(refreshChannels).not.toHaveBeenCalled();
+        expect(switchOf("Vrbo")).toBeEnabled();
+      });
+
+      test("keeps the switches of a listing that is still setting up disabled", async () => {
+        getHostListings.mockResolvedValue({
+          listings: [listing("p4", "Lighthouse Cabin", { distribution: { status: "PROVISIONING" } })],
+        });
+
+        render(<PlatformCardsSection />);
+        await screen.findByText("Booking.com");
+
+        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+      });
+    });
+
+    test("a listing that is already READY never calls enable, from the first click to the Channex screen", async () => {
+      const user = userEvent.setup();
+      createConnectSession.mockResolvedValue({ url: URL_OK });
+      await openChecklist(user);
+      await tickAll(user);
+
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+
+      await screen.findByTitle("Connect Vrbo through Channex");
+      expect(enableDistribution).not.toHaveBeenCalled();
     });
 
     test("turning a switch on opens the checklist for that platform without any request", async () => {

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { HOST_DISTRIBUTION_STATE, useHostDistribution } from "../hooks/useHostDistribution";
 import {
+  DISTRIBUTION_STATUS,
   LISTING_VIEW,
   PLATFORMS,
   describeListingView,
@@ -10,6 +11,7 @@ import {
 import { CONNECT_STEP, useConnectFlow } from "../hooks/useConnectFlow";
 import PlatformCard from "./PlatformCard";
 import ConnectChecklistModal from "./ConnectChecklistModal";
+import TimezoneModal from "./TimezoneModal";
 import ChannexIframeModal from "./ChannexIframeModal";
 import { NotReadyNotice, SetupFailedNotice } from "./DistributionNotices";
 
@@ -19,7 +21,9 @@ const LOAD_ERROR_MESSAGE = "We couldn't load your listings.";
 const REFRESHING_MESSAGE = "Refreshing…";
 const REFRESH_ERROR_MESSAGE = "We couldn't refresh your connections.";
 const CONNECTING_MESSAGE = "Connecting…";
-const DISTRIBUTION_READY = "READY";
+const ENABLING_MESSAGE = "Setting up your listing…";
+// A listing in any other state (setting up, or failed halfway) has its own card or notice instead.
+const STARTABLE_STATUSES = [DISTRIBUTION_STATUS.READY, DISTRIBUTION_STATUS.NOT_ENABLED];
 
 // The three OTA cards of the picked listing (design note #3954, D7), or the notice that explains why
 // there are none. Orchestration only: what each card says lives in utils/distributionStates.js.
@@ -53,11 +57,11 @@ function PlatformCardsSection() {
   const listingView = describeListingView(selected);
   const isRefreshing = refreshingPropertyId === selected.propertyId;
 
-  // A listing that is not set up yet has nothing to connect to: its switches stay disabled until
-  // PR B2 adds the enable step. While a flow is open every switch and the picker are locked: a
-  // second flow cannot start underneath the first, and the host cannot move to a listing whose view
-  // has no cards, which would unmount the flow's modals and leave the step stuck.
-  const canStartConnect = selected.distribution?.status === DISTRIBUTION_READY && !connectFlow.isActive;
+  // A listing that is not turned on starts the same flow: the hook adds the timezone and enable
+  // steps. While a flow is open every switch and the picker are locked: a second flow cannot start
+  // underneath the first, and the host cannot move to a listing whose view has no cards, which would
+  // unmount the flow's modals and leave the step stuck.
+  const canStartConnect = STARTABLE_STATUSES.includes(selected.distribution?.status) && !connectFlow.isActive;
   const handleToggle = ({ otaCode, turnOn }) => {
     if (!turnOn) return;
     connectFlow.start({
@@ -106,6 +110,9 @@ function PlatformCardsSection() {
               {connectFlow.errorMessage}
             </p>
           )}
+          {connectFlow.step === CONNECT_STEP.ENABLING && (
+            <output className="host-chdist__empty-text">{ENABLING_MESSAGE}</output>
+          )}
           {connectFlow.step === CONNECT_STEP.CONNECTING && (
             <output className="host-chdist__empty-text">{CONNECTING_MESSAGE}</output>
           )}
@@ -113,6 +120,13 @@ function PlatformCardsSection() {
             <ConnectChecklistModal
               platform={connectFlow.platform}
               onContinue={connectFlow.continueFromChecklist}
+              onClose={connectFlow.cancel}
+            />
+          )}
+          {connectFlow.step === CONNECT_STEP.TIMEZONE && (
+            <TimezoneModal
+              options={connectFlow.listing.timezone.options}
+              onContinue={connectFlow.continueFromTimezone}
               onClose={connectFlow.cancel}
             />
           )}
