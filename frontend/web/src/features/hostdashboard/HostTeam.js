@@ -39,23 +39,26 @@ const roleBadgeClassName = (role) => {
     return modifier ? `team-role-badge ${modifier}` : "team-role-badge";
 };
 
-const PermissionsSummary = ({ role, t }) => {
+const PermissionsSummary = ({ role, t, collapseOverflow = true }) => {
     const items = getRolePermissionsSummary(role);
     if (items.length === 0) {
         return <span className="team-permissions-empty">{t.permissionsEmpty}</span>;
     }
 
-    const overflowCount = items.length - 2;
+    const overflowCount = collapseOverflow ? items.length - 2 : 0;
     return (
         <div className="team-permissions-list">
-            {items.map((item, index) => (
-                <span
-                    key={item}
-                    className={`team-permission-chip${index >= 2 ? " team-permission-chip--overflow" : ""}`}
-                >
-                    {item}
-                </span>
-            ))}
+            {items.map((item, index) => {
+                const isOverflow = collapseOverflow && index >= 2;
+                return (
+                    <span
+                        key={item}
+                        className={`team-permission-chip${isOverflow ? " team-permission-chip--overflow" : ""}`}
+                    >
+                        {item}
+                    </span>
+                );
+            })}
             {overflowCount > 0 && (
                 <span className="team-permission-more">
                     {t.permissionsMore.replace("{count}", overflowCount)}
@@ -64,6 +67,13 @@ const PermissionsSummary = ({ role, t }) => {
         </div>
     );
 };
+
+const RolePermissionsPreview = ({ id, role, t }) => (
+    <div className="team-modal-permissions" id={id} aria-live="polite">
+        <span className="team-modal-permissions-label">{t.columnPermissions}</span>
+        <PermissionsSummary role={role} t={t} collapseOverflow={false} />
+    </div>
+);
 
 export const TeamMemberRow = ({ member, t, onRemove, onEditRole, canEditRoles }) => {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -457,12 +467,14 @@ const HostTeam = () => {
                                         className="team-modal-input"
                                         value={inviteRole}
                                         onChange={(e) => setInviteRole(e.target.value)}
+                                        aria-describedby="invite-role-permissions"
                                     >
                                         {TEAM_INVITABLE_ROLES.map(role => (
                                             <option key={role} value={role}>{role}</option>
                                         ))}
                                     </select>
                                 </label>
+                                <RolePermissionsPreview id="invite-role-permissions" role={inviteRole} t={t} />
                                 {inviteError && (
                                     <p className="team-invite-error">{inviteModal.error}</p>
                                 )}
@@ -493,12 +505,14 @@ const HostTeam = () => {
                                     className="team-modal-input"
                                     value={editRoleValue}
                                     onChange={(e) => setEditRoleValue(e.target.value)}
+                                    aria-describedby="edit-role-permissions"
                                 >
                                     {TEAM_INVITABLE_ROLES.map(role => (
                                         <option key={role} value={role}>{role}</option>
                                     ))}
                                 </select>
                             </label>
+                            <RolePermissionsPreview id="edit-role-permissions" role={editRoleValue} t={t} />
                             {editRoleError && (
                                 <p className="team-invite-error">{editRoleError}</p>
                             )}
