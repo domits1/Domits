@@ -7,8 +7,11 @@ import vrboLogo from "../../../../images/icon-vrbo.png";
 const LOGOS = { BookingCom: bookingLogo, Airbnb: airbnbLogo, Vrbo: vrboLogo };
 
 // One OTA card: name, badge, switch. `state` comes from describePlatformCard (utils/distributionStates.js).
-// Without onToggle the switch stays disabled, so it never looks usable while it does nothing.
-function PlatformCard({ platform, state, onToggle }) {
+// Without onToggle the switch stays disabled, so it never looks usable while it does nothing. A switch
+// that is on also stays disabled until turnOffEnabled: turning off is a disconnect, and that flow
+// does not exist yet.
+function PlatformCard({ platform, state, onToggle, turnOffEnabled = false }) {
+  const switchLocked = state.switchDisabled || !onToggle || (state.switchOn && !turnOffEnabled);
   const noteClassName = state.tone === "error" ? "chdist-card__reason" : "chdist-card__meta";
 
   return (
@@ -27,7 +30,7 @@ function PlatformCard({ platform, state, onToggle }) {
               role="switch"
               aria-label={`${platform.name} distribution`}
               checked={state.switchOn}
-              disabled={state.switchDisabled || !onToggle}
+              disabled={switchLocked}
               onChange={() => onToggle?.({ otaCode: platform.otaCode, turnOn: !state.switchOn })}
             />
             <span className="chdist-switch__track" aria-hidden="true" />
@@ -52,6 +55,7 @@ PlatformCard.propTypes = {
     note: PropTypes.string,
   }).isRequired,
   onToggle: PropTypes.func,
+  turnOffEnabled: PropTypes.bool,
 };
 
 export default PlatformCard;
