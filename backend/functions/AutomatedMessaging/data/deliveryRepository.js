@@ -3,15 +3,15 @@ import Database from "../.shared/integrations/ORM/index.js";
 import { MessageAutomationDelivery } from "database/models/automation/MessageAutomationDelivery";
 
 export default class DeliveryRepository {
-  async createScheduled(data) {
+  async insertDelivery(data, { status, failureReason }) {
     const client = await Database.getInstance();
     const now = Date.now();
     const delivery = {
       id: randomUUID(),
       ...data,
-      status: "SCHEDULED",
+      status,
       messageId: null,
-      failureReason: null,
+      failureReason,
       renderedContent: null,
       createdAt: now,
       updatedAt: now,
@@ -20,6 +20,14 @@ export default class DeliveryRepository {
 
     await client.createQueryBuilder().insert().into(MessageAutomationDelivery).values(delivery).orIgnore().execute();
     return this.getByIdempotencyKey(data.idempotencyKey);
+  }
+
+  async createScheduled(data) {
+    return this.insertDelivery(data, { status: "SCHEDULED", failureReason: null });
+  }
+
+  async createCancelled(data, failureReason) {
+    return this.insertDelivery(data, { status: "CANCELLED", failureReason });
   }
 
   async getByIdempotencyKey(idempotencyKey) {
