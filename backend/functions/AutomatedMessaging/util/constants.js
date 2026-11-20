@@ -4,6 +4,7 @@ export const AUTOMATION_TRIGGERS = Object.freeze({
   CHECK_IN: "CHECK_IN",
   CHECK_OUT: "CHECK_OUT",
 });
+export const STAY_SEND_GRACE_MS = 6 * 60 * 60 * 1000;
 export const STAY_TIME_ZONE = "Europe/Amsterdam";
 export const DEFAULT_CHECK_IN_TIME = "15:00";
 export const DEFAULT_CHECK_OUT_TIME = "11:00";

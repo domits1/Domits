@@ -68,3 +68,61 @@ describe("DeliveryRepository cancelled deliveries", () => {
     );
   });
 });
+
+describe("DeliveryRepository send-time safety", () => {
+  const updateBuilder = (affected) => {
+    const builder = {};
+    ["update", "set", "where", "andWhere"].forEach((method) => {
+      builder[method] = jest.fn(() => builder);
+    });
+    builder.execute = jest.fn(async () => ({ affected }));
+    return builder;
+  };
+
+  const withBuilder = (builder) => Database.getInstance.mockResolvedValue({ createQueryBuilder: jest.fn(() => builder) });
+
+  test("puts a processing delivery back to scheduled with the new time", async () => {
+    const builder = updateBuilder(1);
+    withBuilder(builder);
+    const repository = new DeliveryRepository();
+
+    await expect(repository.reschedule("delivery-1", 5_000)).resolves.toBe(true);
+
+    expect(builder.set).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "SCHEDULED", scheduledFor: 5_000, failureReason: null })
+    );
+    expect(builder.where).toHaveBeenCalledWith("id = :id", { id: "delivery-1" });
+    expect(builder.andWhere).toHaveBeenCalledWith("status = :processing", { processing: "PROCESSING" });
+  });
+
+  test("reports false when the delivery is no longer processing", async () => {
+    withBuilder(updateBuilder(0));
+
+    await expect(new DeliveryRepository().reschedule("delivery-1", 5_000)).resolves.toBe(false);
+  });
+
+  test("authorizes a send only for the arrival and departure the worker used", async () => {
+    const builder = updateBuilder(1);
+    withBuilder(builder);
+    const repository = new DeliveryRepository();
+
+    await expect(
+      repository.authorizeSend({
+        deliveryId: "delivery-1",
+        automationId: "automation-1",
+        bookingId: "booking-1",
+        hostId: "host-1",
+        propertyId: "property-1",
+        arrivalDate: 100,
+        departureDate: 200,
+        now: 1_000,
+      })
+    ).resolves.toBe(true);
+
+    const [sql, parameters] = builder.andWhere.mock.calls.find(([text]) => text.includes("EXISTS"));
+    expect(sql).toContain("booking.arrivaldate = :arrivalDate");
+    expect(sql).toContain("booking.departuredate = :departureDate");
+    expect(parameters).toMatchObject({ arrivalDate: 100, departureDate: 200 });
+  });
+});
+

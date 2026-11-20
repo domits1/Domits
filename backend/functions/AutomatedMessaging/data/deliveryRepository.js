@@ -77,7 +77,7 @@ export default class DeliveryRepository {
     return Number(result?.affected || 0) === 1;
   }
 
-  async authorizeSend({ deliveryId, automationId, bookingId, hostId, propertyId, now }) {
+  async authorizeSend({ deliveryId, automationId, bookingId, hostId, propertyId, arrivalDate, departureDate, now }) {
     const client = await Database.getInstance();
     const result = await client
       .createQueryBuilder()
@@ -99,11 +99,25 @@ export default class DeliveryRepository {
              AND (automation.propertyid IS NULL OR automation.propertyid = :propertyId)
              AND booking.hostid = :hostId
              AND booking.property_id = :propertyId
+             AND booking.arrivaldate = :arrivalDate
+             AND booking.departuredate = :departureDate
              AND LOWER(TRIM(booking.status)) = 'paid'
              AND property.hostid = :hostId
         )`,
-        { automationId, bookingId, hostId, propertyId }
+        { automationId, bookingId, hostId, propertyId, arrivalDate, departureDate }
       )
+      .execute();
+    return Number(result?.affected || 0) === 1;
+  }
+
+  async reschedule(id, scheduledFor) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(MessageAutomationDelivery)
+      .set({ status: "SCHEDULED", scheduledFor, failureReason: null, updatedAt: Date.now() })
+      .where("id = :id", { id })
+      .andWhere("status = :processing", { processing: "PROCESSING" })
       .execute();
     return Number(result?.affected || 0) === 1;
   }
