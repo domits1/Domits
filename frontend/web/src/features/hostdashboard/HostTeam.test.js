@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import HostTeam, { TeamMemberRow } from "./HostTeam";
@@ -185,6 +185,76 @@ describe("HostTeam edit role modal", () => {
         expect(updateTeamMemberRole).toHaveBeenCalledWith("member-active", "Sales Manager");
         const badge = document.querySelector(".team-row-role .team-role-badge");
         expect(badge).toHaveTextContent("Sales Manager");
+    });
+});
+
+describe("HostTeam role permissions preview", () => {
+    const openInviteDialog = async () => {
+        fireEvent.click(await screen.findByRole("button", { name: en.settings.team.inviteBtn }));
+        return screen.getByRole("dialog");
+    };
+
+    test("invite dialog shows the default role's permissions, described by a polite live region", async () => {
+        fetchTeamMembers.mockResolvedValue([]);
+        renderHostTeam();
+
+        const dialog = await openInviteDialog();
+        expect(within(dialog).getByText("Bookings")).toBeInTheDocument();
+        expect(within(dialog).getByText("Listings")).toBeInTheDocument();
+
+        const select = within(dialog).getByLabelText("Role");
+        const preview = within(dialog).getByText((_, element) => element?.getAttribute("aria-live") === "polite");
+        expect(select).toHaveAttribute("aria-describedby", preview.id);
+        expect(select).toHaveAccessibleDescription(/Bookings.*Listings/);
+        expect(preview).toHaveTextContent("Bookings");
+        expect(preview).toHaveTextContent("Listings");
+    });
+
+    test("changing the invite role updates the shown permissions", async () => {
+        fetchTeamMembers.mockResolvedValue([]);
+        renderHostTeam();
+
+        const dialog = await openInviteDialog();
+        fireEvent.change(within(dialog).getByLabelText("Role"), { target: { value: "Financial Manager" } });
+
+        expect(within(dialog).getByText("Finances")).toBeInTheDocument();
+        expect(within(dialog).getByText("Payouts")).toBeInTheDocument();
+        expect(within(dialog).queryByText("Listings")).not.toBeInTheDocument();
+    });
+
+    test("edit dialog shows the member's current role's permissions and updates on change", async () => {
+        fetchTeamMembers.mockResolvedValue([activeMember]);
+        renderHostTeam();
+
+        await screen.findByText("alex@example.com");
+        fireEvent.click(screen.getByRole("button", { name: "Open actions menu" }));
+        fireEvent.click(screen.getByRole("menuitem", { name: "Edit role" }));
+
+        const dialog = screen.getByRole("dialog");
+        expect(within(dialog).getByText("Bookings")).toBeInTheDocument();
+        expect(within(dialog).getByText("Messaging")).toBeInTheDocument();
+
+        const select = within(dialog).getByLabelText("Role");
+        const preview = within(dialog).getByText((_, element) => element?.getAttribute("aria-live") === "polite");
+        expect(select).toHaveAttribute("aria-describedby", preview.id);
+        expect(select).toHaveAccessibleDescription(/Bookings.*Messaging/);
+
+        fireEvent.change(select, { target: { value: "Distribution Manager" } });
+
+        expect(within(dialog).getByText("Channels")).toBeInTheDocument();
+        expect(within(dialog).getByText("Pricing")).toBeInTheDocument();
+        expect(within(dialog).queryByText("Bookings")).not.toBeInTheDocument();
+    });
+
+    test("dialog preview shows every permission without collapsing overflow", async () => {
+        fetchTeamMembers.mockResolvedValue([]);
+        renderHostTeam();
+
+        const dialog = await openInviteDialog();
+        fireEvent.change(within(dialog).getByLabelText("Role"), { target: { value: "General Manager" } });
+
+        expect(within(dialog).getByText("Finances")).not.toHaveClass("team-permission-chip--overflow");
+        expect(within(dialog).queryByText("+1 more")).not.toBeInTheDocument();
     });
 });
 
