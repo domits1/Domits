@@ -1,6 +1,6 @@
 # feat(distribution): connect an OTA for a listing that is already set up (#506)
 
-Pull request: not opened yet (stacked on the platform cards branch, `feature/506-platform-cards`)
+Pull request: #3982 (stacked on #3978)
 Issue: #506
 Reviewed commits: `248992aae`, `518a31876`, `1281f63dc`, `a38ee32a9`, `7e7e07a5e`, `b9ea2acc2` (and `c52a28e8b`, a refactor with no behaviour change)
 Result: no blocking findings open
