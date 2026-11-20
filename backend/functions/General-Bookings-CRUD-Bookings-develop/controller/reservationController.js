@@ -245,6 +245,11 @@ class ReservationController {
       return await this.acceptInquiry(body.bookingId, authToken);
     }
 
+    if (body?.action === "retry-payment-setup") {
+      if (!body?.bookingId) throw new Error("Missing bookingId.");
+      return await this.retryPaymentSetup(body.bookingId, authToken);
+    }
+
     if (body?.action === "modify-booking-dates") {
       return await this.handleModifyBookingDatesAction(body, authToken);
     }
@@ -319,7 +324,55 @@ class ReservationController {
       };
     } catch (stripeError) {
       console.error("Stripe payment intent creation failed after accept:", stripeError);
-      return { statusCode: 200, headers: responseHeaderJSON, response: result };
+      return {
+        statusCode: 502,
+        headers: responseHeaderJSON,
+        response: {
+          bookingId: result.bookingId,
+          status: result.status,
+          paymentSetupFailed: true,
+          declinedCount: result.declinedCount || 0,
+          message: "The booking was accepted, but Stripe could not prepare payment. Check your connected Stripe account. The guest can retry payment setup.",
+        },
+      };
+    }
+  }
+
+  async retryPaymentSetup(bookingId, authToken) {
+    const booking = await this.bookingService.getPaymentRetryDetails(bookingId, authToken);
+
+    try {
+      const paymentData = await this.paymentSerivce.create(
+        booking.hostId,
+        booking.bookingId,
+        booking.propertyId,
+        booking.dates,
+        booking.paymentId
+      );
+
+      return {
+        statusCode: 200,
+        headers: responseHeaderJSON,
+        response: {
+          bookingId: booking.bookingId,
+          stripeClientSecret: paymentData.stripeClientSecret,
+        },
+      };
+    } catch (error) {
+      console.error("Stripe payment intent retry failed:", {
+        code: error?.code || error?.type || error?.name || "PAYMENT_INTENT_RETRY_FAILED",
+      });
+
+      return {
+        statusCode: 502,
+        headers: responseHeaderJSON,
+        response: {
+          bookingId: booking.bookingId,
+          status: "Awaiting Payment",
+          paymentSetupFailed: true,
+          message: "We could not prepare your payment. Please try again later.",
+        },
+      };
     }
   }
 

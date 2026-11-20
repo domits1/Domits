@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import NotFoundException from "../util/exception/NotFoundException.js";
 import SystemManagerRepository from "./systemManagerRepository.js";
@@ -53,7 +53,7 @@ class StripeRepository {
 
       const { hostCents, platformCents, totalCents } = await CalculateTotalRate(propertyId, dates);
 
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntentParameters = {
         amount: Math.round(totalCents),
         currency: "eur",
         payment_method_types: ["card", "ideal", "klarna"],
@@ -66,6 +66,13 @@ class StripeRepository {
           dates: JSON.stringify(dates),
           bookingId,
         },
+      };
+      const requestFingerprint = createHash("sha256")
+        .update(JSON.stringify(paymentIntentParameters))
+        .digest("hex");
+
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentParameters, {
+        idempotencyKey: "booking-payment-" + requestFingerprint,
       });
 
       return {
@@ -78,8 +85,11 @@ class StripeRepository {
         },
       };
     } catch (error) {
-      console.error("Error creating payment intent:", error);
-      throw new Error("Failed to create payment intent.");
+      console.error("Error creating payment intent:", {
+        code: error?.code || error?.type || error?.name || "PAYMENT_INTENT_CREATE_FAILED",
+        message: error?.message,
+      });
+      throw error;
     }
   }
 
@@ -96,7 +106,7 @@ class StripeRepository {
       .where("stripe_connectedaccounts.user_id = :user_id", { user_id: userId })
       .getOne();
 
-    if (query < 1) {
+    if (!query?.account_id) {
       throw new NotFoundException("No stripeaccount for userid!");
     }
     return query.account_id;
@@ -112,6 +122,7 @@ class StripeRepository {
         stripepaymentid: paymentData.stripePaymentId,
         stripeclientsecret: paymentData.stripeClientSecret,
       })
+      .orIgnore()
       .execute();
 
     try {
