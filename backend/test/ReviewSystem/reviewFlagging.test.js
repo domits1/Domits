@@ -3,6 +3,9 @@ import Database from "database";
 import { DataSource } from "typeorm";
 import { Review } from "../../ORM/models/Review.js";
 import { Review_Flag } from "../../ORM/models/Review_Flag.js";
+import { Property } from "../../ORM/models/Property.js";
+import { Property_Location } from "../../ORM/models/Property_Location.js";
+import { Booking } from "../../ORM/models/Booking.js";
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
 import { Controller } from "../../functions/ReviewSystem/controller/controller.js";
 
@@ -14,7 +17,7 @@ it("authenticates, validates, lists and resolves flags through the moderation sc
     createReviewFlag: jest.fn(async (flag) => flag),
     resolveReviewFlag: jest.fn(async () => ({ status: "RESOLVED" })),
   };
-  const source = new DataSource({ type: "postgres", schema: "test", entities: [Review, Review_Flag] });
+  const source = new DataSource({ type: "postgres", schema: "test", entities: [Review, Review_Flag, Property, Property_Location, Booking] });
   await source.buildMetadatas();
   const query = source.getRepository(Review_Flag).createQueryBuilder("flag");
   const row = { id: "flag-1", status: "RESOLVED", title: "Stay", public_review: "Good",
@@ -52,6 +55,24 @@ it("authenticates, validates, lists and resolves flags through the moderation sc
     expect(query.getQuery()).toContain('ORDER BY "flag"."created_at" ASC, "flag"."id" ASC LIMIT 2 OFFSET 2');
     expect(query.getQuery()).not.toContain("private_feedback");
     expect(query.getParameters()).toMatchObject({ status: "RESOLVED" });
+    for (const filters of [{ rating: "0" }, { rating: "4.5" }, { search: "a".repeat(256) }, { search: [] }]) {
+      expect((await controller.getReviews({ ...event, queryStringParameters: {
+        scope: "moderation", ...filters,
+      } })).statusCode).toBe(400);
+    }
+    const filtered = await controller.getReviews({ ...event, queryStringParameters: {
+      scope: "moderation", status: "RESOLVED", rating: "4", search: "  O'Brien_%  ", limit: "1", offset: "0",
+    } });
+    expect(filtered.statusCode).toBe(200);
+    expect(JSON.parse(filtered.body).next_offset).toBe(1);
+    const sql = query.getQuery();
+    expect(sql).toContain('FLOOR("review"."overall_rating") = :rating');
+    expect(sql).toContain('POSITION(:search IN LOWER(COALESCE("searchBooking"."guestname", \'\'))) > 0');
+    expect(sql).toContain('"searchBooking"."guestid" = "review"."reviewer_user_id"');
+    expect(sql).toContain('"searchProperty"."title"');
+    expect(sql).toContain('"searchLocation"."city"');
+    expect(sql).not.toContain("O'Brien");
+    expect(query.getParameters()).toMatchObject({ status: "RESOLVED", rating: 4, search: "o'brien_%" });
     expect((await controller.updateReview(event)).statusCode).toBe(200);
     expect(repository.resolveReviewFlag).toHaveBeenCalledWith("flag-1", "admin-id", 10);
   } finally {

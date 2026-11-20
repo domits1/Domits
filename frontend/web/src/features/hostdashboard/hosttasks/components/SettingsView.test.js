@@ -50,6 +50,33 @@ describe('SettingsView', () => {
         expect(screen.queryByRole('button', { name: '+ Invite Member' })).not.toBeInTheDocument();
     });
 
+    describe('team rows when viewing a managed host', () => {
+        const renderManagedView = async (membership) => {
+            fetchMemberships.mockResolvedValue([
+                { host_id: 'host-2', host_name: 'Bea Owner', host_email: 'bea@example.com', ...membership },
+            ]);
+            render(<SettingsView currentUser={currentUser} taskContext="managed" managedHostId="host-2" />);
+            const table = await screen.findByRole('table');
+            await within(table).findByText('Bea Owner');
+            const currentUserRow = within(table).getByRole('row', { name: /Alex Host/ });
+            return { table, roleCell: within(currentUserRow).getAllByRole('cell')[1] };
+        };
+
+        test("shows the current user's role from their membership for that host", async () => {
+            const { table, roleCell } = await renderManagedView({ role: 'Financial Manager' });
+
+            expect(roleCell).toHaveTextContent('Financial Manager');
+            expect(within(table).queryByText('Property Operations Manager')).not.toBeInTheDocument();
+        });
+
+        test('shows no role for the current user when the membership has none', async () => {
+            const { table, roleCell } = await renderManagedView({});
+
+            expect(roleCell.textContent).toBe('');
+            expect(within(table).queryByText('Property Operations Manager')).not.toBeInTheDocument();
+        });
+    });
+
     test('shows the invite button and opens the invite modal for an own-tasks view', async () => {
         render(<SettingsView currentUser={currentUser} taskContext="own" managedHostId={null} />);
         await screen.findByText('Team Members');
