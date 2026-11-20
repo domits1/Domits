@@ -92,7 +92,7 @@ When the host turns on distribution for a listing that passes D3, the backend cr
 
 Then it writes the host's account row if there is none (D8), the three mapping rows, and queues a full sync. Channex's defaults for `allow_availability_autoupdate_on_modification` and `..._on_cancellation` stay off, as Channex recommends for a PMS that pushes availability itself.
 
-Idempotent, also under a double click or two tabs: the first step claims the listing by writing its property mapping row with status `PROVISIONING`, under a unique key on `domitsPropertyId` (the entity has none today, so a migration adds it). A second request at the same time fails on that key and gets "already in progress"; a later one finds the existing rows and creates nothing. Only after the claim does the backend call Channex. If a step fails halfway, the next attempt continues from the first missing object (each created id is stored before the next call).
+Idempotent, also under a double click or two tabs: the first step claims the listing by writing its property mapping row with status `PROVISIONING`, under a unique key on `integrationAccountId` plus `domitsPropertyId` (the entity has none today, so a migration adds it). Not on `domitsPropertyId` alone: SiteMinder uses the same table (`integrationPropertyRepository`), and a listing may be mapped on both. Both requests of a double click come from the same host, so they use the same account row (D8) and still collide on this key. Before the migration, check the current rows for duplicates on these two columns; the index build fails if there are any. A second request at the same time fails on that key and gets "already in progress"; a later one finds the existing rows and creates nothing. Only after the claim does the backend call Channex. If a step fails halfway, the next attempt continues from the first missing object (each created id is stored before the next call).
 
 Cost: Channex bills a vacation rental at $0.50 per unit per month, only once the property has an active channel. Creating it ahead costs nothing.
 
@@ -263,7 +263,7 @@ Suggested pages were shared in the group chat on 18 Nov; Ilan owns the final des
 
 1. This note reviewed by Rakib, Ilan and Stefan; Q1 sent to Channex support.
 2. Staging test of the D5 close-then-disconnect order (section 9).
-3. D3 readiness check, the unique key on the property mapping table, provisioning (D2), timezone (D4), account rows (D8), with tests.
+3. D3 readiness check, the unique key on the property mapping table (account plus listing, after a duplicate check), provisioning (D2), timezone (D4), account rows (D8), with tests.
 4. Connect: `connect-session` and `refresh` (D1, D6, D7).
 5. Worker time budget and row caps (#3927), before the worker gets new jobs.
 6. Disconnect: route plus the worker step (D5), then the D9 reconciliation.
