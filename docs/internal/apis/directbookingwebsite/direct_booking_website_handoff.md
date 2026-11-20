@@ -109,7 +109,7 @@ The current website foundation routes inside `PropertyHandler` are:
 - `POST /property/website/site/unpublish`
 - `GET /property/website/public/resolve`
 - `GET /property/website/public/render`
-- `GET /property/website/preview`
+- `GET /property/website/preview` (the logged-in host who owns the draft; answers the listing through the public site view, like the live render)
 - `GET /property/website/kpis`
 
 ## What is not implemented yet
@@ -208,7 +208,8 @@ Panorama Landing currently has the deepest implementation coverage. That is the 
 
 The internal preview route currently:
 
-- loads a saved draft by `draftId`
+- opens only for the logged-in host who owns the draft; anyone else gets a login message or not found
+- loads a saved draft by `draftId`, with the listing through the public site view and the host block of the live site
 - enriches property details before rendering
 - uses the shared template rendering layer
 - subscribes to preview refresh events so an already-open preview can update after editor changes
@@ -231,7 +232,8 @@ The published public runtime currently:
 The public website currently includes a WhatsApp-based host contact widget when the host has a usable WhatsApp integration. That widget:
 
 - is driven by shared host contact enrichment
-- can be shown or hidden through visibility controls
+- can be shown or hidden through visibility controls (`visibility.chatWidget`, on unless the host turns it off)
+- when the host turns it off, the public render sends an empty `host.whatsapp` block (no number) and the quote panel shows no WhatsApp link
 - is best-effort presentation only and not a public chat platform
 
 ### Availability surface
@@ -452,6 +454,7 @@ Important rules:
 - `Update live site` pushes the current draft into published live state
 - `Publish` creates or updates the published standalone site lifecycle
 - `Unpublish` affects live availability, not the host's working draft
+- a publish the server refuses (any 4xx, or a login that cannot be refreshed) is shown as failed with the API message; only after a 5xx, a dropped connection or an answer that cannot be read does `publishWebsiteSite(propertyId, { draftSavedAt })` read the site again, and it counts the publish as done only when the site's `publishedAt` is at or after the `updatedAt` of the draft saved for that publish (both server times)
 - `main.standalone_site_event` owns the KPI and event layer for builder, preview, live-site, and research metrics
 
 Do not collapse draft state and published state back into one model.

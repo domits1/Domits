@@ -1,8 +1,8 @@
 # feat(property-owners): add owner form validation rules
 
-Pull request: (to be opened)
+Pull request: #3777
 Issue: #3239
-Reviewed commit: uncommitted changes on top of da8dcae0e
+Reviewed commit: e5cfc5f20
 Result: no blocking findings
 
 Covers `hostowners/utils/ownerText.js`, with the text helpers moved out of `OwnersTable.js` and `HostOwners.js` without a behaviour change, and `hostowners/utils/ownerFormRules.js` with its tests.

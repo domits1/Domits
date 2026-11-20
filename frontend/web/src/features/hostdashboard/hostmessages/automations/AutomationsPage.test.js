@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { AutomationsContent } from "./AutomationsPage";
 import { useAuth } from "../hooks/useAuth";
 import { fetchAccommodationsByOwnerId } from "../../../../services/fetchAccommodationByOwnerIdService";
@@ -154,6 +154,65 @@ describe("host automated messages v1", () => {
 
     fireEvent.click(await screen.findByText("Pause"));
     await waitFor(() => expect(pauseAutomation).toHaveBeenCalledWith("automation-1"));
+  });
+
+  describe("variable buttons", () => {
+    const EXPECTED = [
+      ["guestName", "Guest's name"],
+      ["propertyName", "Name of the property"],
+      ["checkInDate", "Arrival date"],
+      ["checkOutDate", "Departure date"],
+      ["checkInTime", "Earliest check-in time"],
+      ["checkOutTime", "Latest check-out time"],
+      ["propertyAddress", "Street, number and postal code"],
+      ["propertyCity", "City of the property"],
+      ["numberOfGuests", "Number of guests on the booking"],
+    ];
+
+    const renderEditor = async () => {
+      render(<AutomationsContent />);
+      await screen.findByText("Paid booking welcome");
+      await screen.findByRole("option", { name: "Canal Loft" });
+      return within(screen.getByLabelText("Supported variables"));
+    };
+
+    test("offers every supported variable, the new ones after the four existing ones", async () => {
+      const variables = await renderEditor();
+
+      expect(variables.getAllByRole("button").map((button) => button.textContent)).toEqual(
+        EXPECTED.map(([name]) => `{{${name}}}`)
+      );
+    });
+
+    test.each(EXPECTED)("explains {{%s}} with a short tooltip", async (name, label) => {
+      const variables = await renderEditor();
+
+      expect(variables.getByRole("button", { name: `{{${name}}}` })).toHaveAttribute("title", label);
+    });
+
+    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when clicked", async (name) => {
+      const variables = await renderEditor();
+      fireEvent.change(screen.getByLabelText("Message template"), { target: { value: "Welcome. " } });
+
+      fireEvent.click(variables.getByRole("button", { name: `{{${name}}}` }));
+
+      expect(screen.getByLabelText("Message template")).toHaveValue(`Welcome. {{${name}}}`);
+    });
+
+    test("sends a template with a new variable to the backend preview", async () => {
+      const variables = await renderEditor();
+      fireEvent.change(screen.getByLabelText("Message template"), { target: { value: "Check-in from " } });
+      fireEvent.click(variables.getByRole("button", { name: "{{checkInTime}}" }));
+
+      fireEvent.click(screen.getByText("Render preview"));
+
+      await waitFor(() =>
+        expect(previewAutomation).toHaveBeenCalledWith(
+          expect.objectContaining({ template: "Check-in from {{checkInTime}}" }),
+          null
+        )
+      );
+    });
   });
 
   test("uses the backend renderer for preview and reports invalid variables", async () => {

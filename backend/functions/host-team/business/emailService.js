@@ -4,7 +4,7 @@ const lambdaClient = new LambdaClient({ region: "eu-north-1" });
 
 const FRONTEND_URL = "https://domits.com";
 
-export const sendTeamInviteEmail = async (toEmail, inviteToken, hostEmail) => {
+export const sendTeamInviteEmail = async (toEmail, inviteToken, hostEmail, role) => {
     const acceptLink = `${FRONTEND_URL}/team/accept?token=${inviteToken}`;
 
     const payload = {
@@ -13,9 +13,9 @@ export const sendTeamInviteEmail = async (toEmail, inviteToken, hostEmail) => {
             subject: `Je bent uitgenodigd voor een team op Domits`,
             body: `Hallo,
 
-Je bent uitgenodigd als Property Operations Manager op Domits.
+Je bent uitgenodigd als ${role} op Domits.
 
-Als Property Operations Manager kun je alle reserveringen en accommodaties van de host beheren.
+Met deze rol krijg je toegang tot het hostdashboard van deze host.
 
 Klik op de onderstaande link om de uitnodiging te accepteren:
 ${acceptLink}

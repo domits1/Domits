@@ -3,14 +3,6 @@ const VERIFICATION_LABELS = Object.freeze({
   VERIFIED_STAY: "Verified stay",
 });
 
-export const isVerifiedStatus = (status) => status === "VERIFIED" || status === "VERIFIED_STAY";
-
-const REVIEW_STATUS_LABELS = Object.freeze({
-  PENDING_APPROVAL: "Pending approval", APPROVED: "Approved", PUBLISHED: "Published", REJECTED: "Rejected",
-});
-export const getReviewStatusLabel = (status) =>
-  Object.hasOwn(REVIEW_STATUS_LABELS, status) ? REVIEW_STATUS_LABELS[status] : "Unknown";
-
 export const getReviewRating = (value) => {
   if (value == null || (typeof value === "string" && !value.trim())) return null;
   const rating = Number(value);
@@ -41,6 +33,8 @@ export const formatSubmittedAt = (timestamp) => {
   };
 };
 
+export const isVerifiedStatus = (status) => Object.hasOwn(VERIFICATION_LABELS, status);
+
 export const getVerificationLabel = (status) => VERIFICATION_LABELS[status] ?? "Unverified";
 
 export const matchesReviewSearch = (review, query) => {
@@ -59,3 +53,12 @@ export const matchesReviewSearch = (review, query) => {
       .includes(needle)
   );
 };
+
+const REVIEW_STATUS_LABELS = {
+  PENDING_APPROVAL: "Pending approval",
+  APPROVED: "Awaiting publication",
+  PUBLISHED: "Published",
+  REJECTED: "Rejected",
+};
+
+export const getReviewStatusLabel = (status) => Object.hasOwn(REVIEW_STATUS_LABELS, status) ? REVIEW_STATUS_LABELS[status] : "Unknown";
