@@ -5,11 +5,13 @@ import styles from "../styles/ReviewApproval.module.css";
 
 const PAGE_SIZE = 8;
 
-export default function ReviewModerationQueue() {
+export default function ReviewModerationQueue({ search = "", rating = "" }) {
   const [resolvedReview, setResolvedReview] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [status, setStatus] = useState("PENDING");
-  const [offset, setOffset] = useState(0);
+  const [page, setPage] = useState({ search, rating, offset: 0 });
+  const offset = page.search === search && page.rating === rating ? page.offset : 0;
+  const setOffset = (value) => setPage({ search, rating, offset: value });
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -19,14 +21,21 @@ export default function ReviewModerationQueue() {
   const retry = () => { setResult(null); setError(""); setAttempt((value) => value + 1); };
 
   useEffect(() => {
+    setPage({ search, rating, offset: 0 });
+    setSelectedId(null); setResolvedReview(null);
+  }, [search, rating]);
+
+  useEffect(() => {
     let active = true;
-    getReviewFlags({ status, offset, limit: PAGE_SIZE }).then((page) => {
+    setResult(null); setError("");
+    getReviewFlags({ status, offset, limit: PAGE_SIZE,
+      ...(search.trim() ? { search: search.trim() } : {}), ...(rating ? { rating } : {}) }).then((page) => {
       if (active) setResult(page);
     }).catch((failure) => {
       if (active) setError(failure.message || "Could not load the moderation queue.");
     });
     return () => { active = false; };
-  }, [status, offset, attempt]);
+  }, [status, offset, attempt, search, rating]);
 
   async function resolve(flag) {
     if (inFlight.current) return;
