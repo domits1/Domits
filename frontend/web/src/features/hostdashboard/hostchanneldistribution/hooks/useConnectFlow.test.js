@@ -311,6 +311,18 @@ describe("useConnectFlow", () => {
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
     });
 
+    test("clearError clears the message on request", async () => {
+      enableDistribution.mockRejectedValue(new Error("Failed to fetch"));
+      const hook = setup();
+      startFlow(hook, NOT_ENABLED_LISTING);
+      await act(async () => hook.result.current.continueFromChecklist());
+      expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
+
+      act(() => hook.result.current.clearError());
+
+      expect(hook.result.current.errorMessage).toBe("");
+    });
+
     test("starting again clears the earlier message", async () => {
       enableDistribution.mockRejectedValue(new Error("Failed to fetch"));
       const hook = setup();
