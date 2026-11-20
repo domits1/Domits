@@ -5,6 +5,7 @@ export const WEBSITE_QUOTE_ERROR_CODES = Object.freeze({
   STAY_RESTRICTION_VIOLATION: "stay_restriction_violation",
   QUOTE_UNAVAILABLE: "quote_unavailable",
   PRICING_SERVICE_UNAVAILABLE: "pricing_service_unavailable",
+  PROPERTY_NOT_FOUND: "property_not_found",
 });
 
 const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
@@ -14,6 +15,7 @@ const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
   [WEBSITE_QUOTE_ERROR_CODES.STAY_RESTRICTION_VIOLATION]: 409,
   [WEBSITE_QUOTE_ERROR_CODES.QUOTE_UNAVAILABLE]: 422,
   [WEBSITE_QUOTE_ERROR_CODES.PRICING_SERVICE_UNAVAILABLE]: 503,
+  [WEBSITE_QUOTE_ERROR_CODES.PROPERTY_NOT_FOUND]: 404,
 });
 
 export class WebsiteQuoteError extends Error {
