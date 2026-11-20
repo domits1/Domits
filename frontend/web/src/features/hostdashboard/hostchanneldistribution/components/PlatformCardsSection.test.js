@@ -2,7 +2,12 @@ import React from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PlatformCardsSection from "./PlatformCardsSection";
-import { createConnectSession, getHostListings, refreshChannels } from "../services/hostDistributionApi";
+import {
+  createConnectSession,
+  enableDistribution,
+  getHostListings,
+  refreshChannels,
+} from "../services/hostDistributionApi";
 
 jest.mock("../services/hostDistributionApi");
 
@@ -94,15 +99,247 @@ describe("PlatformCardsSection", () => {
       expect(switchOf("Vrbo")).toBeEnabled();
     });
 
-    test("keeps every switch disabled for a listing whose distribution is not turned on yet", async () => {
-      getHostListings.mockResolvedValue({
-        listings: [listing("p2", "City Loft", { distribution: { status: "NOT_ENABLED" } })],
+    describe("a listing that is not turned on", () => {
+      const NOT_ENABLED = listing("p2", "City Loft", { distribution: { status: "NOT_ENABLED" } });
+      const NEEDS_TIMEZONE = listing("p3", "Ubud Retreat", {
+        distribution: { status: "NOT_ENABLED" },
+        timezone: { required: true, options: ["Asia/Jakarta", "Asia/Makassar"] },
+      });
+      const ENABLED = listing("p2", "City Loft");
+
+      const openChecklistFor = async (user, notEnabledListing) => {
+        getHostListings.mockResolvedValue({ listings: [notEnabledListing] });
+        render(<PlatformCardsSection />);
+        await screen.findByText("Booking.com");
+        await user.click(switchOf("Vrbo"));
+      };
+
+      test("has usable switches, and a switch starts the checklist without any request", async () => {
+        const user = userEvent.setup();
+
+        await openChecklistFor(user, NOT_ENABLED);
+
+        expect(screen.getByRole("dialog", { name: "Connect Vrbo" })).toBeInTheDocument();
+        expect(enableDistribution).not.toHaveBeenCalled();
+        expect(createConnectSession).not.toHaveBeenCalled();
       });
 
-      render(<PlatformCardsSection />);
-      await screen.findByText("Booking.com");
+      test("Continue turns it on with the listing id only, and only then asks for the session", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockResolvedValue({ listing: ENABLED });
+        createConnectSession.mockResolvedValue({ url: URL_OK });
+        await openChecklistFor(user, NOT_ENABLED);
+        await tickAll(user);
 
-      screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        await screen.findByTitle("Connect Vrbo through Channex");
+        expect(enableDistribution).toHaveBeenCalledTimes(1);
+        expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p2" });
+        expect(createConnectSession).toHaveBeenCalledWith({ propertyId: "p2" });
+        expect(enableDistribution.mock.invocationCallOrder[0]).toBeLessThan(
+          createConnectSession.mock.invocationCallOrder[0]
+        );
+      });
+
+      test("says it is setting up while the request is pending, with all switches locked", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockReturnValue(deferred().promise);
+        await openChecklistFor(user, NOT_ENABLED);
+        await tickAll(user);
+
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        expect(screen.getByText("Setting up your listing…").tagName).toBe("OUTPUT");
+        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+      });
+
+      test("stops at the card's Setting up when the answer is not READY, with no Channex screen", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockResolvedValue({
+          listing: listing("p2", "City Loft", { distribution: { status: "PROVISIONING" } }),
+        });
+        await openChecklistFor(user, NOT_ENABLED);
+        await tickAll(user);
+
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        await waitFor(() => expect(within(cardFor("Vrbo")).getByText("Setting up…")).toBeInTheDocument());
+        expect(createConnectSession).not.toHaveBeenCalled();
+        expect(screen.queryByTitle("Connect Vrbo through Channex")).not.toBeInTheDocument();
+        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+      });
+
+      test("asks for the timezone after the checklist, without enabling, and enables with the picked zone", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockResolvedValue({ listing: listing("p3", "Ubud Retreat") });
+        createConnectSession.mockResolvedValue({ url: URL_OK });
+        await openChecklistFor(user, NEEDS_TIMEZONE);
+        await tickAll(user);
+
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        expect(screen.getByRole("dialog", { name: "Choose a timezone" })).toBeInTheDocument();
+        expect(enableDistribution).not.toHaveBeenCalled();
+        expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+
+        await user.selectOptions(screen.getByRole("combobox", { name: "Timezone" }), "Asia/Makassar");
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        await screen.findByTitle("Connect Vrbo through Channex");
+        expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p3", timezone: "Asia/Makassar" });
+      });
+
+      test("cancelling the timezone modal sends nothing and changes nothing", async () => {
+        const user = userEvent.setup();
+        await openChecklistFor(user, NEEDS_TIMEZONE);
+        await tickAll(user);
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+        expect(enableDistribution).not.toHaveBeenCalled();
+        expect(createConnectSession).not.toHaveBeenCalled();
+        expect(refreshChannels).not.toHaveBeenCalled();
+        expect(switchOf("Vrbo")).toBeEnabled();
+      });
+
+      test("keeps the switches of a listing that is still setting up disabled", async () => {
+        getHostListings.mockResolvedValue({
+          listings: [listing("p4", "Lighthouse Cabin", { distribution: { status: "PROVISIONING" } })],
+        });
+
+        render(<PlatformCardsSection />);
+        await screen.findByText("Booking.com");
+
+        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+      });
+    });
+
+    describe("when turning a listing on fails", () => {
+      const NOT_ENABLED = listing("p2", "City Loft", { distribution: { status: "NOT_ENABLED" } });
+      const requestError = (status, errorCode) =>
+        Object.assign(new Error("failed"), { status, responseBody: { errorCode } });
+
+      // Opens the checklist for the not-turned-on listing and presses Continue, so enable is called.
+      const turnOn = async (user) => {
+        getHostListings.mockResolvedValue({ listings: [NOT_ENABLED] });
+        render(<PlatformCardsSection />);
+        await screen.findByText("Booking.com");
+        await user.click(switchOf("Vrbo"));
+        await tickAll(user);
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+      };
+
+      test("a 409 reads the listing again and the card says Setting up, and Refresh then finishes it", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockRejectedValue(requestError(409, "PROVISIONING_IN_PROGRESS"));
+        refreshChannels.mockResolvedValueOnce({
+          listing: listing("p2", "City Loft", { distribution: { status: "PROVISIONING" } }),
+        });
+        refreshChannels.mockResolvedValueOnce({ listing: listing("p2", "City Loft") });
+
+        await turnOn(user);
+
+        await waitFor(() => expect(within(cardFor("Vrbo")).getByText("Setting up…")).toBeInTheDocument());
+        expect(refreshChannels).toHaveBeenCalledTimes(1);
+        expect(refreshChannels).toHaveBeenCalledWith({ propertyId: "p2" });
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        expect(createConnectSession).not.toHaveBeenCalled();
+
+        await user.click(screen.getByRole("button", { name: "Refresh" }));
+
+        await waitFor(() => expect(within(cardFor("Vrbo")).getByText("Not connected")).toBeInTheDocument());
+        expect(switchOf("Vrbo")).toBeEnabled();
+      });
+
+      test("a 422 reads the listing again and shows what is missing instead of the cards", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockRejectedValue(requestError(422, "LISTING_NOT_READY"));
+        refreshChannels.mockResolvedValue({
+          listing: listing("p2", "City Loft", { readiness: { ready: false, missing: ["PRICE_MISSING"] } }),
+        });
+
+        await turnOn(user);
+
+        expect(await screen.findByText("Add a price")).toBeInTheDocument();
+        expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+        expect(refreshChannels).toHaveBeenCalledTimes(1);
+        expect(createConnectSession).not.toHaveBeenCalled();
+      });
+
+      test("a 400 timezone required says so, and the next try asks for the timezone", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockRejectedValue(requestError(400, "TIMEZONE_REQUIRED"));
+        refreshChannels.mockResolvedValue({
+          listing: listing("p2", "City Loft", {
+            distribution: { status: "NOT_ENABLED" },
+            timezone: { required: true, options: ["Asia/Jakarta"] },
+          }),
+        });
+
+        await turnOn(user);
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Choose a timezone to continue.");
+        await waitFor(() => expect(switchOf("Vrbo")).toBeEnabled());
+
+        await user.click(switchOf("Vrbo"));
+        await tickAll(user);
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        expect(screen.getByRole("dialog", { name: "Choose a timezone" })).toBeInTheDocument();
+      });
+
+      test("a failed setup that the backend stored shows the setup-failed notice once, not two alerts", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockRejectedValue(requestError(500, "PROVISIONING_FAILED"));
+        refreshChannels.mockResolvedValue({
+          listing: listing("p2", "City Loft", { distribution: { status: "PROVISIONING_FAILED" } }),
+        });
+
+        await turnOn(user);
+
+        await waitFor(() => expect(screen.queryByRole("switch")).not.toBeInTheDocument());
+        expect(screen.getAllByRole("alert")).toHaveLength(1);
+        expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong while setting up. Try again.");
+        expect(createConnectSession).not.toHaveBeenCalled();
+      });
+
+      test("a failed setup that was not stored says so on the cards, so the host is never left without a message", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockRejectedValue(requestError(500, "PROVISIONING_FAILED"));
+        refreshChannels.mockResolvedValue({ listing: NOT_ENABLED });
+
+        await turnOn(user);
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't set up this listing. Try again.");
+        await waitFor(() => expect(switchOf("Vrbo")).toBeEnabled());
+      });
+
+      test("a network error alerts and leaves the cards as they were, with no refresh", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockRejectedValue(new Error("Failed to fetch"));
+
+        await turnOn(user);
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't set up this listing. Try again.");
+        expect(refreshChannels).not.toHaveBeenCalled();
+        expect(createConnectSession).not.toHaveBeenCalled();
+        await waitFor(() => expect(switchOf("Vrbo")).toBeEnabled());
+      });
+    });
+
+    test("a listing that is already READY never calls enable, from the first click to the Channex screen", async () => {
+      const user = userEvent.setup();
+      createConnectSession.mockResolvedValue({ url: URL_OK });
+      await openChecklist(user);
+      await tickAll(user);
+
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+
+      await screen.findByTitle("Connect Vrbo through Channex");
+      expect(enableDistribution).not.toHaveBeenCalled();
     });
 
     test("turning a switch on opens the checklist for that platform without any request", async () => {
@@ -271,6 +508,107 @@ describe("PlatformCardsSection", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong while setting up. Try again.");
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+  });
+
+  describe("Retry on a setup that failed halfway", () => {
+    const FAILED = listing("p3", "Windmill Cottage", { distribution: { status: "PROVISIONING_FAILED" } });
+    const requestError = (status, errorCode) =>
+      Object.assign(new Error("failed"), { status, responseBody: { errorCode } });
+
+    const renderFailed = async (failedListing = FAILED) => {
+      getHostListings.mockResolvedValue({ listings: [failedListing] });
+      render(<PlatformCardsSection />);
+      await screen.findByRole("button", { name: "Retry" });
+    };
+
+    test("runs enable again with the listing id, with no checklist and no Channex screen, and then the cards show", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockResolvedValue({ listing: listing("p3", "Windmill Cottage") });
+      await renderFailed();
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+      expect(enableDistribution).toHaveBeenCalledTimes(1);
+      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p3" });
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(createConnectSession).not.toHaveBeenCalled();
+      expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    });
+
+    test("is disabled and says it is setting up while the request runs", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockReturnValue(deferred().promise);
+      await renderFailed();
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled();
+      expect(screen.getByText("Setting up your listing…").tagName).toBe("OUTPUT");
+    });
+
+    test("asks for the timezone first where the listing requires one, and enables with the picked zone", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockResolvedValue({ listing: listing("p3", "Windmill Cottage") });
+      await renderFailed({
+        ...FAILED,
+        timezone: { required: true, options: ["Asia/Jakarta", "Asia/Makassar"] },
+      });
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(screen.getByRole("dialog", { name: "Choose a timezone" })).toBeInTheDocument();
+      expect(enableDistribution).not.toHaveBeenCalled();
+
+      await user.selectOptions(screen.getByRole("combobox", { name: "Timezone" }), "Asia/Jakarta");
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+
+      expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p3", timezone: "Asia/Jakarta" });
+    });
+
+    test("cancelling the timezone modal sends nothing and leaves the notice", async () => {
+      const user = userEvent.setup();
+      await renderFailed({ ...FAILED, timezone: { required: true, options: ["Asia/Jakarta"] } });
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(enableDistribution).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+    });
+
+    test("a failure that is stored again keeps the notice with a single alert, and Retry works again", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockRejectedValueOnce(requestError(500, "PROVISIONING_FAILED"));
+      enableDistribution.mockResolvedValue({ listing: listing("p3", "Windmill Cottage") });
+      refreshChannels.mockResolvedValue({ listing: FAILED });
+      await renderFailed();
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      await waitFor(() => expect(refreshChannels).toHaveBeenCalledWith({ propertyId: "p3" }));
+      await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+    });
+
+    test("a network error keeps the notice, with no refresh, and Retry is enabled again", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockRejectedValue(new Error("Failed to fetch"));
+      await renderFailed();
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
+      expect(refreshChannels).not.toHaveBeenCalled();
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+      expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong while setting up. Try again.");
+    });
   });
 
   test("offers a picker only for several listings, and shows the picked listing's cards", async () => {

@@ -76,6 +76,7 @@ export function useHostDistribution() {
     loadState: result.loadState,
     reload,
     refresh,
+    applyListing,
     refreshingPropertyId,
     refreshFailedPropertyId,
   };

@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { HOST_DISTRIBUTION_STATE, useHostDistribution } from "../hooks/useHostDistribution";
 import {
+  DISTRIBUTION_STATUS,
   LISTING_VIEW,
   PLATFORMS,
   describeListingView,
   describeMissingItems,
   describePlatformCard,
 } from "../utils/distributionStates";
-import { CONNECT_STEP, useConnectFlow } from "../hooks/useConnectFlow";
+import { useConnectFlow } from "../hooks/useConnectFlow";
 import PlatformCard from "./PlatformCard";
-import ConnectChecklistModal from "./ConnectChecklistModal";
-import ChannexIframeModal from "./ChannexIframeModal";
+import ConnectFlowLayer from "./ConnectFlowLayer";
 import { NotReadyNotice, SetupFailedNotice } from "./DistributionNotices";
 
 const LOADING_MESSAGE = "Loading your listings…";
@@ -18,15 +18,16 @@ const NO_LISTINGS_MESSAGE = "You have no listings yet.";
 const LOAD_ERROR_MESSAGE = "We couldn't load your listings.";
 const REFRESHING_MESSAGE = "Refreshing…";
 const REFRESH_ERROR_MESSAGE = "We couldn't refresh your connections.";
-const CONNECTING_MESSAGE = "Connecting…";
-const DISTRIBUTION_READY = "READY";
+// A listing in any other state (setting up, or failed halfway) has its own card or notice instead.
+const STARTABLE_STATUSES = [DISTRIBUTION_STATUS.READY, DISTRIBUTION_STATUS.NOT_ENABLED];
 
 // The three OTA cards of the picked listing (design note #3954, D7), or the notice that explains why
 // there are none. Orchestration only: what each card says lives in utils/distributionStates.js.
 function PlatformCardsSection() {
-  const { listings, loadState, reload, refresh, refreshingPropertyId, refreshFailedPropertyId } = useHostDistribution();
+  const { listings, loadState, reload, refresh, applyListing, refreshingPropertyId, refreshFailedPropertyId } =
+    useHostDistribution();
   const [pickedPropertyId, setPickedPropertyId] = useState("");
-  const connectFlow = useConnectFlow({ refresh });
+  const connectFlow = useConnectFlow({ refresh, applyListing });
 
   if (loadState === HOST_DISTRIBUTION_STATE.LOADING) {
     return <output className="host-chdist__empty-text">{LOADING_MESSAGE}</output>;
@@ -52,16 +53,16 @@ function PlatformCardsSection() {
   const listingView = describeListingView(selected);
   const isRefreshing = refreshingPropertyId === selected.propertyId;
 
-  // A listing that is not set up yet has nothing to connect to: its switches stay disabled until
-  // PR B2 adds the enable step. While a flow is open every switch and the picker are locked: a
-  // second flow cannot start underneath the first, and the host cannot move to a listing whose view
-  // has no cards, which would unmount the flow's modals and leave the step stuck.
-  const canStartConnect = selected.distribution?.status === DISTRIBUTION_READY && !connectFlow.isActive;
+  // A listing that is not turned on starts the same flow: the hook adds the timezone and enable
+  // steps. While a flow is open every switch and the picker are locked: a second flow cannot start
+  // underneath the first, and the host cannot move to a listing whose view has no cards, which would
+  // unmount the flow's modals and leave the step stuck.
+  const canStartConnect = STARTABLE_STATUSES.includes(selected.distribution?.status) && !connectFlow.isActive;
   const handleToggle = ({ otaCode, turnOn }) => {
     if (!turnOn) return;
     connectFlow.start({
       platform: PLATFORMS.find((platform) => platform.otaCode === otaCode),
-      propertyId: selected.propertyId,
+      listing: selected,
     });
   };
 
@@ -88,7 +89,9 @@ function PlatformCardsSection() {
         <NotReadyNotice items={describeMissingItems(selected.readiness?.missing)} />
       )}
 
-      {listingView === LISTING_VIEW.SETUP_FAILED && <SetupFailedNotice />}
+      {listingView === LISTING_VIEW.SETUP_FAILED && (
+        <SetupFailedNotice onRetry={() => connectFlow.retry({ listing: selected })} busy={connectFlow.isActive} />
+      )}
 
       {listingView === LISTING_VIEW.CARDS && (
         <>
@@ -100,28 +103,6 @@ function PlatformCardsSection() {
               onToggle={canStartConnect ? handleToggle : undefined}
             />
           ))}
-          {connectFlow.errorMessage && (
-            <p className="host-chdist__error-text" role="alert">
-              {connectFlow.errorMessage}
-            </p>
-          )}
-          {connectFlow.step === CONNECT_STEP.CONNECTING && (
-            <output className="host-chdist__empty-text">{CONNECTING_MESSAGE}</output>
-          )}
-          {connectFlow.step === CONNECT_STEP.CHECKLIST && (
-            <ConnectChecklistModal
-              platform={connectFlow.platform}
-              onContinue={connectFlow.continueFromChecklist}
-              onClose={connectFlow.cancel}
-            />
-          )}
-          {connectFlow.step === CONNECT_STEP.IFRAME && (
-            <ChannexIframeModal
-              platform={connectFlow.platform}
-              url={connectFlow.url}
-              onClose={connectFlow.closeIframe}
-            />
-          )}
           <div className="chdist-card__row">
             <button
               type="button"
@@ -139,6 +120,10 @@ function PlatformCardsSection() {
           )}
         </>
       )}
+
+      {/* Outside the cards view, so a Retry from the setup-failed notice can show its dialogs too. The
+          setup-failed notice already says the setup went wrong, so the flow's own message is left out there. */}
+      <ConnectFlowLayer connectFlow={connectFlow} showError={listingView !== LISTING_VIEW.SETUP_FAILED} />
     </div>
   );
 }
