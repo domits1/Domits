@@ -4,9 +4,9 @@
 //
 // Routes (all under /integrations/channex, Cognito-authenticated):
 //   getHostListings()          GET  /host/listings
+//   createConnectSession({ propertyId })  POST /host/listings/{propertyId}/connect-session
 //   refreshChannels({ propertyId })  POST /host/listings/{propertyId}/channels/refresh
-// enableDistribution, createConnectSession and disconnectChannel arrive with the pull requests
-// that use them.
+// enableDistribution and disconnectChannel arrive with the pull requests that use them.
 
 // While false, the Distribution tab shows none of this, so a real host never sees invented data.
 // Flip to true only for local preview. Remove the flag when the real routes are wired.
@@ -34,6 +34,9 @@ const MOCK_REQUEST_DELAY_MS = 300;
 // }
 // getHostListings  -> { listings: [listing] }
 // refreshChannels  -> { listing }                          // the updated listing, so the UI replaces one object
+// createConnectSession -> { url, expiresAt }               // a one-time Channex screen address for this listing's
+//                                                          // property; errors: 404 LISTING_NOT_FOUND,
+//                                                          // 409 DISTRIBUTION_NOT_ENABLED
 // errors           -> thrown like requestChannex() throws: Error with .status, .responseBody { error, errorCode }
 // ---------------------------------------------------------------------------------------------
 
@@ -110,6 +113,20 @@ const mockDelay = () => new Promise((resolve) => setTimeout(resolve, MOCK_REQUES
 // Callers get copies, so a component that mutates a response cannot change the mock's state.
 const copy = (value) => JSON.parse(JSON.stringify(value));
 
+// Shaped like the Error requestChannex() throws on a non-2xx response, so a real network error and a
+// mock error are handled the same way by callers.
+const buildMockRequestError = ({ endpoint, status, error, errorCode }) => {
+  const requestError = new Error(`POST ${endpoint} failed with status ${status}: ${error}`);
+  requestError.status = status;
+  requestError.endpoint = endpoint;
+  requestError.method = "POST";
+  requestError.responseBody = { error, errorCode };
+  return requestError;
+};
+
+const listingNotFoundError = (endpoint) =>
+  buildMockRequestError({ endpoint, status: 404, error: "Listing not found.", errorCode: "LISTING_NOT_FOUND" });
+
 export const getHostListings = async () => {
   await mockDelay();
   return { listings: copy(mockListings) };
@@ -121,18 +138,34 @@ export const refreshChannels = async ({ propertyId } = {}) => {
   await mockDelay();
 
   const found = mockListings.find((listing) => listing.propertyId === propertyId);
-  if (!found) {
-    const endpoint = `/integrations/channex/host/listings/${propertyId}/channels/refresh`;
-    const error = new Error(`POST ${endpoint} failed with status 404: Listing not found.`);
-    error.status = 404;
-    error.endpoint = endpoint;
-    error.method = "POST";
-    error.responseBody = { error: "Listing not found.", errorCode: "LISTING_NOT_FOUND" };
-    throw error;
-  }
+  if (!found) throw listingNotFoundError(`/integrations/channex/host/listings/${propertyId}/channels/refresh`);
 
   found.channels = found.channels.map((candidate) =>
     candidate.displayState === "SYNCING" ? { ...candidate, displayState: "LIVE" } : candidate
   );
   return { listing: copy(found) };
+};
+
+const MOCK_CONNECT_SESSION_URL = "https://staging.channex.io/mock-connect?token=mock";
+const MOCK_CONNECT_SESSION_LIFETIME_MS = 15 * 60 * 1000;
+
+// The real route requests a one-time token for the listing's own Channex property after the owner
+// check, and never takes a property id from the browser. The mock only answers for a listing that
+// has been turned on, like the real one will.
+export const createConnectSession = async ({ propertyId } = {}) => {
+  await mockDelay();
+
+  const endpoint = `/integrations/channex/host/listings/${propertyId}/connect-session`;
+  const found = mockListings.find((listing) => listing.propertyId === propertyId);
+  if (!found) throw listingNotFoundError(endpoint);
+  if (found.distribution.status !== "READY") {
+    throw buildMockRequestError({
+      endpoint,
+      status: 409,
+      error: "Distribution is not turned on for this listing.",
+      errorCode: "DISTRIBUTION_NOT_ENABLED",
+    });
+  }
+
+  return { url: MOCK_CONNECT_SESSION_URL, expiresAt: Date.now() + MOCK_CONNECT_SESSION_LIFETIME_MS };
 };
