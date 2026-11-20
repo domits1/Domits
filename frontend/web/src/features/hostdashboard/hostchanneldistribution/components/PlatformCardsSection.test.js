@@ -2,8 +2,10 @@ import React from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PlatformCardsSection from "./PlatformCardsSection";
+import { DISMISS_ACTIONS } from "./modalTestHelpers";
 import {
   createConnectSession,
+  disconnectChannel,
   enableDistribution,
   getHostListings,
   refreshChannels,
@@ -90,12 +92,12 @@ describe("PlatformCardsSection", () => {
       await screen.findByTitle("Connect Vrbo through Channex");
     };
 
-    test("on a ready listing only the switches that are off are usable, the ones that are on stay disabled", async () => {
+    test("on a ready listing every switch is usable, the ones that are on can be turned off", async () => {
       render(<PlatformCardsSection />);
       await screen.findByText("Booking.com");
 
-      expect(switchOf("Booking.com")).toBeDisabled();
-      expect(switchOf("Airbnb")).toBeDisabled();
+      expect(switchOf("Booking.com")).toBeEnabled();
+      expect(switchOf("Airbnb")).toBeEnabled();
       expect(switchOf("Vrbo")).toBeEnabled();
     });
 
@@ -508,6 +510,264 @@ describe("PlatformCardsSection", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong while setting up. Try again.");
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+  });
+
+  describe("turning a switch off", () => {
+    const TURN_OFF_LISTING = listing("p1", "Canal House", {
+      channels: [
+        channel("BookingCom", "LIVE", { upcomingBookingCount: 2 }),
+        channel("Airbnb", "SYNCING", { upcomingBookingCount: 1 }),
+      ],
+    });
+    const DISCONNECTING_LISTING = {
+      ...TURN_OFF_LISTING,
+      channels: [channel("BookingCom", "DISCONNECTING", { upcomingBookingCount: 2 }), TURN_OFF_LISTING.channels[1]],
+    };
+    const requestError = (status, errorCode) =>
+      Object.assign(new Error("failed"), { status, responseBody: { errorCode } });
+    const switchOf = (name) => screen.getByRole("switch", { name: `${name} distribution` });
+
+    const renderListings = async (listings = [TURN_OFF_LISTING]) => {
+      getHostListings.mockResolvedValue({ listings });
+      render(<PlatformCardsSection />);
+      await screen.findByText("Booking.com");
+    };
+    const openConfirm = async (user, name = "Booking.com", listings) => {
+      await renderListings(listings);
+      await user.click(switchOf(name));
+    };
+    const confirmTurnOff = (user) => user.click(screen.getByRole("button", { name: "Turn off" }));
+
+    test("turning a switch that is on off opens the confirm for that platform, and requests nothing", async () => {
+      const user = userEvent.setup();
+
+      await openConfirm(user);
+
+      expect(screen.getByRole("dialog", { name: "Turn off Booking.com?" })).toBeInTheDocument();
+      expect(screen.getByText("You have 2 upcoming bookings from Booking.com.")).toBeInTheDocument();
+      expect(disconnectChannel).not.toHaveBeenCalled();
+      expect(refreshChannels).not.toHaveBeenCalled();
+    });
+
+    test("one upcoming booking reads in the singular", async () => {
+      const user = userEvent.setup();
+
+      await openConfirm(user, "Airbnb");
+
+      expect(screen.getByText("You have 1 upcoming booking from Airbnb.")).toBeInTheDocument();
+    });
+
+    test("no upcoming bookings, no such line", async () => {
+      const user = userEvent.setup();
+      await openConfirm(user, "Booking.com", [
+        listing("p1", "Canal House", { channels: [channel("BookingCom", "LIVE", { upcomingBookingCount: 0 })] }),
+      ]);
+
+      expect(screen.queryByText(/upcoming/)).not.toBeInTheDocument();
+    });
+
+    test.each(DISMISS_ACTIONS)(
+      "%s leaves the connection alone: no request, no refresh, the switch still on",
+      async (_name, dismiss) => {
+        const user = userEvent.setup();
+        await openConfirm(user);
+
+        await dismiss(user);
+
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+        expect(disconnectChannel).not.toHaveBeenCalled();
+        expect(refreshChannels).not.toHaveBeenCalled();
+        expect(switchOf("Booking.com")).toBeChecked();
+      }
+    );
+
+    test("a channel that was disconnected outside Domits gets its own confirm text, and a failing one the usual text", async () => {
+      const user = userEvent.setup();
+      await openConfirm(user, "Vrbo", [
+        listing("p1", "Canal House", {
+          channels: [
+            channel("Vrbo", "NEEDS_ATTENTION", { disconnectedOutsideDomits: true }),
+            channel("Airbnb", "NEEDS_ATTENTION"),
+          ],
+        }),
+      ]);
+
+      expect(screen.getByText(/already disconnected outside Domits/)).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+      await user.click(switchOf("Airbnb"));
+
+      expect(screen.getByText(/Airbnb will be disconnected/)).toBeInTheDocument();
+    });
+
+    test("Turn off asks for the channel by its id only, and while it runs the card says Turning off…", async () => {
+      const user = userEvent.setup();
+      disconnectChannel.mockReturnValue(deferred().promise);
+      await openConfirm(user);
+
+      await confirmTurnOff(user);
+
+      expect(disconnectChannel).toHaveBeenCalledTimes(1);
+      expect(disconnectChannel).toHaveBeenCalledWith({ channelId: "c-BookingCom" });
+      expect(within(cardFor("Booking.com")).getByText("Turning off…")).toBeInTheDocument();
+      expect(switchOf("Booking.com")).not.toBeChecked();
+      expect(screen.getByText("Turning off Booking.com…").tagName).toBe("OUTPUT");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    test("while it runs all three switches, the picker and Refresh are locked", async () => {
+      const user = userEvent.setup();
+      disconnectChannel.mockReturnValue(deferred().promise);
+      await openConfirm(user, "Booking.com", [TURN_OFF_LISTING, listing("p2", "Beach Apartment")]);
+
+      await confirmTurnOff(user);
+
+      screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+      expect(screen.getByRole("combobox", { name: "Property" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Refresh" })).toBeDisabled();
+    });
+
+    test("an answer is applied as it is, without another request: the card says Disconnecting… with the hint, and the rest unlocks", async () => {
+      const user = userEvent.setup();
+      disconnectChannel.mockResolvedValue({ listing: DISCONNECTING_LISTING });
+      await openConfirm(user);
+
+      await confirmTurnOff(user);
+
+      await waitFor(() => expect(within(cardFor("Booking.com")).getByText("Disconnecting…")).toBeInTheDocument());
+      expect(
+        within(cardFor("Booking.com")).getByText("This takes about a minute. Click Refresh to see the result.")
+      ).toBeInTheDocument();
+      expect(refreshChannels).not.toHaveBeenCalled();
+      expect(switchOf("Booking.com")).toBeDisabled();
+      expect(switchOf("Airbnb")).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    test("Refresh afterwards shows the channel Disconnected and its switch usable again", async () => {
+      const user = userEvent.setup();
+      disconnectChannel.mockResolvedValue({ listing: DISCONNECTING_LISTING });
+      refreshChannels.mockResolvedValue({
+        listing: {
+          ...TURN_OFF_LISTING,
+          channels: [channel("BookingCom", "DISCONNECTED"), TURN_OFF_LISTING.channels[1]],
+        },
+      });
+      await openConfirm(user);
+      await confirmTurnOff(user);
+      await screen.findByText("Disconnecting…");
+
+      await user.click(screen.getByRole("button", { name: "Refresh" }));
+
+      await waitFor(() => expect(within(cardFor("Booking.com")).getByText("Disconnected")).toBeInTheDocument());
+      expect(switchOf("Booking.com")).toBeEnabled();
+    });
+
+    test("a listing that is already disconnecting shows the hint when the tab opens", async () => {
+      await renderListings([DISCONNECTING_LISTING]);
+
+      expect(screen.getByText("This takes about a minute. Click Refresh to see the result.")).toBeInTheDocument();
+      expect(switchOf("Booking.com")).toBeDisabled();
+    });
+
+    describe("when it fails", () => {
+      test("a 409 reads the listing again, and the card says Disconnecting… with no alert", async () => {
+        const user = userEvent.setup();
+        disconnectChannel.mockRejectedValue(requestError(409, "DISCONNECT_IN_PROGRESS"));
+        refreshChannels.mockResolvedValue({ listing: DISCONNECTING_LISTING });
+        await openConfirm(user);
+
+        await confirmTurnOff(user);
+
+        await waitFor(() => expect(within(cardFor("Booking.com")).getByText("Disconnecting…")).toBeInTheDocument());
+        expect(refreshChannels).toHaveBeenCalledTimes(1);
+        expect(refreshChannels).toHaveBeenCalledWith({ propertyId: "p1" });
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      });
+
+      test("a 404 reads the listing again, and the channel that is gone reads Not connected, with no alert", async () => {
+        const user = userEvent.setup();
+        disconnectChannel.mockRejectedValue(requestError(404, "CHANNEL_NOT_FOUND"));
+        refreshChannels.mockResolvedValue({ listing: listing("p1", "Canal House") });
+        await openConfirm(user);
+
+        await confirmTurnOff(user);
+
+        await waitFor(() => expect(within(cardFor("Booking.com")).getByText("Not connected")).toBeInTheDocument());
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      });
+
+      test("a 500 says so with a single alert, reads the listing again, and the card shows what is left", async () => {
+        const user = userEvent.setup();
+        disconnectChannel.mockRejectedValue(requestError(500, "DISCONNECT_FAILED"));
+        refreshChannels.mockResolvedValue({
+          listing: listing("p1", "Canal House", { channels: [channel("BookingCom", "NEEDS_ATTENTION")] }),
+        });
+        await openConfirm(user);
+
+        await confirmTurnOff(user);
+
+        await waitFor(() => expect(within(cardFor("Booking.com")).getByText("Needs attention")).toBeInTheDocument());
+        expect(screen.getAllByRole("alert")).toHaveLength(1);
+        expect(screen.getByRole("alert")).toHaveTextContent("We couldn't turn this off. Try again.");
+        expect(refreshChannels).toHaveBeenCalledTimes(1);
+        expect(switchOf("Booking.com")).toBeEnabled();
+      });
+
+      test("a network error alerts, leaves the card as it was, and requests no refresh", async () => {
+        const user = userEvent.setup();
+        disconnectChannel.mockRejectedValue(new Error("Failed to fetch"));
+        await openConfirm(user);
+
+        await confirmTurnOff(user);
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't turn this off. Try again.");
+        expect(refreshChannels).not.toHaveBeenCalled();
+        expect(within(cardFor("Booking.com")).getByText("Live")).toBeInTheDocument();
+        await waitFor(() => expect(switchOf("Booking.com")).toBeEnabled());
+        expect(switchOf("Booking.com")).toBeChecked();
+      });
+    });
+
+    describe("a connect and a disconnect never run at the same time", () => {
+      test("while the confirm is open, the other switches cannot start a connect", async () => {
+        const user = userEvent.setup();
+        await openConfirm(user);
+
+        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+      });
+
+      test("while the connect checklist is open, no switch can start a turn off, and Refresh is locked", async () => {
+        const user = userEvent.setup();
+        await renderListings();
+        await user.click(switchOf("Vrbo"));
+
+        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+        expect(screen.getByRole("button", { name: "Refresh" })).toBeDisabled();
+      });
+
+      test("a connect message does not stay on screen next to a turn off, and the other way round", async () => {
+        const user = userEvent.setup();
+        createConnectSession.mockRejectedValue(new Error("boom"));
+        disconnectChannel.mockRejectedValue(new Error("Failed to fetch"));
+        await renderListings();
+
+        await user.click(switchOf("Vrbo"));
+        for (const box of screen.getAllByRole("checkbox")) await user.click(box);
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+        expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't start the connection. Try again.");
+
+        await user.click(switchOf("Booking.com"));
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        await confirmTurnOff(user);
+        expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't turn this off. Try again.");
+        expect(screen.getAllByRole("alert")).toHaveLength(1);
+
+        await user.click(switchOf("Vrbo"));
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe("Retry on a setup that failed halfway", () => {

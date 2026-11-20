@@ -9,8 +9,10 @@ import {
   describePlatformCard,
 } from "../utils/distributionStates";
 import { useConnectFlow } from "../hooks/useConnectFlow";
+import { DISCONNECT_STEP, useDisconnectFlow } from "../hooks/useDisconnectFlow";
 import PlatformCard from "./PlatformCard";
 import ConnectFlowLayer from "./ConnectFlowLayer";
+import DisconnectFlowLayer from "./DisconnectFlowLayer";
 import { NotReadyNotice, SetupFailedNotice } from "./DistributionNotices";
 
 const LOADING_MESSAGE = "Loading your listings…";
@@ -28,6 +30,7 @@ function PlatformCardsSection() {
     useHostDistribution();
   const [pickedPropertyId, setPickedPropertyId] = useState("");
   const connectFlow = useConnectFlow({ refresh, applyListing });
+  const disconnectFlow = useDisconnectFlow({ refresh, applyListing });
 
   if (loadState === HOST_DISTRIBUTION_STATE.LOADING) {
     return <output className="host-chdist__empty-text">{LOADING_MESSAGE}</output>;
@@ -53,18 +56,28 @@ function PlatformCardsSection() {
   const listingView = describeListingView(selected);
   const isRefreshing = refreshingPropertyId === selected.propertyId;
 
-  // A listing that is not turned on starts the same flow: the hook adds the timezone and enable
-  // steps. While a flow is open every switch and the picker are locked: a second flow cannot start
-  // underneath the first, and the host cannot move to a listing whose view has no cards, which would
-  // unmount the flow's modals and leave the step stuck.
-  const canStartConnect = STARTABLE_STATUSES.includes(selected.distribution?.status) && !connectFlow.isActive;
+  // Turning a switch on starts the connect flow (a listing that is not turned on gets the timezone and
+  // enable steps from the hook), and turning one off starts the disconnect flow. While either flow is
+  // open every switch, the picker and Refresh are locked: a connect and a disconnect can never run
+  // at the same time, a second flow cannot start underneath the first, a Refresh cannot race a
+  // request, and the host cannot move to a listing whose view has no cards, which would unmount the
+  // flow's modals and leave the step stuck.
+  const flowBusy = connectFlow.isActive || disconnectFlow.isActive;
+  const canToggle = STARTABLE_STATUSES.includes(selected.distribution?.status) && !flowBusy;
   const handleToggle = ({ otaCode, turnOn }) => {
-    if (!turnOn) return;
-    connectFlow.start({
-      platform: PLATFORMS.find((platform) => platform.otaCode === otaCode),
-      listing: selected,
-    });
+    const platform = PLATFORMS.find((candidate) => candidate.otaCode === otaCode);
+    if (turnOn) {
+      disconnectFlow.clearError();
+      connectFlow.start({ platform, listing: selected });
+      return;
+    }
+    const channel = selected.channels?.find((candidate) => candidate.otaCode === otaCode);
+    if (!channel) return;
+    connectFlow.clearError();
+    disconnectFlow.start({ platform, propertyId: selected.propertyId, channel });
   };
+  const isTurningOff = (otaCode) =>
+    disconnectFlow.step === DISCONNECT_STEP.DISCONNECTING && disconnectFlow.platform?.otaCode === otaCode;
 
   return (
     <div className="chdist-card-list">
@@ -74,7 +87,7 @@ function PlatformCardsSection() {
           <select
             className="host-chdist__picker-select"
             value={selected.propertyId}
-            disabled={connectFlow.isActive}
+            disabled={flowBusy}
             onChange={(event) => setPickedPropertyId(event.target.value)}>
             {listings.map((listing) => (
               <option key={listing.propertyId} value={listing.propertyId}>
@@ -99,15 +112,16 @@ function PlatformCardsSection() {
             <PlatformCard
               key={platform.otaCode}
               platform={platform}
-              state={describePlatformCard(selected, platform.otaCode)}
-              onToggle={canStartConnect ? handleToggle : undefined}
+              state={describePlatformCard(selected, platform.otaCode, { turningOff: isTurningOff(platform.otaCode) })}
+              onToggle={canToggle ? handleToggle : undefined}
+              turnOffEnabled
             />
           ))}
           <div className="chdist-card__row">
             <button
               type="button"
               className="chdist-btn chdist-btn--secondary"
-              disabled={isRefreshing}
+              disabled={isRefreshing || flowBusy}
               onClick={() => refresh(selected.propertyId)}>
               Refresh
             </button>
@@ -123,6 +137,7 @@ function PlatformCardsSection() {
 
       {/* Outside the cards view, so a Retry from the setup-failed notice can show its dialogs too. The
           setup-failed notice already says the setup went wrong, so the flow's own message is left out there. */}
+      <DisconnectFlowLayer disconnectFlow={disconnectFlow} />
       <ConnectFlowLayer connectFlow={connectFlow} showError={listingView !== LISTING_VIEW.SETUP_FAILED} />
     </div>
   );
