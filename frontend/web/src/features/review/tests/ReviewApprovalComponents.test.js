@@ -56,7 +56,7 @@ test.each([
 });
 
 test("formatting exports handle known and unknown statuses", () => {
-  expect(getReviewStatusLabel("APPROVED")).toBe("Approved");
+  expect(getReviewStatusLabel("APPROVED")).toBe("Awaiting publication");
   expect(getReviewStatusLabel("toString")).toBe("Unknown");
   expect(isVerifiedStatus("VERIFIED")).toBe(true);
   expect(isVerifiedStatus("VERIFIED_STAY")).toBe(true);

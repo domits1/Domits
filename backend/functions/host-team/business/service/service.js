@@ -44,7 +44,7 @@ export class Service {
         };
 
         const created = await this.repository.create(dataSource, record);
-        await sendTeamInviteEmail(email, created.invite_token, hostEmail);
+        await sendTeamInviteEmail(email, created.invite_token, hostEmail, normalizedRole);
 
         return created;
     }
