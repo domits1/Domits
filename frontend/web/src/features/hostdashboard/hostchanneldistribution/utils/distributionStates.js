@@ -50,6 +50,13 @@ const UNKNOWN_CHANNEL_STATE = CHANNEL_STATES.NEEDS_ATTENTION;
 
 const SETTING_UP = { label: "Setting up…", tone: "pending", switchOn: false, switchDisabled: true };
 
+// The moment the host's turn-off request runs: off and locked, so a second click cannot start another.
+// After the answer the channel reads Disconnecting… (D7) until a Refresh finds it done.
+const TURNING_OFF = { label: "Turning off…", tone: "pending", switchOn: false, switchDisabled: true };
+
+// D5: the worker finishes a disconnect about a minute after the request, and the tab never polls (D7).
+const DISCONNECTING_HINT = "This takes about a minute. Click Refresh to see the result.";
+
 // Readiness wins over a failed setup: a listing that cannot be set up has nothing to retry yet.
 export function describeListingView(listing) {
   if (!listing.readiness?.ready) return LISTING_VIEW.NOT_READY;
@@ -70,15 +77,18 @@ function describeAttentionNote(channel, platformName) {
   return `Something needs your attention on ${platformName}.`;
 }
 
-export function describePlatformCard(listing, otaCode) {
+// `turningOff` is true while this OTA's turn-off request is running (see useDisconnectFlow).
+export function describePlatformCard(listing, otaCode, { turningOff = false } = {}) {
   const platformName = PLATFORMS.find((platform) => platform.otaCode === otaCode)?.name ?? otaCode;
 
+  if (turningOff) return { ...TURNING_OFF, note: null };
   if (listing.distribution?.status === DISTRIBUTION_STATUS.PROVISIONING) return { ...SETTING_UP, note: null };
 
   const channel = listing.channels?.find((candidate) => candidate.otaCode === otaCode);
   if (!channel) return { ...NOT_CONNECTED, note: null };
 
   const state = CHANNEL_STATES[channel.displayState] ?? UNKNOWN_CHANNEL_STATE;
-  const needsAttention = state === CHANNEL_STATES.NEEDS_ATTENTION;
-  return { ...state, note: needsAttention ? describeAttentionNote(channel, platformName) : null };
+  if (state === CHANNEL_STATES.NEEDS_ATTENTION) return { ...state, note: describeAttentionNote(channel, platformName) };
+  if (state === CHANNEL_STATES.DISCONNECTING) return { ...state, note: DISCONNECTING_HINT };
+  return { ...state, note: null };
 }
