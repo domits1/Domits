@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import FilterUi from './FilterUi';
 import { LanguageContext } from '../../context/LanguageContext';
@@ -59,6 +59,36 @@ describe('FilterUi price range', () => {
         await waitFor(() => expect(onFilterApplied).toHaveBeenCalledTimes(1));
         expect(filterRequests()[0]).toContain('minPrice=15');
         expect(filterRequests()[0]).toContain('maxPrice=500');
+    });
+
+    test('shows the results of the latest slider release when an older answer arrives last', async () => {
+        let answerFirstRequest;
+        const firstRequestAnswer = new Promise((resolve) => {
+            answerFirstRequest = () => resolve({ json: () => Promise.resolve({ properties: [{ id: 'old-price' }] }) });
+        });
+        global.fetch = jest.fn((url) => {
+            const address = String(url);
+            if (address.includes('minPrice=200')) return firstRequestAnswer;
+            if (address.includes('minPrice=300')) {
+                return Promise.resolve({ json: () => Promise.resolve({ properties: [{ id: 'new-price' }] }) });
+            }
+            return Promise.resolve({ json: () => Promise.resolve(BOUNDS_RESPONSE) });
+        });
+        const { onFilterApplied, minThumb } = await renderFilter();
+
+        fireEvent.change(minThumb, { target: { value: 200 } });
+        fireEvent.change(minThumb, { target: { value: 300 } });
+        await waitFor(() => expect(onFilterApplied).toHaveBeenCalledTimes(1));
+        await act(async () => {
+            answerFirstRequest();
+        });
+
+        expect(onFilterApplied).toHaveBeenCalledTimes(1);
+        expect(onFilterApplied).toHaveBeenCalledWith(
+            [{ id: 'new-price' }],
+            null,
+            expect.objectContaining({ minPrice: 300 })
+        );
     });
 
     test('still waits for Apply filter before applying the other filters', async () => {

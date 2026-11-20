@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { MAX_PRICE, MIN_PRICE } from "../../constants/searchFilters";
 import { getListingPricingBreakdown } from "../../features/bookingengine/listingdetails/utils/pricing";
@@ -97,8 +97,11 @@ export default function useFilterLogic(props) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const latestRequestId = useRef(0);
 
   async function fetchFilteredAccommodations(overrides = {}) {
+    latestRequestId.current += 1;
+    const requestId = latestRequestId.current;
     const nextPriceValues = overrides.priceValues ?? priceValues;
     const nextRoomsAndBeds = overrides.roomsAndBeds ?? roomsAndBeds;
     const nextBookingOptions = overrides.bookingOptions ?? bookingOptions;
@@ -141,6 +144,9 @@ export default function useFilterLogic(props) {
 
       const response = await fetch(url);
       const data = await response.json();
+      if (requestId !== latestRequestId.current) {
+        return;
+      }
       const properties = Array.isArray(data) ? data : (data?.properties ?? []);
       const lastEvaluatedKey = Array.isArray(data) ? null : (data?.lastEvaluatedKey ?? null);
 
@@ -157,9 +163,13 @@ export default function useFilterLogic(props) {
         setError("No accommodations found for these criteria");
       }
     } catch (err) {
-      setError(err.message);
+      if (requestId === latestRequestId.current) {
+        setError(err.message);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestId.current) {
+        setLoading(false);
+      }
     }
   }
 
