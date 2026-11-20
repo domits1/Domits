@@ -1,5 +1,7 @@
 import IntegrationAccountRepository from "../../integrations/repositories/integrationAccountRepository.js";
-import IntegrationPropertyRepository from "../../integrations/repositories/integrationPropertyRepository.js";
+import IntegrationPropertyRepository, {
+  MappingConflictError,
+} from "../../integrations/repositories/integrationPropertyRepository.js";
 import IntegrationRatePlanRepository from "../../integrations/repositories/integrationRatePlanRepository.js";
 import IntegrationRoomTypeRepository from "../../integrations/repositories/integrationRoomTypeRepository.js";
 import { CHANNEX_STATUS } from "../channelManagementConstants.js";
@@ -13,6 +15,15 @@ import ChannexAriOutboxWriter from "./channexAriOutboxWriter.js";
 
 const ok = (response) => ({ statusCode: 200, response });
 const bad = (statusCode, response) => ({ statusCode, response });
+
+// Design note D2: a second live Channex property for a listing could double-book, so the save is
+// refused. Replacing one means turning every OTA off first (D5), then archiving the old mapping.
+const mappingConflict = (error) =>
+  bad(409, {
+    error: "This listing is already connected to another Channex property. Turn its OTAs off first.",
+    errorCode: "CHANNEX_PROPERTY_ALREADY_MAPPED",
+    existingExternalPropertyId: error.existingExternalPropertyId,
+  });
 const requireStr = (value) =>
   typeof value === "string" && value.trim() ? value.trim() : null;
 const describeLocalError = (error) => ({
@@ -361,6 +372,7 @@ export default class ChannexMappingService {
         status: saved.response?.status ?? "ACTIVE",
       });
     } catch (error) {
+      if (error instanceof MappingConflictError) return mappingConflict(error);
       const details = describeLocalError(error);
       return bad(500, {
         error: "Failed to save Channex property mapping.",
@@ -553,6 +565,7 @@ export default class ChannexMappingService {
         fullSyncQueued,
       });
     } catch (error) {
+      if (error instanceof MappingConflictError) return mappingConflict(error);
       const details = describeLocalError(error);
       return bad(500, {
         error: "Failed to save Channex setup mapping.",
