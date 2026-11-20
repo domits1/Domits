@@ -5,7 +5,10 @@ import {
   EXISTING_SITE_RENDER_BODY,
   buildExistingSiteController,
   buildRatePlanRepository,
+  buildStoringDraftRepository,
+  buildStoringSiteRepository,
   expectOnlyCurrentPlanRead,
+  hostEvent,
   ratePlanRow,
   renderEvent,
 } from "./support/existingSiteRender.js";
@@ -13,52 +16,6 @@ import {
 const SITE_PAGES = { gallery: { enabled: true, navLabel: "Gallery" }, accommodation: { enabled: true } };
 const OVERRIDES_WITHOUT_PAGES = EXISTING_SITE.publishedContentOverrides;
 const OVERRIDES_WITH_PAGES = { ...OVERRIDES_WITHOUT_PAGES, sitePages: SITE_PAGES };
-
-const asStored = (value) => JSON.parse(JSON.stringify(value));
-
-const buildStoringDraftRepository = (store) => ({
-  getDraftByPropertyIdAndHostId: jest.fn(async () => store.draft),
-  getDraftById: jest.fn(async (draftId) => (store.draft?.id === draftId ? store.draft : null)),
-  upsertDraft: jest.fn(async (input) => {
-    store.draft = {
-      id: "draft-1",
-      propertyId: input.propertyId,
-      hostId: input.hostId,
-      templateKey: input.templateKey,
-      status: input.status,
-      contentOverrides: asStored(input.contentOverrides),
-      themeOverrides: asStored(input.themeOverrides),
-      publishedContentOverrides: asStored(input.publishedContentOverrides ?? {}),
-      publishedThemeOverrides: asStored(input.publishedThemeOverrides ?? {}),
-      createdAt: EXISTING_SITE.createdAt,
-      updatedAt: EXISTING_SITE.updatedAt,
-      lastPreviewBuiltAt: null,
-    };
-    return store.draft;
-  }),
-});
-
-const buildStoringSiteRepository = (store) => ({
-  getSiteById: jest.fn(async (siteId) => (store.site?.id === siteId ? store.site : null)),
-  getSiteByPropertyIdAndHostId: jest.fn(async () => store.site),
-  upsertSiteWithStaticPageOutbox: jest.fn(async (input) => {
-    store.site = {
-      id: EXISTING_SITE.id,
-      ...asStored(input),
-      previewTokenHash: "",
-      staticPageRevision: 1,
-      createdAt: EXISTING_SITE.createdAt,
-      updatedAt: EXISTING_SITE.updatedAt,
-    };
-    return store.site;
-  }),
-});
-
-const hostEvent = (body) => ({
-  httpMethod: "POST",
-  headers: { Authorization: "host-token" },
-  body: JSON.stringify(body),
-});
 
 const saveAndPublishThroughTheEditorApi = async (contentOverrides) => {
   const store = { draft: null, site: null };
@@ -75,6 +32,7 @@ const saveAndPublishThroughTheEditorApi = async (contentOverrides) => {
   controller.propertyService.getFullPropertyAttributesWithFullLocation = jest.fn(
     async () => EXISTING_SITE.publishedPropertySnapshot
   );
+  controller.propertyService.getFullPropertyAttributes = jest.fn(async () => EXISTING_SITE.publishedPropertySnapshot);
 
   const saved = await controller.upsertWebsiteDraft(
     hostEvent({
@@ -90,7 +48,10 @@ const saveAndPublishThroughTheEditorApi = async (contentOverrides) => {
   const published = await controller.publishWebsiteSite(hostEvent({ propertyId: EXISTING_SITE.propertyId }));
   const planReadsBeforeServing = ratePlanRepository.findCurrentByAccountId.mock.calls.length;
   const render = await controller.getPublicWebsiteRenderModel(renderEvent({ domain: EXISTING_DOMAIN.domain }));
-  const preview = await controller.getWebsitePreviewByDraftId(renderEvent({ draft: "draft-1" }));
+  const preview = await controller.getWebsitePreviewByDraftId({
+    ...renderEvent({ draft: "draft-1" }),
+    headers: { Authorization: "host-token" },
+  });
 
   return { saved, published, render, preview, store, planReadsBeforeServing, ratePlanRepository };
 };

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { useParams } from "react-router-dom";
 import { recordPublicWebsiteAnalyticsEventSafely } from "./analytics/websiteAnalyticsService";
 import {
@@ -18,6 +19,8 @@ import {
 import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
+import { MAIN_SITE_PAGE_KEY, resolveSitePageFromPath, resolveSitePageTitle } from "./rendering/websitePages";
+import PageNotFound from "../../../utils/error/404NotFound";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
   fetchPublicWebsiteRenderModel,
@@ -35,7 +38,7 @@ import styles from "./WebsitePublicPreviewPage.module.scss";
 const LIVE_SITE_REFRESH_RETRY_INTERVAL_MS = 2000;
 const LIVE_SITE_REFRESH_WINDOW_MS = 8000;
 
-const normalizeWebsiteDomain = (value) => {
+export const normalizeWebsiteDomain = (value) => {
   const normalizedValue = String(value || "").trim().toLowerCase();
   if (!normalizedValue) {
     return "";
@@ -95,8 +98,8 @@ const resolveUnavailableWebsiteTitle = ({ renderPayload, resolution, requestedDo
   return formatWebsiteTitleFromDomain(requestedDomain) || "Published website unavailable";
 };
 
-function WebsitePublicSitePage() {
-  const { domain: routeDomain = "" } = useParams();
+function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = false }) {
+  const { domain: routeDomain = "", "*": routeSitePath = "" } = useParams();
   const [resolution, setResolution] = useState(null);
   const [renderPayload, setRenderPayload] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,6 +107,7 @@ function WebsitePublicSitePage() {
   const [isMissingPublishedWebsite, setIsMissingPublishedWebsite] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const refreshRetryIntervalRef = useRef(null);
+  const settledRequestKeyRef = useRef("");
   const refreshRetryTimeoutRef = useRef(null);
   const hasPendingRefreshHintRef = useRef(false);
 
@@ -116,6 +120,7 @@ function WebsitePublicSitePage() {
     return normalizeWebsiteDomain(globalThis.location?.host || "");
   }, [routeDomain]);
   const requestedSiteId = String(new URLSearchParams(globalThis.location?.search || "").get("siteId") || "").trim();
+  const requestKey = JSON.stringify([requestedDomain, requestedSiteId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -136,6 +141,7 @@ function WebsitePublicSitePage() {
           return;
         }
 
+        settledRequestKeyRef.current = JSON.stringify([requestedDomain, requestedSiteId]);
         setResolution(nextResolution);
         setRenderPayload(nextRenderPayload);
         setIsLoading(false);
@@ -164,6 +170,7 @@ function WebsitePublicSitePage() {
           return;
         }
 
+        settledRequestKeyRef.current = JSON.stringify([requestedDomain, requestedSiteId]);
         setResolution(null);
         setRenderPayload(null);
         setLoadError(error?.message || "We could not load this published website.");
@@ -197,6 +204,13 @@ function WebsitePublicSitePage() {
     );
   }, [renderPayload, resolution?.templateKey]);
 
+  const isCurrentRequestSettled = settledRequestKeyRef.current === requestKey;
+  const activePageKey = resolveSitePageFromPath(routeSitePath, isCurrentRequestSettled ? publicModel?.sitePages : null);
+  const isMissingRequiredPage =
+    requiresActivePage && (!isCurrentRequestSettled || (!isLoading && activePageKey === MAIN_SITE_PAGE_KEY));
+  const activePageTitle = resolveSitePageTitle(publicModel?.sitePages, activePageKey);
+  const pageBasePath = routeDomain ? `/website-live/${encodeURIComponent(requestedDomain)}` : "";
+  const pageSearch = requestedSiteId ? `?siteId=${encodeURIComponent(requestedSiteId)}` : "";
   const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
@@ -238,7 +252,7 @@ function WebsitePublicSitePage() {
   const headTagsModel = isRequestedSiteLoaded ? publicModel : null;
   const websiteHeadTags = useMemo(() => {
     if (!isDirectBookingWebsiteHost) {
-      return buildWebsiteHeadTags({ model: headTagsModel, isDirectBookingHost: false });
+      return buildWebsiteHeadTags({ model: headTagsModel, isDirectBookingHost: false, pageTitle: activePageTitle });
     }
 
     if (!isRequestedSiteLoaded) {
@@ -246,7 +260,11 @@ function WebsitePublicSitePage() {
     }
 
     if (canRenderPublishedSite) {
-      return buildWebsiteHeadTags({ model: publicModel, fallbackTitle: unavailableWebsiteTitle });
+      return buildWebsiteHeadTags({
+        model: publicModel,
+        fallbackTitle: unavailableWebsiteTitle,
+        pageTitle: activePageTitle,
+      });
     }
 
     if (isLoading) {
@@ -259,6 +277,7 @@ function WebsitePublicSitePage() {
       isMissing: isMissingPublishedWebsite,
     });
   }, [
+    activePageTitle,
     canRenderPublishedSite,
     headTagsModel,
     isDirectBookingWebsiteHost,
@@ -269,7 +288,16 @@ function WebsitePublicSitePage() {
     unavailableWebsiteTitle,
   ]);
 
-  useWebsiteHeadTags({ key: requestedSiteKey, tags: websiteHeadTags });
+  useWebsiteHeadTags({
+    key: isMissingRequiredPage ? "" : requestedSiteKey,
+    tags: isMissingRequiredPage ? null : websiteHeadTags,
+  });
+
+  useEffect(() => {
+    if (onSitePagesLoaded && !isLoading && isCurrentRequestSettled) {
+      onSitePagesLoaded(publicModel?.sitePages);
+    }
+  }, [isCurrentRequestSettled, isLoading, onSitePagesLoaded, publicModel]);
 
   const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
@@ -360,7 +388,7 @@ function WebsitePublicSitePage() {
 
   useEffect(() => {
     const publishedSiteId = String(renderPayload?.site?.id || "").trim();
-    if (!canRenderPublishedSite || !publishedSiteId) {
+    if (!canRenderPublishedSite || !publishedSiteId || isMissingRequiredPage) {
       return undefined;
     }
 
@@ -381,7 +409,11 @@ function WebsitePublicSitePage() {
         });
       },
     });
-  }, [canRenderPublishedSite, renderPayload, requestedDomain, refreshVersion]);
+  }, [canRenderPublishedSite, isMissingRequiredPage, renderPayload, requestedDomain, refreshVersion]);
+
+  if (isMissingRequiredPage) {
+    return <PageNotFound />;
+  }
 
   if (isLoading) {
     return (
@@ -414,6 +446,9 @@ function WebsitePublicSitePage() {
             showBrowserChrome={false}
             enableScrollReveal={isPanoramaTemplate}
             quoteContext={renderPayload?.site?.id ? { siteId: String(renderPayload.site.id) } : null}
+            activePageKey={activePageKey}
+            pageBasePath={pageBasePath}
+            pageSearch={pageSearch}
           />
         </div>
       </main>
@@ -441,5 +476,10 @@ function WebsitePublicSitePage() {
     </main>
   );
 }
+
+WebsitePublicSitePage.propTypes = {
+  onSitePagesLoaded: PropTypes.func,
+  requiresActivePage: PropTypes.bool,
+};
 
 export default WebsitePublicSitePage;

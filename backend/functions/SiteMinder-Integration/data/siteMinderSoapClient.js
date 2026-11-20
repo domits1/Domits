@@ -64,7 +64,7 @@ export class SiteMinderSoapClient {
 
     const result = parseOtaResponse(text);
     if (result.success && response.ok) {
-      return { success: true, echoToken };
+      return { success: true, echoToken, xml: text };
     }
     throw new SiteMinderSoapError(response.status, result.errors, { echoToken });
   }

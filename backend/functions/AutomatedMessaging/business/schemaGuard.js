@@ -4,7 +4,7 @@ export const REQUIRED_SCHEMA = Object.freeze({
   columns: Object.freeze({
     message_automation: [
       "id", "hostid", "propertyid", "name", "triggertype", "offsetamount",
-      "offsetunit", "template", "channel", "status", "createdat", "updatedat",
+      "offsetunit", "offsetdirection", "sendtime", "template", "channel", "status", "createdat", "updatedat",
     ],
     message_automation_delivery: [
       "id", "automationid", "bookingid", "eventtype", "eventversion", "scheduledfor",
