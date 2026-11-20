@@ -150,6 +150,7 @@ export default function ReviewApprovalPage() {
             <Search size={18} aria-hidden="true" />
             <input
               type="search"
+              maxLength={255}
               aria-label="Search reviews"
               placeholder="Search reviews by guest name, property, or reservation..."
               value={query}
@@ -213,7 +214,7 @@ export default function ReviewApprovalPage() {
           {showModeration ? (
             <>
               {flagNotice && <p role="status" className={`${styles.notice} ${styles.noticeSuccess}`}>{flagNotice}</p>}
-              <ReviewModerationQueue />
+              <ReviewModerationQueue search={query} rating={rating} />
             </>
           ) : (
             <section id="review-status-panel" role="tabpanel" aria-labelledby={`review-tab-${tab.scope}`}>

@@ -380,8 +380,14 @@ export class ReviewService {
     await this.assertReviewApprover(userId, username);
     const { status = "PENDING" } = query;
     if (!["PENDING", "RESOLVED"].includes(status)) throw new BadRequestException("Invalid flag status.");
+    if (query.search !== undefined && (typeof query.search !== "string" || query.search.length > 255
+      || INVALID_TEXT_CONTROLS.test(query.search))) throw new BadRequestException("Search must be plain text of at most 255 characters.");
+    if (query.rating !== undefined && (typeof query.rating !== "string" || !/^[1-5]$/.test(query.rating))) {
+      throw new BadRequestException("Rating must be a whole number from 1 to 5.");
+    }
     const { limit, offset } = this.parseReviewPagination(query);
-    const rows = await this.repository.findReviewFlags({ status, limit: limit + 1, offset });
+    const rows = await this.repository.findReviewFlags({ status, limit: limit + 1, offset,
+      search: query.search?.trim() || undefined, rating: query.rating === undefined ? undefined : Number(query.rating) });
     return { flags: rows.slice(0, limit).map(({ review, ...flag }) => ({ ...flag, ...(review ? { review: toPendingReviewView(review) } : {}) })), next_offset: rows.length > limit ? offset + limit : null };
   }
 
