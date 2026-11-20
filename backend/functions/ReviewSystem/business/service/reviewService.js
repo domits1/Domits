@@ -30,7 +30,7 @@ const toReviewView = (review) => ({
   status: review.status, created_at: review.created_at, updated_at: review.updated_at,
 });
 const toPendingReviewView = (review) => ({
-  ...toReviewView(review), property_title: review.property_title ?? null,
+  ...toReviewView(review), has_pending_flag: review.has_pending_flag === true, property_title: review.property_title ?? null,
   property_city: review.property_city ?? null, property_country: review.property_country ?? null,
   property_image_key: review.property_image_key ?? null, guest_name: review.guest_name ?? null,
 });
@@ -269,7 +269,6 @@ export class ReviewService {
     return { limit, offset };
   }
 
-  // Return the published review feed without exposing private feedback or unreleased drafts.
   async getPublicPropertyReviews(propertyId, query = {}) {
     this.assertId(propertyId, "property ID");
     const reviews = await this.repository.findPublicForProperty(propertyId.trim(), this.parseReviewPagination(query));
@@ -383,7 +382,7 @@ export class ReviewService {
     if (!["PENDING", "RESOLVED"].includes(status)) throw new BadRequestException("Invalid flag status.");
     const { limit, offset } = this.parseReviewPagination(query);
     const rows = await this.repository.findReviewFlags({ status, limit: limit + 1, offset });
-    return { flags: rows.slice(0, limit), next_offset: rows.length > limit ? offset + limit : null };
+    return { flags: rows.slice(0, limit).map(({ review, ...flag }) => ({ ...flag, ...(review ? { review: toPendingReviewView(review) } : {}) })), next_offset: rows.length > limit ? offset + limit : null };
   }
 
   async resolveReviewFlag(userId, username, flagId) {

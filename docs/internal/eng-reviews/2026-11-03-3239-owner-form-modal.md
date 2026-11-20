@@ -1,8 +1,8 @@
 # feat(property-owners): add the owner form modal
 
-Pull request: (to be opened)
+Pull request: #3778
 Issue: #3239
-Reviewed commit: uncommitted changes on top of da8dcae0e
+Reviewed commit: 45534beed
 Result: no blocking findings
 
 Covers `hostowners/components/OwnerFormModal.js`, the Add owner and Edit actions in `HostOwners.js` and `OwnersTable.js`, the new texts in `content/{en,nl,de,es}.json` and the styles in `HostOwners.scss`.

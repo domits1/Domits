@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { createHandler, SCREEN_TASK } from "../../functions/Truvi-Integration/index.js";
+import { CANCEL_TASK, createHandler, SCREEN_TASK } from "../../functions/Truvi-Integration/index.js";
 
 jest.mock("database", () => ({
   __esModule: true,
@@ -66,7 +66,7 @@ describe("Truvi-Integration handler", () => {
   it("fails the run when a booking could not be handled, so the alarm sees it", async () => {
     const { handler } = build(summary({ saved: 0, errors: [{ bookingId: "booking-1", message: "database down" }] }));
 
-    await expect(handler({ task: SCREEN_TASK })).rejects.toThrow("Truvi screening left 1 failures");
+    await expect(handler({ task: SCREEN_TASK })).rejects.toThrow("Truvi screen-pending-bookings left 1 failures");
   });
 
   it("does not fail when bookings only wait for a retry", async () => {
@@ -75,5 +75,46 @@ describe("Truvi-Integration handler", () => {
     const response = await handler({ task: SCREEN_TASK });
 
     expect(response.statusCode).toBe(200);
+  });
+
+  it("runs the canceller for the cancel task and not the screener", async () => {
+    const canceller = { run: jest.fn(async () => ({ listed: 1, cancelled: 1, refused: 0, retryLater: 0, errors: [] })) };
+    const createScreener = jest.fn();
+    const createCanceller = jest.fn(async () => canceller);
+    const secretRepository = { getSubscriptionKey: jest.fn() };
+    const handler = createHandler({
+      createScreener,
+      createCanceller,
+      secretRepositoryFactory: () => secretRepository,
+      env: { TRUVI_SCREENING_ENABLED: "true" },
+    });
+
+    const response = await handler({ task: CANCEL_TASK, limit: 3 });
+
+    expect(createCanceller).toHaveBeenCalledWith({ secretRepository });
+    expect(canceller.run).toHaveBeenCalledWith({ limit: 3 });
+    expect(createScreener).not.toHaveBeenCalled();
+    expect(JSON.parse(response.body).cancelled).toBe(1);
+  });
+
+  it("skips the cancel task too when the kill switch is off", async () => {
+    const createCanceller = jest.fn();
+    const handler = createHandler({ createCanceller, secretRepositoryFactory: jest.fn(), env: {} });
+
+    const response = await handler({ task: CANCEL_TASK });
+
+    expect(JSON.parse(response.body).skipped).toBe(true);
+    expect(createCanceller).not.toHaveBeenCalled();
+  });
+
+  it("fails the cancel run when a cancellation hit an unexpected error", async () => {
+    const canceller = { run: jest.fn(async () => ({ listed: 1, cancelled: 0, refused: 0, retryLater: 0, errors: [{ bookingId: "b-1", message: "x" }] })) };
+    const handler = createHandler({
+      createCanceller: jest.fn(async () => canceller),
+      secretRepositoryFactory: () => ({}),
+      env: { TRUVI_SCREENING_ENABLED: "true" },
+    });
+
+    await expect(handler({ task: CANCEL_TASK })).rejects.toThrow("Truvi cancel-cancelled-bookings left 1 failures");
   });
 });

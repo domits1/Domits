@@ -40,7 +40,9 @@ import getReservationsFromToken from "./services/getReservationsFromToken.js";
 import { updateInquiryStatus } from "./services/reservationService.js";
 import hostReservationDetailsTranslations from "./translations/hostReservationDetailsTranslations.js";
 import { fetchPropertySummaries } from "../guestdashboard/services/propertySummaryService";
+import { OTA_DISPLAY_NAMES } from "../../utils/otaDisplayName.js";
 import { isChannexBooking, resolveChannexBookingTotal } from "./utils/reservationCalculations.js";
+import { bookingCurrencyCode, bookingCurrencyPrefix } from "./utils/bookingCurrency.js";
 
 const STATUS_CLASS = {
   PAID: styles.statusPaid,
@@ -286,9 +288,6 @@ const buildChannelLabel = (booking) => {
 
   return rawChannel;
 };
-
-// Channex sends some OTA names as codes; the host knows them by their brand name.
-const OTA_DISPLAY_NAMES = Object.freeze({ BookingCom: "Booking.com" });
 
 // A Channex booking was paid on the OTA, not by card through Domits (#3483).
 const buildPaymentMethod = (booking) => {
@@ -802,6 +801,8 @@ const buildReservationReceiptPayload = (reservation, t) => {
     nights,
     cleaningFee: reservation.cleaningFee,
     total,
+    // The code of the total, so the receipt does not print a booking paid in pounds as euros (#3583).
+    currency: bookingCurrencyCode(reservation),
     // The OTA sends only its total; a Domits nightly rate next to it would not add up.
     showPriceBreakdown: (reservation.channelTotal ?? null) === null,
     paymentStatusLabel: isPaidOnChannel
@@ -1403,7 +1404,7 @@ const PaymentCard = ({ reservation, viewModel, t }) => (
         <div className={`${styles.row} ${styles.total}`}>
           <span>{t.labels.totalPaid}</span>
           <span>
-            {"\u20AC"}
+            {bookingCurrencyPrefix(reservation)}
             {formatCurrency(viewModel.total)}
           </span>
         </div>
