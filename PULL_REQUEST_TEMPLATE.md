@@ -1,6 +1,14 @@
 ## Eng-review
-- [ ] Before opening this PR, I ran the engineering review ([eng-review](https://github.com/domits1/Domits/blob/acceptance/.claude/skills/eng-review/SKILL.md)) skill and fixed or explained its findings.
-- [ ] I added the findings and decisions in [docs/internal/eng-reviews/](https://github.com/domits1/Domits/blob/acceptance/docs/internal/eng-reviews/README.md) (file: )
+[//]: # (Run the eng-review skill before opening this PR. Every finding needs a decision, and the decision needs a reason.)
+- [ ] Before opening this PR, I ran the engineering review ([eng-review](https://github.com/domits1/Domits/blob/acceptance/.claude/skills/eng-review/SKILL.md)) skill.
+- [ ] I added the review file in [docs/internal/eng-reviews/](https://github.com/domits1/Domits/blob/acceptance/docs/internal/eng-reviews/README.md) (file: )
+- [ ] Every finding has a decision: fixed (with commit), accepted (with reason) or follow-up (with issue number).
+- [ ] The decisions are summarized in the table below. Write "No findings." if there were none.
+
+### Decisions
+| Finding | Decision | Why |
+|---|---|---|
+|  |  |  |
 
 ## Close or Relate the Issue
 [//]: # (Only if this should close the issue)
