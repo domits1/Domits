@@ -8,11 +8,9 @@ import {
   describeMissingItems,
   describePlatformCard,
 } from "../utils/distributionStates";
-import { CONNECT_STEP, useConnectFlow } from "../hooks/useConnectFlow";
+import { useConnectFlow } from "../hooks/useConnectFlow";
 import PlatformCard from "./PlatformCard";
-import ConnectChecklistModal from "./ConnectChecklistModal";
-import TimezoneModal from "./TimezoneModal";
-import ChannexIframeModal from "./ChannexIframeModal";
+import ConnectFlowLayer from "./ConnectFlowLayer";
 import { NotReadyNotice, SetupFailedNotice } from "./DistributionNotices";
 
 const LOADING_MESSAGE = "Loading your listings…";
@@ -20,8 +18,6 @@ const NO_LISTINGS_MESSAGE = "You have no listings yet.";
 const LOAD_ERROR_MESSAGE = "We couldn't load your listings.";
 const REFRESHING_MESSAGE = "Refreshing…";
 const REFRESH_ERROR_MESSAGE = "We couldn't refresh your connections.";
-const CONNECTING_MESSAGE = "Connecting…";
-const ENABLING_MESSAGE = "Setting up your listing…";
 // A listing in any other state (setting up, or failed halfway) has its own card or notice instead.
 const STARTABLE_STATUSES = [DISTRIBUTION_STATUS.READY, DISTRIBUTION_STATUS.NOT_ENABLED];
 
@@ -105,38 +101,7 @@ function PlatformCardsSection() {
               onToggle={canStartConnect ? handleToggle : undefined}
             />
           ))}
-          {connectFlow.errorMessage && (
-            <p className="host-chdist__error-text" role="alert">
-              {connectFlow.errorMessage}
-            </p>
-          )}
-          {connectFlow.step === CONNECT_STEP.ENABLING && (
-            <output className="host-chdist__empty-text">{ENABLING_MESSAGE}</output>
-          )}
-          {connectFlow.step === CONNECT_STEP.CONNECTING && (
-            <output className="host-chdist__empty-text">{CONNECTING_MESSAGE}</output>
-          )}
-          {connectFlow.step === CONNECT_STEP.CHECKLIST && (
-            <ConnectChecklistModal
-              platform={connectFlow.platform}
-              onContinue={connectFlow.continueFromChecklist}
-              onClose={connectFlow.cancel}
-            />
-          )}
-          {connectFlow.step === CONNECT_STEP.TIMEZONE && (
-            <TimezoneModal
-              options={connectFlow.listing.timezone.options}
-              onContinue={connectFlow.continueFromTimezone}
-              onClose={connectFlow.cancel}
-            />
-          )}
-          {connectFlow.step === CONNECT_STEP.IFRAME && (
-            <ChannexIframeModal
-              platform={connectFlow.platform}
-              url={connectFlow.url}
-              onClose={connectFlow.closeIframe}
-            />
-          )}
+          <ConnectFlowLayer connectFlow={connectFlow} />
           <div className="chdist-card__row">
             <button
               type="button"
