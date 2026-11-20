@@ -1,9 +1,16 @@
-// Data layer for the Distribution tab. getChannexStatus below calls the real backend, via the
-// existing hostintegrations/channexApi.js helper (which already sends Authorization: Bearer
-// <Cognito ID token> -- no new fetch code here, and the token is never logged). Every other
-// function stays a mock, mirroring the response shape of its matching real endpoint in
-// hostintegrations/channexApi.js, until each is wired the same way.
-import { getChannexStatus as fetchRealChannexStatus } from "../../hostintegrations/channexApi";
+// Data layer for the Distribution tab. getChannexStatus and getMappedProperties below call the
+// real backend, read-only, via the existing hostintegrations/channexApi.js helpers (which already
+// send Authorization: Bearer <Cognito ID token> -- no new fetch code here, and the token is never
+// logged). Every other function stays a mock, mirroring the response shape of its matching real
+// endpoint in hostintegrations/channexApi.js, until each is wired the same way.
+import {
+  getChannexStatus as fetchRealChannexStatus,
+  getLinkedChannexRoomTypes,
+} from "../../hostintegrations/channexApi";
+import { getAccessToken } from "../../../../services/getAccessToken";
+import { fetchListingsFromHostDashboard } from "../../../../services/hostPropertyService";
+
+const HTTP_NOT_FOUND = 404;
 
 // While false, the Distribution tab's "+ Add channel" button stays disabled even when the
 // status is NOT_CONNECTED, so a real host can never trigger this mock connect flow. Flip to
@@ -12,10 +19,11 @@ import { getChannexStatus as fetchRealChannexStatus } from "../../hostintegratio
 export const MOCK_CONNECT_FLOW_ENABLED = false;
 
 // While false, the Distribution tab shows none of the sections that still run on mock data: the
-// Property mapping table, the property picker and the Last sync card. None of their mock functions
-// (getPropertyMappingRows, getMappedProperties, getLatestSyncEvidence) are called either, so a
-// real host never sees invented properties next to their real Channex status. Flip to true only
-// for local preview. Remove this flag entirely once those three read real endpoints.
+// Property mapping table and the Last sync card. Neither of their mock functions
+// (getPropertyMappingRows, getLatestSyncEvidence) is called either, so a real host never sees
+// invented data next to their real Channex status. The property picker no longer depends on this
+// flag: it reads real endpoints. Flip to true only for local preview. Remove this flag entirely
+// once those two read real endpoints.
 export const MOCK_PREVIEW_SECTIONS_ENABLED = false;
 
 // Flip this to preview each "last sync" state in the browser.
@@ -175,17 +183,32 @@ const buildMockChannexRequestError = ({ method, endpoint, status, error, errorCo
 // resolve and re-fire the request. channexApi destructures its argument, hence the empty object.
 export const getChannexStatus = async () => fetchRealChannexStatus({});
 
-// Open question for Enes: real contract is either a new Channex mapping-list endpoint, or
-// filtering hostDashboard/all by mapping -- mocked as a simple list for now. Entries use the
-// hostDashboard/all listing shape (listing.property.id), so the swap keeps the same consumers.
-const MOCK_MAPPED_LISTINGS = [
-  { property: { id: MOCK_DOMITS_PROPERTY_ID, title: "Mock canal house" } },
-  { property: { id: "mock-domits-property-id-2", title: "Mock beach apartment" } },
-];
-
-// Real endpoint (not built yet): GET <mapped listings>?userId=, returning hostDashboard/all-shaped listings
+// Real endpoints, both read-only: GET /integrations/channex/linked-room-types, then
+// GET /property/hostDashboard/all. A listing is "mapped" when a linked room type points at it.
+// The status of a mapping is not checked: the schema defines no status values (open question
+// for Enes). Resolves to hostDashboard/all-shaped listings (listing.property.id / .title).
+//
+// Rejects with the HTTP status on the error, so the caller can tell a 409 (Channex not connected
+// or reconnect required, which the status card already explains) from a real failure.
 export const getMappedProperties = async () => {
-  return MOCK_MAPPED_LISTINGS;
+  const { roomTypeMappings } = await getLinkedChannexRoomTypes();
+  const mappings = Array.isArray(roomTypeMappings) ? roomTypeMappings : [];
+  // A mapping without an id must not count: it would make "nothing linked" look like "something linked".
+  const linkedPropertyIds = new Set(mappings.map((mapping) => mapping?.domitsPropertyId).filter(Boolean));
+  // Nothing is linked, so there is nothing to join and hostDashboard/all need not be called.
+  if (linkedPropertyIds.size === 0) return [];
+
+  const token = getAccessToken();
+  if (!token) throw new Error("No access token available to load the host's properties.");
+
+  const { listings, status } = await fetchListingsFromHostDashboard(token);
+  // hostDashboard/all answers 404 when the host has no properties at all: an empty list, not an error.
+  if (status === HTTP_NOT_FOUND) return [];
+  if (!listings) {
+    throw Object.assign(new Error(`GET /property/hostDashboard/all failed with status ${status}`), { status });
+  }
+
+  return listings.filter((listing) => linkedPropertyIds.has(listing?.property?.id));
 };
 
 // Real endpoint: GET /integrations/channex/sync-evidence/latest?userId=&domitsPropertyId=

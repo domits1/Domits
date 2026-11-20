@@ -1,4 +1,4 @@
-import { connectChannex, getChannexHealth, getChannexStatus } from "./channexApi";
+import { connectChannex, getChannexHealth, getChannexStatus, getLinkedChannexRoomTypes } from "./channexApi";
 import { getIdToken } from "../../../services/getAccessToken";
 
 jest.mock("../../../services/getAccessToken", () => ({
@@ -10,6 +10,8 @@ const CONNECT_URL = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/def
 const STATUS_URL =
   "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/integrations/channex/status?userId=user-1";
 const HEALTH_URL = "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/integrations/channex/health";
+const LINKED_ROOM_TYPES_URL =
+  "https://54s3llwby8.execute-api.eu-north-1.amazonaws.com/default/integrations/channex/linked-room-types";
 
 const mockResponse = ({ ok = true, status = 200, body = {} } = {}) => ({
   ok,
@@ -114,5 +116,18 @@ describe("Channex GET requests", () => {
       headers: { Authorization: "Bearer id-token-1" },
     });
     expect(result).toEqual({ status: "HEALTHY", reasons: [] });
+  });
+
+  // No userId in the query: the backend overwrites it with the token's sub.
+  test("getLinkedChannexRoomTypes reads the linked room types without a userId and returns the parsed body", async () => {
+    globalThis.fetch.mockResolvedValueOnce(mockResponse({ body: { roomTypeMappings: [] } }));
+
+    const result = await getLinkedChannexRoomTypes();
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(LINKED_ROOM_TYPES_URL, {
+      method: "GET",
+      headers: { Authorization: "Bearer id-token-1" },
+    });
+    expect(result).toEqual({ roomTypeMappings: [] });
   });
 });
