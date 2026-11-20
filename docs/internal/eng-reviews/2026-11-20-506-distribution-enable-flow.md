@@ -1,6 +1,6 @@
 # feat(distribution): turn on distribution for a listing from the platform switches (#506)
 
-Pull request: not opened yet (stacked on #3982, which is stacked on #3978)
+Pull request: #3984 (stacked on #3982, which is stacked on #3978)
 Issue: #506
 Reviewed commits: `94bfd0beb`, `d8d3fae91`, `976649f5a`, `3024563ff`, `9aa6e08bc`, `2bc662cf4`, `8dd8c6a48` (refactor, no behaviour change), `73386745f`
 Result: no blocking findings open
