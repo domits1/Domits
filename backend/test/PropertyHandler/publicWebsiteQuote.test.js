@@ -24,10 +24,8 @@ const QUOTE_FIXTURE = {
   quoteToken: "qtok_test",
 };
 
-// Carries a client propertyId on purpose: the controller must never forward it.
 const REQUEST_BODY = {
   siteId: "site-1",
-  propertyId: "attacker-property",
   checkIn: "2026-10-01",
   checkOut: "2026-10-05",
   guests: 2,
@@ -69,7 +67,7 @@ describe("PropertyController.createPublicWebsiteQuote", () => {
     expect(response.headers["Cache-Control"]).toContain("no-store");
   });
 
-  it("quotes the site's own property and ignores the client-supplied propertyId", async () => {
+  it("quotes the site's own property when the request names no property", async () => {
     const controller = buildQuoteController();
 
     await controller.createPublicWebsiteQuote(buildQuoteEvent());
@@ -82,6 +80,23 @@ describe("PropertyController.createPublicWebsiteQuote", () => {
       guests: 2,
       currency: "EUR",
     });
+  });
+
+  it("refuses a property the site does not serve, without quoting or recording events", async () => {
+    const controller = buildQuoteController();
+
+    const response = await controller.createPublicWebsiteQuote(
+      buildQuoteEvent({ body: { ...REQUEST_BODY, propertyId: "attacker-property" } })
+    );
+
+    expect(response.statusCode).toBe(404);
+    expect(parseBody(response).error).toEqual({
+      code: "property_not_found",
+      message: "No property was found for this website.",
+      requestId: "req-1",
+    });
+    expect(controller.websiteQuoteService.createQuote).not.toHaveBeenCalled();
+    expect(controller.directBookingWebsiteEventRepository.recordEvent).not.toHaveBeenCalled();
   });
 
   it("records a requested and a returned event, attributed to the site owner", async () => {

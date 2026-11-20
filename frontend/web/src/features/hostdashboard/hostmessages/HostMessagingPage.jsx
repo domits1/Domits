@@ -6,13 +6,13 @@ import "./automations/automations.scss";
 const HostMessagingPage = () => (
   <div className="host-messaging-shell">
     <nav className="host-messaging-tabs" aria-label="Messaging views">
-      <NavLink end to=".">Inbox</NavLink>
-      <NavLink to="automations">Automations</NavLink>
+      <NavLink end to="/hostdashboard/messages">Inbox</NavLink>
+      <NavLink to="/hostdashboard/messages/automations">Automations</NavLink>
     </nav>
     <Routes>
       <Route index element={<Messages dashboardType="host" />} />
       <Route path="automations" element={<AutomationsPage />} />
-      <Route path="*" element={<Navigate to="." replace />} />
+      <Route path="*" element={<Navigate to="/hostdashboard/messages" replace />} />
     </Routes>
   </div>
 );

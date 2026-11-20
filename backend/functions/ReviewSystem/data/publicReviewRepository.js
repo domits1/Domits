@@ -46,8 +46,8 @@ export class PublicReviewRepository {
     const eligible = () => applyCompletedStayConditions(eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
         { propertyStatus: "ACTIVE" })
-      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id")
-      .andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" }),
+      // Publication preserves verification_status; the matching booking proves the stay.
+      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id"),
       verificationNow);
     const matchingReviews = () => {
       const query = eligible().andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {

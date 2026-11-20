@@ -274,6 +274,7 @@ class ReservationController {
         idempotencyKey: readHeader(event?.headers, "Idempotency-Key"),
         quoteToken: payload.quoteToken,
         guest: payload.guest,
+        message: payload.message,
         session: payload.session,
         requestId,
       });
