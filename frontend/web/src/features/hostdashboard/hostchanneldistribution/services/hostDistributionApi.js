@@ -7,7 +7,7 @@
 //   enableDistribution({ propertyId, timezone })  POST /host/listings/{propertyId}/distribution
 //   createConnectSession({ propertyId })  POST /host/listings/{propertyId}/connect-session
 //   refreshChannels({ propertyId })  POST /host/listings/{propertyId}/channels/refresh
-// disconnectChannel arrives with the pull request that uses it.
+//   disconnectChannel({ channelId })  POST /host/channels/{channelId}/disconnect
 
 // While false, the Distribution tab shows none of this, so a real host never sees invented data.
 // Flip to true only for local preview. Remove the flag when the real routes are wired.
@@ -17,6 +17,11 @@ export const MOCK_HOST_DISTRIBUTION_ENABLED = false;
 // "success" | "in-progress" | "timezone-required" | "not-ready" | "failed". Each error outcome also
 // stores the state a real backend would leave behind, so Refresh then shows it.
 export const MOCK_ENABLE_OUTCOME = "success";
+
+// What disconnectChannel answers, the same way: "success" | "in-progress" | "not-found" | "failed".
+// "in-progress" stores DISCONNECTING, "not-found" removes the channel, and "failed" stores ERROR, so
+// the Refresh after the error shows what a backend would have left behind.
+export const MOCK_DISCONNECT_OUTCOME = "success";
 
 const MOCK_REQUEST_DELAY_MS = 300;
 
@@ -36,7 +41,8 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //     status: "ACTIVE" | "DISCONNECTING" | "DISCONNECTED" | "ERROR",   // the D7 row status
 //     displayState: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
 //     lastErrorCode, disconnectedOutsideDomits,
-//     upcomingBookingCount,                                // used by the disconnect dialog (PR C)
+//     upcomingBookingCount,                                // PROPOSED: upcoming bookings from this OTA, for the
+//                                                          // disconnect dialog (D5)
 //   }],
 // }
 // getHostListings  -> { listings: [listing] }
@@ -47,12 +53,20 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //                                                          // 404 LISTING_NOT_FOUND, 409 PROVISIONING_IN_PROGRESS,
 //                                                          // 422 LISTING_NOT_READY, 500 PROVISIONING_FAILED (the next
 //                                                          // attempt resumes, D2). The error codes are proposed.
+// disconnectChannel -> { listing }                       // answers at once (D5): the channel is DISCONNECTING and a
+//                                                          // worker finishes it about a minute later, so Refresh
+//                                                          // later shows DISCONNECTED. Idempotent: a channel that is
+//                                                          // already DISCONNECTED comes back unchanged. Errors:
+//                                                          // 404 CHANNEL_NOT_FOUND, 409 DISCONNECT_IN_PROGRESS,
+//                                                          // 500 DISCONNECT_FAILED. The error codes are proposed.
 // createConnectSession -> { url, expiresAt }               // a one-time Channex screen address for this listing's
 //                                                          // property; errors: 404 LISTING_NOT_FOUND,
 //                                                          // 409 DISTRIBUTION_NOT_ENABLED
 // errors           -> thrown like requestChannex() throws: Error with .status, .responseBody { error, errorCode }
 // ---------------------------------------------------------------------------------------------
 
+// The id is the same for an OTA in every listing unless a fixture gives its own, so a fixture that
+// shares an OTA with another one passes channelId.
 const channel = (otaCode, status, displayState, extra = {}) => ({
   channelId: `mock-channel-${otaCode}`,
   otaCode,
@@ -76,7 +90,10 @@ const createFixtures = () => [
     readiness: READY,
     distribution: { status: "READY" },
     timezone: NO_TIMEZONE_CHOICE,
-    channels: [channel("BookingCom", "ACTIVE", "LIVE"), channel("Airbnb", "ACTIVE", "SYNCING")],
+    channels: [
+      channel("BookingCom", "ACTIVE", "LIVE", { upcomingBookingCount: 2 }),
+      channel("Airbnb", "ACTIVE", "SYNCING", { upcomingBookingCount: 1 }),
+    ],
   },
   {
     propertyId: "mock-listing-not-turned-on",
@@ -93,9 +110,13 @@ const createFixtures = () => [
     distribution: { status: "READY" },
     timezone: NO_TIMEZONE_CHOICE,
     channels: [
-      channel("BookingCom", "DISCONNECTING", "DISCONNECTING"),
-      channel("Airbnb", "DISCONNECTED", "DISCONNECTED"),
-      channel("Vrbo", "ERROR", "NEEDS_ATTENTION", { disconnectedOutsideDomits: true }),
+      channel("BookingCom", "DISCONNECTING", "DISCONNECTING", { channelId: "mock-channel-mixed-BookingCom" }),
+      channel("Airbnb", "DISCONNECTED", "DISCONNECTED", { channelId: "mock-channel-mixed-Airbnb" }),
+      channel("Vrbo", "ERROR", "NEEDS_ATTENTION", {
+        channelId: "mock-channel-mixed-Vrbo",
+        disconnectedOutsideDomits: true,
+        upcomingBookingCount: 3,
+      }),
     ],
   },
   {
@@ -134,11 +155,18 @@ const createFixtures = () => [
 
 let mockListings = createFixtures();
 let mockEnableOutcome = MOCK_ENABLE_OUTCOME;
+let mockDisconnectOutcome = MOCK_DISCONNECT_OUTCOME;
 
 // For tests: the mock keeps state between calls so a preview session behaves like a backend.
 export const resetMockHostDistribution = () => {
   mockListings = createFixtures();
   mockEnableOutcome = MOCK_ENABLE_OUTCOME;
+  mockDisconnectOutcome = MOCK_DISCONNECT_OUTCOME;
+};
+
+// For tests: the outcome the next disconnectChannel calls answer with.
+export const setMockDisconnectOutcome = (outcome) => {
+  mockDisconnectOutcome = outcome;
 };
 
 // For tests: the outcome the next enableDistribution calls answer with.
@@ -171,8 +199,17 @@ export const getHostListings = async () => {
 };
 
 // The mock stands in for "read the channels from Channex": a syncing channel has caught up by the
-// time the host refreshes, and a listing that was still provisioning has finished, so Refresh
-// visibly does something in a preview.
+// time the host refreshes, a listing that was still provisioning has finished, and a channel that was
+// being disconnected is done (the worker needs about a minute, D5), so Refresh visibly does
+// something in a preview.
+const finishPendingChannel = (candidate) => {
+  if (candidate.displayState === "SYNCING") return { ...candidate, displayState: "LIVE" };
+  if (candidate.displayState === "DISCONNECTING") {
+    return { ...candidate, status: "DISCONNECTED", displayState: "DISCONNECTED" };
+  }
+  return candidate;
+};
+
 export const refreshChannels = async ({ propertyId } = {}) => {
   await mockDelay();
 
@@ -180,9 +217,7 @@ export const refreshChannels = async ({ propertyId } = {}) => {
   if (!found) throw listingNotFoundError(`/integrations/channex/host/listings/${propertyId}/channels/refresh`);
 
   if (found.distribution.status === "PROVISIONING") found.distribution = { status: "READY" };
-  found.channels = found.channels.map((candidate) =>
-    candidate.displayState === "SYNCING" ? { ...candidate, displayState: "LIVE" } : candidate
-  );
+  found.channels = found.channels.map(finishPendingChannel);
   return { listing: copy(found) };
 };
 
@@ -243,6 +278,65 @@ export const enableDistribution = async ({ propertyId, timezone } = {}) => {
   found.distribution = { status: "READY" };
   found.timezone = NO_TIMEZONE_CHOICE;
   return { listing: copy(found) };
+};
+
+const channelNotFoundError = (endpoint) =>
+  buildMockRequestError({ endpoint, status: 404, error: "Channel not found.", errorCode: "CHANNEL_NOT_FOUND" });
+
+const findChannel = (channelId) => {
+  for (const listing of mockListings) {
+    const found = listing.channels.find((candidate) => candidate.channelId === channelId);
+    if (found) return { listing, channel: found };
+  }
+  return null;
+};
+
+// Leaves behind what a real backend would, so the Refresh that follows an error shows it.
+const storeForcedDisconnectOutcome = ({ listing, channel: forced }) => {
+  if (mockDisconnectOutcome === "in-progress") {
+    Object.assign(forced, { status: "DISCONNECTING", displayState: "DISCONNECTING" });
+  }
+  if (mockDisconnectOutcome === "failed") {
+    Object.assign(forced, { status: "ERROR", displayState: "NEEDS_ATTENTION", lastErrorCode: "DISCONNECT_FAILED" });
+  }
+  if (mockDisconnectOutcome === "not-found") {
+    listing.channels = listing.channels.filter((candidate) => candidate !== forced);
+  }
+};
+
+// Turns one OTA connection off (D5). Like the real route it answers at once with the channel
+// DISCONNECTING; a Refresh later shows it DISCONNECTED. A channel that is already off comes back
+// unchanged, so a double click or a second tab is harmless.
+export const disconnectChannel = async ({ channelId } = {}) => {
+  await mockDelay();
+
+  const endpoint = `/integrations/channex/host/channels/${channelId}/disconnect`;
+  const match = findChannel(channelId);
+  if (!match) throw channelNotFoundError(endpoint);
+  if (match.channel.status === "DISCONNECTED") return { listing: copy(match.listing) };
+
+  storeForcedDisconnectOutcome(match);
+
+  if (mockDisconnectOutcome === "not-found") throw channelNotFoundError(endpoint);
+  if (match.channel.status === "DISCONNECTING") {
+    throw buildMockRequestError({
+      endpoint,
+      status: 409,
+      error: "This channel is already being disconnected.",
+      errorCode: "DISCONNECT_IN_PROGRESS",
+    });
+  }
+  if (mockDisconnectOutcome === "failed") {
+    throw buildMockRequestError({
+      endpoint,
+      status: 500,
+      error: "Turning off the channel failed.",
+      errorCode: "DISCONNECT_FAILED",
+    });
+  }
+
+  Object.assign(match.channel, { status: "DISCONNECTING", displayState: "DISCONNECTING" });
+  return { listing: copy(match.listing) };
 };
 
 const MOCK_CONNECT_SESSION_URL = "https://staging.channex.io/mock-connect?token=mock";
