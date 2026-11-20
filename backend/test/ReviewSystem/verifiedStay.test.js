@@ -17,23 +17,33 @@ test.each([{ status: "cancelled", departuredate: 1000 }, { status: "pending", de
   "rejects an ineligible reservation %j", (booking) => {
     expect(completedStayError(booking, 2000)).not.toBeNull();
   });
-test("requires a matching reservation, guest, property, and stored public verification", async () => {
+test("verifies score, count and page through completed booking evidence without requiring stored verification", async () => {
   const database = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Property, Review] });
   await database.buildMetadatas();
-  const query = database.getRepository(Review).createQueryBuilder("review");
-  jest.spyOn(query, "getRawOne").mockResolvedValue({ score: null, count: "0" });
-  jest.spyOn(query, "getMany").mockResolvedValue([]);
+  const queries = [];
+  const build = database.getRepository(Review).createQueryBuilder.bind(database.getRepository(Review));
   jest.spyOn(database, "getRepository").mockImplementation((entity) => entity === Property
-    ? { findOne: async () => ({ id: "p1" }) } : { createQueryBuilder: () => query });
+    ? { findOne: async () => ({ id: "p1" }) } : { createQueryBuilder: () => {
+      const query = build("review");
+      jest.spyOn(query, "getRawOne").mockResolvedValue({ score: null, count: "0" });
+      jest.spyOn(query, "getMany").mockResolvedValue([]);
+      queries.push(query);
+      return query;
+    } });
   Database.getInstance.mockResolvedValue(database);
   await new ReviewRepository().getPublicReviewPage("p1", 0, { verificationNow: 2000 });
-  const sql = query.getQuery();
-  expect(sql).toContain('INNER JOIN "main"."booking"');
-  for (const [bookingField, reviewField] of [["id", "booking_id"], ["guestid", "reviewer_user_id"], ["property_id", "property_id"]]) {
-    expect(sql).toContain(`"stay"."${bookingField}" = "review"."${reviewField}"`);
+  expect(queries).toHaveLength(3);
+  for (const query of queries) {
+    const sql = query.getQuery();
+    expect(sql).toContain('INNER JOIN "main"."booking"');
+    for (const [bookingField, reviewField] of [["id", "booking_id"], ["guestid", "reviewer_user_id"], ["property_id", "property_id"]]) {
+      expect(sql).toContain(`"stay"."${bookingField}" = "review"."${reviewField}"`);
+    }
+    expect(sql).toContain("<= :stayNow");
+    expect(sql).toContain('"stay"."departuredate" > 0');
+    expect(sql).not.toContain("verification_status");
+    expect(query.getParameters()).toMatchObject({ propertyId: "p1", propertyStatus: "ACTIVE",
+      publicationStatus: "PUBLISHED", status: "PUBLISHED",
+      reviewType: "GUEST_TO_PROPERTY", stayStatuses: ["paid", "confirmed"], stayNow: 2000 });
   }
-  expect(sql).toContain("<= :stayNow");
-  expect(query.getParameters()).toMatchObject({ propertyId: "p1", propertyStatus: "ACTIVE",
-    verificationStatus: "VERIFIED", publicationStatus: "PUBLISHED", status: "PUBLISHED",
-    reviewType: "GUEST_TO_PROPERTY", stayStatuses: ["paid", "confirmed"], stayNow: 2000 });
 });

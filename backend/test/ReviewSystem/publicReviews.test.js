@@ -35,13 +35,21 @@ describe("public review retrieval", () => {
         categories: [{ key: "comfort", label: "Comfort", rating: 4.5 }] }] });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "p1" });
     expect(query.andWhere).toHaveBeenCalledWith("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" });
-    expect(query.andWhere).toHaveBeenCalledWith("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" });
     expect(query.select).toHaveBeenCalledWith(["review.id", "review.overall_rating", "review.public_review", "review.created_at"]);
     expect(query.orderBy).toHaveBeenCalledWith("review.created_at", "DESC");
     expect(query.limit).toHaveBeenCalledWith(11);
     expect(query.andWhere).toHaveBeenCalledWith("review.status = :status", { status: "PUBLISHED" });
     expect(query.andWhere).toHaveBeenCalledWith("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
   });
+  test.each(["UNVERIFIED", "VERIFIED_STAY", "VERIFIED"])(
+    "returns published %s reviews verified by reservation evidence", async (verification_status) => {
+      reviews[0].verification_status = verification_status;
+      const result = await controller.getPublicReviews(request());
+      expect(result.statusCode).toBe(200);
+      expect(JSON.parse(result.body)).toMatchObject({ overall_score: 4, review_count: 11,
+        reviews: [{ id: "r1", verified: true }] });
+      expect(query.andWhere.mock.calls.some(([sql]) => sql.includes("review.verification_status"))).toBe(false);
+    });
   test.each(["-1", "1.5", "", "100001", [], {}])("rejects invalid offset %j", async (offset) => {
     expect((await controller.getPublicReviews(request({ offset }))).statusCode).toBe(400);
     expect(query.getMany).not.toHaveBeenCalled();
