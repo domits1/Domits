@@ -742,12 +742,13 @@ describe("property paths of an Elite website on its own domain", () => {
     expect(lastTemplateProps().model.source.propertyId).toBe("property-b");
     expect(lastTemplateProps().model.host.name).toBe("Amara");
     expect(readPageHeading()).toBe("Villa B");
-    expect(listSectionIds()).toEqual(["about", "features"]);
+    expect(listSectionIds()).toEqual(["accommodation"]);
     expect(readMenuItems()).toEqual([
       ["Home", "/"],
       ["Villa B", currentPageHref],
     ]);
     expect(screen.queryByTestId("quote-availability")).toBeNull();
+    expect(document.querySelector('.publicPreviewCanvas a[href*="#availability"]')).toBeNull();
     expect(document.title).toBe("Villa B | Wellness Villa Bisous");
     expect(document.head.querySelector('meta[name="description"]').content).toBe("A quiet garden villa with a pond.");
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);
