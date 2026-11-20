@@ -26,7 +26,7 @@ One eng-review ran on each staged diff before its commit.
 | P2 (9/10) | `components/PlatformCardsSection.js` (the property picker) | While the flow was in the connecting step the checklist's backdrop was already gone, so the picker was usable. Moving to a listing that is not ready makes the section drop the cards view, which unmounts the flow's modals. The step then became `iframe` with nothing rendered, and every switch stayed locked with no message. | Fixed before the commit: the picker is disabled while a flow is open. The test "locks the property picker while connecting" failed first (`Received element is not disabled`) and now passes. |
 | P4 (6/10) | `hooks/useConnectFlow.js` | A connect session answer without a `url` goes to the iframe step. | Accepted: `ChannexIframeModal` then says "We couldn't open the Channex screen." and closes through the normal path. |
 | P4 (5/10) | `hooks/useConnectFlow.js` | The session error is logged before the mounted check, so a flow that unmounted still logs. | Accepted: harmless. |
-| P4 (5/10) | `utils/connectChecklist.js` | The Booking.com line shows an internal issue number (#3950) to the host. | Accepted: the plan asks for it. Confirm in the final copy. |
+| P4 (5/10) | `utils/connectChecklist.js` | The Booking.com line shows an internal issue number (#3950) to the host. | Fixed: removed from the host text. The number stays in a code comment above `OTA_PREREQUISITES`. |
 | P4 (6/10) | `components/PlatformCard.js` | `turnOffEnabled` also locks a switch that shows "Needs attention". | Accepted: intended until PR C. |
 
 ## Architecture and data flow

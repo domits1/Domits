@@ -15,8 +15,10 @@ describe("describeConnectChecklist", () => {
     expect(lines.at(-1)).toBe(DISCONNECT_LINE);
   });
 
-  test("Booking.com names the Channex connectivity provider choice and the issue number", () => {
-    expect(describeConnectChecklist("BookingCom")[0]).toMatch(/Channex.*connectivity provider.*#3950/);
+  test("Booking.com names the Channex connectivity provider choice, without an issue number", () => {
+    expect(describeConnectChecklist("BookingCom")[0]).toBe(
+      "I chose Channex as my connectivity provider in the Booking.com extranet"
+    );
   });
 
   test("an unknown OTA still gets the disconnect line, so it is never skipped", () => {
