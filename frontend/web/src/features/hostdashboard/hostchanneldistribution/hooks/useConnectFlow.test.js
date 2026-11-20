@@ -369,6 +369,80 @@ describe("useConnectFlow", () => {
     expect(refresh).toHaveBeenCalledWith("p1");
   });
 
+  describe("retry of a setup that failed halfway", () => {
+    const FAILED_LISTING = listing({ distribution: { status: "PROVISIONING_FAILED" } });
+
+    test("enables again with no checklist, applies the answer, and opens no session", async () => {
+      enableDistribution.mockResolvedValue({ listing: READY_LISTING });
+      const hook = setup();
+
+      await act(async () => hook.result.current.retry({ listing: FAILED_LISTING }));
+
+      expect(enableDistribution).toHaveBeenCalledTimes(1);
+      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p1" });
+      expect(hook.applyListing).toHaveBeenCalledWith("p1", READY_LISTING);
+      expect(createConnectSession).not.toHaveBeenCalled();
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.errorMessage).toBe("");
+    });
+
+    test("is busy while the request runs, and a second retry sends nothing more", async () => {
+      enableDistribution.mockReturnValue(deferred().promise);
+      const hook = setup();
+
+      act(() => {
+        hook.result.current.retry({ listing: FAILED_LISTING });
+        hook.result.current.retry({ listing: FAILED_LISTING });
+      });
+
+      expect(hook.result.current.step).toBe(CONNECT_STEP.ENABLING);
+      expect(hook.result.current.isActive).toBe(true);
+      expect(enableDistribution).toHaveBeenCalledTimes(1);
+    });
+
+    test("asks for the timezone first where the listing requires one, then enables with the zone", async () => {
+      enableDistribution.mockResolvedValue({ listing: READY_LISTING });
+      const hook = setup();
+      const needsZone = listing({
+        distribution: { status: "PROVISIONING_FAILED" },
+        timezone: { required: true, options: ["Asia/Jakarta"] },
+      });
+
+      await act(async () => hook.result.current.retry({ listing: needsZone }));
+
+      expect(hook.result.current.step).toBe(CONNECT_STEP.TIMEZONE);
+      expect(enableDistribution).not.toHaveBeenCalled();
+
+      await act(async () => hook.result.current.continueFromTimezone("Asia/Jakarta"));
+
+      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p1", timezone: "Asia/Jakarta" });
+      expect(createConnectSession).not.toHaveBeenCalled();
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+    });
+
+    test("a failure reads the listing again like any enable failure", async () => {
+      enableDistribution.mockRejectedValue(requestError(500, "PROVISIONING_FAILED"));
+      const hook = setup();
+
+      await act(async () => hook.result.current.retry({ listing: FAILED_LISTING }));
+
+      expect(hook.refresh).toHaveBeenCalledWith("p1");
+      expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
+    });
+
+    test("is ignored while a flow is open", () => {
+      const hook = setup();
+      startFlow(hook);
+
+      act(() => {
+        hook.result.current.retry({ listing: FAILED_LISTING });
+      });
+
+      expect(hook.result.current.step).toBe(CONNECT_STEP.CHECKLIST);
+      expect(enableDistribution).not.toHaveBeenCalled();
+    });
+  });
+
   test("start is ignored while a flow is open", () => {
     const hook = setup();
     startFlow(hook);

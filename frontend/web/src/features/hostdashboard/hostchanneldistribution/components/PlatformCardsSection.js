@@ -89,7 +89,9 @@ function PlatformCardsSection() {
         <NotReadyNotice items={describeMissingItems(selected.readiness?.missing)} />
       )}
 
-      {listingView === LISTING_VIEW.SETUP_FAILED && <SetupFailedNotice />}
+      {listingView === LISTING_VIEW.SETUP_FAILED && (
+        <SetupFailedNotice onRetry={() => connectFlow.retry({ listing: selected })} busy={connectFlow.isActive} />
+      )}
 
       {listingView === LISTING_VIEW.CARDS && (
         <>
@@ -101,7 +103,6 @@ function PlatformCardsSection() {
               onToggle={canStartConnect ? handleToggle : undefined}
             />
           ))}
-          <ConnectFlowLayer connectFlow={connectFlow} />
           <div className="chdist-card__row">
             <button
               type="button"
@@ -119,6 +120,10 @@ function PlatformCardsSection() {
           )}
         </>
       )}
+
+      {/* Outside the cards view, so a Retry from the setup-failed notice can show its dialogs too. The
+          setup-failed notice already says the setup went wrong, so the flow's own message is left out there. */}
+      <ConnectFlowLayer connectFlow={connectFlow} showError={listingView !== LISTING_VIEW.SETUP_FAILED} />
     </div>
   );
 }

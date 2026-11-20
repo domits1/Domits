@@ -22,12 +22,20 @@ NotReadyNotice.propTypes = {
   items: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
-// Shown instead of the OTA cards when provisioning stopped halfway (D2). The retry button comes
-// with the pull request that wires the turn-on flow.
-export function SetupFailedNotice() {
+// Shown instead of the OTA cards when provisioning stopped halfway (D2). Retry asks the caller to
+// turn distribution on again, and is disabled while that request runs.
+export function SetupFailedNotice({ onRetry, busy = false }) {
   return (
     <div className="host-chdist__error" role="alert">
       <p className="host-chdist__error-text">{SETUP_FAILED_MESSAGE}</p>
+      <button type="button" className="chdist-btn chdist-btn--primary" disabled={busy} onClick={onRetry}>
+        Retry
+      </button>
     </div>
   );
 }
+
+SetupFailedNotice.propTypes = {
+  onRetry: PropTypes.func.isRequired,
+  busy: PropTypes.bool,
+};

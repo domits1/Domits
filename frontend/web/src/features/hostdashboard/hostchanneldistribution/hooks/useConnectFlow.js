@@ -31,6 +31,9 @@ const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, listing: null, url:
 //     └──close, refresh(propertyId) once ── iframe ◀──session ok── connecting ◀────────────────┘
 //                                                       session fails: message, idle
 //
+// retry({ listing }) is the same machine without the checklist and the session: idle ──▶ [timezone] ──▶
+// enabling ──▶ idle, for the Retry of a setup that failed halfway.
+//
 // The checklist comes first and nothing is requested before the host has confirmed it. `refresh` and
 // `applyListing` are useHostDistribution's, so the listing the host sees follows every answer.
 export function useConnectFlow({ refresh, applyListing }) {
@@ -118,9 +121,33 @@ export function useConnectFlow({ refresh, applyListing }) {
         moveTo(IDLE_FLOW);
         return;
       }
+      // A retry has no platform: the host only wanted the listing set up, and the cards show next.
+      if (!platform) {
+        moveTo(IDLE_FLOW);
+        return;
+      }
       await openSession({ platform, propertyId });
     },
     [applyListing, failEnable, moveTo, openSession]
+  );
+
+  // Turns a listing on: asks for the timezone first where the listing requires one (D4), and
+  // otherwise enables straight away.
+  const enableOrAskTimezone = useCallback(
+    async ({ platform, listing }) => {
+      const { propertyId } = listing;
+      if (listing.timezone?.required) {
+        // A required choice with no options would be a dead modal, so it is an error instead.
+        if (!listing.timezone.options?.length) {
+          failEnable(new Error("The listing requires a timezone but offered no options."), propertyId);
+          return;
+        }
+        moveTo({ step: CONNECT_STEP.TIMEZONE, platform, listing, url: null });
+        return;
+      }
+      await enableThenConnect({ platform, propertyId });
+    },
+    [enableThenConnect, failEnable, moveTo]
   );
 
   const continueFromChecklist = useCallback(async () => {
@@ -134,18 +161,19 @@ export function useConnectFlow({ refresh, applyListing }) {
       return;
     }
 
-    if (listing.timezone?.required) {
-      // A required choice with no options would be a dead modal, so it is an error instead.
-      if (!listing.timezone.options?.length) {
-        failEnable(new Error("The listing requires a timezone but offered no options."), propertyId);
-        return;
-      }
-      moveTo({ step: CONNECT_STEP.TIMEZONE, platform, listing, url: null });
-      return;
-    }
+    await enableOrAskTimezone({ platform, listing });
+  }, [enableOrAskTimezone, flow, openSession]);
 
-    await enableThenConnect({ platform, propertyId });
-  }, [enableThenConnect, failEnable, flow, moveTo, openSession]);
+  // The Retry of a setup that failed halfway (D2: the next attempt resumes). No checklist and no
+  // platform: the listing is only set up, and the host sees the cards when it is READY.
+  const retry = useCallback(
+    async ({ listing }) => {
+      if (stepRef.current !== CONNECT_STEP.IDLE) return;
+      setErrorMessage("");
+      await enableOrAskTimezone({ platform: null, listing });
+    },
+    [enableOrAskTimezone]
+  );
 
   const continueFromTimezone = useCallback(
     async (timezone) => {
@@ -175,6 +203,7 @@ export function useConnectFlow({ refresh, applyListing }) {
     cancel,
     continueFromChecklist,
     continueFromTimezone,
+    retry,
     closeIframe,
   };
 }

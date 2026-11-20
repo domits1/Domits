@@ -10,11 +10,12 @@ const ENABLING_MESSAGE = "Setting up your listing…";
 
 // What the connect flow puts on screen for its current step: the message of the last failure, a
 // sentence while a request runs, and the modal of the step. All of it comes from the useConnectFlow
-// result, so the section only decides where to put it.
-function ConnectFlowLayer({ connectFlow }) {
+// result, so the section only decides where to put it. showError is off while another notice already
+// tells the host the same thing.
+function ConnectFlowLayer({ connectFlow, showError = true }) {
   return (
     <>
-      {connectFlow.errorMessage && (
+      {showError && connectFlow.errorMessage && (
         <p className="host-chdist__error-text" role="alert">
           {connectFlow.errorMessage}
         </p>
@@ -58,6 +59,7 @@ ConnectFlowLayer.propTypes = {
     continueFromTimezone: PropTypes.func.isRequired,
     closeIframe: PropTypes.func.isRequired,
   }).isRequired,
+  showError: PropTypes.bool,
 };
 
 export default ConnectFlowLayer;
