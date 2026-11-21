@@ -3,6 +3,7 @@ import * as api     from "./priceLabsApiClient.js";
 import { verifyPriceLabsSignature } from "./priceLabsWebhookVerifier.js";
 import { Repository }               from "../../data/repository.js";
 import { SystemManagerRepository }  from "../../data/systemManagerRepository.js";
+import { isEuroBooking }            from "../../util/bookingCurrency.js";
 
 const SSM_TOKEN_KEY = "/pricelabs/integration_token";
 const SSM_NAME_KEY  = "/pricelabs/integration_name";
@@ -372,7 +373,9 @@ function _buildReservationEntry(b, cleaningFeeByProperty) {
     end_date:       checkout,
     booked_time:    new Date(Number(b.createdat)).toISOString().replace("T", " ").split(".")[0],
     total_days:     _dateDiff(checkin, checkout),
-    total_cost:     b.total_price || 0,
+    // Sent as euros, so an amount in another currency becomes 0 (#3583). The booking itself is still
+    // sent: PriceLabs updates reservations by id, so a left-out one would keep its old entry after a cancel.
+    total_cost:     isEuroBooking(b) ? b.total_price || 0 : 0,
     currency:       "EUR",
     status,
     booking_source: b.booking_source || "direct",

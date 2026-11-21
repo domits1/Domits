@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import { safeReviewDestination } from "./safeReviewDestination";
-import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
-import { REVIEW_APPROVAL_ADMIN_PATH } from "../review/navigation/reviewApprovalRoute";
 import { hasReviewApprovalAccess } from "../review/services/reviewAPI";
+import { REVIEW_APPROVAL_ADMIN_PATH } from "../review/navigation/reviewApprovalRoute";
+import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
 import MfaChallengeStep from "./mfaChallenge/MfaChallengeStep";
 import { useMfaChallenge, SOFTWARE_TOKEN_MFA } from "./mfaChallenge/useMfaChallenge";
 
@@ -39,20 +39,30 @@ const Login = () => {
 
   const inputRef = useRef([]);
 
+  const getAdminLanding = useCallback(async () => {
+    if (redirect && !["/hostdashboard", "/guestdashboard", "/"].includes(redirect)) return null;
+    try {
+      return (await hasReviewApprovalAccess()) === true ? REVIEW_APPROVAL_ADMIN_PATH : null;
+    } catch {
+      return null;
+    }
+  }, [redirect]);
+
   useEffect(() => {
     let active = true;
     const checkAuth = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
 
-        const canApproveReviews = await hasReviewApprovalAccess();
         if (!active) return;
         if (returnTo) {
           navigate(returnTo, { replace: true });
           return;
         }
-        if (canApproveReviews) {
-          navigate(REVIEW_APPROVAL_ADMIN_PATH, { replace: true });
+        const adminLanding = await getAdminLanding();
+        if (!active) return;
+        if (adminLanding) {
+          navigate(adminLanding);
           return;
         }
 
@@ -72,7 +82,7 @@ const Login = () => {
     return () => {
       active = false;
     };
-  }, [navigate, redirect, returnTo]);
+  }, [navigate, redirect, returnTo, getAdminLanding]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -83,8 +93,13 @@ const Login = () => {
 
     if (returnTo) {
       navigate(returnTo, { replace: true });
+      return;
+    }
+    const adminLanding = await getAdminLanding();
+    if (adminLanding) {
+      window.location.href = adminLanding;
     } else if (redirect) {
-      window.location.href = (await hasReviewApprovalAccess()) ? REVIEW_APPROVAL_ADMIN_PATH : redirect;
+      window.location.href = redirect;
     } else {
       globalThis.location.reload();
     }

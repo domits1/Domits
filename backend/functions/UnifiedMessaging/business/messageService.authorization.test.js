@@ -487,6 +487,30 @@ describe("MessageService authorization and booking scoping", () => {
     expect(mockMessageRepository.createMessage).not.toHaveBeenCalled();
   });
 
+  test("takes the host and guest from the thread when an existing-thread send leaves them null", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null }));
+    mockMessageRepository.createMessage.mockImplementation(async (row) => ({ id: "message-1", ...row }));
+
+    const result = await service.sendMessage(
+      { threadId: "thread-1", recipientId: "host-1", hostId: null, guestId: null, content: "Hello" },
+      guestAuth
+    );
+
+    expect(result.statusCode).toBe(201);
+    expect(mockMessageRepository.createMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ threadId: "thread-1", senderId: "guest-1", recipientId: "host-1" })
+    );
+  });
+
+  test("rejects a hostId that differs from the thread host when sending to an existing thread", async () => {
+    mockThreadRepository.getThreadById.mockResolvedValue(thread({ bookingId: null }));
+
+    await expect(
+      service.sendMessage({ threadId: "thread-1", hostId: "guest-1", guestId: "host-1", content: "Hello" }, guestAuth)
+    ).rejects.toMatchObject({ statusCode: 403, code: "FORBIDDEN" });
+    expect(mockMessageRepository.createMessage).not.toHaveBeenCalled();
+  });
+
   test("rejects a guest starting a new conversation without propertyId", async () => {
     await expect(service.sendMessage({ recipientId: "host-1", content: "Hello" }, guestAuth)).rejects.toMatchObject({
       statusCode: 400,
