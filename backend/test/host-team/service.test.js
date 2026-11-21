@@ -8,7 +8,15 @@ jest.mock("../../functions/host-team/business/emailService.js", () => ({
   sendTeamInviteEmail: jest.fn().mockResolvedValue(undefined),
 }));
 
+const mockLambdaSend = jest.fn().mockResolvedValue({});
+jest.mock("@aws-sdk/client-lambda", () => ({
+  __esModule: true,
+  LambdaClient: jest.fn(() => ({ send: mockLambdaSend })),
+  InvokeCommand: jest.fn((input) => ({ input })),
+}));
+
 const { Service, normalizeRole } = require("../../functions/host-team/business/service/service.js");
+const { sendTeamInviteEmail } = require("../../functions/host-team/business/emailService.js");
 const { ALLOWED_TEAM_MEMBER_ROLES, DEFAULT_TEAM_MEMBER_ROLE } = require("../../functions/host-team/util/roles.js");
 
 const createRepository = ({ member } = {}) => ({
@@ -83,6 +91,34 @@ describe("Service.inviteMember", () => {
     );
   });
 
+  test("passes the normalized role to the invite email", async () => {
+    sendTeamInviteEmail.mockClear();
+    const { service } = createService();
+
+    await service.inviteMember("host-1", "host@example.com", "member@example.com", " Financial Manager ");
+
+    expect(sendTeamInviteEmail).toHaveBeenCalledWith(
+      "member@example.com",
+      "token-1",
+      "host@example.com",
+      "Financial Manager"
+    );
+  });
+
+  test("passes the default role to the invite email when role is omitted", async () => {
+    sendTeamInviteEmail.mockClear();
+    const { service } = createService();
+
+    await service.inviteMember("host-1", "host@example.com", "member@example.com", undefined);
+
+    expect(sendTeamInviteEmail).toHaveBeenCalledWith(
+      "member@example.com",
+      "token-1",
+      "host@example.com",
+      DEFAULT_TEAM_MEMBER_ROLE
+    );
+  });
+
   test.each(["Host", "Admin", "Traveler", "Superhost"])(
     "rejects invite with role %s and never persists it",
     async (role) => {
@@ -136,5 +172,28 @@ describe("Service.updateMemberRole", () => {
       service.updateMemberRole("host-1", "member-1", "Sales Manager")
     ).rejects.toMatchObject({ statusCode: 403 });
     expect(repository.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("sendTeamInviteEmail", () => {
+  const { sendTeamInviteEmail: sendRealInviteEmail } = jest.requireActual(
+    "../../functions/host-team/business/emailService.js"
+  );
+  const sentEmailBody = () => {
+    const command = mockLambdaSend.mock.calls.at(-1)[0];
+    return JSON.parse(command.input.Payload).body.body;
+  };
+
+  beforeEach(() => {
+    mockLambdaSend.mockClear();
+  });
+
+  test("names the invited role and not Property Operations Manager", async () => {
+    await sendRealInviteEmail("member@example.com", "token-1", "host@example.com", "Financial Manager");
+
+    const body = sentEmailBody();
+    expect(body).toContain("Je bent uitgenodigd als Financial Manager op Domits.");
+    expect(body).not.toContain("Property Operations Manager");
+    expect(body).toContain("https://domits.com/team/accept?token=token-1");
   });
 });
