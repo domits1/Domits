@@ -6,9 +6,13 @@ import MessageToast from "./MessageToast";
 import { useSendMessage } from "../../features/hostdashboard/hostmessages/hooks/useSendMessage";
 import { useFetchMessages } from "../../features/hostdashboard/hostmessages/hooks/useFetchMessages";
 import ChatUploadAttachment from "../../features/hostdashboard/hostmessages/components/chatUploadAttachment";
+import AttachmentChip from "../../features/hostdashboard/hostmessages/components/AttachmentChip";
+import Icon from "@mdi/react";
+import { mdiClose } from "@mdi/js";
 import { FaPaperPlane, FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../../features/hostdashboard/hostmessages/hooks/useAuth";
 import { getMessageCapabilities } from "./messageCapabilities";
+import { extractFileUrls } from "../../features/hostdashboard/hostmessages/utils/extractFileUrls";
 
 import fallbackAvatar from "./domits-logo.jpg";
 
@@ -19,6 +23,10 @@ const getOtherPartyName = (selfUserId, contactId, contactName) => {
 };
 
 const NEAR_BOTTOM_PX = 40;
+
+const releasePreview = (previewUrl) => {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+};
 
 const getMessageKey = (message) => {
   if (!message) return "message-unknown";
@@ -38,11 +46,15 @@ const isUnsentMessageOfOtherConversation = (message, contactId, threadId) => {
   return isOtherRecipient || isOtherThread;
 };
 
+const getSignedFileUrls = (result) => extractFileUrls(result?.saved?.attachments);
+
 const buildSettledMessage = (pending, result, fallbackPlatform) => {
   const saved = result?.saved || {};
+  const signedFileUrls = getSignedFileUrls(result);
   return {
     ...pending,
     id: saved.id || pending.id,
+    fileUrls: signedFileUrls.length > 0 ? signedFileUrls : pending.fileUrls,
     createdAt: saved.createdAt ? new Date(saved.createdAt).toISOString() : pending.createdAt,
     threadId: saved.threadId || pending.threadId,
     bookingId: saved.bookingId || pending.bookingId,
@@ -80,8 +92,22 @@ const ChatScreen = ({
   const [error, setError] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [toastText, setToastText] = useState("");
-  const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
+  const [attachments, setAttachments] = useState([]);
   const [showPreviewPopover, setShowPreviewPopover] = useState(false);
+  const uploadedFileUrls = useMemo(() => attachments.map((attachment) => attachment.url), [attachments]);
+  const imageAttachments = useMemo(
+    () => attachments.filter((attachment) => attachment.type?.startsWith("image/")),
+    [attachments]
+  );
+  const isPreviewOpen = showPreviewPopover && imageAttachments.length > 0;
+  const attachmentsRef = useRef(attachments);
+  attachmentsRef.current = attachments;
+  const messagePreviewsRef = useRef(new Map());
+
+  const releaseMessagePreviews = (messageId) => {
+    messagePreviewsRef.current.get(messageId)?.forEach(releasePreview);
+    messagePreviewsRef.current.delete(messageId);
+  };
 
   const [localMessages, setLocalMessages] = useState([]);
   const [retryingIds, setRetryingIds] = useState({});
@@ -89,7 +115,7 @@ const ChatScreen = ({
   const retryingRef = useRef(new Set());
 
   const { sendMessage, retryMessage, sending } = useSendMessage(userId, accessToken);
-  const { fetchMessages, messagesByRecipient, messagesByThread } = useFetchMessages(userId);
+  const { fetchMessages, refreshAttachments, messagesByRecipient, messagesByThread } = useFetchMessages(userId);
 
   const scrollContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -102,8 +128,26 @@ const ChatScreen = ({
 
   // An unsent upload belongs to the thread it was attached in; the next thread may not accept attachments.
   useEffect(() => {
-    setUploadedFileUrls([]);
+    setAttachments([]);
+    return () => attachmentsRef.current.forEach((attachment) => releasePreview(attachment.previewUrl));
   }, [resolvedContactId, threadId]);
+
+  useEffect(() => {
+    const previews = messagePreviewsRef.current;
+    return () => {
+      previews.forEach((previewUrls) => previewUrls.forEach(releasePreview));
+      previews.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isPreviewOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setShowPreviewPopover(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [isPreviewOpen]);
 
   useEffect(() => {
     if (!resolvedContactId) {
@@ -219,7 +263,7 @@ const ChatScreen = ({
       text: newMessage.trim(),
       content: newMessage.trim(),
       createdAt: nowIso,
-      fileUrls: uploadedFileUrls,
+      fileUrls: attachments.map((attachment) => attachment.previewUrl || attachment.url),
       threadId: threadId || null,
       propertyId: effectivePropertyId,
       bookingId: bookingId || null,
@@ -228,16 +272,20 @@ const ChatScreen = ({
       deliveryStatus: "pending",
     };
 
+    const localPreviewUrls = attachments.map((attachment) => attachment.previewUrl).filter(Boolean);
+    if (localPreviewUrls.length > 0) messagePreviewsRef.current.set(optimisticId, localPreviewUrls);
+
     isNearBottomRef.current = true;
     setLocalMessages((prev) => [...prev, optimistic]);
 
     try {
-      const result = await sendMessage(resolvedContactId, optimistic.text, optimistic.fileUrls, sendOptions);
+      const result = await sendMessage(resolvedContactId, optimistic.text, uploadedFileUrls, sendOptions);
 
       const saved = result?.saved || {};
       if (!result?.success && !saved.id) throw new Error(result?.error || "send failed");
 
       const finalMsg = buildSettledMessage(optimistic, result, resolvedPlatform);
+      if (getSignedFileUrls(result).length > 0) releaseMessagePreviews(optimisticId);
 
       setLocalMessages((prev) => prev.map((m) => (m.id === optimisticId ? finalMsg : m)));
       handleContactListMessage?.(finalMsg);
@@ -252,7 +300,7 @@ const ChatScreen = ({
         retryPayload: {
           recipientId: resolvedContactId,
           text: optimistic.text,
-          fileUrls: optimistic.fileUrls,
+          fileUrls: uploadedFileUrls,
           options: sendOptions,
         },
       };
@@ -264,7 +312,7 @@ const ChatScreen = ({
 
   const clearComposer = () => {
     setNewMessage("");
-    setUploadedFileUrls([]);
+    setAttachments([]);
     setShowPreviewPopover(false);
   };
 
@@ -292,11 +340,15 @@ const ChatScreen = ({
     }
 
     const settledMessage = { ...buildSettledMessage(message, result, resolvedPlatform), retryPayload: undefined };
+    if (getSignedFileUrls(result).length > 0) releaseMessagePreviews(message.id);
     setLocalMessages((prev) => prev.map((m) => (m.id === message.id ? settledMessage : m)));
     handleContactListMessage?.(settledMessage);
 
     if (!result.success) showSendFailedToast();
   };
+
+  const handleAttachmentError = (message) =>
+    refreshAttachments(resolvedContactId, message?.threadId || threadId || null, message?.id);
 
   const handleRetry = async (message) => {
     if (retryingRef.current.has(message.id)) return;
@@ -331,7 +383,12 @@ const ChatScreen = ({
     setShowToast(true);
   };
 
-  const handleUploadComplete = (url) => setUploadedFileUrls((prev) => [...prev, url]);
+  const handleUploadComplete = (attachment) => setAttachments((prev) => [...prev, attachment]);
+
+  const handleRemoveAttachment = (url) => {
+    releasePreview(attachments.find((attachment) => attachment.url === url)?.previewUrl);
+    setAttachments((prev) => prev.filter((attachment) => attachment.url !== url));
+  };
 
   if (!resolvedContactId) {
     return (
@@ -395,6 +452,7 @@ const ChatScreen = ({
               contactName={headerName}
               contactImage={contactImage}
               onRetry={handleRetry}
+              onAttachmentError={handleAttachmentError}
               isRetrying={Boolean(retryingIds[message.id])}
             />
           ))
@@ -419,23 +477,28 @@ const ChatScreen = ({
 
         <div className="chat-input">
           <div className="attachment-area">
-            {uploadedFileUrls.length > 0 && (
-              <button
-                className="inline-upload-preview"
-                onClick={() => setShowPreviewPopover((s) => !s)}
-                title={uploadedFileUrls.length > 1 ? "View all previews" : "View preview"}
-                type="button"
-              >
-                <img src={uploadedFileUrls[0]} alt="First attachment preview" />
-                {uploadedFileUrls.length > 1 && <span className="more-badge">+{uploadedFileUrls.length - 1}</span>}
-              </button>
+            {attachments.length > 0 && (
+              <ul className="attachment-chips" aria-label="Attachments">
+                {attachments.map((attachment) => (
+                  <AttachmentChip
+                    key={attachment.url}
+                    attachment={attachment}
+                    onRemove={handleRemoveAttachment}
+                    onPreview={() => setShowPreviewPopover((open) => !open)}
+                  />
+                ))}
+              </ul>
             )}
           </div>
 
           <div className="message-input-container">
             <div className="message-input-wrapper">
               {capabilities.canUseAttachments && resolvedPlatform !== "CHANNEX" ? (
-                <ChatUploadAttachment onUploadComplete={handleUploadComplete} onUploadError={showUploadFailedToast} />
+                <ChatUploadAttachment
+                  key={`${resolvedContactId}::${threadId || ""}`}
+                  onUploadComplete={handleUploadComplete}
+                  onUploadError={showUploadFailedToast}
+                />
               ) : null}
               <textarea
                 value={newMessage}
@@ -461,21 +524,25 @@ const ChatScreen = ({
             </div>
           </div>
 
-          {showPreviewPopover && uploadedFileUrls.length > 0 && (
+          {isPreviewOpen && (
             <div className="preview-popover" role="dialog" aria-label="Attachment previews">
               <div className="preview-popover-header">
                 <h4>Attachments</h4>
-                <button onClick={() => setShowPreviewPopover(false)} aria-label="Close" type="button">
-                  ✕
+                <button
+                  className="preview-popover-close"
+                  onClick={() => setShowPreviewPopover(false)}
+                  aria-label="Close attachment previews"
+                  type="button">
+                  <Icon path={mdiClose} size={0.9} />
                 </button>
               </div>
-              <div className="preview-popover-body">
-                {uploadedFileUrls.map((url, idx) => (
-                  <div key={url} className="preview-item">
-                    <img src={url} alt={`Attachment ${idx + 1}`} />
-                  </div>
+              <ul className="preview-popover-grid">
+                {imageAttachments.map((attachment) => (
+                  <li key={attachment.url} className="preview-item">
+                    <img src={attachment.previewUrl || attachment.url} alt={attachment.name} />
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
         </div>

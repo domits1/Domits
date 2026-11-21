@@ -30,4 +30,15 @@ describe("AutomatedMessaging schema guard", () => {
     });
     expect(inspect).toHaveBeenCalledTimes(1);
   });
+
+  test.each(["offsetdirection", "sendtime"])("requires the stay-date column %s of message_automation", async (column) => {
+    const rows = readyRows().filter((row) => !(row.object_name === "message_automation" && row.member_name === column));
+    const guard = new SchemaGuard({ inspect: jest.fn(async () => rows) });
+
+    await expect(guard.assertReady()).rejects.toMatchObject({
+      statusCode: 503,
+      code: "SCHEMA_NOT_READY",
+      details: { missingColumns: [`message_automation.${column}`] },
+    });
+  });
 });
