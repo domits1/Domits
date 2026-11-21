@@ -15,7 +15,8 @@ import styles from "../styles/ReviewApproval.module.css";
 
 export default function ReviewApprovalDetails({ review, approving, onApprove, onClose, onFlag, onPublish }) {
   const pending = review.status === "PENDING_APPROVAL";
-  const canFlag = ["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status);
+  const flagged = review.has_pending_flag === true;
+  const canFlag = !flagged && ["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status);
   const submitted = formatSubmittedAt(review.created_at);
   const location = formatPropertyLocation(review);
   const verificationClassName = isVerifiedStatus(review.verification_status) ? styles.pillVerified : styles.pillNeutral;
@@ -78,7 +79,7 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
         <dt>Status</dt>
         <dd>
           <span className={`${styles.pill} ${pending ? styles.pillPending : styles.pillNeutral}`}>
-            {getReviewStatusLabel(review.status)}
+            {flagged ? "Flagged" : getReviewStatusLabel(review.status)}
           </span>
         </dd>
         <dt>Verification status</dt>
@@ -98,7 +99,7 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
               Flag for review
             </button>
           )}
-          {pending && (
+          {pending && !flagged && (
             <button
               type="button"
               className={`${styles.approveButton} ${styles.approveButtonLarge}`}
