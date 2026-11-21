@@ -611,7 +611,8 @@ export class ReviewService {
       publication_status: review.publication_status, verification_status: review.verification_status,
       category_ratings: review.categoryRatings || {},
       response: review.response ? { message: review.response.message, published_at: review.response.publishedAt } : null,
-      can_edit: timestamp >= Number(review.created_at) && timestamp < deadline, edit_expires_at: deadline || null };
+      can_edit: review.status === "DRAFT" && review.publication_status === "UNPUBLISHED"
+        && timestamp >= Number(review.created_at) && timestamp < deadline, edit_expires_at: deadline || null };
   }
 
   async getGuestReviewHistory(callerUserId, query = {}) {
