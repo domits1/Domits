@@ -19,6 +19,8 @@ export const MessageAutomation = new EntitySchema({
     triggerType: { name: "triggertype", type: "varchar", nullable: false },
     offsetAmount: { name: "offsetamount", type: "int", nullable: false, default: 0 },
     offsetUnit: { name: "offsetunit", type: "varchar", nullable: false },
+    offsetDirection: { name: "offsetdirection", type: "varchar", nullable: true },
+    sendTime: { name: "sendtime", type: "varchar", nullable: true },
     template: { type: "text", nullable: false },
     channel: { type: "varchar", nullable: false },
     status: { type: "varchar", nullable: false, default: "DRAFT" },

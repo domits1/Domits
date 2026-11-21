@@ -103,15 +103,17 @@ describe("website draft and site requests and the login session", () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it("still returns the live site when publish fails on the server but the site is published", async () => {
+  it("still returns the live site when publish fails on the server after the site was published", async () => {
     Auth.currentSession.mockResolvedValue(sessionWith("fresh-token"));
     global.fetch
       .mockResolvedValueOnce(
         jsonResponse(500, { message: "We could not complete this website request. Please try again." })
       )
-      .mockResolvedValueOnce(jsonResponse(200, { site: { status: "PUBLISHED" }, domains: [] }));
+      .mockResolvedValueOnce(jsonResponse(200, { site: { status: "PUBLISHED", publishedAt: 2000 }, domains: [] }));
 
-    await expect(publishWebsiteSite("p1")).resolves.toMatchObject({ site: { status: "PUBLISHED" } });
+    await expect(publishWebsiteSite("p1", { draftSavedAt: 1000 })).resolves.toMatchObject({
+      site: { status: "PUBLISHED" },
+    });
     expect(global.fetch.mock.calls[1][0]).toContain("/website/site?property=p1");
   });
 });
