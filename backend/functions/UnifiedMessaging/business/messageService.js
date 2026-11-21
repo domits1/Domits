@@ -5,6 +5,8 @@ import IntegrationAccountRepository from "../.shared/integrations/repositories/i
 import { createDefaultProviderAdapters, resolveProviderAdapter } from "./providerAdapterRegistry.js";
 import publishRealtimeMessage from "./publishRealtimeMessage.js";
 import { badRequest, conflict, forbidden, notFound } from "../util/httpErrors.js";
+import { signMessage, signMessages } from "../util/attachmentUrlSigner.js";
+import { parseStoredAttachments } from "../util/storedAttachments.js";
 
 const isExternalProviderPayload = (payload) => Boolean(payload.platform) && payload.platform !== "DOMITS";
 const resolveParticipantId = (explicitId, fallbackId) => explicitId || fallbackId;
@@ -114,6 +116,7 @@ class MessageService {
     realtimePublisher = publishRealtimeMessage,
     providerAdapters = createDefaultProviderAdapters(),
     integrationAccounts = new IntegrationAccountRepository(),
+    attachmentSigner = { signMessage, signMessages },
   } = {}) {
     this.messageRepository = new MessageRepository();
     this.threadRepository = new ThreadRepository();
@@ -121,6 +124,7 @@ class MessageService {
     this.providerAdapters = providerAdapters;
     this.realtimePublisher = realtimePublisher;
     this.integrationAccounts = integrationAccounts;
+    this.attachmentSigner = attachmentSigner;
   }
 
   async resolveDomitsBookingThread(payload, senderId, recipientId) {
@@ -495,11 +499,11 @@ class MessageService {
 
     return {
       statusCode: errorCode ? 502 : 201,
-      response: {
+      response: await this.attachmentSigner.signMessage({
         ...message,
         threadId: resolvedThreadId,
         providerResult,
-      },
+      }),
     };
   }
 
@@ -519,7 +523,7 @@ class MessageService {
       integrationAccountId: thread.integrationAccountId,
       externalThreadId: thread.externalThreadId,
       content: message.content,
-      attachments: message.attachments,
+      attachments: parseStoredAttachments(message.attachments),
       metadata: parseStoredMetadata(message.metadata),
     };
 
@@ -543,10 +547,10 @@ class MessageService {
 
     return {
       statusCode: sendResult.errorCode ? 502 : 200,
-      response: {
+      response: await this.attachmentSigner.signMessage({
         ...updated,
         providerResult: sendResult.providerResult,
-      },
+      }),
     };
   }
 
@@ -741,7 +745,7 @@ class MessageService {
     const messages = await this.messageRepository.getMessagesByThreadId(threadId);
     return {
       statusCode: 200,
-      response: messages,
+      response: await this.attachmentSigner.signMessages(messages),
     };
   }
 

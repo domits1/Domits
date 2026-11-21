@@ -25,6 +25,7 @@ export function TextField({
   isHighlighted = false,
   onFocus = undefined,
   onBlur = undefined,
+  maxLength = undefined,
 }) {
   const normalizedValue = typeof value === "string" ? value : "";
 
@@ -62,6 +63,7 @@ export function TextField({
         id={`website-editor-${field.key}`}
         className={styles.textInput}
         value={normalizedValue}
+        maxLength={maxLength}
         onChange={onChange}
         onKeyDown={onKeyDown}
         onFocus={onFocus}
@@ -80,6 +82,7 @@ TextField.propTypes = {
   fieldRef: refPropType,
   isHighlighted: PropTypes.bool,
   onKeyDown: PropTypes.func,
+  maxLength: PropTypes.number,
 };
 
 const selectFieldOptionPropType = PropTypes.shape({

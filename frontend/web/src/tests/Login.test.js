@@ -5,8 +5,6 @@ import '@testing-library/jest-dom';
 import Login from '../features/auth/Login.js';
 import { Auth } from 'aws-amplify';
 import { MemoryRouter } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import { Router } from 'react-router';
 
 jest.mock('aws-amplify');
 jest.mock('react-router-dom', () => ({
