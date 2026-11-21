@@ -1,0 +1,105 @@
+name: Repository-wide Open Pull Request Limit
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  enforce-open-pr-limit:
+    name: Enforce 30 non-exempt open PR maximum
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close newly opened PR when repository limit is exceeded
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const maxOpenPullRequests = 30;
+            const pullRequest = context.payload.pull_request;
+            const pullNumber = pullRequest?.number;
+
+            if (!Number.isInteger(pullNumber)) {
+              core.setFailed("The pull request number is missing from the event payload.");
+              return;
+            }
+
+            const isExemptPullRequest = (candidate) => {
+              const headBranch = String(candidate.head?.ref || "");
+              return (
+                candidate.user?.type === "Bot" ||
+                headBranch.startsWith("hotfix/") ||
+                headBranch.startsWith("release/")
+              );
+            };
+
+            if (isExemptPullRequest(pullRequest)) {
+              core.info(
+                `Skipping the open-PR limit for exempt PR #${pullNumber} (author type: ${pullRequest.user?.type || "unknown"}, head branch: ${pullRequest.head?.ref || "unknown"}).`
+              );
+              return;
+            }
+
+            const openPullRequests = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100,
+            });
+
+            const currentPullRequest = openPullRequests.find(
+              (candidate) => candidate.number === pullNumber
+            );
+
+            if (!currentPullRequest) {
+              core.info("The pull request is no longer open. No action is needed.");
+              return;
+            }
+
+            const countableOpenPullRequests = openPullRequests.filter(
+              (candidate) => !isExemptPullRequest(candidate)
+            );
+
+            if (countableOpenPullRequests.length <= maxOpenPullRequests) {
+              core.info(
+                `Repository has ${countableOpenPullRequests.length}/${maxOpenPullRequests} non-exempt open pull requests.`
+              );
+              return;
+            }
+
+            const message = [
+              "### Repository-wide open pull request limit reached",
+              "",
+              `This repository currently has **${countableOpenPullRequests.length} non-exempt open pull requests**, including this one.`,
+              `The maximum is **${maxOpenPullRequests} non-exempt open pull requests** across all contributors.`,
+              "",
+              "Exemptions: pull requests opened by GitHub bots, and pull requests whose head branch starts with `hotfix/` or `release/`. Exempt pull requests are not included in the limit.",
+              "",
+              "This newly opened pull request has been automatically closed. Existing pull requests are not changed by this automation, and the source branch is not deleted.",
+              "",
+              "Please merge or close existing non-exempt pull requests until there are **29 or fewer**. You can then reopen this pull request or create a new one.",
+            ].join("\n");
+
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullNumber,
+                body: message,
+              });
+            } catch (error) {
+              core.warning(`Could not add the explanation comment: ${error.message}`);
+            }
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+              state: "closed",
+            });
+
+            core.warning(
+              `Closed newly opened PR #${pullNumber}: repository has ${countableOpenPullRequests.length} non-exempt open PRs; limit is ${maxOpenPullRequests}.`
+            );

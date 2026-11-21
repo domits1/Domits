@@ -1,6 +1,7 @@
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 import Database from "database";
 import { DataSource, SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder } from "typeorm";
+import { Property } from "database/models/Property";
 import { Booking } from "database/models/Booking";
 import { Review } from "database/models/Review";
 import { Review_Request } from "database/models/Review_Request";
@@ -8,12 +9,42 @@ import { ReviewService } from "../../functions/ReviewSystem/business/service/rev
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 import { handler } from "../../functions/ReviewSystem/index.js";
 import { ReviewRequestNotifier } from "../../functions/ReviewSystem/business/service/reviewRequestNotifier.js";
+const invitationRepository = { getDetails: jest.fn().mockResolvedValue({ propertyTitle: "Canal Loft", city: "Amsterdam" }) };
+const notifierOptions = { repository: invitationRepository };
 const now = 1800000000000;
 const booking = { id: "b1", guestid: "g1", hostid: "h1", property_id: "p1", departuredate: now - 1, status: "paid" };
+
+test.each([
+  [undefined, "https://domits.com"],
+  ["", "https://domits.com"],
+  ["https://acceptance.domits.com", "https://acceptance.domits.com"],
+  ["https://localhost:3000", "https://localhost:3000"],
+])("uses frontend URL %s for invitation links", async (frontendUrl, origin) => {
+  const previous = process.env.FRONTEND_URL;
+  try {
+    if (frontendUrl === undefined) delete process.env.FRONTEND_URL;
+    else process.env.FRONTEND_URL = frontendUrl;
+    const response = body => ({ Payload: Buffer.from(JSON.stringify({ statusCode: 200, body })) });
+    const client = { send: jest.fn()
+      .mockResolvedValueOnce(response(JSON.stringify([{ Attributes: [{ Name: "email", Value: "guest@example.com" }] }])))
+      .mockResolvedValueOnce(response("Email sent")) };
+    await new ReviewRequestNotifier(client, notifierOptions).send({ ...booking, id: "booking & one" });
+    const payload = JSON.parse(Buffer.from(client.send.mock.calls[1][0].input.Payload).toString());
+    const link = new URL(payload.body.body.match(/Share your experience: (https:\/\/\S+)/)[1]);
+    expect(link.origin).toBe(origin);
+    expect(link.pathname).toBe("/review");
+    expect(link.searchParams.get("bookingId")).toBe("booking & one");
+  } finally {
+    if (previous === undefined) delete process.env.FRONTEND_URL;
+    else process.env.FRONTEND_URL = previous;
+  }
+});
+
 let repository, notifier, service;
 beforeEach(() => {
   process.env.REVIEW_REQUEST_START_AT = String(now - 1000);
   repository = {
+    getReviewSchedule: jest.fn().mockResolvedValue({ enabled: true, delayHours: 0 }),
     findReviewRequestCandidates: jest.fn().mockResolvedValue([booking]),
     claimReviewRequest: jest.fn().mockResolvedValue({ id: "r1" }),
     findBookingById: jest.fn().mockResolvedValue(booking),
@@ -54,8 +85,32 @@ test("tracks delivery failures and exposes acknowledgement failures", async () =
     { bookingId: "b1", status: "RECONCILIATION_REQUIRED" },
   ]);
 });
+test.each(["http://localhost:3000", "not a url"])("stops the batch before claiming when FRONTEND_URL is %s", async frontendUrl => {
+  process.env.FRONTEND_URL = frontendUrl;
+  try {
+    await expect(service.processReviewRequests()).rejects.toMatchObject({ code: "INVALID_FRONTEND_URL" });
+    expect(repository.findReviewRequestCandidates).not.toHaveBeenCalled();
+    expect(repository.claimReviewRequest).not.toHaveBeenCalled();
+  } finally {
+    delete process.env.FRONTEND_URL;
+  }
+});
+test("tags a property details failure so the log names its cause", async () => {
+  const log = jest.spyOn(console, "error").mockImplementation(() => {});
+  const response = body => ({ Payload: Buffer.from(JSON.stringify({ statusCode: 200, body })) });
+  const client = { send: jest.fn().mockResolvedValueOnce(response(JSON.stringify([
+    { Attributes: [{ Name: "email", Value: "guest@example.com" }] },
+  ]))) };
+  const failing = { getDetails: jest.fn().mockRejectedValue(new Error("connection reset")) };
+  service = new ReviewService({ repository, notifier: new ReviewRequestNotifier(client, { repository: failing }), now: () => now });
+  expect((await service.processReviewRequests())[0].status).toBe("FAILED");
+  expect(client.send).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({
+    errorCode: "PROPERTY_DETAILS_UNAVAILABLE", dependency: "database",
+  });
+});
 test("integrates repository claims, email delivery and acknowledgement without duplicate sends", async () => {
-  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request] });
+  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request, Property] });
   await db.buildMetadatas();
   Database.getInstance.mockResolvedValue(db);
   let claimed = false;
@@ -73,22 +128,27 @@ test("integrates repository claims, email delivery and acknowledgement without d
     { Attributes: [{ Name: "email", Value: "guest@example.com" }] },
   ]))).mockResolvedValueOnce(response("Email sent")) };
   const real = new ReviewRepository();
+  real.getReviewSchedule = repository.getReviewSchedule;
   real.findBookingById = repository.findBookingById;
   real.findReviewByBookingTypeAndReviewer = repository.findReviewByBookingTypeAndReviewer;
-  service = new ReviewService({ repository: real, notifier: new ReviewRequestNotifier(client), now: () => now });
+  service = new ReviewService({ repository: real, notifier: new ReviewRequestNotifier(client, notifierOptions), now: () => now });
   const results = await Promise.all([service.processReviewRequest(booking), service.processReviewRequest(booking)]);
   expect(results.map(result => result.status).sort()).toEqual(["SENT", "SKIPPED"]);
   const payload = JSON.parse(Buffer.from(client.send.mock.calls[1][0].input.Payload).toString());
+  expect(payload.body.htmlBody).toContain("Canal Loft");
+  expect(payload.body.htmlBody).toContain("Share your experience");
   expect(payload.body.toEmail).toBe("guest@example.com");
   expect(payload.body.body).toContain("/review?bookingId=b1");
   const query = jest.spyOn(SelectQueryBuilder.prototype, "getMany").mockResolvedValue([]);
   await real.findReviewRequestCandidates(now);
   expect(query.mock.instances[0].getQuery()).toContain('"existing"."id" IS NULL');
+  expect(query.mock.instances[0].getQuery()).toContain('"schedule"."review_requests_enabled" = TRUE');
+  expect(query.mock.instances[0].getQuery()).toContain('"stay"."departuredate" + "schedule"."review_request_delay_hours" * 3600000 <= :scheduleNow');
   expect(query.mock.instances[0].getParameters()).toMatchObject({ stayStatuses: ["paid", "confirmed"], stayNow: now });
 });
 test("rejects email Lambda failures and missing addresses", async () => {
   const client = { send: jest.fn().mockResolvedValue({ FunctionError: "Unhandled", Payload: Buffer.from("{}") }) };
-  await expect(new ReviewRequestNotifier(client).send(booking)).rejects.toThrow("dependency failed");
+  await expect(new ReviewRequestNotifier(client, notifierOptions).send(booking)).rejects.toThrow("dependency failed");
 });
 test("dispatches scheduled events without affecting HTTP routes", async () => {
   const run = jest.spyOn(ReviewService.prototype, "processReviewRequests").mockResolvedValue([]);
@@ -104,7 +164,7 @@ test("does not deliver without an email or after a failed email response", async
   const failed = { send: jest.fn().mockResolvedValueOnce(payload(JSON.stringify([
     { Attributes: [{ Name: "email", Value: "guest@example.com" }] },
   ]))).mockResolvedValueOnce({ Payload: Buffer.from('{"statusCode":500}') }) };
-  await expect(new ReviewRequestNotifier(failed).send(booking)).rejects.toThrow("dependency failed");
+  await expect(new ReviewRequestNotifier(failed, notifierOptions).send(booking)).rejects.toThrow("dependency failed");
 });
 
 test("continues the batch after a claim or acknowledgement failure", async () => {
@@ -131,7 +191,7 @@ test("does not overwrite completion when acknowledging an in-flight email", asyn
 test.each([undefined, "", "invalid", "0", "-1", "1.5"])("fails closed with invalid rollout configuration %s", async startAt => {
   if (startAt === undefined) delete process.env.REVIEW_REQUEST_START_AT;
   else process.env.REVIEW_REQUEST_START_AT = startAt;
-  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request] });
+  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request, Property] });
   await db.buildMetadatas();
   Database.getInstance.mockResolvedValue(db);
   await expect(new ReviewRepository().findReviewRequestCandidates(now)).rejects.toThrow("REVIEW_REQUEST_START_AT");
@@ -139,7 +199,7 @@ test.each([undefined, "", "invalid", "0", "-1", "1.5"])("fails closed with inval
 
 test.each([now - 1000, now - 40 * 86400000])("limits candidates to rollout and recent checkouts: %s", async startAt => {
   process.env.REVIEW_REQUEST_START_AT = String(startAt);
-  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request] });
+  const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request, Property] });
   await db.buildMetadatas();
   Database.getInstance.mockResolvedValue(db);
   const getMany = jest.spyOn(SelectQueryBuilder.prototype, "getMany").mockResolvedValue([]);

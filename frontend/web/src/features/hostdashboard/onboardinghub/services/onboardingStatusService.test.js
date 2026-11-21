@@ -2,10 +2,32 @@ import {
   checkAnyWebsiteStatus,
   checkGoLiveStatus,
   checkPaymentsStatus,
+  checkSecurityStatus,
+  checkOwnersStatus,
+  checkMessagingStatus,
   computeIsGoLiveReady,
 } from "./onboardingStatusService";
+import { Auth } from "aws-amplify";
 import { fetchWebsiteDraftByPropertyId } from "../../website/services/websiteDraftService";
 import { getStripeAccountDetails } from "../../hostfinance/services/stripeAccountService";
+import { listOwners } from "../../hostowners/services/ownerService";
+import { listAutomations } from "../../hostmessages/services/automationService";
+
+jest.mock("aws-amplify", () => ({
+  Auth: {
+    currentAuthenticatedUser: jest.fn(),
+    getPreferredMFA: jest.fn(),
+    currentSession: jest.fn(),
+  },
+}));
+
+jest.mock("../../hostowners/services/ownerService", () => ({
+  listOwners: jest.fn(),
+}));
+
+jest.mock("../../hostmessages/services/automationService", () => ({
+  listAutomations: jest.fn(),
+}));
 
 jest.mock("../../website/services/websiteDraftService", () => ({
   fetchWebsiteDraftByPropertyId: jest.fn(),
@@ -100,6 +122,156 @@ describe("checkPaymentsStatus", () => {
     getStripeAccountDetails.mockRejectedValue(new Error("network error"));
 
     const result = await checkPaymentsStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account", unknown: true });
+  });
+});
+
+describe("checkSecurityStatus", () => {
+  const user = { username: "host-1" };
+
+  beforeEach(() => {
+    Auth.currentAuthenticatedUser.mockReset();
+    Auth.getPreferredMFA.mockReset();
+    Auth.currentAuthenticatedUser.mockResolvedValue(user);
+  });
+
+  test.each([["TOTP"], ["SOFTWARE_TOKEN_MFA"], ["SMS"], ["SMS_MFA"]])(
+    "is complete when the preferred MFA is %s",
+    async (preferredMfa) => {
+      Auth.getPreferredMFA.mockResolvedValue(preferredMfa);
+
+      const result = await checkSecurityStatus();
+
+      expect(result).toEqual({ complete: true, scope: "account" });
+      expect(Auth.getPreferredMFA).toHaveBeenCalledWith(user);
+    }
+  );
+
+  test.each([["NOMFA"], [""], [undefined]])("is not complete when the preferred MFA is %p", async (preferredMfa) => {
+    Auth.getPreferredMFA.mockResolvedValue(preferredMfa);
+
+    const result = await checkSecurityStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account" });
+  });
+
+  test("reports unknown when the signed-in user cannot be read", async () => {
+    Auth.currentAuthenticatedUser.mockRejectedValue(new Error("The user is not authenticated"));
+
+    const result = await checkSecurityStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account", unknown: true });
+  });
+
+  test("reports unknown when the MFA lookup fails", async () => {
+    Auth.getPreferredMFA.mockRejectedValue(new Error("network error"));
+
+    const result = await checkSecurityStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account", unknown: true });
+  });
+});
+
+describe("checkOwnersStatus", () => {
+  beforeEach(() => {
+    listOwners.mockReset();
+  });
+
+  test("is complete when at least one owner is not archived", async () => {
+    listOwners.mockResolvedValue([
+      { id: "o1", status: "archived" },
+      { id: "o2", status: "active" },
+    ]);
+
+    const result = await checkOwnersStatus();
+
+    expect(result).toEqual({ complete: true, scope: "account" });
+  });
+
+  test("is not complete when the host has no owners", async () => {
+    listOwners.mockResolvedValue([]);
+
+    const result = await checkOwnersStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account" });
+  });
+
+  test("is not complete when every owner is archived", async () => {
+    listOwners.mockResolvedValue([
+      { id: "o1", status: "archived" },
+      { id: "o2", status: "archived" },
+    ]);
+
+    const result = await checkOwnersStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account" });
+  });
+
+  test("reports unknown when the response is not a list", async () => {
+    listOwners.mockResolvedValue({ owners: [] });
+
+    const result = await checkOwnersStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account", unknown: true });
+  });
+
+  test("reports unknown when the owners request fails", async () => {
+    listOwners.mockRejectedValue(new Error("network error"));
+
+    const result = await checkOwnersStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account", unknown: true });
+  });
+});
+
+describe("checkMessagingStatus", () => {
+  beforeEach(() => {
+    listAutomations.mockReset();
+  });
+
+  test("is complete when at least one automation is active", async () => {
+    listAutomations.mockResolvedValue([
+      { id: "a1", status: "DRAFT" },
+      { id: "a2", status: "ACTIVE" },
+    ]);
+
+    const result = await checkMessagingStatus();
+
+    expect(result).toEqual({ complete: true, scope: "account" });
+  });
+
+  test("is not complete when the host has no automations", async () => {
+    listAutomations.mockResolvedValue([]);
+
+    const result = await checkMessagingStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account" });
+  });
+
+  test("is not complete when every automation is still a draft", async () => {
+    listAutomations.mockResolvedValue([
+      { id: "a1", status: "DRAFT" },
+      { id: "a2", status: "DRAFT" },
+    ]);
+
+    const result = await checkMessagingStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account" });
+  });
+
+  test("reports unknown when the response is not a list", async () => {
+    listAutomations.mockResolvedValue(null);
+
+    const result = await checkMessagingStatus();
+
+    expect(result).toEqual({ complete: false, scope: "account", unknown: true });
+  });
+
+  test("reports unknown when the automations request fails", async () => {
+    listAutomations.mockRejectedValue(new Error("network error"));
+
+    const result = await checkMessagingStatus();
 
     expect(result).toEqual({ complete: false, scope: "account", unknown: true });
   });

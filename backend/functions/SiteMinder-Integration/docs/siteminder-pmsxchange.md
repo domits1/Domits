@@ -16,8 +16,9 @@ Docs: https://developer.siteminder.com/pmsxchange-api
 | Mapping | `business/siteMinderMappingService.js` | - | shared tables |
 | Checked sending | `business/siteMinderInventoryService.js` | Domits -> SiteMinder | - |
 | Reading reservations | `util/reservationsMessage.js` | SiteMinder -> Domits | `OTA_ResRetrieveRS` |
+| Asking for, confirming and failing reservations | `util/reservationsMessage.js`, `business/siteMinderReservationsReader.js` | both | `OTA_ReadRQ`, `OTA_NotifReportRQ` |
 
-Not built yet: asking for and confirming reservations, saving them as bookings, the Lambda handler and schedule, and the host screen.
+Not built yet: saving reservations as bookings, the Lambda handler and schedule, and the host screen.
 
 ## Receiving reservations
 
@@ -45,7 +46,17 @@ A reservation that is not confirmed comes back on the next `OTA_ReadRQ`. After 2
 | `guest` | the primary guest: first and last name, email and the first phone number |
 | `total` | `ResGlobalInfo/Total`, which SiteMinder calls the total for the whole reservation |
 
-It never reads `Guarantee` or `PaymentCard`, so card details do not end up in Domits even when a channel sends them. A reservation without a SiteMinder id or message id throws, because it can be neither saved nor confirmed. A response with a `DOCTYPE` is refused.
+`SiteMinderReservationsReader` (in `createSiteMinderServices` as `reservations`) has three calls:
+
+| Call | Sends | Notes |
+| ---- | ----- | ----- |
+| `readUndelivered()` | `OTA_ReadRQ` for the whole PMS (`RequestorID` = `SITEMINDER_PMS_CODE`, no `HotelCode`) | SiteMinder asks for one level only, and ARI already works per PMS. Returns the list from `readReservations` |
+| `confirm(reservations)` | one `OTA_NotifReportRQ` with `<Success/>` | per reservation: status, message id, the Domits booking id as `ResID_Value` (`ResID_Type="14"`), and the time Domits saved it (`CreateDateTime` for `Book`, `LastModifyDateTime` for `Modify` and `Cancel`). Sends nothing when the list is empty |
+| `reportFailure(reservation, error)` | one `OTA_NotifReportRQ` with `<Errors>` and that one reservation, without a booking id | the error type and code come from SiteMinder's error tables. The text is cut to 200 characters and must not contain guest data, because the hotel can see it |
+
+Each call has its own `EchoToken`. A refused or failed call throws `SiteMinderSoapError`, like the ARI calls.
+
+`readReservations` never reads `Guarantee` or `PaymentCard`, so card details do not end up in Domits even when a channel sends them. A reservation without a SiteMinder id or message id throws, because it can be neither saved nor confirmed. A response with a `DOCTYPE` is refused.
 
 ## When a send is tried again
 
@@ -69,12 +80,20 @@ The mapping uses the shared `channel_integration_*` tables that Channex also use
 | `channel_integration_room_type` | `externalRoomTypeId` = `roomTypeCode` (also used as `InvTypeCode`) |
 | `channel_integration_rate_plan` | `externalRatePlanId` = `ratePlanCode` |
 
-`SiteMinderMappingService.syncHotel({ userId, domitsPropertyId, hotelCode })`:
+One SiteMinder room type is one Domits property. In SiteMinder a host sells villas, apartments and holiday homes as room types inside one property (the API calls it a hotel), each with a number of units. In Domits one property is one rentable unit. So a villa park with two villas is one SiteMinder hotel with two room types, linked to two Domits properties, and a reservation for both villas becomes two Domits bookings. Decided with Stefan on 9 November 2026; refusing multi-room reservations is not an option, and SiteMinder tests them in its certification.
 
-1. Only the owner of the Domits property may map it.
-2. A hotel code can feed only one Domits property.
-3. Reads Rooms and Rates from SiteMinder and stores the room types and rate plans as `ACTIVE`.
-4. Sets the ones SiteMinder no longer returns to `INACTIVE`.
+Availability for a linked room type must be sent as 1 or 0 per date, taken from the calendar of its Domits property, so SiteMinder never sells one villa twice, even when the room type says more units. The part that builds availability from the calendar is not built yet.
+
+`SiteMinderMappingService.syncRoomType({ userId, domitsPropertyId, hotelCode, roomTypeCode })`:
+
+1. Only the owner of the Domits property may link it.
+2. A hotel belongs to one Domits host. Another host gets `SITEMINDER_HOTEL_ALREADY_MAPPED`.
+3. A room type can be linked to only one Domits property at a time (`SITEMINDER_ROOM_TYPE_ALREADY_MAPPED`), so one villa never gets two calendars.
+4. Reads Rooms and Rates from SiteMinder. A room type that SiteMinder does not have gives `SITEMINDER_ROOM_TYPE_NOT_FOUND` and nothing is stored.
+5. Stores the hotel, the room type and its rate plans as `ACTIVE` for this Domits property.
+6. Sets everything else of this Domits property in this hotel to `INACTIVE`: the room it was linked to before, and rate plans SiteMinder no longer returns. Linking the same room again is safe.
+
+The ARI check (`SiteMinderInventoryService`) accepts the room types of every Domits property of the host in that hotel.
 
 ## Why sending is checked first
 

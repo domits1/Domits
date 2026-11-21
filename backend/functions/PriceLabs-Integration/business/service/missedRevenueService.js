@@ -1,4 +1,5 @@
 import { validateDateRange } from "../../util/dateRange.js";
+import { isEuroBooking } from "../../util/bookingCurrency.js";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -56,7 +57,11 @@ function bookedDateSetByProperty(bookings) {
  * byPropertyDate keeps the per-night amounts so revenue efficiency can be
  * restricted to the nights potential revenue actually covers.
  *
- * total_price is stored in euros; refunded_amount is stored in cents (see
+ * total_price is in euros unless the booking has another currency (an imported
+ * channel booking, #3583); those are left out, because there is no exchange rate.
+ * Their nights are returned in nonEuroNightsByProperty, so revenue efficiency can
+ * leave them out of the potential side too.
+ * refunded_amount is stored in cents (see
  * General-Bookings-CRUD-Bookings-develop/data/stripeRepository.js and
  * reservationController.js), so refunds are converted before netting.
  */
@@ -66,6 +71,7 @@ function actualRevenueByProperty(bookings, startDate, endDate) {
 
   const byProperty = new Map();
   const byPropertyDate = new Map();
+  const nonEuroNightsByProperty = new Map();
   let total = 0;
 
   for (const b of bookings) {
@@ -78,6 +84,13 @@ function actualRevenueByProperty(bookings, startDate, endDate) {
     const endMs = Date.parse(`${end}T00:00:00Z`);
     const totalNights = Math.round((endMs - startMs) / MS_PER_DAY);
     if (totalNights <= 0) continue;
+
+    if (!isEuroBooking(b)) {
+      if (!nonEuroNightsByProperty.has(b.property_id)) nonEuroNightsByProperty.set(b.property_id, new Set());
+      const nights = nonEuroNightsByProperty.get(b.property_id);
+      for (let ms = startMs; ms < endMs; ms += MS_PER_DAY) nights.add(new Date(ms).toISOString().slice(0, 10));
+      continue;
+    }
 
     // Clamped at 0: an over-refund (refunded_amount > total_price) is a data
     // anomaly, not a real negative revenue contribution to show on a KPI card.
@@ -96,7 +109,7 @@ function actualRevenueByProperty(bookings, startDate, endDate) {
     }
   }
 
-  return { total, byProperty, byPropertyDate };
+  return { total, byProperty, byPropertyDate, nonEuroNightsByProperty };
 }
 
 /**
@@ -304,6 +317,7 @@ export class MissedRevenueService {
       total: actualRevenue,
       byProperty: actualRevenueByPropertyMap,
       byPropertyDate: actualRevenueByPropertyDate,
+      nonEuroNightsByProperty,
     } = actualRevenueByProperty(bookings, startDate, endDate);
 
     let grossMissedRevenue = 0;
@@ -327,8 +341,10 @@ export class MissedRevenueService {
     for (const row of priceRows) {
       const iso = isoFromCalendarInt(row.calendar_date);
       const isBooked = bookedByProperty.get(row.property_id)?.has(iso) ?? false;
+      // A night sold in another currency has no actual revenue to compare, so it is not potential either.
+      const isNonEuroNight = nonEuroNightsByProperty.get(row.property_id)?.has(iso) ?? false;
 
-      if (isPotentialNight(row, isBooked)) {
+      if (!isNonEuroNight && isPotentialNight(row, isBooked)) {
         const propEntry = ensureProperty(byPropertyMap, row.property_id);
         propEntry.potentialOccupiedNights += 1;
 
