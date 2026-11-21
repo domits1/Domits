@@ -29,8 +29,7 @@ export class ReviewRequestNotifier {
     return response.body;
   }
   async send(booking) {
-    const url = new URL("/review", process.env.FRONTEND_URL || "http://localhost:3000");
-    // After the deployment, switch to "https://domits.com" 
+    const url = new URL("/review", process.env.FRONTEND_URL || "https://domits.com");
     url.searchParams.set("bookingId", booking.id);
     const body = await this.invoke("GetUserInfo", { UserId: booking.guestid });
     let users;
