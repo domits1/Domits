@@ -109,6 +109,20 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
     expect(params).toEqual(expect.arrayContaining([300, "Booking.com"]));
   });
 
+  // Without the currency next to it, an amount in pounds would be shown as euros (#3583).
+  test.each([
+    { label: "GBP", currency: "GBP", expected: "GBP" },
+    { label: "none when it has no amount", currency: undefined, expected: null },
+  ])("an imported booking stores the currency of its amount: $label", async ({ currency, expected }) => {
+    const { repository, client } = setup();
+
+    await repository.createExternalBooking({ ...booking, totalPrice: 250, currency });
+
+    const [sql, params] = client.query.mock.calls[0];
+    expect(sql).toContain("total_price, booking_source, currency)");
+    expect(params[17]).toBe(expected);
+  });
+
   test("an imported booking stores the guest count from Channex", async () => {
     const { repository, client } = setup();
 
@@ -147,25 +161,29 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
     expect(params[6]).toBeNull();
   });
 
-  // A modification without an amount keeps the stored one instead of erasing it.
-  test("a date change updates the total price only when Channex sends one", async () => {
+  // A modification without an amount keeps the stored one instead of erasing it. The import
+  // sends amount and currency together or not at all, so the same rule keeps them a pair.
+  test("a date change updates the total price and its currency only when Channex sends them", async () => {
     const { repository, manager } = setup();
 
-    await repository.updateImportedBooking({ ...booking, totalPrice: 350, channexChanges: [change] });
+    await repository.updateImportedBooking({ ...booking, totalPrice: 350, currency: "GBP", channexChanges: [change] });
 
     const [sql, params] = manager.query.mock.calls[0];
-    expect(sql).toContain("total_price = COALESCE(");
-    expect(params).toContain(350);
+    expect(sql).toContain("total_price = COALESCE($6, total_price)");
+    expect(sql).toContain("currency = COALESCE($8, currency)");
+    expect(params[5]).toBe(350);
+    expect(params[7]).toBe("GBP");
   });
 
-  test("a date change without an amount keeps the stored total price", async () => {
+  test("a date change without an amount keeps the stored total price and currency", async () => {
     const { repository, manager } = setup();
 
     await repository.updateImportedBooking({ ...booking, channexChanges: [change] });
 
     const [sql, params] = manager.query.mock.calls[0];
-    expect(sql).toContain("total_price = COALESCE($6, total_price)");
+    expect(sql).toContain("currency = COALESCE($8, currency)");
     expect(params[5]).toBeNull();
+    expect(params[7]).toBeNull();
   });
 
   test("an imported cancellation and its outbox row are saved in one transaction", async () => {

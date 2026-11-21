@@ -80,7 +80,7 @@ function Pages() {
                   to={item.to}
                   end={item.to === "/guestdashboard"}
                   className={({ isActive }) =>
-                    `menu-item ${isActive ? "active" : ""}`
+                    `menu-item ${isActive || (item.key === "Reviews" && location.pathname === "/review") ? "active" : ""}`
                   }
                 >
                   <span className="icon" aria-hidden="true">

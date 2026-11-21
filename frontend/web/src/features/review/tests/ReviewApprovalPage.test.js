@@ -80,6 +80,27 @@ describe("ReviewApprovalPage", () => {
     expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 0, limit: 8 });
   });
 
+  test("filters moderation before pagination, resets its page and retains resolved status", async () => {
+    getReviewFlags.mockResolvedValue({ flags: [{ id: "flag", title: "Matching stay", reason: "SPAM", overall_rating: 4.5 }], next_offset: 8 });
+    render(<ReviewApprovalPage />);
+    await screen.findByRole("tab", { name: "Pending approval (2)" });
+    fireEvent.click(screen.getByRole("tab", { name: "Moderation queue" }));
+    fireEvent.change(await screen.findByLabelText("Flag status"), { target: { value: "RESOLVED" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Next page" }));
+    await waitFor(() => expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 8, limit: 8 }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search reviews" }), { target: { value: "Riverside" } });
+    await waitFor(() => expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 0, limit: 8, search: "Riverside" }));
+    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
+    fireEvent.change(screen.getByLabelText("Rating"), { target: { value: "4" } });
+    await waitFor(() => expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 0, limit: 8, search: "Riverside", rating: "4" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Next page" }));
+    await waitFor(() => expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 8, limit: 8, search: "Riverside", rating: "4" }));
+    getReviewFlags.mockResolvedValue({ flags: [], next_offset: null });
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Nobody" } });
+    expect(await screen.findByText("No resolved review flags.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next page" })).not.toBeInTheDocument();
+  });
+
   test("lists pending reviews with property, guest, booking, rating and status", async () => {
     render(<ReviewApprovalPage />);
 
@@ -189,7 +210,7 @@ describe("ReviewApprovalPage", () => {
 
     expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
     expect(within(details()).getByText("Unverified")).toBeInTheDocument();
-    expect(within(rowFor("Good location")).getByRole("checkbox")).toBeChecked();
+    expect(within(rowFor("Good location")).getByRole("checkbox", { name: "Show review details for Good location" })).toBeChecked();
   });
 
   test("opens review details by clicking row content or pressing Enter or Space on the row", async () => {
@@ -200,11 +221,12 @@ describe("ReviewApprovalPage", () => {
     expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
 
     fireEvent.keyDown(rowFor("Great stay!"), { key: "Enter" });
-    expect(within(rowFor("Great stay!")).getByRole("checkbox")).toBeChecked();
+    expect(within(rowFor("Great stay!")).getByRole("checkbox", { name: "Show review details for Great stay!" })).toBeChecked();
     expect(within(details()).getByText("The apartment was clean, modern and well equipped.")).toBeInTheDocument();
 
     fireEvent.keyDown(rowFor("Good location"), { key: " " });
-    expect(within(rowFor("Good location")).getByRole("checkbox")).toBeChecked();
+    expect(within(rowFor("Good location")).getByRole("checkbox", { name: "Show review details for Good location" })).toBeChecked();
+    expect(within(details()).getByText("Nice location and easy check-in.")).toBeInTheDocument();
   });
 
   test("closes the details panel", async () => {

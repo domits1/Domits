@@ -4,9 +4,10 @@ import { getIdToken } from "../../../services/getAccessToken";
 export const API_REVIEW_BASE =
   "https://vk70rgm6z0.execute-api.eu-north-1.amazonaws.com/default";
 
-export const saveHostResponse = async (reviewId, message) => {
-  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response/publish`, {
-    method: "POST", headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
+export const saveHostResponse = async (reviewId, message, action = "publish") => {
+  const suffix = action === "publish" ? "/publish" : "";
+  const response = await fetch(`${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/response${suffix}`, {
+    method: action === "edit" ? "PATCH" : "POST", headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
   });
   const payload = await parseResponse(response);
@@ -45,8 +46,16 @@ const requestModeration = async (method, fallback, query = {}, body) => {
   return payload;
 };
 
-export const getReviewFlags = (query) =>
-  requestModeration("GET", "Could not load the moderation queue.", query);
+export const getReviewFlags = async (query) => {
+  const payload = await requestModeration("GET", "Could not load the moderation queue.", query);
+  if (!payload || !Array.isArray(payload.flags) ||
+    payload.flags.some((flag) => !flag || typeof flag !== "object" || Array.isArray(flag)) ||
+    !(payload.next_offset === null ||
+      (Number.isSafeInteger(payload.next_offset) && payload.next_offset >= 0))) {
+    throw new Error("Could not load the moderation queue. The server returned an unexpected response. Please try again.");
+  }
+  return payload;
+};
 
 export const flagReview = (reviewId, reason, notes) =>
   requestModeration("POST", "Could not flag this review.", {}, { review_id: reviewId, reason, notes });
@@ -66,13 +75,62 @@ export const publishApprovedReview = async (reviewId) => {
   return payload;
 };
 
+const ACCESS_TIMEOUT_MS = 5000;
+const ACCESS_CACHE_MS = 5 * 60 * 1000;
+let approvalAccessCache = null;
+
+export const clearReviewApprovalAccessCache = () => { approvalAccessCache = null; };
+if (typeof globalThis.addEventListener === "function") {
+  globalThis.addEventListener("authChanged", clearReviewApprovalAccessCache);
+}
+
+// Cache only confirmed approval access, never denials or queue rows. Token scoping prevents
+// sharing answers across accounts/sessions; the short TTL bounds role staleness.
 export const hasReviewApprovalAccess = async () => {
+  const controller = new AbortController();
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => { controller.abort(); resolve(null); }, ACCESS_TIMEOUT_MS);
+  });
+  const check = async () => {
+    const token = await getIdToken();
+    if (controller.signal.aborted || !token) return null;
+    if (approvalAccessCache?.token === token && approvalAccessCache.expiresAt > Date.now()) {
+      const shared = approvalAccessCache;
+      const allowed = await Promise.race([shared.answer, timeout]);
+      // The shared request belongs to its first caller. If its deadline expires,
+      // a later caller may retry using the time left on its own deadline.
+      if (!shared.controller.signal.aborted || controller.signal.aborted) return allowed;
+      if (approvalAccessCache === shared) approvalAccessCache = null;
+    }
+    const entry = { token, controller, expiresAt: Date.now() + ACCESS_CACHE_MS };
+    approvalAccessCache = entry;
+    const request = (async () => {
+      try {
+        const response = await fetch(`${API_REVIEW_BASE}/reviews?scope=pending-approval`, {
+          method: "GET", headers: { Authorization: token }, signal: controller.signal,
+        });
+        if (response.status === 401 || response.status === 403) return false;
+        if (!response.ok) return null;
+        const payload = await parseResponse(response);
+        return Array.isArray(payload) ? true : null;
+      } catch {
+        return null;
+      }
+    })();
+    entry.answer = Promise.race([request, timeout]);
+    const allowed = await entry.answer;
+    if ((allowed !== true || controller.signal.aborted) && approvalAccessCache === entry) {
+      approvalAccessCache = null;
+    }
+    return allowed;
+  };
   try {
-    await getPendingApprovalReviews();
-    return true;
-  } catch (error) {
-    if (error?.status === 401 || error?.status === 403) return false;
+    return await Promise.race([check(), timeout]);
+  } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 };
 
@@ -244,6 +302,8 @@ export const createReview = async ({
   title,
   publicReview,
   privateFeedback,
+  domitsPrivateFeedback,
+  categoryRatings,
 }) => {
   const token = await getIdToken();
 
@@ -259,6 +319,8 @@ export const createReview = async ({
       title,
       public_review: publicReview,
       private_feedback: privateFeedback,
+      ...(domitsPrivateFeedback ? { domits_private_feedback: domitsPrivateFeedback } : {}),
+      ...(categoryRatings ? { category_ratings: categoryRatings } : {}),
     }),
   });
 
@@ -268,5 +330,32 @@ export const createReview = async ({
     throw new Error(getReviewErrorMessage(response.status, payload));
   }
 
+  return payload;
+};
+
+export async function reviewSchedule(propertyId, settings, signal) {
+  const query = new URLSearchParams({ scope: "property-review-schedule", propertyId });
+  const response = await fetch(`${API_REVIEW_BASE}/reviews?${query}`, {
+    method: settings === undefined ? "GET" : "PATCH", signal,
+    headers: { Authorization: await getIdToken(), "Content-Type": "application/json" },
+    ...(settings === undefined ? {} : { body: JSON.stringify(settings) }),
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not save review preferences.");
+  return payload;
+}
+
+export const publishReview = async (reviewId) => {
+  const response = await fetch(
+    `${API_REVIEW_BASE}/reviews/${encodeURIComponent(reviewId)}/publish`,
+    { method: "POST", headers: { Authorization: await getIdToken() } }
+  );
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not publish your review. Please try again.");
+  const published = payload?.status === "PUBLISHED" && payload?.publication_status === "PUBLISHED";
+  const pending = payload?.status === "PENDING_APPROVAL" && payload?.publication_status === "UNPUBLISHED";
+  if (!published && !pending) {
+    throw new Error("Publication could not be confirmed. Please retry.");
+  }
   return payload;
 };

@@ -134,6 +134,9 @@ export const getChannexAdminAccess = ({ userId }) =>
 // The backend takes the admin from the token's claims, so no userId is sent (#2869).
 export const getChannexHealth = () => requestChannex("/integrations/channex/health");
 
+// The backend overwrites userId with the token's sub, so none is sent. Read-only.
+export const getLinkedChannexRoomTypes = () => requestChannex("/integrations/channex/linked-room-types");
+
 export const connectChannex = ({ userId, apiKey, displayName }) =>
   requestChannex("/integrations/channex/connect", {
     method: "POST",

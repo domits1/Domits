@@ -1,8 +1,21 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
+import { buildReviewInvitationEmail, httpsUrl } from "./reviewInvitationEmail.js";
+import { ReviewInvitationRepository } from "../../data/reviewInvitationRepository.js";
+
+// Checked before candidates are claimed: a claimed request is never retried, so a bad
+// setting must stop the batch rather than mark every request FAILED.
+export function reviewFrontendUrl() {
+  const url = httpsUrl(process.env.FRONTEND_URL || "https://domits.com");
+  if (!url) throw Object.assign(new Error("FRONTEND_URL must be an HTTPS URL."), { code: "INVALID_FRONTEND_URL" });
+  return url;
+}
+
 export class ReviewRequestNotifier {
-  constructor(client = new LambdaClient({ region: process.env.AWS_REGION || "eu-north-1", maxAttempts: 1 })) {
+  constructor(client = new LambdaClient({ region: process.env.AWS_REGION || "eu-north-1", maxAttempts: 1 }),
+    { repository = new ReviewInvitationRepository() } = {}) {
     this.client = client;
+    this.repository = repository;
   }
   async invoke(FunctionName, payload) {
     const fail = (code) => Object.assign(new Error("Review notification dependency failed."), {
@@ -29,9 +42,6 @@ export class ReviewRequestNotifier {
     return response.body;
   }
   async send(booking) {
-    const url = new URL("/review", process.env.FRONTEND_URL || "http://localhost:3000");
-    // After the deployment, switch to "https://domits.com" 
-    url.searchParams.set("bookingId", booking.id);
     const body = await this.invoke("GetUserInfo", { UserId: booking.guestid });
     let users;
     try { users = typeof body === "string" ? JSON.parse(body) : body; }
@@ -43,9 +53,28 @@ export class ReviewRequestNotifier {
     if (!email) throw Object.assign(new Error("Guest email is unavailable."), {
       code: "GUEST_EMAIL_UNAVAILABLE", dependency: "GetUserInfo",
     });
+    let details;
+    try { details = await this.repository.getDetails(booking.property_id); }
+    catch (cause) {
+      throw Object.assign(new Error("Property details are unavailable.", { cause }), {
+        code: "PROPERTY_DETAILS_UNAVAILABLE", dependency: "database",
+      });
+    }
+    const imageBase = httpsUrl(process.env.EMAIL_PROPERTY_IMAGE_BASE_URL || "https://accommodation.s3.eu-north-1.amazonaws.com");
+    // Encode stored object keys as path segments rather than treating them as URLs.
+    const propertyImageUrl = imageBase && details.imageKey
+      ? `${imageBase.replace(/\/$/, "")}/${details.imageKey.split("/").map(encodeURIComponent).join("/")}`
+      : null;
+    const attributes = users?.[0]?.Attributes || [];
+    const guestName = attributes.find(attribute => attribute.Name === "given_name")?.Value;
+    const emailContent = buildReviewInvitationEmail({
+      booking, guestName, propertyTitle: details.propertyTitle, city: details.city, propertyImageUrl,
+      logoUrl: process.env.EMAIL_LOGO_URL,
+      frontendUrl: reviewFrontendUrl(),
+    });
     await this.invoke("EmailNotificationService", { body: {
-      toEmail: email, subject: "How was your stay?",
-      body: `Share your experience with your recent stay:\n${url.href}`,
+      toEmail: email, subject: emailContent.subject,
+      body: emailContent.text, htmlBody: emailContent.html,
     } });
   }
 }
