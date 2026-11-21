@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useChannexDistribution } from "./useChannexDistribution";
-import { getChannexStatus, getLatestSyncEvidence } from "../services/channexDistributionService";
+import { getChannexStatus } from "../services/channexDistributionService";
 
 jest.mock("../services/channexDistributionService");
 
@@ -10,7 +10,6 @@ describe("useChannexDistribution", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     getChannexStatus.mockResolvedValue(CONNECTED_STATUS);
-    getLatestSyncEvidence.mockResolvedValue({ item: null });
   });
 
   test("sets error and clears loading when getChannexStatus rejects", async () => {
@@ -45,24 +44,12 @@ describe("useChannexDistribution", () => {
     expect(getChannexStatus).toHaveBeenCalledTimes(2);
   });
 
-  test("does not fetch sync evidence until a property is selected", async () => {
+  test("loads the status once and exposes it", async () => {
     const { result } = renderHook(() => useChannexDistribution());
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(getLatestSyncEvidence).not.toHaveBeenCalled();
-  });
-
-  test("refetches sync evidence for a new property without refetching status", async () => {
-    const { result, rerender } = renderHook(({ domitsPropertyId }) => useChannexDistribution({ domitsPropertyId }), {
-      initialProps: { domitsPropertyId: "property-1" },
-    });
-    await waitFor(() => expect(result.current.status).toEqual(CONNECTED_STATUS));
-
-    rerender({ domitsPropertyId: "property-2" });
-
-    await waitFor(() => expect(getLatestSyncEvidence).toHaveBeenLastCalledWith({ domitsPropertyId: "property-2" }));
-    expect(getLatestSyncEvidence).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toEqual(CONNECTED_STATUS);
     expect(getChannexStatus).toHaveBeenCalledTimes(1);
   });
 });

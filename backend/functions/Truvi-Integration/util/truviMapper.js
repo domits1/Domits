@@ -112,3 +112,14 @@ export function mapCreateResponse(response) {
     flaggedReason: flaggedReason ?? null,
   };
 }
+
+export function toCancelRequest({ verificationId, reservationId, now = new Date() }) {
+  if (!verificationId || !reservationId) {
+    throw new Error("verificationId and reservationId are required to cancel a Truvi verification");
+  }
+  return {
+    metadata: { timeStamp: toTruviTimestamp(now), echoToken: randomUUID() },
+    verification: { verificationId },
+    reservation: { reservationId },
+  };
+}
