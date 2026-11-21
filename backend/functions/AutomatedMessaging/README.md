@@ -56,6 +56,8 @@ The following migrations have been applied successfully:
 
 The required tables, columns, and all 11 required indexes are present. The Lambda never creates or alters database objects at runtime.
 
+Stay-date triggers add `migrations/002_add_stay_date_triggers.sql`, with `migrations/002_add_stay_date_triggers_rollback.sql`. Apply it before the code that maps its columns is merged, following `docs/internal/tools/dsql_automated_messaging_stay_date_triggers_runbook.md`. Until it is applied, `GET /automations/health` answers `503 SCHEMA_NOT_READY`.
+
 ## Remaining enablement gates
 
 1. Merge and deploy this branch to `acceptance` so the real `AutomatedMessaging` function code is installed.

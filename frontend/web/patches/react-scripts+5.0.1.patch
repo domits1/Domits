@@ -1,0 +1,70 @@
+diff --git a/node_modules/react-scripts/config/webpackDevServer.config.js b/node_modules/react-scripts/config/webpackDevServer.config.js
+index 522a81b..814475f 100644
+--- a/node_modules/react-scripts/config/webpackDevServer.config.js
++++ b/node_modules/react-scripts/config/webpackDevServer.config.js
+@@ -99,7 +99,10 @@ module.exports = function (proxy, allowedHost) {
+       publicPath: paths.publicUrlOrPath.slice(0, -1),
+     },
+ 
+-    https: getHttpsConfig(),
++    // webpack-dev-server 5: `https` became `server`.
++    server: getHttpsConfig()
++      ? { type: 'https', options: getHttpsConfig() === true ? {} : getHttpsConfig() }
++      : 'http',
+     host,
+     historyApiFallback: {
+       // Paths with dots should still use the history fallback.
+@@ -109,7 +112,8 @@ module.exports = function (proxy, allowedHost) {
+     },
+     // `proxy` is run between `before` and `after` `webpack-dev-server` hooks
+     proxy,
+-    onBeforeSetupMiddleware(devServer) {
++    // webpack-dev-server 5: onBeforeSetupMiddleware/onAfterSetupMiddleware became setupMiddlewares.
++    setupMiddlewares(middlewares, devServer) {
+       // Keep `evalSourceMapMiddleware`
+       // middlewares before `redirectServedPath` otherwise will not have any effect
+       // This lets us fetch source contents from webpack for the error overlay
+@@ -119,17 +123,17 @@ module.exports = function (proxy, allowedHost) {
+         // This registers user provided middleware for proxy reasons
+         require(paths.proxySetup)(devServer.app);
+       }
+-    },
+-    onAfterSetupMiddleware(devServer) {
++
+       // Redirect to `PUBLIC_URL` or `homepage` from `package.json` if url not match
+-      devServer.app.use(redirectServedPath(paths.publicUrlOrPath));
++      middlewares.push(redirectServedPath(paths.publicUrlOrPath));
+ 
+       // This service worker file is effectively a 'no-op' that will reset any
+       // previous service worker registered for the same host:port combination.
+       // We do this in development to avoid hitting the production cache if
+       // it used the same host and port.
+       // https://github.com/facebook/create-react-app/issues/2272#issuecomment-302832432
+-      devServer.app.use(noopServiceWorkerMiddleware(paths.publicUrlOrPath));
++      middlewares.push(noopServiceWorkerMiddleware(paths.publicUrlOrPath));
++      return middlewares;
+     },
+   };
+ };
+diff --git a/node_modules/react-scripts/scripts/start.js b/node_modules/react-scripts/scripts/start.js
+index 8b9a2c2..33e3bd5 100644
+--- a/node_modules/react-scripts/scripts/start.js
++++ b/node_modules/react-scripts/scripts/start.js
+@@ -141,7 +141,7 @@ checkBrowsers(paths.appPath, isInteractive)
+ 
+     ['SIGINT', 'SIGTERM'].forEach(function (sig) {
+       process.on(sig, function () {
+-        devServer.close();
++        devServer.stop();  // webpack-dev-server 5: close() became stop()
+         process.exit();
+       });
+     });
+@@ -149,7 +149,7 @@ checkBrowsers(paths.appPath, isInteractive)
+     if (process.env.CI !== 'true') {
+       // Gracefully exit when stdin ends
+       process.stdin.on('end', function () {
+-        devServer.close();
++        devServer.stop();  // webpack-dev-server 5: close() became stop()
+         process.exit();
+       });
+     }

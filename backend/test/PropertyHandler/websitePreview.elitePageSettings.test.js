@@ -13,6 +13,8 @@ import {
 
 const SITE_PAGES = { gallery: { enabled: true, navLabel: "Gallery" } };
 const PROPERTY_DETAILS = { property: { id: "property-1", title: "Cliff House", status: "ACTIVE" } };
+const PUBLIC_HOST = { displayName: "Karim", profileImage: "", whatsapp: { isAvailable: false, phoneNumber: "", phoneNumberDigits: "" } };
+const previewBody = (draft) => JSON.stringify({ draft, propertyDetails: PROPERTY_DETAILS, host: PUBLIC_HOST });
 
 const draftRow = ({ contentOverrides = {}, publishedContentOverrides = {} } = {}) => ({
   id: "draft-1",
@@ -38,14 +40,19 @@ const openPreview = (draft, ratePlanRepository, query = {}, planReadTimeoutMs = 
   const controller = new PropertyController();
   controller.directBookingWebsiteDraftRepository = { getDraftById: jest.fn(async () => draft) };
   controller.directBookingWebsiteEventRepository = { recordEvent: jest.fn(async () => undefined) };
-  controller.propertyService = { getFullPropertyAttributesWithFullLocation: jest.fn(async () => PROPERTY_DETAILS) };
+  controller.propertyService = { getFullPropertyAttributes: jest.fn(async () => PROPERTY_DETAILS) };
+  controller.websitePublicHostService = { loadPublicHost: jest.fn(async () => PUBLIC_HOST) };
+  controller.authManager = {
+    authorizeGroupRequest: jest.fn(async () => "host-1"),
+    authorizeOwnerRequest: jest.fn(async () => "host-1"),
+  };
   controller.directBookingWebsiteRatePlanService = new DirectBookingWebsiteRatePlanService(ratePlanRepository, {});
   controller.websiteElitePageSettings = new WebsiteElitePageSettings(controller.directBookingWebsiteRatePlanService, {
     planReadTimeoutMs,
   });
   return controller.getWebsitePreviewByDraftId({
     httpMethod: "GET",
-    headers: {},
+    headers: { Authorization: "host-token" },
     queryStringParameters: { draft: draft.id, ...query },
   });
 };
@@ -62,7 +69,7 @@ describe("the public preview of a draft and its page settings", () => {
     const response = await openPreview(draft, ratePlanRepository);
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toBe(JSON.stringify({ draft: draftRow(), propertyDetails: PROPERTY_DETAILS }));
+    expect(response.body).toBe(previewBody(draftRow()));
     expectNoPlanRead(ratePlanRepository);
   });
 
@@ -76,7 +83,7 @@ describe("the public preview of a draft and its page settings", () => {
     const response = await openPreview(DRAFT_WITH_PAGES, ratePlanRepository);
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toBe(JSON.stringify({ draft: draftRow(), propertyDetails: PROPERTY_DETAILS }));
+    expect(response.body).toBe(previewBody(draftRow()));
     expectOnlyCurrentPlanRead(ratePlanRepository);
     expect(consoleError).not.toHaveBeenCalled();
   });
@@ -90,7 +97,7 @@ describe("the public preview of a draft and its page settings", () => {
     const response = await openPreview(DRAFT_WITH_PAGES, ratePlanRepository, { hostId: "host-from-request" });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toBe(JSON.stringify({ draft: DRAFT_WITH_PAGES, propertyDetails: PROPERTY_DETAILS }));
+    expect(response.body).toBe(previewBody(DRAFT_WITH_PAGES));
     expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledTimes(1);
     expect(ratePlanRepository.findCurrentByAccountId).toHaveBeenCalledWith("host-1");
   });
@@ -114,6 +121,6 @@ describe("the public preview of a draft and its page settings", () => {
     const response = await openPreview(DRAFT_WITH_PAGES, ratePlanRepository, {}, 20);
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toBe(JSON.stringify({ draft: draftRow(), propertyDetails: PROPERTY_DETAILS }));
+    expect(response.body).toBe(previewBody(draftRow()));
   });
 });
