@@ -1392,6 +1392,18 @@
             "title": "Teammitglieder",
             "desc": "Lade dein Team ein und weise Rollen für dein Portfolio zu."
           },
+          "security": {
+            "title": "Sicherheit & Authentifizierung einrichten",
+            "desc": "Schütze dein Konto mit Zwei-Faktor-Authentifizierung."
+          },
+          "owners": {
+            "title": "Eigentümerverwaltung einrichten",
+            "desc": "Füge Eigentümer hinzu und verwalte ihre Eigentumsanteile."
+          },
+          "messaging": {
+            "title": "Nachrichten einrichten",
+            "desc": "Richte automatische Nachrichten für deine Gäste ein."
+          },
           "listProperties": {
             "title": "Unterkünfte eintragen",
             "desc": "Verwalte und füge Unterkünfte in deinem Portfolio hinzu."
@@ -2158,6 +2170,45 @@
         "percentInvalid": "Gib einen Prozentsatz von 0,01 bis 100 ein, mit höchstens 2 Nachkommastellen.",
         "percentZero": "Ein Anteil muss mindestens 0,01% betragen. Entferne den Eigentümer stattdessen."
       }
+    }
+  },
+  "hostIntegrations": {
+    "title": "Integrations-Marktplatz",
+    "subtitle": "Verbinde die Tools, die du schon nutzt, mit Domits und sieh, was als Nächstes kommt.",
+    "listLabel": "Integrationen",
+    "setUpWhatsApp": "WhatsApp einrichten",
+    "filtersLabel": "Integration finden",
+    "searchLabel": "Integrationen suchen",
+    "searchPlaceholder": "Nach Namen suchen",
+    "categoryLabel": "Kategorie",
+    "statusLabel": "Status",
+    "allCategories": "Alle Kategorien",
+    "allStatuses": "Alle Status",
+    "resultCountOne": "{count} Integration",
+    "resultCountOther": "{count} Integrationen",
+    "emptyTitle": "Keine Integrationen gefunden",
+    "emptyText": "Versuche einen anderen Namen oder setze die Filter zurück, um alle Integrationen zu sehen.",
+    "clearFilters": "Filter zurücksetzen",
+    "talkToSales": "Vertrieb kontaktieren",
+    "statuses": {
+      "available": "Verfügbar",
+      "in_development": "In Entwicklung",
+      "on_request": "Auf Anfrage"
+    },
+    "categories": {
+      "revenue_management": "Revenue Management",
+      "channel_management": "Channel Management",
+      "guest_protection": "Gästeschutz",
+      "smart_locks": "Smarte Schlösser",
+      "guest_communication": "Gästekommunikation"
+    },
+    "descriptions": {
+      "pricelabs": "Optimiere deine Übernachtungspreise mit dynamischer Preisgestaltung auf Basis der Marktnachfrage und der Leistung deiner Unterkunft.",
+      "channex": "Verwalte Verfügbarkeit, Preise und Reservierungen deiner Unterkunft über mehrere Buchungskanäle mit einer einzigen Verbindung.",
+      "siteminder": "Verbinde deine Verwaltungs- und Vertriebsabläufe mit dem Hospitality-Technologie-Ökosystem von SiteMinder.",
+      "truvi": "Sorge für sicherere Buchungen mit Gäste-Screening und Lösungen für das Risikomanagement.",
+      "remotelock": "Vereinfache den Zugang zu deiner Unterkunft mit vernetzten smarten Schlössern und automatischer Zugangsverwaltung.",
+      "whatsapp": "Kommuniziere mit Gästen über WhatsApp als Teil der Verwaltung deiner Unterkunft."
     }
   }
 }
