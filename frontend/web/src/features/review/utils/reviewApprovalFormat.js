@@ -69,5 +69,4 @@ const REVIEW_STATUS_LABELS = {
   REJECTED: "Rejected",
 };
 
-export const getReviewStatusLabel = (status) =>
-  Object.hasOwn(REVIEW_STATUS_LABELS, status) ? REVIEW_STATUS_LABELS[status] : "Unknown";
+export const getReviewStatusLabel = (status) => Object.hasOwn(REVIEW_STATUS_LABELS, status) ? REVIEW_STATUS_LABELS[status] : "Unknown";

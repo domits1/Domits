@@ -316,6 +316,33 @@ describe("MissedRevenueService.getMissedRevenue", () => {
     expect(result.actualRevenue).toBe(0);
   });
 
+  // The revenue figures are in euros; an imported booking paid in pounds would add 250 GBP
+  // as 250 EUR, so it is left out until there is an exchange rate (#3583, decision A).
+  test.each([
+    ["GBP", false],
+    ["usd", false],
+    ["EUR", true],
+    [null, true],
+  ])("a booking in currency %p contributes to actual revenue: %s", async (currency, contributes) => {
+    const { service } = createService({
+      priceRows: [],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "Paid",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 250,
+          currency,
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.actualRevenue).toBe(contributes ? 250 : 0);
+  });
+
   test.each([
     ["Confirmed", true],
     ["Accepted", true],
@@ -498,6 +525,41 @@ describe("MissedRevenueService.getMissedRevenue", () => {
 
     // actualRevenue=25, potentialRevenue=100 => 25%
     expect(result.revenueEfficiencyPct).toBeCloseTo(25);
+  });
+
+  // A non-euro booking has no actual revenue, so its nights leave the potential side too;
+  // otherwise its price would lower the efficiency. The nights stay booked, so they are not missed (#3583).
+  test("leaves the nights of a non-euro booking out of both sides of revenue efficiency", async () => {
+    const { service } = createService({
+      priceRows: [
+        { property_id: "prop-1", calendar_date: 20260901, pricelabs_price: 100 },
+        { property_id: "prop-1", calendar_date: 20260902, pricelabs_price: 300 },
+      ],
+      bookings: [
+        {
+          property_id: "prop-1",
+          status: "confirmed",
+          arrivaldate: Date.parse("2026-09-01T00:00:00Z"),
+          departuredate: Date.parse("2026-09-02T00:00:00Z"),
+          total_price: 25,
+        },
+        {
+          property_id: "prop-1",
+          status: "Paid",
+          arrivaldate: Date.parse("2026-09-02T00:00:00Z"),
+          departuredate: Date.parse("2026-09-03T00:00:00Z"),
+          total_price: 250,
+          currency: "GBP",
+        },
+      ],
+    });
+
+    const result = await service.getMissedRevenue("host-1", "2026-09-01", "2026-09-30");
+
+    expect(result.potentialRevenue).toBe(100);
+    expect(result.potentialOccupiedNights).toBe(1);
+    expect(result.revenueEfficiencyPct).toBeCloseTo(25);
+    expect(result.grossMissedRevenue).toBe(0);
   });
 
   test("revenue efficiency ignores actual revenue from a property with no priced potential nights, but actualRevenue keeps it", async () => {

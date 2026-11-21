@@ -69,6 +69,27 @@ describe("ReservationController.createPublicSiteBookingRequest", () => {
     });
   });
 
+  it("passes the guest's phone and message to the service, and nothing else from the body", async () => {
+    const controller = buildController();
+    const guest = { ...REQUEST_BODY.guest, phone: "+31 6 1234 5678" };
+
+    await controller.createPublicSiteBookingRequest(
+      buildEvent({ body: { ...REQUEST_BODY, guest, message: "We arrive late.", propertyId: "property-9" } })
+    );
+
+    const [input] = controller.publicSiteBookingRequestService.createBookingRequest.mock.calls[0];
+    expect(input).toEqual({ ...input, guest, message: "We arrive late." });
+    expect(Object.keys(input).sort()).toEqual([
+      "guest",
+      "idempotencyKey",
+      "message",
+      "quoteToken",
+      "requestId",
+      "session",
+      "siteId",
+    ]);
+  });
+
   it("reads the Idempotency-Key header regardless of casing", async () => {
     const controller = buildController();
 
