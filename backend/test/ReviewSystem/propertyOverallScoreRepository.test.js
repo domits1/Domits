@@ -8,9 +8,10 @@ describe("property score repository", () => {
   let query, propertyRepository, reviewRepository, repository;
   beforeEach(() => {
     query = { getRawOne: jest.fn().mockResolvedValue({ overall_score: "4.5", review_count: "2" }) };
-    for (const method of ["innerJoin", "select", "addSelect", "where", "andWhere"]) {
+    for (const method of ["innerJoin", "select", "addSelect", "where", "andWhere", "update", "set"]) {
       query[method] = jest.fn(() => query);
     }
+    query.execute = jest.fn().mockResolvedValue({ affected: 1 });
     propertyRepository = { findOne: jest.fn().mockResolvedValue({ id: "property-1" }) };
     reviewRepository = {
       createQueryBuilder: () => query,
@@ -45,6 +46,20 @@ describe("property score repository", () => {
     expect(query.select).toHaveBeenCalledWith("AVG(review.overall_rating)", "overall_score");
     expect(query.addSelect).toHaveBeenCalledWith("COUNT(*)", "review_count");
     expect(result).toEqual({ property_id: "property-1", overall_score: 4.5, review_count: 2 });
+  });
+  test("deleted reviews cannot satisfy the score publication filters", async () => {
+    await repository.deleteOwnReview("review-1", "guest-1", 1234);
+    expect(query.where).toHaveBeenCalledWith("id = :id", { id: "review-1" });
+    expect(query.andWhere).toHaveBeenCalledWith("reviewer_user_id = :reviewerUserId", { reviewerUserId: "guest-1" });
+    expect(query.set).toHaveBeenCalledWith({ status: "DELETED", updated_at: 1234 });
+    expect(query.execute).toHaveBeenCalledTimes(1);
+    await repository.getPropertyReviewScore("property-1", "host-1");
+    for (const field of ["status", "publication_status"]) {
+      const condition = query.andWhere.mock.calls.find(([sql]) => sql.startsWith(`review.${field} =`));
+      expect(condition).toBeDefined();
+      expect(Object.values(condition[1])).toEqual(["PUBLISHED"]);
+      expect(Object.values(condition[1])).not.toContain("DELETED");
+    }
   });
   test("does not convert an absent average into a zero score", async () => {
     query.getRawOne.mockResolvedValue({ overall_score: null, review_count: "0" });
