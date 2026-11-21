@@ -1,7 +1,7 @@
 import { applyCompletedStayConditions } from "../util/verifiedStay.js";
 import { attachPublicDetails } from "./reviewRepositoryShared.js";
 import { randomUUID } from "node:crypto";
-import { In } from "typeorm";
+import { In, IsNull } from "typeorm";
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";

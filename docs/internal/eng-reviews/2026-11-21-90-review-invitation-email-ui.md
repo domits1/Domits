@@ -1,5 +1,14 @@
 # Review invitation email UI
 
+Record correction (2026-11-21): the runbook restoration described below was not
+present at merged commit 4d5dee493. Following an explicit owner decision, the guide
+was restored in the current working tree at
+`backend/infrastructure/review-requests/README.md`. Live scheduler provisioning
+and shared sender deployment remain unverified. See
+[the current branch review](2026-11-21-90-review-request-scheduling.md) for the
+current findings and decisions; earlier statements below describe that earlier
+review's reported working-tree state, not proof of deployment or merge inclusion.
+
 Pull request: #3648
 Issue: #90
 Reviewed commit: f513e3ccf
