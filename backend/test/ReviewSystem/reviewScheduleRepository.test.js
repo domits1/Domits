@@ -1,10 +1,25 @@
 jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn() } }));
 import Database from "database";
-import { DataSource } from "typeorm";
+import { DataSource, IsNull } from "typeorm";
+import { Review_Request } from "database/models/Review_Request";
 import { Property } from "database/models/Property";
 import { Team_Member } from "database/models/Team_Member";
 import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewRepository.js";
 import { ReviewRequestSchedule20261022 } from "../../ORM/migrations/20261022_review_request_schedule.js";
+test("releases a claimed unsent invitation when its schedule is deferred", async () => {
+  const update = jest.fn().mockResolvedValue({ affected: 1 });
+  const getRepository = jest.fn().mockReturnValue({ update });
+  Database.getInstance.mockResolvedValue({ getRepository });
+
+  await expect(new ReviewRepository().releaseUnsentReviewRequest("request-1", 1800000000000))
+    .resolves.toEqual({ affected: 1 });
+
+  expect(getRepository).toHaveBeenCalledWith(Review_Request);
+  expect(update).toHaveBeenCalledWith(
+    { id: "request-1", status: "SENDING", lastSentAt: IsNull() },
+    { status: "OPEN", claimedAt: null, sendCount: 0, updatedAt: 1800000000000 },
+  );
+});
 test("authorizes ownership or active operations membership with property scope", async () => {
   const db = new DataSource({ type: "postgres", schema: "main", entities: [Property, Team_Member] });
   await db.buildMetadatas();

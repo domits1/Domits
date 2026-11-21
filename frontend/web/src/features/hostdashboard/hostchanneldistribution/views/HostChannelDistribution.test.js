@@ -78,33 +78,108 @@ describe("HostChannelDistribution", () => {
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
-  test("defaults the property picker to the first listing and scopes the sync to the picked one", async () => {
-    service.MOCK_PREVIEW_SECTIONS_ENABLED = true;
-    getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
+  describe("Property picker", () => {
+    const NO_PROPERTIES_SENTENCE = "No properties are linked to Channex yet.";
+    const LOAD_ERROR_SENTENCE = "We couldn't load your properties.";
 
-    render(<HostChannelDistribution />);
+    test("shows the picker on real data with the first property selected", async () => {
+      getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
 
-    const picker = await screen.findByRole("combobox");
-    await waitFor(() => expect(getLatestSyncEvidence).toHaveBeenCalledWith({ domitsPropertyId: "property-1" }));
-    expect(picker).toHaveValue("property-1");
+      render(<HostChannelDistribution />);
 
-    fireEvent.change(picker, { target: { value: "property-2" } });
+      const picker = await screen.findByRole("combobox");
+      expect(picker).toHaveValue("property-1");
+      expect(within(picker).getByRole("option", { name: "Beach apartment" })).toBeInTheDocument();
 
-    await waitFor(() => expect(getLatestSyncEvidence).toHaveBeenLastCalledWith({ domitsPropertyId: "property-2" }));
-  });
+      fireEvent.change(picker, { target: { value: "property-2" } });
 
-  test("shows no picker and no sync card when no listing is mapped, instead of a false No sync yet", async () => {
-    service.MOCK_PREVIEW_SECTIONS_ENABLED = true;
-    getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
-    getMappedProperties.mockResolvedValue([]);
+      expect(picker).toHaveValue("property-2");
+    });
 
-    render(<HostChannelDistribution />);
+    test("shows a loading sentence while the properties load", async () => {
+      getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
+      getMappedProperties.mockReturnValue(new Promise(() => {}));
 
-    await screen.findByText("Channex");
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.queryByText("Last sync")).not.toBeInTheDocument();
-    expect(screen.queryByText("No sync yet")).not.toBeInTheDocument();
-    expect(getLatestSyncEvidence).not.toHaveBeenCalled();
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("Loading your properties…")).toBeInTheDocument();
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    });
+
+    test("shows a sentence and no picker when no property is linked", async () => {
+      getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
+      getMappedProperties.mockResolvedValue([]);
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText(NO_PROPERTIES_SENTENCE)).toBeInTheDocument();
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    });
+
+    test("selects a single property silently, with no picker and no sentence", async () => {
+      getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
+      getMappedProperties.mockResolvedValue([LISTINGS[0]]);
+
+      render(<HostChannelDistribution />);
+
+      await waitFor(() => expect(getMappedProperties).toHaveBeenCalledTimes(1));
+      await screen.findByText("Channex");
+      await waitFor(() => expect(screen.queryByText("Loading your properties…")).not.toBeInTheDocument());
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(screen.queryByText(NO_PROPERTIES_SENTENCE)).not.toBeInTheDocument();
+      expect(screen.queryByText(LOAD_ERROR_SENTENCE)).not.toBeInTheDocument();
+    });
+
+    test.each(["CHANNEX_NOT_CONNECTED", "CHANNEX_RECONNECT_REQUIRED"])(
+      "shows no picker and no sentence on a 409 (%s), because the status card already explains it",
+      async (errorCode) => {
+        getChannexStatus.mockResolvedValue({ status: "RECONNECT_REQUIRED", displayName: "Channex" });
+        getMappedProperties.mockRejectedValue(
+          Object.assign(new Error("conflict"), { status: 409, responseBody: { errorCode } })
+        );
+
+        render(<HostChannelDistribution />);
+
+        await screen.findByText("Channex");
+        await waitFor(() => expect(getMappedProperties).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(screen.queryByText("Loading your properties…")).not.toBeInTheDocument());
+        expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+        expect(screen.queryByText(NO_PROPERTIES_SENTENCE)).not.toBeInTheDocument();
+        expect(screen.queryByText(LOAD_ERROR_SENTENCE)).not.toBeInTheDocument();
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      }
+    );
+
+    test("shows the error sentence when the properties fail to load", async () => {
+      getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
+      getMappedProperties.mockRejectedValue(Object.assign(new Error("boom"), { status: 500 }));
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText(LOAD_ERROR_SENTENCE)).toBeInTheDocument();
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    });
+
+    test.each([
+      {
+        label: "not connected",
+        status: () => Promise.resolve({ status: "NOT_CONNECTED" }),
+        settled: "No channel connected yet",
+      },
+      {
+        label: "outside the allowlist",
+        status: () => Promise.reject(Object.assign(new Error("forbidden"), { status: 403 })),
+        settled: "No channel connected yet",
+      },
+    ])("makes no property request when the host is $label", async ({ status, settled }) => {
+      getChannexStatus.mockImplementation(status);
+
+      render(<HostChannelDistribution />);
+
+      await screen.findByText(settled);
+      expect(getMappedProperties).not.toHaveBeenCalled();
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    });
   });
 
   test("requests the status once and does not refetch when the user id resolves after the first render", async () => {
@@ -122,20 +197,121 @@ describe("HostChannelDistribution", () => {
     expect(getChannexStatus).toHaveBeenCalledWith();
   });
 
-  // The three sections that still run on mock data stay out of the tab, and their mock functions
-  // are never called, unless MOCK_PREVIEW_SECTIONS_ENABLED is on.
-  test("with the preview flag off, renders no picker, Last sync or Property mapping and calls none of their mocks", async () => {
+  describe("Last sync card", () => {
+    const connect = () => getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
+    const evidenceFor = (overrides) => ({
+      item: { status: "SUCCESS", overallSuccess: true, startedAt: 1758700000000, finishedAt: 1758700005000, ...overrides },
+    });
+
+    test("is shown with the preview flag off, for the first property, and follows the picker", async () => {
+      connect();
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("Property: Canal house")).toBeInTheDocument();
+      await waitFor(() => expect(getLatestSyncEvidence).toHaveBeenCalledWith({ domitsPropertyId: "property-1" }));
+
+      fireEvent.change(await screen.findByRole("combobox"), { target: { value: "property-2" } });
+
+      expect(await screen.findByText("Property: Beach apartment")).toBeInTheDocument();
+      await waitFor(() => expect(getLatestSyncEvidence).toHaveBeenLastCalledWith({ domitsPropertyId: "property-2" }));
+    });
+
+    test("names the only property when there is no picker", async () => {
+      connect();
+      getMappedProperties.mockResolvedValue([LISTINGS[0]]);
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("Property: Canal house")).toBeInTheDocument();
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(getLatestSyncEvidence).toHaveBeenCalledWith({ domitsPropertyId: "property-1" });
+    });
+
+    test("shows the outcome sentence of the latest sync", async () => {
+      connect();
+      getLatestSyncEvidence.mockResolvedValue(evidenceFor({ overallSuccess: false, status: "FAILED", errorCount: 1 }));
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText(/^Last sync failed on /)).toBeInTheDocument();
+    });
+
+    test("shows a loading sentence while the last sync loads", async () => {
+      connect();
+      getLatestSyncEvidence.mockReturnValue(new Promise(() => {}));
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("Loading the last sync…")).toBeInTheDocument();
+    });
+
+    test("says no sync has run when the property has no evidence", async () => {
+      connect();
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("No sync has run for this property yet.")).toBeInTheDocument();
+    });
+
+    test("shows a sentence on the card, not the page-wide error, when the last sync cannot be loaded", async () => {
+      connect();
+      getLatestSyncEvidence.mockRejectedValue(Object.assign(new Error("boom"), { status: 500 }));
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("We couldn't load the last sync.")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Something went wrong loading your Channex connection.")).not.toBeInTheDocument();
+    });
+
+    test("shows no card and no sentence on a 404 CHANNEX_NOT_FOUND, because the status card covers it", async () => {
+      connect();
+      getLatestSyncEvidence.mockRejectedValue(
+        Object.assign(new Error("not found"), { status: 404, responseBody: { errorCode: "CHANNEX_NOT_FOUND" } })
+      );
+
+      render(<HostChannelDistribution />);
+
+      await waitFor(() => expect(getLatestSyncEvidence).toHaveBeenCalledTimes(1));
+      await screen.findByText("Channex");
+      await waitFor(() => expect(screen.queryByText("Loading the last sync…")).not.toBeInTheDocument());
+      expect(screen.queryByText("Last sync")).not.toBeInTheDocument();
+      expect(screen.queryByText(/Property: /)).not.toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    test("is not shown, and nothing is requested, when no property is linked", async () => {
+      connect();
+      getMappedProperties.mockResolvedValue([]);
+
+      render(<HostChannelDistribution />);
+
+      await screen.findByText("No properties are linked to Channex yet.");
+      expect(screen.queryByText("Last sync")).not.toBeInTheDocument();
+      expect(getLatestSyncEvidence).not.toHaveBeenCalled();
+    });
+
+    test("is not shown, and nothing is requested, when Channex is not connected", async () => {
+      getChannexStatus.mockResolvedValue({ status: "NOT_CONNECTED" });
+
+      render(<HostChannelDistribution />);
+
+      await screen.findByText("No channel connected yet");
+      expect(screen.queryByText("Last sync")).not.toBeInTheDocument();
+      expect(getLatestSyncEvidence).not.toHaveBeenCalled();
+    });
+  });
+
+  // The Property mapping table still runs on mock data: it stays out of the tab, and its mock
+  // function is never called, unless MOCK_PREVIEW_SECTIONS_ENABLED is on.
+  test("with the preview flag off, renders no Property mapping and does not call its mock", async () => {
     getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
 
     render(<HostChannelDistribution />);
 
-    await screen.findByText("Channex");
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.queryByText("Last sync")).not.toBeInTheDocument();
-    expect(screen.queryByText("No sync yet")).not.toBeInTheDocument();
+    await screen.findByRole("combobox");
     expect(screen.queryByText("Property mapping")).not.toBeInTheDocument();
-    expect(getMappedProperties).not.toHaveBeenCalled();
-    expect(getLatestSyncEvidence).not.toHaveBeenCalled();
     expect(getPropertyMappingRows).not.toHaveBeenCalled();
   });
 

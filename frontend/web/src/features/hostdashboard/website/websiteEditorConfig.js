@@ -139,6 +139,7 @@ export const EDITOR_SECTION_KEYS = Object.freeze({
   images: "images",
   trustCards: "trustCards",
   journeyStops: "journeyStops",
+  pages: "pages",
 });
 
 export const EDITOR_TARGET_KEYS = Object.freeze({

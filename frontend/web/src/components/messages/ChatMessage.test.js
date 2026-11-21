@@ -88,3 +88,36 @@ describe("ChatMessage retry button", () => {
     expect(onRetry).not.toHaveBeenCalled();
   });
 });
+
+describe("ChatMessage attachment load errors", () => {
+  const renderWithImage = (url, props = {}) => {
+    const message = { ...baseMessage, id: "message-1", fileUrls: [url] };
+    render(<ChatMessage message={message} userId="host-1" {...props} />);
+    return message;
+  };
+
+  test("reports the message when an attachment image fails to load", () => {
+    const onAttachmentError = jest.fn();
+    const message = renderWithImage("https://signed.example.com/photo.jpg?X-Amz-Signature=abc", { onAttachmentError });
+
+    fireEvent.error(screen.getByAltText("Attachment"));
+
+    expect(onAttachmentError).toHaveBeenCalledTimes(1);
+    expect(onAttachmentError).toHaveBeenCalledWith(message);
+  });
+
+  test("does not report a local preview that fails to load", () => {
+    const onAttachmentError = jest.fn();
+    renderWithImage("blob:photo-preview", { onAttachmentError });
+
+    fireEvent.error(screen.getByAltText("Attachment"));
+
+    expect(onAttachmentError).not.toHaveBeenCalled();
+  });
+
+  test("shows a failed image without a handler and without an error", () => {
+    renderWithImage("https://signed.example.com/photo.jpg?X-Amz-Signature=abc");
+
+    expect(() => fireEvent.error(screen.getByAltText("Attachment"))).not.toThrow();
+  });
+});
