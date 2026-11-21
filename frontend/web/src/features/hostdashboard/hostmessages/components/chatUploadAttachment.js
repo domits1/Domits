@@ -1,14 +1,30 @@
-import React, { useRef, useState} from "react";
+import React, { useEffect, useRef, useState} from "react";
 import Icon from "@mdi/react";
 import { mdiLoading, mdiPaperclip } from "@mdi/js";
 import { useUploadUrl } from "../hooks/useUploadURL";
+
+const createLocalPreview = (file) => {
+    const isImage = Boolean(file.type?.startsWith("image/"));
+    if (!isImage || typeof URL.createObjectURL !== "function") {
+        return null;
+    }
+    return URL.createObjectURL(file);
+};
 
 const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
     const [files, setFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
     const uploadingRef = useRef(false);
     const fileInputRef = useRef(null);
+    const mountedRef = useRef(true);
     const { getUploadUrl } = useUploadUrl();
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
 
     const handleAddAttachment = async () => {
         fileInputRef.current?.click();
@@ -51,13 +67,18 @@ const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
             throw new Error("Failed to upload file");
         }
 
+        if (!mountedRef.current) {
+            return;
+        }
+
         const uploadedFile = {
             name: file.name,
             type: file.type,
             url: response.fileUrl,
+            previewUrl: createLocalPreview(file),
         };
         setFiles((prev) => [...prev, uploadedFile]);
-        onUploadComplete(response.fileUrl);
+        onUploadComplete(uploadedFile);
     };
 
     const handleAttachments = async (droppedFiles) => {
@@ -70,10 +91,14 @@ const ChatUploadAttachment = ({ onUploadComplete, onUploadError }) => {
         try {
             await uploadFile(droppedFiles[0]);
         } catch {
-            onUploadError?.();
+            if (mountedRef.current) {
+                onUploadError?.();
+            }
         } finally {
             uploadingRef.current = false;
-            setUploading(false);
+            if (mountedRef.current) {
+                setUploading(false);
+            }
         }
     };
 

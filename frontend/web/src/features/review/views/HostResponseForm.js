@@ -19,6 +19,7 @@ export default function HostResponseForm({ review, onResponseChange }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const published = Boolean(response && response.status !== "draft");
   const normalizedMessage = message.replace(/\r\n?/g, "\n").trim();
   const validMessage =
@@ -26,18 +27,20 @@ export default function HostResponseForm({ review, onResponseChange }) {
   const changed = normalizedMessage !== (response?.message || "").replace(/\r\n?/g, "\n").trim();
   const canPublish = !busy && !confirmDelete && editing && validMessage && (!published || changed);
   const canDelete = Boolean(response) && !busy;
-  const submit = async (event) => {
+  const submit = async (event, action = "publish") => {
     event.preventDefault();
     if (!canPublish) return;
     const text = normalizedMessage;
     setBusy(true);
     setError("");
     try {
-      const saved = await saveHostResponse(review.id, text);
+      const saved = action === "publish" ? await saveHostResponse(review.id, text)
+        : await saveHostResponse(review.id, text, action);
       setResponse(saved);
       setMessage(saved.message);
       setEditing(false);
       onResponseChange?.(saved);
+      setNotice(saved.status === "draft" ? "Draft saved. It is not publicly visible." : "Response published.");
     } catch (cause) {
       setError(
         cause instanceof Error && cause.message ? cause.message : "Could not save your response. Please try again."
@@ -97,7 +100,7 @@ export default function HostResponseForm({ review, onResponseChange }) {
               }}
             />
             <p className={styles.count} id={`response-help-${review.id}`}>
-              {message.length}/500 characters. Your response will be public.
+              {message.length}/500 characters. Drafts stay private until you publish.
             </p>
           </>
         ) : (
@@ -110,6 +113,7 @@ export default function HostResponseForm({ review, onResponseChange }) {
             {error}
           </p>
         )}
+        {notice && <p role="status">{notice}</p>}
         {confirmDelete ? (
           <div className={styles.confirm}>
             <p>Delete this response? It will no longer appear on the review.</p>
@@ -152,6 +156,8 @@ export default function HostResponseForm({ review, onResponseChange }) {
                 Cancel
               </button>
             )}
+            {!published && <button type="button" disabled={!canPublish}
+              onClick={(event) => submit(event, response ? "edit" : "draft")}>Save Draft</button>}
             <button type="submit" className={styles.publish} disabled={!canPublish}>
               {busy ? "Publishing..." : "Publish"}
             </button>
