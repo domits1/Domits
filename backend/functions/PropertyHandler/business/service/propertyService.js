@@ -921,6 +921,13 @@ export class PropertyService {
   }
 
   async updateLocation(propertyId, location) {
+    // A listing can exist without a location row (shown as "Unknown city"); an update would then
+    // change nothing and fail, so the first save creates the location instead.
+    const existing = await this.propertyLocationRepository.getPropertyLocationById(propertyId);
+    if (!existing) {
+      return this.createLocation({ ...location, property_id: propertyId });
+    }
+
     const result = await this.propertyLocationRepository.updatePropertyLocationById(propertyId, location);
     if (!result) {
       throw new DatabaseException("Failed to update property location.");

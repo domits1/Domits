@@ -9,10 +9,12 @@ import {
   findSitePageTableProblems,
   hasActiveSitePages,
   isReservedSitePath,
+  isSitePagePath,
   normalizeSitePageNavLabel,
   normalizeSitePages,
   resolvePanoramaPageSections,
   resolveSitePageFromPath,
+  resolveSitePageTitle,
 } from "../rendering/websitePages";
 
 const CONFIGURABLE_PAGE_KEYS = ["gallery", "accommodation", "contact"];
@@ -435,5 +437,53 @@ describe("resolvePanoramaPageSections", () => {
       expect([...servedSections].sort()).toEqual([...PANORAMA_PAGE_SECTION_ORDER].sort());
       expect(resolvePanoramaPageSections(sitePages, MAIN_SITE_PAGE_KEY)).toContain("availability");
     });
+  });
+});
+
+describe("site page paths under the live view", () => {
+  it.each(["", "gallery", "gallery/", "GALLERY", "accommodation", "contact-us"])(
+    "treats %p as the site root or a page",
+    (pathname) => {
+      expect(isSitePagePath(pathname)).toBe(true);
+    }
+  );
+
+  it.each(["/", "/gallery", "gallery//", "contact", "main", "unknown", "gallery/photos", "__proto__", null])(
+    "treats %p as a path outside the site pages",
+    (pathname) => {
+      expect(isSitePagePath(pathname)).toBe(false);
+    }
+  );
+});
+
+describe("site page links with a search", () => {
+  it.each([
+    ["/website-live/villa.example", "gallery", "?siteId=abc-1", "/website-live/villa.example/gallery?siteId=abc-1"],
+    ["/website-live/villa.example", "main", "?siteId=abc-1", "/website-live/villa.example?siteId=abc-1"],
+    ["", "main", "?siteId=a%2Fb", "/?siteId=a%2Fb"],
+  ])("builds the link under %p for %p with the search after the path", (basePath, pageKey, search, href) => {
+    expect(buildSitePageHref(basePath, pageKey, search)).toBe(href);
+  });
+
+  it.each(["siteId=abc", "?", "?a#b", "?a/b", "?a\\b", "?a b", "?a\nb", "?<x>", '?a"b', 42, null])(
+    "drops the search %p",
+    (search) => {
+      expect(buildSitePageHref("", "gallery", search)).toBe("/gallery");
+    }
+  );
+});
+
+describe("site page titles", () => {
+  const SITE_PAGES = { gallery: { enabled: true, navLabel: "Photos" }, contact: { enabled: false } };
+
+  it.each([
+    ["gallery", "Photos"],
+    ["main", ""],
+    ["contact", ""],
+    ["accommodation", ""],
+    ["unknown", ""],
+    ["__proto__", ""],
+  ])("titles the page %p as %p", (pageKey, title) => {
+    expect(resolveSitePageTitle(SITE_PAGES, pageKey)).toBe(title);
   });
 });

@@ -439,6 +439,82 @@ export default function useUserProfile() {
     }
   };
 
+  const profileAttributeFields = {
+    dateOfBirth: {
+      attribute: "birthdate",
+      validate: () => validateDateOfBirth(tempUser.dateOfBirth),
+      setError: setDateOfBirthError,
+      toAttribute: () => formatBirthdateForStorage(tempUser.dateOfBirth),
+      toLocal: () => tempUser.dateOfBirth,
+      reportFailure: () => setDateOfBirthError("Failed to update birthdate. Please try again."),
+    },
+    placeOfBirth: {
+      attribute: "custom:place_of_birth",
+      toAttribute: () => tempUser.placeOfBirth,
+      toLocal: () => tempUser.placeOfBirth,
+      reportFailure: () => alert("Failed to update place of birth. Please try again."),
+    },
+    nationality: {
+      attribute: "custom:nationality",
+      validate: () => validateNationalityField(tempUser.nationality || ""),
+      setError: setNationalityError,
+      toAttribute: () => tempUser.nationality.trim(),
+      toLocal: () => tempUser.nationality.trim(),
+      reportFailure: () => setNationalityError("Failed to update nationality. Please try again."),
+    },
+    title: {
+      attribute: "custom:title",
+      toAttribute: () => tempUser.title || "",
+      toLocal: () => tempUser.title,
+      reportFailure: () => alert("Failed to update title. Please try again."),
+    },
+    sex: {
+      attribute: "gender",
+      toAttribute: () => tempUser.sex || "",
+      toLocal: () => tempUser.sex,
+      reportFailure: () => alert("Failed to update gender. Please try again."),
+    },
+  };
+
+  const saveProfileAttributes = async (changedKeys) => {
+    const batchedKeys = [];
+    let hasInvalidField = false;
+
+    changedKeys.forEach((key) => {
+      const field = profileAttributeFields[key];
+      const error = field.validate ? field.validate() : "";
+      if (field.setError) {
+        field.setError(error);
+      }
+      if (error) {
+        hasInvalidField = true;
+        return;
+      }
+      batchedKeys.push(key);
+    });
+
+    if (batchedKeys.length === 0) {
+      return !hasInvalidField;
+    }
+
+    const attributes = Object.fromEntries(
+      batchedKeys.map((key) => [profileAttributeFields[key].attribute, profileAttributeFields[key].toAttribute()])
+    );
+
+    try {
+      const currentUser = await Auth.currentAuthenticatedUser();
+      await Auth.updateUserAttributes(currentUser, attributes);
+      const updates = Object.fromEntries(batchedKeys.map((key) => [key, profileAttributeFields[key].toLocal()]));
+      setUser((prev) => ({ ...prev, ...updates }));
+      batchedKeys.filter((key) => editState[key]).forEach((key) => toggleEditState(key));
+      return !hasInvalidField;
+    } catch (error) {
+      console.error("Error updating profile attributes:", error);
+      batchedKeys.forEach((key) => profileAttributeFields[key].reportFailure());
+      return false;
+    }
+  };
+
   const fetchUserData = async () => {
     setAuthStatusLoading(true);
     setAuthStatusError(false);
@@ -575,6 +651,7 @@ export default function useUserProfile() {
     onSaveUserNationality: saveUserNationality,
     onSaveUserTitle: saveUserTitle,
     onSaveUserSex: saveUserSex,
+    onSaveProfileAttributes: saveProfileAttributes,
     onToggleEditState: toggleEditState,
   };
 }

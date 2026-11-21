@@ -7,6 +7,10 @@ const createHarness = ({
   beforeAuthorize = null,
   sendOutcomes = null,
   sendError = null,
+  template = "Hi {{guestName}}, welcome to {{propertyName}} from {{checkInDate}} to {{checkOutDate}}.",
+  checkIn = { checkInFrom: "15:00:00", checkOutTill: "11:00:00" },
+  location = { street: "Keizersgracht", housenumber: 12, housenumberextension: null, postalcode: "1015 CJ", city: "Amsterdam" },
+  guests = 2,
 } = {}) => {
   let currentAutomationStatus = automationStatus;
   let currentBookingStatus = bookingStatus;
@@ -16,7 +20,7 @@ const createHarness = ({
     bookingId: "booking-1",
     scheduledFor: 1_000,
     status: initialDeliveryStatus,
-    templateSnapshot: "Hi {{guestName}}, welcome to {{propertyName}} from {{checkInDate}} to {{checkOutDate}}.",
+    templateSnapshot: template,
   };
   const deliveryRepository = {
     delivery,
@@ -75,9 +79,12 @@ const createHarness = ({
           guestname: "Taylor",
           arrivaldate: Date.UTC(2026, 5, 20),
           departuredate: Date.UTC(2026, 5, 23),
+          guests,
           status: currentBookingStatus,
         },
         property: { id: "property-1", title: "Canal Loft" },
+        checkIn,
+        location,
       })),
     },
     unifiedMessagingClient,
@@ -166,6 +173,77 @@ describe("AutomatedMessaging delivery worker", () => {
       status: "SENT",
       messageId: "message-existing",
       failureReason: "Existing automated message reconciled.",
+    });
+  });
+
+  describe("new variables", () => {
+    const TEMPLATE =
+      "Check-in {{checkInTime}}, check-out {{checkOutTime}}. {{propertyAddress}} in {{propertyCity}} for {{numberOfGuests}} guests.";
+
+    test("sends the rendered check-in time, check-out time, address, city and number of guests", async () => {
+      const { worker, deliveryRepository, unifiedMessagingClient } = createHarness({ template: TEMPLATE });
+
+      await worker.processDue({ now: 2_000 });
+
+      expect(unifiedMessagingClient.sendAutomatedDomitsMessage).toHaveBeenCalledTimes(1);
+      expect(unifiedMessagingClient.sendAutomatedDomitsMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: "Check-in 15:00, check-out 11:00. Keizersgracht 12, 1015 CJ in Amsterdam for 2 guests.",
+        })
+      );
+      expect(deliveryRepository.delivery).toMatchObject({ status: "SENT" });
+    });
+
+    test.each([
+      ["a property with no check-in row", { checkIn: null }, "checkInTime, checkOutTime"],
+      ["a property with no location", { location: null }, "propertyAddress, propertyCity"],
+      ["a booking without a number of guests", { guests: null }, "numberOfGuests"],
+    ])("does not send for %s and says which values are missing", async (_label, harnessPatch, missing) => {
+      const { worker, deliveryRepository, unifiedMessagingClient } = createHarness({
+        template: TEMPLATE,
+        ...harnessPatch,
+      });
+
+      const results = await worker.processDue({ now: 2_000 });
+
+      expect(unifiedMessagingClient.sendAutomatedDomitsMessage).not.toHaveBeenCalled();
+      expect(deliveryRepository.authorizeSend).not.toHaveBeenCalled();
+      expect(deliveryRepository.delivery).toMatchObject({ status: "FAILED", failureReason: `Missing values: ${missing}` });
+      expect(results).toEqual([expect.objectContaining({ status: "FAILED", failureReason: `Missing values: ${missing}` })]);
+    });
+
+    test("sends a template that does not use the missing value", async () => {
+      const { worker, unifiedMessagingClient } = createHarness({
+        template: "Welcome, {{guestName}}. Check-out {{checkOutTime}}.",
+        location: null,
+      });
+
+      await worker.processDue({ now: 2_000 });
+
+      expect(unifiedMessagingClient.sendAutomatedDomitsMessage).toHaveBeenCalledTimes(1);
+    });
+
+    test("names only the values the template uses and that are missing, in the order of the template", async () => {
+      const { worker, deliveryRepository } = createHarness({
+        template: "{{propertyCity}} {{guestName}} {{checkInTime}}",
+        checkIn: null,
+        location: null,
+      });
+
+      await worker.processDue({ now: 2_000 });
+
+      expect(deliveryRepository.delivery.failureReason).toBe("Missing values: propertyCity, checkInTime");
+    });
+  });
+
+  test("a template with an unsupported variable fails with the generic reason", async () => {
+    const { worker, deliveryRepository } = createHarness({ template: "Hi {{wifiPassword}}" });
+
+    await worker.processDue({ now: 2_000 });
+
+    expect(deliveryRepository.delivery).toMatchObject({
+      status: "FAILED",
+      failureReason: "Approved template values are missing.",
     });
   });
 
