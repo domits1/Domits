@@ -4,6 +4,8 @@ export const Property = new EntitySchema({
     name: "Property",
     tableName: "property",
     columns: {
+        review_requests_enabled: { type: "boolean", default: true },
+        review_request_delay_hours: { type: "int", default: 0 },
         id: {
             primary: true,
             type: "varchar",

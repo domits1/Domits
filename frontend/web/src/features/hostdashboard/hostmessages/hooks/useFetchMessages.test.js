@@ -348,3 +348,461 @@ describe("useFetchMessages history on open", () => {
     expect(texts()).toEqual([]);
   });
 });
+
+describe("useFetchMessages refetch for live messages with attachments", () => {
+  const RAW_URL = "https://general-messaging-production-attachments.s3.amazonaws.com/images/abc-123.png";
+  const SIGNED_URL = `${RAW_URL}?X-Amz-Signature=abc`;
+
+  const storedWithSignedUrl = (id, createdAt) => ({
+    ...historyRow(id, "See photo", createdAt),
+    attachments: JSON.stringify([{ url: SIGNED_URL, type: "image", name: null }]),
+  });
+  const liveWithRawUrl = (id, overrides = {}) =>
+    livePush(id, "See photo", "2026-06-01T10:00:00.000Z", { fileUrls: [RAW_URL], ...overrides });
+  const messageUrls = (hook, id, threadId = THREAD_ID) =>
+    hook.result.current.messagesByThread[threadId]?.find((m) => m.id === id)?.fileUrls;
+  const messagesCalls = () => globalThis.fetch.mock.calls.filter(([url]) => String(url).includes("/messages?"));
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Auth.currentSession.mockResolvedValue({ getIdToken: () => ({ getJwtToken: () => "id-token-1" }) });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("refetches the thread and shows the signed url when a live message with an attachment arrives", async () => {
+    mockMessagesEndpoint([]);
+    const { hook, push, open } = setupHook();
+    await open();
+    expect(messagesCalls()).toHaveLength(1);
+    globalThis.fetch.mockImplementation(async () =>
+      jsonResponse([storedWithSignedUrl("stored-1", "2026-06-01T10:00:00.000Z")])
+    );
+
+    await act(async () => push(liveWithRawUrl("stored-1")));
+
+    await waitFor(() => expect(messageUrls(hook, "stored-1")).toEqual([SIGNED_URL]));
+    expect(messagesCalls()).toHaveLength(2);
+    expect(String(messagesCalls()[1][0])).toContain(`threadId=${THREAD_ID}`);
+    expect(messagesCalls()[1][1].headers.Authorization).toBe("Bearer id-token-1");
+  });
+
+  test("shows the message once, with the signed url", async () => {
+    mockMessagesEndpoint([]);
+    const { hook, push, open } = setupHook();
+    await open();
+    globalThis.fetch.mockImplementation(async () =>
+      jsonResponse([storedWithSignedUrl("stored-1", "2026-06-01T10:00:00.000Z")])
+    );
+
+    await act(async () => push(liveWithRawUrl("stored-1")));
+
+    await waitFor(() => expect(messageUrls(hook, "stored-1")).toEqual([SIGNED_URL]));
+    expect(hook.result.current.messagesByThread[THREAD_ID].filter((m) => m.id === "stored-1")).toHaveLength(1);
+  });
+
+  test("does not refetch for a live message without attachments", async () => {
+    mockMessagesEndpoint([]);
+    const { push, open } = setupHook();
+    await open();
+
+    await act(async () => push(livePush("stored-2", "Just text", "2026-06-01T10:00:00.000Z")));
+
+    expect(messagesCalls()).toHaveLength(1);
+  });
+
+  test("refetches once for a live message, even when later messages arrive", async () => {
+    mockMessagesEndpoint([]);
+    const { push, open } = setupHook();
+    await open();
+
+    await act(async () => push(liveWithRawUrl("stored-1")));
+    await waitFor(() => expect(messagesCalls()).toHaveLength(2));
+    await act(async () => push(livePush("stored-2", "Just text", "2026-06-01T10:01:00.000Z")));
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("keeps the live message when the refetched history does not have it yet", async () => {
+    mockMessagesEndpoint([]);
+    const { hook, push, open } = setupHook();
+    await open();
+
+    await act(async () => push(liveWithRawUrl("stored-1")));
+
+    await waitFor(() => expect(messagesCalls()).toHaveLength(2));
+    expect(messageUrls(hook, "stored-1")).toEqual([RAW_URL]);
+  });
+
+  test("keeps the live message and raises no error when the refetch fails", async () => {
+    mockMessagesEndpoint([]);
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const { hook, push, open } = setupHook();
+    await open();
+    globalThis.fetch.mockImplementation(async () => ({ ok: false, status: 500, text: async () => "boom" }));
+
+    await act(async () => push(liveWithRawUrl("stored-1")));
+
+    await waitFor(() => expect(messagesCalls()).toHaveLength(2));
+    expect(messageUrls(hook, "stored-1")).toEqual([RAW_URL]);
+    expect(hook.result.current.error).toBeNull();
+  });
+
+  test("keeps the live message and raises no error when the refetch cannot reach the server", async () => {
+    mockMessagesEndpoint([]);
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const { hook, push, open } = setupHook();
+    await open();
+    globalThis.fetch.mockImplementation(async () => {
+      throw new Error("network");
+    });
+
+    await act(async () => push(liveWithRawUrl("stored-1")));
+
+    await waitFor(() => expect(messagesCalls()).toHaveLength(2));
+    expect(messageUrls(hook, "stored-1")).toEqual([RAW_URL]);
+    expect(hook.result.current.error).toBeNull();
+  });
+
+  test("refetches the thread of the message without changing the open conversation", async () => {
+    mockMessagesEndpoint([historyRow("old-1", "Earlier question", "2026-06-01T09:00:00.000Z")]);
+    const { hook, push, open, texts } = setupHook();
+    await open();
+    globalThis.fetch.mockImplementation(async (url) =>
+      jsonResponse(
+        new URL(String(url)).searchParams.get("threadId") === "thread-2"
+          ? [{ ...storedWithSignedUrl("stored-9", "2026-06-01T10:00:00.000Z"), threadId: "thread-2" }]
+          : []
+      )
+    );
+
+    await act(async () => push(liveWithRawUrl("stored-9", { threadId: "thread-2" })));
+
+    await waitFor(() => expect(messageUrls(hook, "stored-9", "thread-2")).toEqual([SIGNED_URL]));
+    expect(messagesCalls().at(-1)[0]).toContain("threadId=thread-2");
+    expect(texts()).toEqual(["Earlier question"]);
+  });
+
+  test("does not refetch for a live message that has no thread", async () => {
+    mockMessagesEndpoint([]);
+    const { push, open } = setupHook();
+    await open();
+
+    await act(async () => push(liveWithRawUrl("stored-1", { threadId: null })));
+
+    expect(messagesCalls()).toHaveLength(1);
+  });
+
+  test("refetches once for several live messages of the same thread that arrive together", async () => {
+    mockMessagesEndpoint([]);
+    let wsMessages = [];
+    const wrapper = ({ children }) => (
+      <WebSocketContext.Provider value={{ messages: wsMessages }}>{children}</WebSocketContext.Provider>
+    );
+    wrapper.propTypes = { children: PropTypes.node };
+    const hook = renderHook(() => useFetchMessages("host-1"), { wrapper });
+    await act(async () => {
+      await hook.result.current.fetchMessages("guest-1", THREAD_ID, OPTIONS);
+    });
+    expect(messagesCalls()).toHaveLength(1);
+
+    wsMessages = [liveWithRawUrl("stored-1"), liveWithRawUrl("stored-2", { createdAt: "2026-06-01T10:01:00.000Z" })];
+    await act(async () => hook.rerender());
+
+    await waitFor(() => expect(messagesCalls()).toHaveLength(2));
+    await act(async () => {});
+    expect(messagesCalls()).toHaveLength(2);
+  });
+});
+
+describe("useFetchMessages retry of the live-attachment refetch", () => {
+  const RAW_URL = "https://general-messaging-production-attachments.s3.amazonaws.com/images/abc-123.png";
+  const SIGNED_URL = `${RAW_URL}?X-Amz-Signature=abc`;
+  const MESSAGE_ID = "stored-1";
+  const RETRY_DELAYS = [1000, 3000, 6000];
+
+  const stored = () => ({
+    ...historyRow(MESSAGE_ID, "See photo", "2026-06-01T10:00:00.000Z"),
+    attachments: JSON.stringify([{ url: SIGNED_URL, type: "image", name: null }]),
+  });
+  const live = () =>
+    livePush(MESSAGE_ID, "See photo", "2026-06-01T10:00:00.000Z", { fileUrls: [RAW_URL] });
+  const failure = () => ({ ok: false, status: 500, text: async () => "boom" });
+  const signedUrls = (hook) =>
+    hook.result.current.messagesByThread[THREAD_ID]?.find((m) => m.id === MESSAGE_ID)?.fileUrls;
+  const messagesCalls = () => globalThis.fetch.mock.calls.filter(([url]) => String(url).includes("/messages?"));
+  const advance = (ms) =>
+    act(async () => {
+      jest.advanceTimersByTime(ms);
+      for (let tick = 0; tick < 20; tick += 1) await Promise.resolve();
+    });
+  const runAllRetries = async () => {
+    for (const delay of RETRY_DELAYS) await advance(delay);
+  };
+  const answerWith = (...responses) => {
+    const queue = [...responses];
+    globalThis.fetch.mockImplementation(async () => {
+      const next = queue.length > 1 ? queue.shift() : queue[0];
+      return typeof next === "function" ? next() : next;
+    });
+  };
+  const arrive = async () => {
+    mockMessagesEndpoint([]);
+    const harness = setupHook();
+    await harness.open();
+    return harness;
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+    Auth.currentSession.mockResolvedValue({ getIdToken: () => ({ getJwtToken: () => "id-token-1" }) });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  test("retries after a failed request and stores the signed url", async () => {
+    const { hook, push } = await arrive();
+    answerWith(failure(), jsonResponse([stored()]));
+
+    await act(async () => push(live()));
+    expect(messagesCalls()).toHaveLength(2);
+    expect(signedUrls(hook)).toEqual([RAW_URL]);
+
+    await advance(RETRY_DELAYS[0]);
+
+    expect(messagesCalls()).toHaveLength(3);
+    expect(signedUrls(hook)).toEqual([SIGNED_URL]);
+  });
+
+  test("retries when the rows do not contain the message yet", async () => {
+    const { hook, push } = await arrive();
+    answerWith(jsonResponse([]), jsonResponse([stored()]));
+
+    await act(async () => push(live()));
+    expect(signedUrls(hook)).toEqual([RAW_URL]);
+
+    await advance(RETRY_DELAYS[0]);
+
+    expect(messagesCalls()).toHaveLength(3);
+    expect(signedUrls(hook)).toEqual([SIGNED_URL]);
+  });
+
+  test("waits 1s, 3s and 6s between the attempts", async () => {
+    const { push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    expect(messagesCalls()).toHaveLength(2);
+
+    await advance(RETRY_DELAYS[0] - 1);
+    expect(messagesCalls()).toHaveLength(2);
+    await advance(1);
+    expect(messagesCalls()).toHaveLength(3);
+
+    await advance(RETRY_DELAYS[1] - 1);
+    expect(messagesCalls()).toHaveLength(3);
+    await advance(1);
+    expect(messagesCalls()).toHaveLength(4);
+
+    await advance(RETRY_DELAYS[2] - 1);
+    expect(messagesCalls()).toHaveLength(4);
+    await advance(1);
+    expect(messagesCalls()).toHaveLength(5);
+  });
+
+  test("stops after the first try and three retries", async () => {
+    const { hook, push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    await runAllRetries();
+    await advance(60000);
+
+    expect(messagesCalls()).toHaveLength(5);
+    expect(signedUrls(hook)).toEqual([RAW_URL]);
+    expect(hook.result.current.error).toBeNull();
+  });
+
+  test("does not retry again once the message arrived", async () => {
+    const { push } = await arrive();
+    answerWith(jsonResponse([stored()]));
+
+    await act(async () => push(live()));
+    await advance(60000);
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("a later push does not start a second retry loop for the same message", async () => {
+    const { push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    await act(async () => push(livePush("stored-2", "Just text", "2026-06-01T10:01:00.000Z")));
+    await advance(RETRY_DELAYS[0]);
+
+    expect(messagesCalls()).toHaveLength(3);
+  });
+
+  test("a message that arrives after the first loop ended gets no new loop", async () => {
+    const { push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    await runAllRetries();
+    await advance(60000);
+    const callsAfterLimit = messagesCalls().length;
+    await act(async () => push(livePush("stored-2", "Just text", "2026-06-01T10:01:00.000Z")));
+    await advance(60000);
+
+    expect(messagesCalls()).toHaveLength(callsAfterLimit);
+  });
+
+  test("settles the message and fetches no more when the refresh throws unexpectedly", async () => {
+    const { push } = await arrive();
+    const callsBefore = messagesCalls().length;
+    const RealAbortController = globalThis.AbortController;
+    globalThis.AbortController = function BrokenAbortController() {
+      throw new Error("unexpected");
+    };
+
+    try {
+      await act(async () => push(live()));
+      globalThis.AbortController = RealAbortController;
+      await runAllRetries();
+      await act(async () => push(livePush("stored-2", "Just text", "2026-06-01T10:01:00.000Z")));
+      await advance(60000);
+    } finally {
+      globalThis.AbortController = RealAbortController;
+    }
+
+    expect(messagesCalls()).toHaveLength(callsBefore);
+  });
+
+  test("stops fetching when the chat unmounts during the wait", async () => {
+    const { hook, push } = await arrive();
+    answerWith(failure());
+
+    await act(async () => push(live()));
+    expect(messagesCalls()).toHaveLength(2);
+    hook.unmount();
+    await advance(60000);
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("aborts a request that is still running when the chat unmounts", async () => {
+    const { hook, push } = await arrive();
+    let signal = null;
+    globalThis.fetch.mockImplementation((_url, init) => {
+      signal = init.signal;
+      return new Promise(() => {});
+    });
+
+    await act(async () => push(live()));
+    expect(signal.aborted).toBe(false);
+    hook.unmount();
+
+    expect(signal.aborted).toBe(true);
+  });
+});
+
+describe("useFetchMessages refresh for an attachment image that failed to load", () => {
+  const OLD_URL = "https://signed.example.com/photo.jpg?X-Amz-Signature=old";
+  const NEW_URL = "https://signed.example.com/photo.jpg?X-Amz-Signature=new";
+  const stored = (id, url) => ({
+    ...historyRow(id, "See photo", "2026-06-01T10:00:00.000Z"),
+    attachments: JSON.stringify([{ url, type: "image", name: null }]),
+  });
+  const urlOf = (hook, id) => hook.result.current.messagesByThread[THREAD_ID]?.find((m) => m.id === id)?.fileUrls;
+  const messagesCalls = () => globalThis.fetch.mock.calls.filter(([url]) => String(url).includes("/messages?"));
+  const refresh = (hook, id) =>
+    act(async () => {
+      await hook.result.current.refreshAttachments("guest-1", THREAD_ID, id);
+    });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Auth.currentSession.mockResolvedValue({ getIdToken: () => ({ getJwtToken: () => "id-token-1" }) });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  const openWithOldUrl = async () => {
+    mockMessagesEndpoint([stored("stored-1", OLD_URL)]);
+    const harness = setupHook();
+    await harness.open();
+    expect(urlOf(harness.hook, "stored-1")).toEqual([OLD_URL]);
+    globalThis.fetch.mockImplementation(async () => jsonResponse([stored("stored-1", NEW_URL)]));
+    return harness;
+  };
+
+  test("refetches the thread and shows the fresh url", async () => {
+    const { hook } = await openWithOldUrl();
+
+    await refresh(hook, "stored-1");
+
+    expect(messagesCalls()).toHaveLength(2);
+    expect(urlOf(hook, "stored-1")).toEqual([NEW_URL]);
+  });
+
+  test("asks only once per message, even when the image fails again", async () => {
+    const { hook } = await openWithOldUrl();
+
+    await refresh(hook, "stored-1");
+    await refresh(hook, "stored-1");
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("makes a single request when several messages of one thread fail together", async () => {
+    mockMessagesEndpoint([stored("stored-1", OLD_URL), stored("stored-2", OLD_URL)]);
+    const { hook } = setupHook();
+    await act(async () => {
+      await hook.result.current.fetchMessages("guest-1", THREAD_ID, OPTIONS);
+    });
+    globalThis.fetch.mockImplementation(() => new Promise(() => {}));
+
+    await act(async () => {
+      hook.result.current.refreshAttachments("guest-1", THREAD_ID, "stored-1");
+      hook.result.current.refreshAttachments("guest-1", THREAD_ID, "stored-2");
+    });
+
+    expect(messagesCalls()).toHaveLength(2);
+  });
+
+  test("does not retry when the refetch fails", async () => {
+    const { hook } = await openWithOldUrl();
+    globalThis.fetch.mockImplementation(async () => ({ ok: false, status: 500, text: async () => "boom" }));
+
+    await refresh(hook, "stored-1");
+    await refresh(hook, "stored-1");
+
+    expect(messagesCalls()).toHaveLength(2);
+    expect(hook.result.current.error).toBeNull();
+  });
+
+  test.each([
+    ["a missing message id", "guest-1", THREAD_ID, undefined],
+    ["a missing thread id", "guest-1", null, "stored-1"],
+    ["a missing partner id", null, THREAD_ID, "stored-1"],
+  ])("does nothing for %s", async (_label, partnerId, threadId, messageId) => {
+    const { hook } = await openWithOldUrl();
+
+    await act(async () => {
+      await hook.result.current.refreshAttachments(partnerId, threadId, messageId);
+    });
+
+    expect(messagesCalls()).toHaveLength(1);
+  });
+});

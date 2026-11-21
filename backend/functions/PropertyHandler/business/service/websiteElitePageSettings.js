@@ -54,6 +54,10 @@ export class WebsiteElitePageSettings {
     };
   }
 
+  async allowsSiteProperties(hostId) {
+    return (await this.readEntitlements(hostId)).includes(SITE_PROPERTIES_ENTITLEMENT);
+  }
+
   async readEntitlements(hostId) {
     try {
       const { entitlements } = await withinTimeLimit(

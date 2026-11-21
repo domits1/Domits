@@ -4,13 +4,14 @@
 
 import React from "react";
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ChatScreen from "./ChatScreen";
 import { getMessageCapabilities } from "./messageCapabilities";
 
 const mockSendMessage = jest.fn();
 const mockRetryMessage = jest.fn();
 const mockFetchMessages = jest.fn();
+const mockRefreshAttachments = jest.fn();
 let mockMessagesByThread = {};
 
 jest.mock("./domits-logo.jpg", () => "domits-logo.jpg");
@@ -38,6 +39,7 @@ jest.mock("../../features/hostdashboard/hostmessages/hooks/useSendMessage", () =
 jest.mock("../../features/hostdashboard/hostmessages/hooks/useFetchMessages", () => ({
   useFetchMessages: () => ({
     fetchMessages: mockFetchMessages,
+    refreshAttachments: mockRefreshAttachments,
     messagesByRecipient: {},
     messagesByThread: mockMessagesByThread,
   }),
@@ -47,10 +49,50 @@ jest.mock("../../features/hostdashboard/hostmessages/components/chatUploadAttach
   const PropTypes = require("prop-types");
 
   function MockChatUploadAttachment({ onUploadComplete, onUploadError }) {
+    const [busy, setBusy] = require("react").useState(false);
     return (
       <>
-        <button type="button" onClick={() => onUploadComplete("https://example.com/photo.jpg")}>
+        <button type="button" onClick={() => setBusy(true)}>
+          Start upload
+        </button>
+        {busy ? <span>Uploader busy</span> : null}
+        <button
+          type="button"
+          onClick={() =>
+            onUploadComplete({ url: "https://example.com/photo.jpg", name: "photo.jpg", type: "image/jpeg" })
+          }>
           Attach
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onUploadComplete({ url: "https://example.com/lease.pdf", name: "lease.pdf", type: "application/pdf" })
+          }>
+          Attach PDF
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onUploadComplete({
+              url: "https://example.com/photo.jpg",
+              name: "photo.jpg",
+              type: "image/jpeg",
+              previewUrl: "blob:photo-preview",
+            })
+          }>
+          Attach with preview
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onUploadComplete({
+              url: "https://example.com/second.jpg",
+              name: "second.jpg",
+              type: "image/jpeg",
+              previewUrl: "blob:second-preview",
+            })
+          }>
+          Attach second with preview
         </button>
         <button type="button" onClick={() => onUploadError()}>
           Fail upload
@@ -443,16 +485,26 @@ describe("ChatScreen reservation messaging", () => {
     );
     const renderHostChat = (platform) => render(hostChat({ platform }));
 
+    test("starts a fresh uploader when the host opens another thread", () => {
+      const { rerender } = render(hostChat());
+      fireEvent.click(screen.getByRole("button", { name: "Start upload" }));
+      expect(screen.getByText("Uploader busy")).toBeInTheDocument();
+
+      rerender(hostChat({ contactId: "guest-2", threadId: "thread-2" }));
+
+      expect(screen.queryByText("Uploader busy")).not.toBeInTheDocument();
+    });
+
     test("drops an unsent attachment, but keeps the typed text, when the host opens another thread", () => {
       const { rerender } = render(hostChat());
 
       fireEvent.click(screen.getByRole("button", { name: "Attach" }));
       fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "Draft reply" } });
-      expect(screen.getByAltText("First attachment preview")).toBeInTheDocument();
+      expect(screen.getByRole("listitem", { name: "photo.jpg" })).toBeInTheDocument();
 
       rerender(hostChat({ platform: "CHANNEX", contactId: "guest-2", threadId: "thread-2" }));
 
-      expect(screen.queryByAltText("First attachment preview")).not.toBeInTheDocument();
+      expect(screen.queryByRole("list", { name: "Attachments" })).not.toBeInTheDocument();
       expect(screen.getByPlaceholderText("Type a message")).toHaveValue("Draft reply");
     });
 
@@ -513,6 +565,407 @@ describe("ChatScreen reservation messaging", () => {
       renderHostChat("DOMITS");
 
       expect(screen.getByRole("button", { name: "Attach" })).toBeInTheDocument();
+    });
+  });
+
+  describe("attachment chips", () => {
+    const renderHostChat = () =>
+      render(
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId="thread-1"
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={getMessageCapabilities("host")}
+        />
+      );
+    const attach = (name) => fireEvent.click(screen.getByRole("button", { name }));
+    const chip = (name) => screen.getByRole("listitem", { name });
+
+    test("shows the thumbnail of an image attachment", () => {
+      renderHostChat();
+
+      attach("Attach");
+
+      expect(within(chip("photo.jpg")).getByRole("img", { name: "photo.jpg" })).toHaveAttribute(
+        "src",
+        "https://example.com/photo.jpg"
+      );
+    });
+
+    test("shows the file name and no image for a PDF attachment", () => {
+      renderHostChat();
+
+      attach("Attach PDF");
+
+      expect(within(chip("lease.pdf")).getByText("lease.pdf")).toBeInTheDocument();
+      expect(chip("lease.pdf").querySelector("img")).toBeNull();
+    });
+
+    test("falls back to the file name when the image cannot be loaded", () => {
+      renderHostChat();
+      attach("Attach");
+
+      fireEvent.error(within(chip("photo.jpg")).getByRole("img", { name: "photo.jpg" }));
+
+      expect(chip("photo.jpg").querySelector("img")).toBeNull();
+      expect(within(chip("photo.jpg")).getByText("photo.jpg")).toBeInTheDocument();
+    });
+
+    test("gives the list and every chip an accessible name and a remove button", () => {
+      renderHostChat();
+      attach("Attach");
+      attach("Attach PDF");
+
+      const list = screen.getByRole("list", { name: "Attachments" });
+
+      expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+      expect(within(chip("photo.jpg")).getByRole("button", { name: "Remove attachment" })).toBeInTheDocument();
+      expect(within(chip("lease.pdf")).getByRole("button", { name: "Remove attachment" })).toBeInTheDocument();
+    });
+
+    test("removes only the attachment whose remove button was clicked", () => {
+      renderHostChat();
+      attach("Attach");
+      attach("Attach PDF");
+
+      fireEvent.click(within(chip("lease.pdf")).getByRole("button", { name: "Remove attachment" }));
+
+      expect(screen.queryByRole("listitem", { name: "lease.pdf" })).not.toBeInTheDocument();
+      expect(chip("photo.jpg")).toBeInTheDocument();
+    });
+
+    test("sends the remaining attachment urls and then clears the chips", async () => {
+      renderHostChat();
+      attach("Attach");
+      attach("Attach PDF");
+      fireEvent.click(within(chip("lease.pdf")).getByRole("button", { name: "Remove attachment" }));
+
+      fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "See photo" } });
+      fireEvent.click(screen.getByTitle("Send"));
+
+      await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(1));
+      expect(mockSendMessage.mock.calls[0][2]).toEqual(["https://example.com/photo.jpg"]);
+      await waitFor(() => expect(screen.queryByRole("list", { name: "Attachments" })).not.toBeInTheDocument());
+    });
+
+    describe("preview popover", () => {
+      const openPreview = () => fireEvent.click(screen.getByRole("button", { name: "Preview photo.jpg" }));
+
+      test("lists only the image attachments", () => {
+        renderHostChat();
+        attach("Attach");
+        attach("Attach PDF");
+
+        openPreview();
+
+        const dialog = screen.getByRole("dialog", { name: "Attachment previews" });
+        expect(within(dialog).getAllByRole("img")).toHaveLength(1);
+        expect(within(dialog).getByRole("img", { name: "photo.jpg" })).toBeInTheDocument();
+      });
+
+      test("closes with its close button", () => {
+        renderHostChat();
+        attach("Attach");
+        openPreview();
+
+        fireEvent.click(screen.getByRole("button", { name: "Close attachment previews" }));
+
+        expect(screen.queryByRole("dialog", { name: "Attachment previews" })).not.toBeInTheDocument();
+      });
+
+      test("closes with the Escape key", () => {
+        renderHostChat();
+        attach("Attach");
+        openPreview();
+
+        fireEvent.keyDown(document, { key: "Escape" });
+
+        expect(screen.queryByRole("dialog", { name: "Attachment previews" })).not.toBeInTheDocument();
+      });
+
+      test("offers no preview for a PDF", () => {
+        renderHostChat();
+        attach("Attach PDF");
+
+        expect(screen.queryByRole("button", { name: /^Preview/ })).not.toBeInTheDocument();
+      });
+    });
+
+    describe("local previews", () => {
+      const originalRevokeObjectURL = URL.revokeObjectURL;
+      const hostChat = (threadId = "thread-1") => (
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId={threadId}
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={getMessageCapabilities("host")}
+        />
+      );
+
+      beforeEach(() => {
+        URL.revokeObjectURL = jest.fn();
+      });
+
+      afterEach(() => {
+        cleanup();
+        URL.revokeObjectURL = originalRevokeObjectURL;
+      });
+
+      test("shows the local preview in the chip thumbnail", () => {
+        renderHostChat();
+
+        attach("Attach with preview");
+
+        expect(within(chip("photo.jpg")).getByRole("img", { name: "photo.jpg" })).toHaveAttribute(
+          "src",
+          "blob:photo-preview"
+        );
+      });
+
+      test("shows the local preview in the preview card", () => {
+        renderHostChat();
+        attach("Attach with preview");
+
+        fireEvent.click(screen.getByRole("button", { name: "Preview photo.jpg" }));
+
+        const dialog = screen.getByRole("dialog", { name: "Attachment previews" });
+        expect(within(dialog).getByRole("img", { name: "photo.jpg" })).toHaveAttribute("src", "blob:photo-preview");
+      });
+
+      test("sends only the uploaded url, never the local preview", async () => {
+        renderHostChat();
+        attach("Attach with preview");
+
+        fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "See photo" } });
+        fireEvent.click(screen.getByTitle("Send"));
+
+        await waitFor(() => expect(mockSendMessage).toHaveBeenCalledTimes(1));
+        expect(mockSendMessage.mock.calls[0][2]).toEqual(["https://example.com/photo.jpg"]);
+      });
+
+      test("revokes the preview of the chip that is removed and keeps the other one", () => {
+        renderHostChat();
+        attach("Attach with preview");
+        attach("Attach second with preview");
+
+        fireEvent.click(within(chip("second.jpg")).getByRole("button", { name: "Remove attachment" }));
+
+        expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:second-preview");
+      });
+
+      test("revokes nothing when a chip without a preview is removed", () => {
+        renderHostChat();
+        attach("Attach PDF");
+
+        fireEvent.click(within(chip("lease.pdf")).getByRole("button", { name: "Remove attachment" }));
+
+        expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+      });
+
+      test("revokes the previews of the chips when the host opens another thread", () => {
+        const { rerender } = render(hostChat());
+        attach("Attach with preview");
+        attach("Attach second with preview");
+
+        rerender(hostChat("thread-2"));
+
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:second-preview");
+        expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
+      });
+
+      test("revokes the previews of the chips when the chat is closed", () => {
+        const { unmount } = render(hostChat());
+        attach("Attach with preview");
+
+        unmount();
+
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+      });
+
+      describe("after the message is sent", () => {
+        const SIGNED_PHOTO = "https://signed.example.com/photo.jpg?X-Amz-Signature=abc";
+        const savedWithSignedUrl = (patch = {}) => ({
+          success: true,
+          saved: {
+            id: "message-1",
+            threadId: "thread-1",
+            deliveryStatus: "sent",
+            attachments: [{ url: SIGNED_PHOTO, type: "image", name: "photo.jpg" }],
+            ...patch,
+          },
+        });
+        const sendWithPreview = () => {
+          attach("Attach with preview");
+          fireEvent.change(screen.getByPlaceholderText("Type a message"), { target: { value: "See photo" } });
+          fireEvent.click(screen.getByTitle("Send"));
+        };
+        const pendingSend = () => {
+          const control = {};
+          mockSendMessage.mockImplementationOnce(
+            () =>
+              new Promise((resolve) => {
+                control.resolve = resolve;
+              })
+          );
+          return control;
+        };
+        const sentImage = () => screen.getByAltText("Attachment");
+
+        test("shows the local preview in the sent message while the server answers, and sends the uploaded url", async () => {
+          pendingSend();
+          renderHostChat();
+
+          sendWithPreview();
+
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", "blob:photo-preview"));
+          expect(mockSendMessage.mock.calls[0][2]).toEqual(["https://example.com/photo.jpg"]);
+          expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        });
+
+        test("clears the chips without revoking the preview the sent message still shows", async () => {
+          const send = pendingSend();
+          renderHostChat();
+          sendWithPreview();
+          await waitFor(() => expect(sentImage()).toBeInTheDocument());
+
+          await act(async () =>
+            send.resolve({ success: true, saved: { id: "message-1", threadId: "thread-1", deliveryStatus: "sent" } })
+          );
+
+          await waitFor(() => expect(screen.queryByRole("list", { name: "Attachments" })).not.toBeInTheDocument());
+          expect(sentImage()).toHaveAttribute("src", "blob:photo-preview");
+          expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        });
+
+        test("switches to the signed url from the send response and revokes the local preview", async () => {
+          const send = pendingSend();
+          renderHostChat();
+          sendWithPreview();
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", "blob:photo-preview"));
+
+          await act(async () => send.resolve(savedWithSignedUrl()));
+
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", SIGNED_PHOTO));
+          expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+          expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+        });
+
+        test("reads signed urls that the response returns as a JSON string", async () => {
+          const send = pendingSend();
+          renderHostChat();
+          sendWithPreview();
+          await waitFor(() => expect(sentImage()).toBeInTheDocument());
+
+          await act(async () =>
+            send.resolve(
+              savedWithSignedUrl({ attachments: JSON.stringify([{ url: SIGNED_PHOTO, type: "image", name: null }]) })
+            )
+          );
+
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", SIGNED_PHOTO));
+        });
+
+        test("keeps the local preview and does not revoke it when the response has no attachments", async () => {
+          const send = pendingSend();
+          renderHostChat();
+          sendWithPreview();
+          await waitFor(() => expect(sentImage()).toBeInTheDocument());
+
+          await act(async () =>
+            send.resolve({ success: true, saved: { id: "message-1", threadId: "thread-1", deliveryStatus: "sent" } })
+          );
+
+          expect(await screen.findByText("✓", { selector: ".message-status", exact: true })).toBeInTheDocument();
+          expect(sentImage()).toHaveAttribute("src", "blob:photo-preview");
+          expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        });
+
+        test("keeps the local preview of a message that failed and resends only the uploaded url", async () => {
+          mockSendMessage
+            .mockResolvedValueOnce({ success: false, error: "network error" })
+            .mockResolvedValueOnce(savedWithSignedUrl());
+          renderHostChat();
+
+          sendWithPreview();
+          expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
+          expect(sentImage()).toHaveAttribute("src", "blob:photo-preview");
+          expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+          fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+          await waitFor(() => expect(sentImage()).toHaveAttribute("src", SIGNED_PHOTO));
+          expect(mockSendMessage.mock.calls[1][2]).toEqual(["https://example.com/photo.jpg"]);
+          expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+          expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+        });
+
+        test("revokes the local preview of a message that never got a signed url when the chat closes", async () => {
+          mockSendMessage.mockResolvedValueOnce({ success: false, error: "network error" });
+          const { unmount } = render(hostChat());
+          sendWithPreview();
+          expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
+
+          unmount();
+
+          expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+          expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-preview");
+        });
+      });
+    });
+  });
+
+  describe("attachment images that fail to load", () => {
+    const withImage = (url) => ({
+      id: "message-9",
+      threadId: "thread-1",
+      userId: "guest-1",
+      senderId: "guest-1",
+      recipientId: "host-1",
+      text: "See photo",
+      createdAt: "2026-01-01T10:00:00.000Z",
+      fileUrls: [url],
+    });
+    const renderChat = () =>
+      render(
+        <ChatScreen
+          userId="host-1"
+          contactId="guest-1"
+          contactName="Guest"
+          propertyId="property-1"
+          threadId="thread-1"
+          platform="DOMITS"
+          dashboardType="host"
+          capabilities={getMessageCapabilities("host")}
+        />
+      );
+
+    test("asks the hook to refresh the thread for the message of the image", () => {
+      mockMessagesByThread = { "thread-1": [withImage("https://signed.example.com/photo.jpg?X-Amz-Signature=old")] };
+      renderChat();
+
+      fireEvent.error(screen.getByAltText("Attachment"));
+
+      expect(mockRefreshAttachments).toHaveBeenCalledTimes(1);
+      expect(mockRefreshAttachments).toHaveBeenCalledWith("guest-1", "thread-1", "message-9");
+    });
+
+    test("does not refresh the thread for a local preview that fails", () => {
+      mockMessagesByThread = { "thread-1": [withImage("blob:photo-preview")] };
+      renderChat();
+
+      fireEvent.error(screen.getByAltText("Attachment"));
+
+      expect(mockRefreshAttachments).not.toHaveBeenCalled();
     });
   });
 });
