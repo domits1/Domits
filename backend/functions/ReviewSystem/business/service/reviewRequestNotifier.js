@@ -3,6 +3,14 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { buildReviewInvitationEmail, httpsUrl } from "./reviewInvitationEmail.js";
 import { ReviewInvitationRepository } from "../../data/reviewInvitationRepository.js";
 
+// Checked before candidates are claimed: a claimed request is never retried, so a bad
+// setting must stop the batch rather than mark every request FAILED.
+export function reviewFrontendUrl() {
+  const url = httpsUrl(process.env.FRONTEND_URL || "https://domits.com");
+  if (!url) throw Object.assign(new Error("FRONTEND_URL must be an HTTPS URL."), { code: "INVALID_FRONTEND_URL" });
+  return url;
+}
+
 export class ReviewRequestNotifier {
   constructor(client = new LambdaClient({ region: process.env.AWS_REGION || "eu-north-1", maxAttempts: 1 }),
     { repository = new ReviewInvitationRepository() } = {}) {
@@ -45,7 +53,13 @@ export class ReviewRequestNotifier {
     if (!email) throw Object.assign(new Error("Guest email is unavailable."), {
       code: "GUEST_EMAIL_UNAVAILABLE", dependency: "GetUserInfo",
     });
-    const details = await this.repository.getDetails(booking.property_id);
+    let details;
+    try { details = await this.repository.getDetails(booking.property_id); }
+    catch (cause) {
+      throw Object.assign(new Error("Property details are unavailable.", { cause }), {
+        code: "PROPERTY_DETAILS_UNAVAILABLE", dependency: "database",
+      });
+    }
     const imageBase = httpsUrl(process.env.EMAIL_PROPERTY_IMAGE_BASE_URL || "https://accommodation.s3.eu-north-1.amazonaws.com");
     // Encode stored object keys as path segments rather than treating them as URLs.
     const propertyImageUrl = imageBase && details.imageKey
@@ -56,7 +70,7 @@ export class ReviewRequestNotifier {
     const emailContent = buildReviewInvitationEmail({
       booking, guestName, propertyTitle: details.propertyTitle, city: details.city, propertyImageUrl,
       logoUrl: process.env.EMAIL_LOGO_URL,
-      frontendUrl: process.env.FRONTEND_URL || "https://domits.com",
+      frontendUrl: reviewFrontendUrl(),
     });
     await this.invoke("EmailNotificationService", { body: {
       toEmail: email, subject: emailContent.subject,

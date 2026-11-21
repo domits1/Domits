@@ -1,4 +1,4 @@
-import { ReviewRequestNotifier } from "./reviewRequestNotifier.js";
+import { ReviewRequestNotifier, reviewFrontendUrl } from "./reviewRequestNotifier.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -173,6 +173,7 @@ export class ReviewService {
   }
 
   async processReviewRequests() {
+    reviewFrontendUrl();
     const bookings = await this.repository.findReviewRequestCandidates(this.now());
     const results = [];
     for (const booking of bookings) {

@@ -83,6 +83,30 @@ test("tracks delivery failures and exposes acknowledgement failures", async () =
     { bookingId: "b1", status: "RECONCILIATION_REQUIRED" },
   ]);
 });
+test.each(["http://localhost:3000", "not a url"])("stops the batch before claiming when FRONTEND_URL is %s", async frontendUrl => {
+  process.env.FRONTEND_URL = frontendUrl;
+  try {
+    await expect(service.processReviewRequests()).rejects.toMatchObject({ code: "INVALID_FRONTEND_URL" });
+    expect(repository.findReviewRequestCandidates).not.toHaveBeenCalled();
+    expect(repository.claimReviewRequest).not.toHaveBeenCalled();
+  } finally {
+    delete process.env.FRONTEND_URL;
+  }
+});
+test("tags a property details failure so the log names its cause", async () => {
+  const log = jest.spyOn(console, "error").mockImplementation(() => {});
+  const response = body => ({ Payload: Buffer.from(JSON.stringify({ statusCode: 200, body })) });
+  const client = { send: jest.fn().mockResolvedValueOnce(response(JSON.stringify([
+    { Attributes: [{ Name: "email", Value: "guest@example.com" }] },
+  ]))) };
+  const failing = { getDetails: jest.fn().mockRejectedValue(new Error("connection reset")) };
+  service = new ReviewService({ repository, notifier: new ReviewRequestNotifier(client, { repository: failing }), now: () => now });
+  expect((await service.processReviewRequests())[0].status).toBe("FAILED");
+  expect(client.send).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({
+    errorCode: "PROPERTY_DETAILS_UNAVAILABLE", dependency: "database",
+  });
+});
 test("integrates repository claims, email delivery and acknowledgement without duplicate sends", async () => {
   const db = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Review, Review_Request] });
   await db.buildMetadatas();
