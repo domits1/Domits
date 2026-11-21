@@ -1,18 +1,19 @@
 import React from "react";
 import RatingStars from "./RatingStars";
 import { normalizeImageUrl } from "../../../utils/accommodationImage";
-import { formatPropertyLocation, formatSubmittedAt, getGuestInitials, getReviewStatusLabel } from "../utils/reviewApprovalFormat";
+import { formatPropertyLocation, formatSubmittedAt, getGuestInitials, getReviewStatusLabel, getReviewRating } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
 function ReviewApprovalRow({ review, selected, approving, onApprove, onPublish, onView, onClose }) {
   const pending = review.status === "PENDING_APPROVAL";
+  const flagged = review.has_pending_flag === true;
   const submitted = formatSubmittedAt(review.created_at);
+  const rating = getReviewRating(review.overall_rating);
   const rowClassName = `${styles.reviewRow} ${selected ? styles.selectedRow : ""}`;
 
   return (
     <tr
       className={rowClassName}
-      aria-selected={selected}
       tabIndex={0}
       onClick={(event) => {
         if (!event.target.closest("button, input, a, label")) onView(review.id);
@@ -57,8 +58,8 @@ function ReviewApprovalRow({ review, selected, approving, onApprove, onPublish, 
         </div>
       </td>
       <td>
-        <RatingStars value={Number(review.overall_rating)} size={15} className={styles.stars} />
-        <span className={styles.ratingValue}>{Number(review.overall_rating).toFixed(1)}</span>
+        {rating !== null && <RatingStars value={rating} size={15} className={styles.stars} />}
+        <span className={styles.ratingValue}>{rating === null ? "Rating unavailable" : rating.toFixed(1)}</span>
       </td>
       <td>
         <p>{submitted.date}</p>
@@ -66,12 +67,12 @@ function ReviewApprovalRow({ review, selected, approving, onApprove, onPublish, 
       </td>
       <td>
         <span className={`${styles.pill} ${pending ? styles.pillPending : styles.pillNeutral}`}>
-          {pending ? "Pending" : getReviewStatusLabel(review.status)}
+          {flagged ? "Flagged" : pending ? "Pending" : getReviewStatusLabel(review.status)}
         </span>
       </td>
       <td>
         <div className={styles.rowActions}>
-          {pending && (
+          {pending && !flagged && (
             <button type="button" className={styles.approveButton} disabled={approving} onClick={() => onApprove(review)}>
               {approving ? "Approving…" : "Approve"}
             </button>

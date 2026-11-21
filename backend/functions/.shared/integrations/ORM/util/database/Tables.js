@@ -2,6 +2,8 @@ import { UnifiedThread } from "database/models/unified/messaging/UnifiedThread";
 import { UnifiedMessage } from "database/models/unified/messaging/UnifiedMessage";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
+import { Property_Check_In } from "database/models/Property_Check_In";
+import { Property_Location } from "database/models/Property_Location";
 import { MessageAutomation } from "database/models/automation/MessageAutomation";
 import { MessageAutomationDelivery } from "database/models/automation/MessageAutomationDelivery";
 import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
@@ -25,6 +27,8 @@ export const Tables = [
   UnifiedMessage,
   Booking,
   Property,
+  Property_Check_In,
+  Property_Location,
   MessageAutomation,
   MessageAutomationDelivery,
   BookingAutomationOutbox,

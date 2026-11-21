@@ -1,4 +1,4 @@
-import { ReviewRequestNotifier } from "./reviewRequestNotifier.js";
+import { ReviewRequestNotifier, reviewFrontendUrl } from "./reviewRequestNotifier.js";
 import { randomUUID } from "node:crypto";
 import { ReviewRepository } from "../../data/reviewRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
@@ -32,7 +32,7 @@ const toReviewView = (review) => ({
   status: review.status, created_at: review.created_at, updated_at: review.updated_at,
 });
 const toPendingReviewView = (review) => ({
-  ...toReviewView(review), property_title: review.property_title ?? null,
+  ...toReviewView(review), has_pending_flag: review.has_pending_flag === true, property_title: review.property_title ?? null,
   property_city: review.property_city ?? null, property_country: review.property_country ?? null,
   property_image_key: review.property_image_key ?? null, guest_name: review.guest_name ?? null,
 });
@@ -195,6 +195,7 @@ export class ReviewService {
   }
 
   async processReviewRequests() {
+    reviewFrontendUrl();
     const bookings = await this.repository.findReviewRequestCandidates(this.now());
     const results = [];
     for (const booking of bookings) {
@@ -347,7 +348,6 @@ export class ReviewService {
     return { limit, offset };
   }
 
-  // Return the published review feed without exposing private feedback or unreleased drafts.
   async getPublicPropertyReviews(propertyId, query = {}) {
     this.assertId(propertyId, "property ID");
     const reviews = await this.repository.findPublicForProperty(propertyId.trim(), this.parseReviewPagination(query));
@@ -459,9 +459,15 @@ export class ReviewService {
     await this.assertReviewApprover(userId, username);
     const { status = "PENDING" } = query;
     if (!["PENDING", "RESOLVED"].includes(status)) throw new BadRequestException("Invalid flag status.");
+    if (query.search !== undefined && (typeof query.search !== "string" || query.search.length > 255
+      || INVALID_TEXT_CONTROLS.test(query.search))) throw new BadRequestException("Search must be plain text of at most 255 characters.");
+    if (query.rating !== undefined && (typeof query.rating !== "string" || !/^[1-5]$/.test(query.rating))) {
+      throw new BadRequestException("Rating must be a whole number from 1 to 5.");
+    }
     const { limit, offset } = this.parseReviewPagination(query);
-    const rows = await this.repository.findReviewFlags({ status, limit: limit + 1, offset });
-    return { flags: rows.slice(0, limit), next_offset: rows.length > limit ? offset + limit : null };
+    const rows = await this.repository.findReviewFlags({ status, limit: limit + 1, offset,
+      search: query.search?.trim() || undefined, rating: query.rating === undefined ? undefined : Number(query.rating) });
+    return { flags: rows.slice(0, limit).map(({ review, ...flag }) => ({ ...flag, ...(review ? { review: toPendingReviewView(review) } : {}) })), next_offset: rows.length > limit ? offset + limit : null };
   }
 
   async resolveReviewFlag(userId, username, flagId) {
@@ -682,7 +688,8 @@ export class ReviewService {
       publication_status: review.publication_status, verification_status: review.verification_status,
       category_ratings: review.categoryRatings || {},
       response: review.response ? { message: review.response.message, published_at: review.response.publishedAt } : null,
-      can_edit: timestamp >= Number(review.created_at) && timestamp < deadline, edit_expires_at: deadline || null };
+      can_edit: review.status === "DRAFT" && review.publication_status === "UNPUBLISHED"
+        && timestamp >= Number(review.created_at) && timestamp < deadline, edit_expires_at: deadline || null };
   }
 
   async getGuestReviewHistory(callerUserId, query = {}) {
