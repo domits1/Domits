@@ -44,9 +44,24 @@ describe("guest history service and authenticated controller", () => {
     expect(result.statusCode).toBe(401);
     expect(repository.findGuestReviewHistory).not.toHaveBeenCalled();
   });
-  test.each(["PUBLISHED", "DRAFT", "REJECTED"])("preserves status %s", async (status) => {
+  test.each([
+    ["DRAFT", "UNPUBLISHED", true],
+    ["PENDING_APPROVAL", "UNPUBLISHED", false],
+    ["APPROVED", "UNPUBLISHED", false],
+    ["PUBLISHED", "PUBLISHED", false],
+    ["REJECTED", "REJECTED", false],
+    ["DRAFT", "PUBLISHED", false],
+  ])("list and detail report editability for %s/%s", async (status, publication_status, can_edit) => {
     review.status = status;
-    expect((await service.getGuestReviewHistory("guest-1")).reviews[0].status).toBe(status);
+    review.publication_status = publication_status;
+    const list = await controller.manageReviews(event());
+    const detail = await controller.manageReviews({ ...event(), resource: "/reviews/{id}", pathParameters: { id },
+      queryStringParameters: { view: "history" } });
+    expect(list.statusCode).toBe(200);
+    expect(detail.statusCode).toBe(200);
+    for (const item of [JSON.parse(list.body).reviews[0], JSON.parse(detail.body)]) {
+      expect(item).toMatchObject({ status, publication_status, can_edit });
+    }
   });
   test("returns ten rows and a continuation offset", async () => {
     repository.findGuestReviewHistory.mockResolvedValue(Array.from({ length: 11 }, (_, index) => ({ ...review, id: `r${index}` })));

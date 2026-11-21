@@ -1,15 +1,28 @@
 import { DirectBookingWebsiteRatePlanService } from "./directBookingWebsiteRatePlanService.js";
+import { SITE_PROPERTIES_OVERRIDE_KEY } from "./websiteSiteProperties.js";
 import { withinTimeLimit } from "../../util/timeLimit.js";
 
 export const SITE_PAGES_OVERRIDE_KEY = "sitePages";
 export const SITE_PAGES_ENTITLEMENT = "website.unlimited_pages";
+export const SITE_PROPERTIES_ENTITLEMENT = "website.multi_property";
 export const WEBSITE_PLAN_READ_TIMEOUT_MS = 3000;
 
-const hasSitePages = (overrides) => Boolean(overrides) && Object.hasOwn(overrides, SITE_PAGES_OVERRIDE_KEY);
+const ELITE_OVERRIDE_ENTITLEMENTS = Object.freeze([
+  [SITE_PAGES_OVERRIDE_KEY, SITE_PAGES_ENTITLEMENT],
+  [SITE_PROPERTIES_OVERRIDE_KEY, SITE_PROPERTIES_ENTITLEMENT],
+]);
 
-const withoutSitePages = (overrides) =>
-  hasSitePages(overrides)
-    ? Object.fromEntries(Object.entries(overrides).filter(([key]) => key !== SITE_PAGES_OVERRIDE_KEY))
+const hasKey = (overrides, key) => Boolean(overrides) && Object.hasOwn(overrides, key);
+
+const listEliteKeys = (...overridesList) =>
+  ELITE_OVERRIDE_ENTITLEMENTS.filter(([key]) => overridesList.some((overrides) => hasKey(overrides, key)));
+
+const listBlockedKeys = (eliteKeys, entitlements) =>
+  eliteKeys.filter(([, entitlement]) => !entitlements.includes(entitlement)).map(([key]) => key);
+
+const withoutKeys = (overrides, keys) =>
+  keys.some((key) => hasKey(overrides, key))
+    ? Object.fromEntries(Object.entries(overrides).filter(([key]) => !keys.includes(key)))
     : overrides;
 
 export class WebsiteElitePageSettings {
@@ -22,35 +35,43 @@ export class WebsiteElitePageSettings {
   }
 
   async servePageSettingsForHost({ hostId, overrides }) {
-    if (!hasSitePages(overrides)) return overrides;
-    return (await this.mayServePageSettings(hostId)) ? overrides : withoutSitePages(overrides);
+    const eliteKeys = listEliteKeys(overrides);
+    if (eliteKeys.length === 0) return overrides;
+    return withoutKeys(overrides, listBlockedKeys(eliteKeys, await this.readEntitlements(hostId)));
   }
 
   async servePageSettingsOnDraft(draft) {
-    const draftHasSitePages = hasSitePages(draft?.contentOverrides) || hasSitePages(draft?.publishedContentOverrides);
-    if (!draftHasSitePages || (await this.mayServePageSettings(draft.hostId))) return draft;
+    const eliteKeys = listEliteKeys(draft?.contentOverrides, draft?.publishedContentOverrides);
+    if (eliteKeys.length === 0) return draft;
+
+    const blockedKeys = listBlockedKeys(eliteKeys, await this.readEntitlements(draft.hostId));
+    if (blockedKeys.length === 0) return draft;
 
     return {
       ...draft,
-      contentOverrides: withoutSitePages(draft.contentOverrides),
-      publishedContentOverrides: withoutSitePages(draft.publishedContentOverrides),
+      contentOverrides: withoutKeys(draft.contentOverrides, blockedKeys),
+      publishedContentOverrides: withoutKeys(draft.publishedContentOverrides, blockedKeys),
     };
   }
 
-  async mayServePageSettings(hostId) {
+  async allowsSiteProperties(hostId) {
+    return (await this.readEntitlements(hostId)).includes(SITE_PROPERTIES_ENTITLEMENT);
+  }
+
+  async readEntitlements(hostId) {
     try {
       const { entitlements } = await withinTimeLimit(
         this.ratePlanService.getCurrentEntitlements(hostId),
         this.planReadTimeoutMs,
         () => new Error("The website plan read did not answer in time.")
       );
-      return entitlements.includes(SITE_PAGES_ENTITLEMENT);
+      return entitlements;
     } catch (error) {
       console.error(
-        `[WebsitePageSettings] the website plan of host ${hostId} could not be read, so site pages are not served.`,
+        `[WebsitePageSettings] the website plan of host ${hostId} could not be read, so Elite page settings are not served.`,
         error
       );
-      return false;
+      return [];
     }
   }
 }

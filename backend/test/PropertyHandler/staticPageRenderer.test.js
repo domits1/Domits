@@ -2,6 +2,7 @@ import { describe, it, expect, jest } from "@jest/globals";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { StaticPageRenderer } from "../../functions/PropertyHandler/business/service/staticPageRenderer.js";
+import { FULL_LOCATION } from "./support/publicLocation.js";
 
 const FIXTURES = join(process.cwd(), "prerender", "__fixtures__");
 const FIXTURE_PAYLOAD = JSON.parse(readFileSync(join(FIXTURES, "renderPayload.json"), "utf8"));
@@ -32,6 +33,7 @@ describe("StaticPageRenderer", () => {
     const generator = buildGenerator();
     const snapshot = {
       ...SITE.publishedPropertySnapshot,
+      location: FULL_LOCATION,
       calendarAvailability: { unavailableDateKeys: ["2026-12-24"] },
     };
 

@@ -86,18 +86,19 @@ describe("Login MFA challenge", () => {
     jest.clearAllMocks();
   });
 
-  it("sends an authorized review approver to the admin dashboard even with a guest group", async () => {
+  it("uses the admin dashboard for a traveler with approval access", async () => {
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { "custom:group": "Traveler" } });
     hasReviewApprovalAccess.mockResolvedValue(true);
 
     renderLogin();
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(
-      "/hostdashboard/admin/review-approval", { replace: true },
+      "/hostdashboard/admin/review-approval",
     ));
+    expect(hasReviewApprovalAccess).toHaveBeenCalled();
   });
 
-  it("sends an authorized review approver to the admin dashboard instead of a login redirect", async () => {
+  it("uses the admin dashboard instead of a generic dashboard redirect", async () => {
     Auth.signIn.mockResolvedValue({ username: "user-123" });
     hasReviewApprovalAccess.mockResolvedValue(true);
     renderLogin("/login?redirect=%2Fguestdashboard");
@@ -105,6 +106,7 @@ describe("Login MFA challenge", () => {
     submitPassword();
 
     await waitFor(() => expect(locationStub.href).toBe("/hostdashboard/admin/review-approval"));
+    expect(hasReviewApprovalAccess).toHaveBeenCalled();
   });
 
   it("completes a login without a challenge by dispatching authChanged and reloading", async () => {

@@ -1,5 +1,7 @@
 const PUBLIC_PROPERTY_FIELDS = ["id", "title", "subtitle", "description", "status"];
 
+export const PUBLIC_LOCATION_FIELDS = Object.freeze(["country", "city"]);
+
 const PUBLIC_SNAPSHOT_SECTIONS = [
   "amenities",
   "availability",
@@ -40,6 +42,8 @@ const pickFields = (source, fields) => {
   return view;
 };
 
+export const toPublicLocationView = (location) => (isObject(location) ? pickFields(location, PUBLIC_LOCATION_FIELDS) : null);
+
 export const toPublicWebsitePropertySnapshotView = (snapshot) => {
   if (!isObject(snapshot)) {
     return {};
@@ -51,6 +55,9 @@ export const toPublicWebsitePropertySnapshotView = (snapshot) => {
   }
   if (isObject(snapshot.calendarAvailability)) {
     view.calendarAvailability = pickFields(snapshot.calendarAvailability, PUBLIC_CALENDAR_FIELDS);
+  }
+  if ("location" in view) {
+    view.location = toPublicLocationView(view.location);
   }
 
   return view;

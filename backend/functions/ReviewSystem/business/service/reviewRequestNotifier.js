@@ -34,7 +34,6 @@ export class ReviewRequestNotifier {
     return response.body;
   }
   async send(booking) {
-
     const body = await this.invoke("GetUserInfo", { UserId: booking.guestid });
     let users;
     try { users = typeof body === "string" ? JSON.parse(body) : body; }

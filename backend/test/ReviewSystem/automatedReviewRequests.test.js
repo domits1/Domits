@@ -12,6 +12,33 @@ const invitationRepository = { getDetails: jest.fn().mockResolvedValue({ propert
 const notifierOptions = { repository: invitationRepository };
 const now = 1800000000000;
 const booking = { id: "b1", guestid: "g1", hostid: "h1", property_id: "p1", departuredate: now - 1, status: "paid" };
+
+test.each([
+  [undefined, "https://domits.com"],
+  ["", "https://domits.com"],
+  ["https://acceptance.domits.com", "https://acceptance.domits.com"],
+  ["https://localhost:3000", "https://localhost:3000"],
+])("uses frontend URL %s for invitation links", async (frontendUrl, origin) => {
+  const previous = process.env.FRONTEND_URL;
+  try {
+    if (frontendUrl === undefined) delete process.env.FRONTEND_URL;
+    else process.env.FRONTEND_URL = frontendUrl;
+    const response = body => ({ Payload: Buffer.from(JSON.stringify({ statusCode: 200, body })) });
+    const client = { send: jest.fn()
+      .mockResolvedValueOnce(response(JSON.stringify([{ Attributes: [{ Name: "email", Value: "guest@example.com" }] }])))
+      .mockResolvedValueOnce(response("Email sent")) };
+    await new ReviewRequestNotifier(client, notifierOptions).send({ ...booking, id: "booking & one" });
+    const payload = JSON.parse(Buffer.from(client.send.mock.calls[1][0].input.Payload).toString());
+    const link = new URL(payload.body.body.match(/Share your experience: (https:\/\/\S+)/)[1]);
+    expect(link.origin).toBe(origin);
+    expect(link.pathname).toBe("/review");
+    expect(link.searchParams.get("bookingId")).toBe("booking & one");
+  } finally {
+    if (previous === undefined) delete process.env.FRONTEND_URL;
+    else process.env.FRONTEND_URL = previous;
+  }
+});
+
 let repository, notifier, service;
 beforeEach(() => {
   process.env.REVIEW_REQUEST_START_AT = String(now - 1000);
