@@ -7,7 +7,7 @@ import styles from "./ReviewNotifications.module.css";
 import { useReviewAlerts } from "./ReviewAlertsProvider";
 import { FiCheck, FiSearch, FiTrash2 } from "react-icons/fi";
 
-const filters = [
+const hostFilters = [
   ["all", "All notifications"], ["unread", "Unread notifications"],
   ["review", "New reviews"], ["low", "Low ratings"],
   ["declining", "Declining ratings"], ["overdue", "Overdue responses"],
@@ -28,6 +28,8 @@ const toggleSelection = (selected, id, checked) => {
 export default function ReviewNotifications({ alerts = [], loading = false, error = false }) {
   const live = useReviewAlerts();
   ({ alerts, loading, error } = notificationData(live, alerts, loading, error));
+  const filters = live?.administrator ? [["all", "All notifications"], ["unread", "Unread notifications"],
+    ["approval", "Pending approval"], ["flagged", "Flagged"], ["publication", "Pending publication"]] : hostFilters;
   const [filter, setFilter] = useState("all");
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [bulkPending, setBulkPending] = useState(false);
@@ -66,12 +68,14 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
     }
   }, [live?.pending]);
 
+  if (live?.administrator && !live.allowed) return <p role={error ? "alert" : "status"}>
+    {error || "Checking review administration access..."}{error && <button onClick={live.refresh}>Retry</button>}</p>;
   return (
     <section className={`${reviewStyles.page} ${styles.page}`} aria-labelledby="notification-heading"
       aria-busy={loading || undefined}>
       <header className={reviewStyles.pageHeading}>
         <h2 id="notification-heading">Review Notifications</h2>
-        <p>View and manage all review-related notifications for your properties.</p>
+        <p>{live?.administrator ? "View and manage review moderation notifications." : "View and manage all review-related notifications for your properties."}</p>
         {live && <div className={`${styles.tools} ${styles.bulkActions}`}>
           <button className={styles.action} disabled={bulkPending || live.loading || live.pending || !targets.some((a) => !a.read)} onClick={() => bulk("read")}><FiCheck aria-hidden="true" /> Mark {scope} alerts as read</button>
           <button className={styles.action} disabled={bulkPending || live.loading || live.pending || !targets.some((a) => a.read)} onClick={() => bulk("dismiss")}><FiTrash2 aria-hidden="true" /> Dismiss {scope} read alerts</button>
@@ -129,10 +133,10 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
                       {validDate ? <time dateTime={alert.timestamp}>{new Date(alert.timestamp).toLocaleString()}</time> : <span>Date unavailable</span>}
                       <span className={alert.read ? alertStyles.read : alertStyles.unread}>{alert.read ? "Read" : "Unread"}</span>
                     </div>
-                    <div className={styles.actions}><Link className={styles.action} to={alert.propertyId ?
-                      `/hostdashboard/property?ID=${encodeURIComponent(alert.propertyId)}` : "/hostdashboard/reviews"}
-                      aria-label={`${alert.propertyId ? "View property" : "View reviews"} for ${alert.property}`}>
-                      {alert.propertyId ? "View property" : "View reviews"}<span aria-hidden="true"> ›</span>
+                    <div className={styles.actions}><Link className={styles.action} to={alert.destination || (alert.propertyId ?
+                      `/hostdashboard/property?ID=${encodeURIComponent(alert.propertyId)}` : "/hostdashboard/reviews")}
+                      aria-label={`${alert.destination ? "Review" : alert.propertyId ? "View property" : "View reviews"} for ${alert.property}`}>
+                      {alert.destination ? "Review" : alert.propertyId ? "View property" : "View reviews"}<span aria-hidden="true"> ›</span>
                     </Link>
                     {live && <>
                       <button className={styles.action} disabled={live.pending || live.loading || alert.read} onClick={() => live.update(alert.id, "read")} aria-label={`Mark notification for ${alert.property} as read`}><FiCheck aria-hidden="true" /></button>

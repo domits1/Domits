@@ -380,3 +380,19 @@ describe("ReviewApprovalPage", () => {
     expect(getAdminReviews).toHaveBeenCalledTimes(2);
   });
 });
+
+
+test("notification links select the publication tab and the referenced review on a later page", async () => {
+  getAdminReviews.mockResolvedValue(Array.from({ length: 10 }, (_, index) => pendingReview({ id: `target${index}`, title: `Review ${index}`, status: "APPROVED" })));
+  render(<ReviewApprovalPage initialTab="approved" reviewId="target9" />);
+  expect(await screen.findByRole("tab", { name: /Unpublished/ })).toHaveAttribute("aria-selected", "true");
+  await waitFor(() => expect(details()).toHaveTextContent("Review 9"));
+  expect(getAdminReviews).toHaveBeenCalledWith("approved");
+});
+
+test("flag notification links open the moderation view", async () => {
+  getReviewFlags.mockResolvedValue({ flags: [], next_offset: null });
+  render(<ReviewApprovalPage initialTab="moderation" reviewId="r1" />);
+  expect(await screen.findByRole("tab", { name: /Moderation queue/ })).toHaveAttribute("aria-selected", "true");
+  await waitFor(() => expect(getReviewFlags).toHaveBeenCalled());
+});

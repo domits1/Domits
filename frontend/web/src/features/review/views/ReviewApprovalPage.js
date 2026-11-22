@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ListFilter, Search } from "lucide-react";
 import ReviewApprovalTable from "../components/ReviewApprovalTable";
 import ReviewApprovalDetails from "../components/ReviewApprovalDetails";
@@ -72,8 +72,9 @@ function Pagination({ page, pageCount, total, onChange }) {
   );
 }
 
-export default function ReviewApprovalPage() {
-  const [tabIndex, setTabIndex] = useState(0);
+export default function ReviewApprovalPage({ initialTab, reviewId } = {}) {
+  const [tabIndex, setTabIndex] = useState(() => initialTab === "moderation" ? REVIEW_TABS.indexOf(MODERATION_TAB)
+    : Math.max(0, REVIEW_TABS.findIndex(tab => tab.scope === initialTab)));
   const tab = REVIEW_TABS[tabIndex];
   const showModeration = tab === MODERATION_TAB;
   const { reviews, queueState, loadError, retry, approve, publish, approvingIds, notice } = useReviewApprovalQueue(tab.scope);
@@ -89,6 +90,10 @@ export default function ReviewApprovalPage() {
     () => reviews.filter((review) => matchesReviewSearch(review, query) && matchesRating(review, rating)),
     [reviews, query, rating]
   );
+  useEffect(() => {
+    const index = reviews.findIndex(review => review.id === reviewId);
+    if (index >= 0) { setPage(Math.floor(index / PAGE_SIZE) + 1); setSelectedId(reviewId); }
+  }, [reviews, reviewId]);
   const pageCount = Math.max(1, Math.ceil(visibleReviews.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pageReviews = visibleReviews.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -214,7 +219,7 @@ export default function ReviewApprovalPage() {
           {showModeration ? (
             <>
               {flagNotice && <p role="status" className={`${styles.notice} ${styles.noticeSuccess}`}>{flagNotice}</p>}
-              <ReviewModerationQueue search={query} rating={rating} />
+              <ReviewModerationQueue targetReviewId={reviewId} search={query} rating={rating} />
             </>
           ) : (
             <section id="review-status-panel" role="tabpanel" aria-labelledby={`review-tab-${tab.scope}`}>

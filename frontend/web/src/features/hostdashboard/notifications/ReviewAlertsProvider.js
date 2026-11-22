@@ -1,14 +1,18 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { getIdToken } from "../../../services/getAccessToken";
-import { API_REVIEW_BASE } from "../../review/services/reviewAPI";
+import { API_REVIEW_BASE, hasReviewApprovalAccess } from "../../review/services/reviewAPI";
 
 export const ReviewAlertsContext = createContext(null);
 export const useReviewAlerts = () => useContext(ReviewAlertsContext);
-const kinds = { NEW_REVIEW: "review", LOW_RATING: "low", DECLINING_RATING: "declining", RESPONSE_OVERDUE: "overdue" };
-const messages = { review: "A new review is available.", low: "A low rating requires attention.", declining: "Your property rating is declining.", overdue: "A review response is overdue." };
+export const adminKinds = { REVIEW_PENDING_APPROVAL: "approval", REVIEW_FLAGGED: "flagged", REVIEW_PENDING_PUBLICATION: "publication" };
+const adminPath = "/hostdashboard/admin/review-approval";
+const adminTabs = { approval: "pending-approval", flagged: "moderation", publication: "approved" };
+const kinds = { NEW_REVIEW: "review", LOW_RATING: "low", DECLINING_RATING: "declining", RESPONSE_OVERDUE: "overdue", ...adminKinds };
+const messages = { approval: "A guest review is awaiting approval.", flagged: "A review requires moderation.", publication: "An approved review is awaiting publication.", review: "A new review is available.", low: "A low rating requires attention.", declining: "Your property rating is declining.", overdue: "A review response is overdue." };
 const adapt = (alert) => ({ id: alert.id, type: kinds[alert.alert_type] || "review",
-  propertyId: alert.property_id, property: `Property ${alert.property_id}`, read: alert.status !== "UNREAD",
+  propertyId: alert.property_id, property: `Property ${alert.property_id}${adminKinds[alert.alert_type] ? ` / Review ${alert.review_id}` : ""}`,
+  ...(adminKinds[alert.alert_type] ? { destination: `${adminPath}?tab=${adminTabs[kinds[alert.alert_type]]}&reviewId=${encodeURIComponent(alert.review_id)}` } : {}), read: alert.status !== "UNREAD",
   dismissed: alert.status === "DISMISSED", timestamp: new Date(Number(alert.created_at)).toISOString(),
   message: messages[kinds[alert.alert_type]] || "Review feedback requires attention." });
 
@@ -23,6 +27,7 @@ export async function requestAlerts(path, method = "GET") {
 
 export default function ReviewAlertsProvider({ children }) {
   const { pathname } = useLocation();
+  const administrator = pathname.startsWith("/hostdashboard/admin/");
   const active = pathname === "/hostdashboard" || pathname.startsWith("/hostdashboard/");
   const [state, setState] = useState({ alerts: [], unreadCount: 0, loading: false, error: "", hasMore: false });
   const [pending, setPending] = useState(false);
@@ -34,28 +39,42 @@ export default function ReviewAlertsProvider({ children }) {
     const epoch = generation.current, offset = append ? data.current.offset || 0 : 0;
     setState((s) => ({ ...s, loading: true, error: "" }));
     try {
-      const result = await requestAlerts(`?limit=50&offset=${offset}`);
+      if (administrator) {
+        const allowed = await hasReviewApprovalAccess();
+        if (epoch !== generation.current) return;
+        if (allowed !== true) throw Object.assign(new Error(allowed === false ? "Review administration access is required." : "Could not verify review administration access. Please retry."), { status: allowed === false ? 403 : 503 });
+        setState(s => ({ ...s, allowed: true }));
+      }
+      let result, records = [], cursor = offset;
+      do {
+        result = await requestAlerts(`?limit=50&offset=${cursor}`);
+        if (!Array.isArray(result.alerts)) throw new Error("Invalid notification response.");
+        records.push(...result.alerts); cursor += result.alerts.length;
+        if (epoch !== generation.current) return;
+      } while (administrator && result.alerts.length === 50);
+      result = { ...result, alerts: records };
       if (!Array.isArray(result.alerts) || !Number.isInteger(result.unread_count)) throw new Error("Invalid notification response.");
-      const rows = result.alerts.map(adapt).filter((a) => !a.dismissed);
+      const rows = [...new Map(result.alerts.filter(a => !administrator || Object.keys(adminKinds).includes(a.alert_type))
+        .map(adapt).filter(a => !a.dismissed).map(a => [a.id, a])).values()];
       if (epoch === generation.current) setState((s) => ({ alerts: [...new Map([...(append ? s.alerts : []), ...rows].map((a) => [a.id, a])).values()],
-        unreadCount: result.unread_count, offset: offset + result.alerts.length, hasMore: result.alerts.length === 50, loading: false, error: "" }));
+        allowed: administrator, unreadCount: administrator ? rows.filter(a => !a.read).length : result.unread_count, offset: offset + result.alerts.length, hasMore: !administrator && result.alerts.length === 50, loading: false, error: "" }));
     } catch (error) {
-      if (epoch === generation.current) setState((s) => ({ ...s, loading: false, authorizationError: error.status === 401 || error.status === 403, error: error.message || "Could not load notifications. Please sign in and retry." }));
+      if (epoch === generation.current) setState((s) => ({ ...s, ...(administrator && (error.status === 401 || error.status === 403) ? { alerts: [], unreadCount: 0, allowed: false } : {}), loading: false, authorizationError: error.status === 401 || error.status === 403, error: error.message || "Could not load notifications. Please sign in and retry." }));
     } finally { if (epoch === generation.current) busy.current = false; }
   };
   const update = async (id, action) => {
-    if (busy.current || mutating.current) return;
+    if (busy.current || mutating.current || (administrator && !data.current.allowed)) return false;
     mutating.current = true; setPending(true);
     const epoch = generation.current;
     try {
       const result = await requestAlerts(`/${encodeURIComponent(id)}/${action}`, "PATCH");
-      if (!result.alert || result.alert.id !== id) throw new Error("Invalid notification response.");
+      if (!result.alert || result.alert.id !== id || (administrator && !Object.keys(adminKinds).includes(result.alert.alert_type)) || !(action === "read" ? ["READ", "DISMISSED"] : ["DISMISSED"]).includes(result.alert.status)) throw new Error("Invalid notification response.");
       const updated = adapt(result.alert);
       if (epoch === generation.current) setState((s) => ({ ...s, error: "", alerts: s.alerts.map((a) => a.id === id ? updated : a).filter((a) => !a.dismissed),
         unreadCount: Math.max(0, s.unreadCount - (s.alerts.some((a) => a.id === id && !a.read) && updated.read ? 1 : 0)) }));
       return epoch === generation.current;
     } catch (error) {
-      if (epoch === generation.current) setState((s) => ({ ...s, authorizationError: error.status === 401 || error.status === 403, error: error.message || "Action failed. Please retry." }));
+      if (epoch === generation.current) setState((s) => ({ ...s, ...(administrator && (error.status === 401 || error.status === 403) ? { alerts: [], unreadCount: 0, allowed: false } : {}), authorizationError: error.status === 401 || error.status === 403, error: error.message || "Action failed. Please retry." }));
       return false;
     } finally { if (epoch === generation.current) { mutating.current = false; setPending(false); } }
   };
@@ -74,6 +93,6 @@ export default function ReviewAlertsProvider({ children }) {
     return () => { generation.current++; window.removeEventListener("authChanged", reset); document.removeEventListener("visibilitychange", refresh); };
     // Route activation starts one shared request; the list and bell never fetch independently.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
-  return <ReviewAlertsContext.Provider value={{ ...state, pending, refresh: () => load(), loadMore: () => load(true), update }}>{children}</ReviewAlertsContext.Provider>;
+  }, [active, administrator]);
+  return <ReviewAlertsContext.Provider value={{ ...state, administrator, pending, refresh: () => load(), loadMore: () => load(true), update }}>{children}</ReviewAlertsContext.Provider>;
 }

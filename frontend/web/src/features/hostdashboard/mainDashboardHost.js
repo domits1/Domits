@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useMatch } from "react-router-dom";
+import { Routes, Route, Navigate, useMatch, useLocation } from "react-router-dom";
 
 import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
@@ -69,12 +69,15 @@ import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettings
 import HostSettingsDirectBookingWebsiteRatePlan from "./hostsettings/pages/HostSettingsDirectBookingWebsiteRatePlan";
 
 function MainDashboardHost({ reviewAlerts = [], reviewAlertsLoading = false, reviewAlertsError = false }) {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
   const isReviewApproval = useMatch(REVIEW_APPROVAL_ADMIN_PATH);
 
   if (isReviewApproval) {
     return (
       <ReviewApprovalNavigation>
-        <ReviewApprovalPage />
+        {params.get("notifications") === "1" ? <ReviewNotifications />
+          : <ReviewApprovalPage key={search} initialTab={params.get("tab")} reviewId={params.get("reviewId")} />}
       </ReviewApprovalNavigation>
     );
   }

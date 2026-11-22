@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { Building, Star } from "lucide-react";
 import { PROPERTY_REVIEW_ADMIN_ROUTE } from "../../hostdashboard/propertyreview/propertyReviewAccess";
 import { REVIEW_APPROVAL_ADMIN_ROUTE } from "../navigation/reviewApprovalRoute";
@@ -24,6 +24,7 @@ export default function ReviewApprovalNavigation({ children }) {
               </NavLink>
             </li>
           ))}
+          <li><Link to="/hostdashboard/admin/review-approval?notifications=1">Notifications</Link></li>
         </ul>
       </nav>
       {children}

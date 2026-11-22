@@ -5,7 +5,7 @@ import styles from "../styles/ReviewApproval.module.css";
 
 const PAGE_SIZE = 8;
 
-export default function ReviewModerationQueue({ search = "", rating = "" }) {
+export default function ReviewModerationQueue({ search = "", rating = "", targetReviewId }) {
   const [resolvedReview, setResolvedReview] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [status, setStatus] = useState("PENDING");
@@ -37,6 +37,11 @@ export default function ReviewModerationQueue({ search = "", rating = "" }) {
     return () => { active = false; };
   }, [status, offset, attempt, search, rating]);
 
+  useEffect(() => {
+    if (!targetReviewId) return;
+    const flag = result?.flags.find(flag => flag.review_id === targetReviewId || flag.review?.id === targetReviewId);
+    if (flag) setSelectedId(flag.id);
+  }, [result, targetReviewId]);
   async function resolve(flag) {
     if (inFlight.current) return;
     inFlight.current = true;
