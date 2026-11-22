@@ -32,3 +32,5 @@
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 .actions button, .actions a { min-height: 32px; border: 1px solid #dce5df; border-radius: 5px; padding: 5px 8px; background: white; color: #006b00; }
 .actions button:focus-visible, .actions a:focus-visible { outline: 2px solid #008000; outline-offset: 2px; }
+
+.rejected { color: #c91d27; background: #ffedef; }

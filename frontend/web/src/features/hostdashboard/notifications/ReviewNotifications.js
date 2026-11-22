@@ -29,7 +29,8 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
   const live = useReviewAlerts();
   ({ alerts, loading, error } = notificationData(live, alerts, loading, error));
   const filters = live?.administrator ? [["all", "All notifications"], ["unread", "Unread notifications"],
-    ["approval", "Pending approval"], ["flagged", "Flagged"], ["publication", "Pending publication"]] : hostFilters;
+    ["approval", "Pending approval"], ["flagged", "Flagged"], ["publication", "Pending publication"]] : live?.guest ? [["all", "All notifications"], ["unread", "Unread notifications"],
+    ["approved", "Approved"], ["rejected", "Rejected"], ["published", "Published"], ["responded", "Host responses"]] : hostFilters;
   const [filter, setFilter] = useState("all");
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [bulkPending, setBulkPending] = useState(false);
@@ -68,14 +69,14 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
     }
   }, [live?.pending]);
 
-  if (live?.administrator && !live.allowed) return <p role={error ? "alert" : "status"}>
+  if ((live?.administrator && !live.allowed) || (live?.guest && live.authorizationError)) return <p role={error ? "alert" : "status"}>
     {error || "Checking review administration access..."}{error && <button onClick={live.refresh}>Retry</button>}</p>;
   return (
     <section className={`${reviewStyles.page} ${styles.page}`} aria-labelledby="notification-heading"
       aria-busy={loading || undefined}>
       <header className={reviewStyles.pageHeading}>
         <h2 id="notification-heading">Review Notifications</h2>
-        <p>{live?.administrator ? "View and manage review moderation notifications." : "View and manage all review-related notifications for your properties."}</p>
+        <p>{live?.administrator ? "View and manage review moderation notifications." : live?.guest ? "Follow updates to your reviews and host responses." : "View and manage all review-related notifications for your properties."}</p>
         {live && <div className={`${styles.tools} ${styles.bulkActions}`}>
           <button className={styles.action} disabled={bulkPending || live.loading || live.pending || !targets.some((a) => !a.read)} onClick={() => bulk("read")}><FiCheck aria-hidden="true" /> Mark {scope} alerts as read</button>
           <button className={styles.action} disabled={bulkPending || live.loading || live.pending || !targets.some((a) => a.read)} onClick={() => bulk("dismiss")}><FiTrash2 aria-hidden="true" /> Dismiss {scope} read alerts</button>
@@ -90,6 +91,8 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
         ))}
       </div>
       {live && <p>Filters apply to loaded alerts.</p>}
+      {live?.guest && live.countLoading && <output>Counting unread notifications...</output>}
+      {live?.guest && live.countError && !error && <p role="alert">{live.countError} <button onClick={live.refresh}>Retry</button></p>}
       <div className={styles.tools} onChange={() => setLimit(PAGE_SIZE)}>
         <div className={styles.search}>
           <FiSearch aria-hidden="true" className={styles.searchIcon} />
@@ -102,10 +105,10 @@ export default function ReviewNotifications({ alerts = [], loading = false, erro
           <option value={0}>All time</option><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option>
         </select>
       </div>
-      {live && error && !live.authorizationError && <p role="alert">{error} <button onClick={live.refresh} disabled={live.loading || live.pending}>Retry</button></p>}
+      {live && error && (!live.authorizationError || live.guest) && <p role="alert">{error} <button onClick={live.refresh} disabled={live.loading || live.pending}>Retry</button></p>}
       {loading ? <output>Loading notifications…</output> : error && !live ?
         <p role="alert">Unable to load notifications. Please try again later.</p> :
-        filtered.length === 0 ? <><output>{alerts.length ? "No notifications match this filter." : "No notifications yet."}</output>
+        filtered.length === 0 ? <><output>{alerts.length ? "No notifications match this filter." : live?.guest && live.hasMore ? "No guest notifications in the loaded results." : "No notifications yet."}</output>
           {live?.hasMore && <button disabled={live.loading || live.pending} onClick={live.loadMore}>Load more notifications</button>}</> : (
           <>
             <div className={`${styles.row} ${styles.tableHeading}`}><input type="checkbox" aria-label="Select visible notifications" checked={visible.length > 0 && visible.every((a) => selected.has(a.id))}

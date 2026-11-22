@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   MessageSquare,
   ArrowDownLeft,
@@ -20,7 +20,7 @@ function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
   const rating = Number(review.overall_rating ?? review.rating);
   const hasRating = Number.isFinite(rating) && rating >= 1 && rating <= 5;
   return (
-    <article key={review.id} className={styles.card}>
+    <article id={`guest-review-${encodeURIComponent(review.id)}`} tabIndex={-1} key={review.id} className={styles.card}>
       <div className={styles.cardTop}>
         <span className={styles.badge}>{isWritten ? "Written by you" : "From your host"}</span>
         {hasRating && (
@@ -31,12 +31,13 @@ function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
       </div>
       <h3>{review.title || "Stay review"}</h3>
       <p className={styles.content}>{review.content || review.public_review || "No written feedback provided."}</p>
+      {review.response?.published_at != null && <section aria-label="Host response"><strong>Host response</strong><p>{review.response.message}</p></section>}
       <footer className={styles.cardFooter}>
         <span className={styles.date}>
           <CalendarDays size={14} aria-hidden="true" />{" "}
           {review.date ? DateFormatterDD_MM_YYYY(review.date) : "Date unavailable"}
         </span>
-        {isWritten && (
+        {isWritten && review.status !== "REJECTED" && (
           <div className={styles.actions}>
             {review.can_edit && Date.now() < review.edit_expires_at && (
               <button type="button" onClick={() => navigate(`/review?reviewId=${encodeURIComponent(review.id)}`)}>
@@ -96,6 +97,8 @@ function ReviewList({ loading, visibleReviews, isWritten, deletingId, asyncDelet
 }
 
 function GuestReviews() {
+  const session = useRef(0);
+  const [identityVersion, setIdentityVersion] = useState(0);
   const [activeTab, setActiveTab] = useState("written");
   const [deletingId, setDeletingId] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -105,24 +108,50 @@ function GuestReviews() {
   const [userId, setUserId] = useState(null);
   const [reviewError, setReviewError] = useState("");
   const navigate = useNavigate();
-
-  // Get user once & redirect if not logged in
+  const { search } = useLocation();
+  const targetId = new URLSearchParams(search).get("reviewId");
+  const [linkedReview, setLinkedReview] = useState(null);
   useEffect(() => {
-    (async () => {
+    let active = true; const version = session.current;
+    setLinkedReview(null);
+    if (userId && targetId) {
+      setActiveTab("written");
+      requestReview("GET", { reviewId: targetId, view: "history" }).then(async res => {
+        if (!res.ok) throw new Error("Unavailable review");
+        const review = await res.json();
+        if (review?.id !== targetId) throw new Error("Mismatched review");
+        if (active && version === session.current) setLinkedReview(review);
+      }).catch(() => { if (active && version === session.current) setReviewError("This review is unavailable for your account."); });
+    }
+    return () => { active = false; };
+  }, [userId, targetId, identityVersion]);
+  useEffect(() => {
+    if (linkedReview && !isLoading && activeTab === "written") {
+      const card = document.getElementById(`guest-review-${encodeURIComponent(linkedReview.id)}`);
+      card?.scrollIntoView?.({ block: "center" }); card?.focus();
+    }
+  }, [linkedReview, isLoading, activeTab]);
+
+  // Clear account-bound history before resolving a replacement session.
+  useEffect(() => {
+    const loadUser = async () => {
+      const version = ++session.current;
+      setUserId(null); setLinkedReview(null); setReviews([]); setReceivedReviews([]);
+      setIsLoading(true); setIsLoading2(true); setReviewError("");
       try {
         const userInfo = await Auth.currentUserInfo();
+        if (version !== session.current) return;
         const sub = userInfo?.attributes?.sub;
-        if (sub) setUserId(sub);
-        else navigate("/login");
-      } catch (err) {
-        console.error("Auth/currentUserInfo error:", err);
-        navigate("/login");
-      }
-    })();
+        if (sub) { setUserId(sub); setIdentityVersion(version); } else navigate("/login");
+      } catch { if (version === session.current) navigate("/login"); }
+    };
+    void loadUser(); window.addEventListener("authChanged", loadUser);
+    return () => { session.current++; window.removeEventListener("authChanged", loadUser); };
   }, [navigate]);
 
   useEffect(() => {
     if (!userId) return;
+    const version = session.current;
 
     const retrieveReviews = async () => {
       setIsLoading(true);
@@ -130,20 +159,20 @@ function GuestReviews() {
         const res = await requestReview("GET", { scope: "written" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setReviews(Array.isArray(data) ? data : []);
+        if (version === session.current) setReviews(Array.isArray(data) ? data : []);
       } catch (e) {
-        setReviewError("Could not load your reviews. Please try again.");
-        setReviews([]);
+        if (version === session.current) { setReviewError("Could not load your reviews. Please try again."); setReviews([]); }
       } finally {
-        setIsLoading(false);
+        if (version === session.current) setIsLoading(false);
       }
     };
 
     retrieveReviews();
-  }, [userId]);
+  }, [userId, identityVersion]);
 
   useEffect(() => {
     if (!userId) return;
+    const version = session.current;
 
     const retrieveReceivedReviews = async () => {
       setIsLoading2(true);
@@ -151,17 +180,16 @@ function GuestReviews() {
         const res = await requestReview("GET", { scope: "received" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setReceivedReviews(Array.isArray(data) ? data : []);
+        if (version === session.current) setReceivedReviews(Array.isArray(data) ? data : []);
       } catch (e) {
-        setReviewError("Could not load received reviews. Please try again.");
-        setReceivedReviews([]);
+        if (version === session.current) { setReviewError("Could not load received reviews. Please try again."); setReceivedReviews([]); }
       } finally {
-        setIsLoading2(false);
+        if (version === session.current) setIsLoading2(false);
       }
     };
 
     retrieveReceivedReviews();
-  }, [userId]);
+  }, [userId, identityVersion]);
 
   const asyncDeleteReview = async (review) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
@@ -182,7 +210,7 @@ function GuestReviews() {
   };
 
   const isWritten = activeTab === "written";
-  const visibleReviews = isWritten ? reviews : receivedReviews;
+  const visibleReviews = isWritten ? (linkedReview ? [linkedReview, ...reviews.filter(review => review.id !== linkedReview.id)] : reviews) : receivedReviews;
   const loading = isWritten ? isLoading : isLoading2;
 
   return (

@@ -30,6 +30,7 @@ const contentByLanguage = { en, nl, de, es };
 function Header({ setSearchResults, setLoading, notificationAlerts = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isGuestDashboard = location.pathname === "/guestdashboard" || location.pathname.startsWith("/guestdashboard/");
   const isHostDashboard = location.pathname === "/hostdashboard" || location.pathname.startsWith("/hostdashboard/");
   const { setFlowState } = useContext(FlowContext);
 
@@ -370,7 +371,7 @@ function Header({ setSearchResults, setLoading, notificationAlerts = [] }) {
   return (
     <>
       <header
-        className={`app-header ${isHostDashboard ? notificationStyles.hostHeader : ""}`}
+        className={`app-header ${(isHostDashboard || isGuestDashboard) ? notificationStyles.hostHeader : ""}`}
         style={
           isMobileListingDetails
             ? {
@@ -468,7 +469,7 @@ function Header({ setSearchResults, setLoading, notificationAlerts = [] }) {
               </motion.div>
             )}
 
-            {isHostDashboard && (
+            {(isHostDashboard || isGuestDashboard) && (
               <NotificationBell key={location.pathname} alerts={notificationAlerts} onOpen={() => {
                 setDropdownVisible(false);
                 setAppsMenuOpen(false);
