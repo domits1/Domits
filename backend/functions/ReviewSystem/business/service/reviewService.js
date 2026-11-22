@@ -1,3 +1,4 @@
+import { REVIEW_APPROVER_ROLES, isReviewAdministrator } from "../../auth/reviewAdministrator.js";
 import { ReviewRequestNotifier, reviewFrontendUrl } from "./reviewRequestNotifier.js";
 import { ReviewAlertProcessingService } from "./reviewAlertProcessingService.js";
 import { randomUUID } from "node:crypto";
@@ -17,12 +18,7 @@ const REVIEW_MIN_LENGTH = 1;
 const REVIEW_MAX_LENGTH = 500;
 
 const GUEST_REVIEW_TYPE = "GUEST_TO_PROPERTY";
-const REVIEW_APPROVER_ROLES = [
-  "Guest Experience Manager",
-  "Property Operations Manager",
-  "Reservation Manager",
-  "General Manager",
-];
+
 const EDITABLE_FIELDS = new Set(["overall_rating", "title", "public_review", "private_feedback", "category_ratings"]);
 const toReviewView = (review) => ({
   id: review.id, booking_id: review.booking_id, property_id: review.property_id,
@@ -425,8 +421,7 @@ export class ReviewService {
 
   assertAdministrator(userId, username) {
     this.assertCaller(userId);
-    const admins = String(process.env.PROPERTY_REVIEW_ADMIN_USER_IDS || "").split(/[,\s;]+/).filter(Boolean);
-    if (typeof username !== "string" || !admins.includes(username.trim())) {
+    if (!isReviewAdministrator(username)) {
       throw new ForbiddenException("Administrator access is required.");
     }
   }

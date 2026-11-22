@@ -4,6 +4,10 @@ export const ALERT_TYPES = Object.freeze({
   NEW_REVIEW: "NEW_REVIEW", LOW_RATING: "LOW_RATING",
   DECLINING_RATING: "DECLINING_RATING", RESPONSE_OVERDUE: "RESPONSE_OVERDUE",
 });
+export const ADMIN_ALERT_TYPES = Object.freeze({
+  REVIEW_PENDING_APPROVAL: "REVIEW_PENDING_APPROVAL", REVIEW_FLAGGED: "REVIEW_FLAGGED",
+  REVIEW_PENDING_PUBLICATION: "REVIEW_PENDING_PUBLICATION",
+});
 export const DEFAULT_RESPONSE_OVERDUE_HOURS = 72;
 const HOUR_MS = 3_600_000;
 const id = (value) => typeof value === "string" && value.trim().length > 0;
@@ -68,6 +72,30 @@ export class ReviewAlertRules {
       || previousStart >= currentStart || currentStart >= endExclusive) return null;
     return candidate(ALERT_TYPES.DECLINING_RATING, recipientUserId, trend.property_id,
       undefined, endExclusive, [previousStart, currentStart, endExclusive]);
+  }
+
+  // Only consume persisted snapshots from ReviewAdminAlertCandidateService.
+  // updated_at is the transition version while unpublished: edits are draft-only;
+  // flagging also updates it, so publication keys use the one-way target state.
+  static administrator({ type, review, flag, recipients = [] } = {}) {
+    if (!Object.values(ADMIN_ALERT_TYPES).includes(type) || !review
+      || review.review_type !== "GUEST_TO_PROPERTY" || !id(review.id) || !id(review.property_id)
+      || review.deletedAt != null || review.deleted_at != null || !Array.isArray(recipients)) return [];
+    let eventTimestamp = review.updated_at;
+    let identity = [review.status];
+    if (type === ADMIN_ALERT_TYPES.REVIEW_FLAGGED) {
+      if (!["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status)
+        || review.publication_status !== (review.status === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED")
+        || !id(flag?.id) || flag.review_id !== review.id || flag.status !== "PENDING") return [];
+      eventTimestamp = flag.created_at;
+      identity = [flag.id];
+    } else {
+      const status = type === ADMIN_ALERT_TYPES.REVIEW_PENDING_APPROVAL ? "PENDING_APPROVAL" : "APPROVED";
+      if (review.status !== status || review.publication_status !== "UNPUBLISHED") return [];
+    }
+    if (!timestamp(eventTimestamp) || eventTimestamp > 8640000000000000) return [];
+    return [...new Set(recipients.filter(id))].map(recipient => candidate(type, recipient,
+      review.property_id, review.id, eventTimestamp, identity));
   }
 
   static evaluateReview(input) {
