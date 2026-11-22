@@ -1,5 +1,5 @@
 import { applyCompletedStayConditions } from "../util/verifiedStay.js";
-import { enqueueReviewAlertWork } from "./reviewAlertWorkRepository.js";
+import { enqueueReviewAlertWork, enqueueAdminReviewAlert } from "./reviewAlertWorkRepository.js";
 import { attachPublicDetails } from "./reviewRepositoryShared.js";
 import { randomUUID } from "node:crypto";
 import { In, IsNull } from "typeorm";
@@ -610,6 +610,8 @@ export class ReviewRepository {
           { updated_at: nextTimestamp(flag.created_at, review.updated_at) });
         if (result.affected !== 1) throw new ConflictException("Review changed. Reload before continuing.");
         await manager.getRepository(Review_Flag).insert(flag);
+        if (review.review_type === "GUEST_TO_PROPERTY") await enqueueAdminReviewAlert(manager,
+          "REVIEW_FLAGGED", review.id, flag.created_at, flag.id);
         return flag;
       });
     } catch (error) {
@@ -724,6 +726,8 @@ export class ReviewRepository {
 
       if (result.affected !== 1) return null;
 
+      if (to !== "PUBLISHED") await enqueueAdminReviewAlert(manager,
+        to === "PENDING_APPROVAL" ? "REVIEW_PENDING_APPROVAL" : "REVIEW_PENDING_PUBLICATION", review.id, timestamp);
       if (to === "PUBLISHED") await enqueueReviewAlertWork(manager, review.id,
         { reviewId: review.id, publishedAt: timestamp, phase: "publication" }, timestamp);
       if (to === "PUBLISHED") await this.completeReviewRequest(

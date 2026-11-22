@@ -1,3 +1,5 @@
+import { ADMIN_ALERT_TYPES } from "../business/model/reviewAlertRules.js";
+import { ReviewAdminAlertCandidateService } from "../business/service/reviewAdminAlertCandidateService.js";
 import Database from "database";
 import { Property } from "database/models/Property";
 import { Review } from "database/models/Review";
@@ -5,6 +7,14 @@ import { Team_Member } from "database/models/Team_Member";
 
 export class ReviewAlertRecipientRepository {
   async resolve(event) {
+    if (Object.values(ADMIN_ALERT_TYPES).includes(event.type)) {
+      const candidates = await new ReviewAdminAlertCandidateService().evaluate({
+        type: event.type, reviewId: event.reviewId, flagId: event.flagId,
+      });
+      return candidates.filter(candidate => candidate.recipientUserId === event.recipientUserId
+        && candidate.propertyId === event.propertyId && candidate.eventKey === event.eventKey
+        && candidate.eventTimestamp === event.eventTimestamp).map(candidate => candidate.recipientUserId);
+    }
     const database = await Database.getInstance();
     const property = await database.getRepository(Property).findOne({ where: { id: event.propertyId } });
     if (!property?.hostid) return [];

@@ -544,6 +544,9 @@ describe('Review transactional writes', () => {
     await repository.resolveReviewFlag("f2", "moderator", now + 4);
     await expect(publish()).resolves.toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED" });
     expect(committed.get(Review_Flag)).toHaveLength(2);
+    expect(committed.get(Review_Alert_Work).map(job => JSON.parse(job.payload)).filter(event => event.type === "REVIEW_FLAGGED"))
+      .toEqual([expect.objectContaining({ flagId: "f1", eventTimestamp: now }),
+        expect.objectContaining({ flagId: "f2", eventTimestamp: now + 3 })]);
   });
 
   it.each(["missing", "DELETED"])("refuses to flag a %s review", async (status) => {
@@ -578,7 +581,12 @@ describe('Review transactional writes', () => {
       expect(await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: version,
         updatedAt: now, from, to, authorize: async () => true })).toBeNull();
       expect(committed.get(Review_Request)[0].status).toBe(to === "PUBLISHED" ? "COMPLETED" : "OPEN");
-      expect(committed.get(Review_Alert_Work)).toHaveLength(to === "PUBLISHED" ? 1 : 0);
+      expect(committed.get(Review_Alert_Work)).toHaveLength(["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].indexOf(to) + 1);
+      const payloads = committed.get(Review_Alert_Work).map(job => JSON.parse(job.payload));
+      expect(payloads.at(-1)).toMatchObject(to === "PUBLISHED"
+        ? { phase: "publication", publishedAt: result.updated_at }
+        : { phase: "admin", type: to === "PENDING_APPROVAL" ? "REVIEW_PENDING_APPROVAL" : "REVIEW_PENDING_PUBLICATION",
+          reviewId: "r1", eventTimestamp: result.updated_at });
       current = committed.get(Review)[0];
     }
   });

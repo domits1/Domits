@@ -1,12 +1,19 @@
+import { ReviewAdminAlertCandidateService } from "./reviewAdminAlertCandidateService.js";
 import { ReviewAlertRules, responseOverdueHours } from "../model/reviewAlertRules.js";
 import { readTrendPolicy } from "../model/ratingTrends.js";
-import { ReviewAlertWorkRepository } from "../../data/reviewAlertWorkRepository.js";
+import { ReviewAlertWorkRepository, adminReviewAlertWorkId } from "../../data/reviewAlertWorkRepository.js";
 import { ReviewAlertNotificationService } from "./reviewAlertNotificationService.js";
 const DAY = 86400000;
 
 export class ReviewAlertProcessingService {
-  constructor({ repository = new ReviewAlertWorkRepository(), delivery = new ReviewAlertNotificationService(), now = Date.now } = {}) {
-    Object.assign(this, { repository, delivery, now });
+  constructor({ repository = new ReviewAlertWorkRepository(), delivery = new ReviewAlertNotificationService(), adminCandidates = new ReviewAdminAlertCandidateService(), now = Date.now } = {}) {
+    Object.assign(this, { repository, delivery, adminCandidates, now });
+  }
+  async afterAdminEvent(type, reviewId, flagId) {
+    try {
+      const job = await this.repository.find(adminReviewAlertWorkId(type, reviewId, flagId));
+      if (job && job.due_at != null) await this.process(job);
+    } catch { this.log(); } // Durable work remains available to the scheduled worker.
   }
   async afterPublication(review) {
     try {
@@ -29,6 +36,18 @@ export class ReviewAlertProcessingService {
   async process(job) {
     const payload = JSON.parse(job.payload), now = this.now();
     try {
+      if (payload.phase === "admin") {
+        const candidates = await this.adminCandidates.evaluate(payload);
+        let failed = false;
+        for (const event of candidates) {
+          try {
+            await this.send({ ...event, ...(payload.flagId ? { flagId: payload.flagId } : {}) }, async () =>
+              (await this.adminCandidates.evaluate(payload)).some(fresh => fresh.eventKey === event.eventKey));
+          } catch { failed = true; }
+        }
+        if (failed) throw new Error("Administrator alert delivery incomplete.");
+        return await this.repository.advance(job, payload, null);
+      }
       if (!payload.reviewId) return await this.scan(job, payload, now);
       const hours = responseOverdueHours(process.env.REVIEW_RESPONSE_OVERDUE_HOURS);
       const input = { ...await this.repository.context(payload.reviewId, now), publishedAt: payload.publishedAt, now, overdueHours: hours };

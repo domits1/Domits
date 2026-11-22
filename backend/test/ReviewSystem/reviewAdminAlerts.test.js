@@ -4,11 +4,13 @@ import { ReviewAdminAlertCandidateService } from "../../functions/ReviewSystem/b
 import { ReviewAdminAlertRepository } from "../../functions/ReviewSystem/data/reviewAdminAlertRepository.js";
 import { REVIEW_APPROVER_ROLES } from "../../functions/ReviewSystem/auth/reviewAdministrator.js";
 import { Review } from "database/models/Review";
+import { Review_Alert_Work } from "database/models/Review_Alert_Work";
+import { In } from "typeorm";
 import { Review_Flag } from "database/models/Review_Flag";
 const review = { id: "r", property_id: "p", review_type: "GUEST_TO_PROPERTY", status: "PENDING_APPROVAL",
   publication_status: "UNPUBLISHED", updated_at: 100, private_feedback: "SECRET" };
 const flag = { id: "f", review_id: "r", status: "PENDING", created_at: 110 };
-const run = (type, changes = {}) => ReviewAlertRules.administrator({ type, review, flag, recipients: ["a", "a"], ...changes });
+const run = (type, changes = {}) => ReviewAlertRules.administrator({ type, review, flag, eventTimestamp: 100, recipients: ["a", "a"], ...changes });
 test.each(Object.values(ADMIN_ALERT_TYPES))("normalizes %s and deduplicates stable identities", type => {
   const current = { ...review, status: type === "REVIEW_PENDING_PUBLICATION" ? "APPROVED" : "PENDING_APPROVAL" };
   const rows = run(type, { review: current });
@@ -22,7 +24,7 @@ test.each(["DRAFT", "REJECTED", "DELETED", "APPROVED", "PUBLISHED"])("rejects pe
   expect(run("REVIEW_PENDING_APPROVAL", { review: { ...review, status } })).toEqual([]);
 });
 test.each([null, { ...review, review_type: "HOST_TO_GUEST" }, { ...review, publication_status: "PUBLISHED" },
-  { ...review, updated_at: NaN }, { ...review, property_id: "" }, { ...review, deleted_at: 1 }])("rejects invalid review %j", current => {
+  { ...review, status: "INVALID" }, { ...review, property_id: "" }, { ...review, deleted_at: 1 }])("rejects invalid review %j", current => {
   expect(run("REVIEW_PENDING_APPROVAL", { review: current })).toEqual([]);
 });
 test("flags require matching pending flag, supported state and unique flag identity", () => {
@@ -47,12 +49,17 @@ test("trusted backend resolution intersects allowlist and active roles, ignoring
       { role: REVIEW_APPROVER_ROLES[0], status: "active", member_user_id: "outside" },
       { role: REVIEW_APPROVER_ROLES[0], status: "active", member_user_id: null });
     const findFlag = jest.fn().mockResolvedValue(flag);
-    const repository = new ReviewAdminAlertRepository({ getDatabase: async () => ({ getRepository: model => model === Review
-      ? { findOne: async () => review } : model === Review_Flag ? { findOne: findFlag } : { find: async () => members } }) });
+    const findMembers = jest.fn(async () => members);
+    const repository = new ReviewAdminAlertRepository({ getDatabase: async () => ({ getRepository: model => model === Review_Alert_Work ? { findOneBy: async () => ({ payload: JSON.stringify({
+        phase: "admin", type: "REVIEW_FLAGGED", reviewId: "r", flagId: "f", eventTimestamp: 110 }) }) } : model === Review
+      ? { findOne: async () => review } : model === Review_Flag ? { findOne: findFlag } : { find: findMembers } }) });
     const service = new ReviewAdminAlertCandidateService({ repository });
     expect((await service.evaluate({ type: "REVIEW_FLAGGED", reviewId: "r", flagId: "f", recipientUserId: "attacker" }))
       .map(row => row.recipientUserId)).toEqual(["a0", "a1", "a2", "a3"]);
     expect(findFlag).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "f", review_id: "r", status: "PENDING" } }));
+    expect(findMembers).toHaveBeenCalledWith(expect.objectContaining({ where: {
+      status: "active", role: In(REVIEW_APPROVER_ROLES), member_user_id: In(["a0", "a1", "a2", "a3", "inactive", "wrong"]),
+    } }));
     process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = "";
     expect(await service.evaluate({ type: "REVIEW_PENDING_APPROVAL", reviewId: "r" })).toEqual([]);
   } finally { if (old === undefined) delete process.env.PROPERTY_REVIEW_ADMIN_USER_IDS; else process.env.PROPERTY_REVIEW_ADMIN_USER_IDS = old; }
@@ -75,4 +82,8 @@ test.each(Object.values(ADMIN_ALERT_TYPES))("existing review_alert repository ac
   expect(await repository.createAlertIfMissing(row)).toBe(true);
   expect(await repository.createAlertIfMissing(row)).toBe(false);
   expect(query.onConflict).toHaveBeenCalledWith('("recipient_user_id", "event_key") DO NOTHING');
+});
+
+test.each([undefined, NaN, -1, 8640000000000001])("rejects invalid immutable event time %s", eventTimestamp => {
+  expect(run("REVIEW_PENDING_APPROVAL", { eventTimestamp })).toEqual([]);
 });

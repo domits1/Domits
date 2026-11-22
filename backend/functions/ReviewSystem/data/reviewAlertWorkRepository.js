@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import Database from "database";
 import { IsNull, LessThanOrEqual } from "typeorm";
 import { Review_Alert_Work } from "database/models/Review_Alert_Work";
@@ -9,6 +10,12 @@ import { HostReviewRepository } from "./hostReviewRepository.js";
 export const enqueueReviewAlertWork = (manager, id, payload, due_at) => manager.getRepository(Review_Alert_Work)
   .createQueryBuilder().insert().values({ id, payload: JSON.stringify(payload), due_at, version: 0 })
   .onConflict('(\"id\") DO NOTHING').execute();
+
+export const adminReviewAlertWorkId = (type, reviewId, flagId) => `admin:${createHash("sha256")
+  .update(JSON.stringify([type, reviewId, flagId ?? null])).digest("hex")}`;
+export const enqueueAdminReviewAlert = (manager, type, reviewId, eventTimestamp, flagId) =>
+  enqueueReviewAlertWork(manager, adminReviewAlertWorkId(type, reviewId, flagId),
+    { phase: "admin", type, reviewId, eventTimestamp, ...(flagId ? { flagId } : {}) }, eventTimestamp);
 
 export class ReviewAlertWorkRepository {
   async store() { return (await Database.getInstance()).getRepository(Review_Alert_Work); }

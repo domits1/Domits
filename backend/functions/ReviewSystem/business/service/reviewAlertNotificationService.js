@@ -2,9 +2,10 @@ import { createHash } from "node:crypto";
 import { ReviewAlertRepository } from "../../data/reviewAlertRepository.js";
 import { ReviewAlertRecipientRepository } from "../../data/reviewAlertRecipientRepository.js";
 import { ReviewRequestNotifier } from "./reviewRequestNotifier.js";
-import { ALERT_TYPES } from "../model/reviewAlertRules.js";
+import { ALERT_TYPES, ADMIN_ALERT_TYPES } from "../model/reviewAlertRules.js";
 import { ReviewAlertPreferencesRepository } from "../../data/reviewAlertPreferencesRepository.js";
 
+const SUPPORTED_TYPES = { ...ALERT_TYPES, ...ADMIN_ALERT_TYPES };
 const PREFERENCE_KEYS = {
   NEW_REVIEW: "manager_review_received", LOW_RATING: "manager_low_review",
 };
@@ -21,7 +22,7 @@ export class ReviewAlertNotificationService {
 
   async deliver(event = {}, { isEligible = async () => true } = {}) {
     try {
-      if (!Object.values(ALERT_TYPES).includes(event.type) || !validId(event.propertyId)
+      if (!Object.values(SUPPORTED_TYPES).includes(event.type) || !validId(event.propertyId)
         || (event.reviewId !== undefined && !validId(event.reviewId))
         || (event.type !== ALERT_TYPES.DECLINING_RATING && !event.reviewId)
         || typeof event.eventKey !== "string" || !event.eventKey.trim()
@@ -36,7 +37,8 @@ export class ReviewAlertNotificationService {
         ...(event.reviewId ? { reviewId: event.reviewId } : {}),
         ...Object.fromEntries(["overallRating", "previousRating", "currentRating"]
           .filter(key => rating(event[key])).map(key => [key, event[key]])),
-        destination: "https://domits.com/hostdashboard/reviews",
+        destination: Object.values(ADMIN_ALERT_TYPES).includes(event.type)
+          ? "https://domits.com/hostdashboard/admin/review-approval" : "https://domits.com/hostdashboard/reviews",
         eventTimestamp: new Date(event.eventTimestamp).toISOString(),
       };
       const results = [];
@@ -72,7 +74,7 @@ export class ReviewAlertNotificationService {
       }
       return results;
     } catch (error) {
-      this.logFailure(Object.values(ALERT_TYPES).includes(event?.type) ? event.type : "INVALID", error);
+      this.logFailure(Object.values(SUPPORTED_TYPES).includes(event?.type) ? event.type : "INVALID", error);
       return [];
     }
   }

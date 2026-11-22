@@ -460,10 +460,12 @@ export class ReviewService {
       throw new BadRequestException("Flag notes must be plain text of at most 2000 characters.");
     }
     const now = this.now();
-    return this.repository.createReviewFlag({
+    const flag = await this.repository.createReviewFlag({
       id: randomUUID(), review_id: reviewId.trim(), flagged_by: userId, reason,
       notes: this.normalizeOptionalText(notes), status: "PENDING", created_at: now, updated_at: now, resolved_by: null,
     });
+    await this.notifyAdministrators("REVIEW_FLAGGED", flag.review_id, flag.id);
+    return flag;
   }
 
   async getModerationQueue(userId, username, query) {
@@ -499,6 +501,11 @@ export class ReviewService {
     }, version);
   }
 
+  async notifyAdministrators(type, reviewId, flagId) {
+    try { await this.alerts.afterAdminEvent(type, reviewId, flagId); }
+    catch { console.error(JSON.stringify({ event: "REVIEW_ADMIN_ALERT_PROCESSING_FAILED", alertType: type, requiresReconciliation: true })); }
+  }
+
   async changePublicationState(review, from, to, authorize, version = review.updated_at) {
     if (review.status !== from || review.publication_status !== "UNPUBLISHED") {
       throw new ConflictException("Review cannot transition in its current state.");
@@ -515,6 +522,8 @@ export class ReviewService {
     const result = await this.repository.publishDraft({ reviewId: review.id,
       expectedUpdatedAt: version, updatedAt: this.now(), from, to, validate, authorize });
     if (!result) throw new ConflictException("Review changed. Reload before continuing.");
+    if (to !== "PUBLISHED") await this.notifyAdministrators(
+      to === "PENDING_APPROVAL" ? "REVIEW_PENDING_APPROVAL" : "REVIEW_PENDING_PUBLICATION", result.id);
     if (to === "PUBLISHED") {
       try { await this.alerts.afterPublication(result); }
       catch { console.error(JSON.stringify({ event: "REVIEW_ALERT_PROCESSING_FAILED" })); }

@@ -75,13 +75,11 @@ export class ReviewAlertRules {
   }
 
   // Only consume persisted snapshots from ReviewAdminAlertCandidateService.
-  // updated_at is the transition version while unpublished: edits are draft-only;
-  // flagging also updates it, so publication keys use the one-way target state.
-  static administrator({ type, review, flag, recipients = [] } = {}) {
+  // Event time comes from the immutable transactionally persisted work payload.
+  static administrator({ type, review, flag, recipients = [], eventTimestamp } = {}) {
     if (!Object.values(ADMIN_ALERT_TYPES).includes(type) || !review
       || review.review_type !== "GUEST_TO_PROPERTY" || !id(review.id) || !id(review.property_id)
       || review.deletedAt != null || review.deleted_at != null || !Array.isArray(recipients)) return [];
-    let eventTimestamp = review.updated_at;
     let identity = [review.status];
     if (type === ADMIN_ALERT_TYPES.REVIEW_FLAGGED) {
       if (!["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status)
