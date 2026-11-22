@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import Database from "database";
 import { Review_Alert } from "database/models/Review_Alert";
-import { ALERT_TYPES, ADMIN_ALERT_TYPES } from "../business/model/reviewAlertRules.js";
+import { ALERT_TYPES, ADMIN_ALERT_TYPES, GUEST_ALERT_TYPES } from "../business/model/reviewAlertRules.js";
 
 const STATUSES = ["UNREAD", "READ", "DISMISSED"];
 function text(value, name) {
@@ -30,7 +30,7 @@ export class ReviewAlertRepository {
   async createAlertIfMissing({ recipient_user_id, property_id, review_id = null, alert_type, event_key }) {
     text(recipient_user_id, "recipient"); text(property_id, "property"); text(event_key, "event key");
     if (review_id !== null) text(review_id, "review");
-    if (!Object.values({ ...ALERT_TYPES, ...ADMIN_ALERT_TYPES }).includes(alert_type)) throw new TypeError("Invalid alert type.");
+    if (!Object.values({ ...ALERT_TYPES, ...ADMIN_ALERT_TYPES, ...GUEST_ALERT_TYPES }).includes(alert_type)) throw new TypeError("Invalid alert type.");
     const now = this.now();
     const row = { id: randomUUID(), recipient_user_id, property_id, review_id, alert_type, event_key,
       status: "UNREAD", created_at: now, updated_at: now };

@@ -8,6 +8,10 @@ export const ADMIN_ALERT_TYPES = Object.freeze({
   REVIEW_PENDING_APPROVAL: "REVIEW_PENDING_APPROVAL", REVIEW_FLAGGED: "REVIEW_FLAGGED",
   REVIEW_PENDING_PUBLICATION: "REVIEW_PENDING_PUBLICATION",
 });
+export const GUEST_ALERT_TYPES = Object.freeze({
+  REVIEW_APPROVED: "REVIEW_APPROVED", REVIEW_REJECTED: "REVIEW_REJECTED",
+  REVIEW_PUBLISHED: "REVIEW_PUBLISHED", HOST_RESPONDED: "HOST_RESPONDED",
+});
 export const DEFAULT_RESPONSE_OVERDUE_HOURS = 72;
 const HOUR_MS = 3_600_000;
 const id = (value) => typeof value === "string" && value.trim().length > 0;
@@ -94,6 +98,41 @@ export class ReviewAlertRules {
     if (!timestamp(eventTimestamp) || eventTimestamp > 8640000000000000) return [];
     return [...new Set(recipients.filter(id))].map(recipient => candidate(type, recipient,
       review.property_id, review.id, eventTimestamp, identity));
+  }
+
+  // Internal rule boundary: use committed backend snapshots, never request bodies.
+  // eventTimestamp is the immutable status-transition time (epoch milliseconds),
+  // not mutable review.updated_at. HOST_RESPONDED uses response.publishedAt.
+  static guest({ type, review, previousReview, response, previousResponse, eventTimestamp } = {}) {
+    const validId = value => id(value) && value === value.trim() && value.length <= 255;
+    const guestReview = value => value?.review_type === "GUEST_TO_PROPERTY"
+      && [value.id, value.property_id, value.reviewer_user_id].every(validId)
+      && value.deletedAt == null && value.deleted_at == null;
+    if (!Object.values(GUEST_ALERT_TYPES).includes(type) || !guestReview(review)) return [];
+    let identity = [review.status];
+    if (type === GUEST_ALERT_TYPES.HOST_RESPONDED) {
+      if (!isPublished(review) || !validId(response?.id) || response.reviewId !== review.id
+        || response.authorRole !== "host" || response.status !== "published"
+        || response.deletedAt != null || response.deleted_at != null
+        || (previousResponse && (previousResponse.id !== response.id
+          || previousResponse.reviewId !== review.id || previousResponse.authorRole !== "host"
+          || previousResponse.status !== "draft" || previousResponse.deletedAt != null
+          || previousResponse.publishedAt != null))) return [];
+      eventTimestamp = response.publishedAt;
+      identity = [response.id, eventTimestamp];
+    } else {
+      if (!guestReview(previousReview) || previousReview.id !== review.id
+        || previousReview.property_id !== review.property_id
+        || previousReview.reviewer_user_id !== review.reviewer_user_id
+        || previousReview.publication_status !== "UNPUBLISHED") return [];
+      const from = type === GUEST_ALERT_TYPES.REVIEW_PUBLISHED ? ["APPROVED"]
+        : type === GUEST_ALERT_TYPES.REVIEW_REJECTED ? ["PENDING_APPROVAL", "APPROVED"] : ["PENDING_APPROVAL"];
+      const to = { REVIEW_APPROVED: "APPROVED", REVIEW_REJECTED: "REJECTED", REVIEW_PUBLISHED: "PUBLISHED" }[type];
+      if (!from.includes(previousReview.status) || review.status !== to
+        || review.publication_status !== (to === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED")) return [];
+    }
+    if (!timestamp(eventTimestamp) || eventTimestamp > 8640000000000000) return [];
+    return [candidate(type, review.reviewer_user_id, review.property_id, review.id, eventTimestamp, identity)];
   }
 
   static evaluateReview(input) {
