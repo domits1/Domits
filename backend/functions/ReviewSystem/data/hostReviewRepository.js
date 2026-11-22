@@ -1,3 +1,4 @@
+import { enqueueGuestReviewAlert } from "./reviewAlertWorkRepository.js";
 import { randomUUID } from "node:crypto";
 import { IsNull } from "typeorm";
 import Database from "database";
@@ -52,6 +53,7 @@ export class HostReviewRepository {
         const saved = await repository.save({ ...existing, id: existing?.id || randomUUID(), reviewId,
           authorId: user.userId, authorRole: "host", message, status, createdAt: existing?.createdAt ?? now,
           updatedAt: now, publishedAt: status === "published" ? existing?.publishedAt ?? now : null, deletedAt: null });
+        await enqueueGuestReviewAlert(manager, { type: "HOST_RESPONDED", review, response: saved, previousResponse: existing });
         return { id: saved.id, message: saved.message, status: saved.status, createdAt: saved.createdAt,
           updatedAt: saved.updatedAt, publishedAt: saved.publishedAt };
       });

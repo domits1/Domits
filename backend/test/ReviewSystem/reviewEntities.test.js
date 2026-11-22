@@ -581,7 +581,7 @@ describe('Review transactional writes', () => {
       expect(await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: version,
         updatedAt: now, from, to, authorize: async () => true })).toBeNull();
       expect(committed.get(Review_Request)[0].status).toBe(to === "PUBLISHED" ? "COMPLETED" : "OPEN");
-      expect(committed.get(Review_Alert_Work)).toHaveLength(["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].indexOf(to) + 1);
+      expect(committed.get(Review_Alert_Work)).toHaveLength({ PENDING_APPROVAL: 1, APPROVED: 3, PUBLISHED: 5 }[to]);
       const payloads = committed.get(Review_Alert_Work).map(job => JSON.parse(job.payload));
       expect(payloads.at(-1)).toMatchObject(to === "PUBLISHED"
         ? { phase: "publication", publishedAt: result.updated_at }

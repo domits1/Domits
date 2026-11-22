@@ -116,7 +116,8 @@ export class ReviewAlertRules {
         || response.deletedAt != null || response.deleted_at != null
         || (previousResponse && (previousResponse.id !== response.id
           || previousResponse.reviewId !== review.id || previousResponse.authorRole !== "host"
-          || previousResponse.status !== "draft" || previousResponse.deletedAt != null
+          || !["draft", "deleted"].includes(previousResponse.status)
+          || (previousResponse.status === "draft" && previousResponse.deletedAt != null)
           || previousResponse.publishedAt != null))) return [];
       eventTimestamp = response.publishedAt;
       identity = [response.id, eventTimestamp];

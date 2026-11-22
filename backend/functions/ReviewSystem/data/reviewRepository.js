@@ -1,5 +1,5 @@
 import { applyCompletedStayConditions } from "../util/verifiedStay.js";
-import { enqueueReviewAlertWork, enqueueAdminReviewAlert } from "./reviewAlertWorkRepository.js";
+import { enqueueReviewAlertWork, enqueueAdminReviewAlert, enqueueGuestReviewAlert } from "./reviewAlertWorkRepository.js";
 import { attachPublicDetails } from "./reviewRepositoryShared.js";
 import { randomUUID } from "node:crypto";
 import { In, IsNull } from "typeorm";
@@ -687,7 +687,8 @@ export class ReviewRepository {
       }
 
       const transitions = { DRAFT: "PENDING_APPROVAL", PENDING_APPROVAL: "APPROVED", APPROVED: "PUBLISHED" };
-      if (!Object.hasOwn(transitions, from) || transitions[from] !== to) {
+      if (!(to === "REJECTED" && ["PENDING_APPROVAL", "APPROVED"].includes(from))
+        && (!Object.hasOwn(transitions, from) || transitions[from] !== to)) {
         throw new ConflictException("Invalid review transition.");
       }
       validate(review);
@@ -714,6 +715,7 @@ export class ReviewRepository {
         updated_at: timestamp,
       };
 
+      const previousReview = { ...review };
       const result = await reviews.update(
         {
           id: reviewId,
@@ -726,7 +728,10 @@ export class ReviewRepository {
 
       if (result.affected !== 1) return null;
 
-      if (to !== "PUBLISHED") await enqueueAdminReviewAlert(manager,
+      if (to !== "PENDING_APPROVAL") await enqueueGuestReviewAlert(manager, {
+        type: `REVIEW_${to}`, previousReview, review: { ...previousReview, ...updates }, eventTimestamp: timestamp,
+      });
+      if (["PENDING_APPROVAL", "APPROVED"].includes(to)) await enqueueAdminReviewAlert(manager,
         to === "PENDING_APPROVAL" ? "REVIEW_PENDING_APPROVAL" : "REVIEW_PENDING_PUBLICATION", review.id, timestamp);
       if (to === "PUBLISHED") await enqueueReviewAlertWork(manager, review.id,
         { reviewId: review.id, publishedAt: timestamp, phase: "publication" }, timestamp);

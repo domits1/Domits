@@ -165,6 +165,12 @@ export class Controller {
   }
 
   async updateReview(event) {
+    if (event.queryStringParameters?.action === "reject") return this.executeAuthenticated(event, async (userId, user) => {
+      const body = parseBody(event);
+      if (Object.keys(body).some(key => key !== "updated_at")) throw new BadRequestException("Only updated_at is accepted for rejection.");
+      return this.moderationResponse(200, await this.service.rejectReview(userId, user.username,
+        this.getPathParameter(event, "id"), body.updated_at));
+    });
     if (event.queryStringParameters?.scope === "property-review-schedule") return this.manageReviewSchedule(event);
     if (event.resource === "/reviews" && event.queryStringParameters?.scope === "moderation") {
       return this.executeAuthenticated(event, async (userId, user) =>

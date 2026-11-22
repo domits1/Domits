@@ -2,10 +2,10 @@ import { createHash } from "node:crypto";
 import { ReviewAlertRepository } from "../../data/reviewAlertRepository.js";
 import { ReviewAlertRecipientRepository } from "../../data/reviewAlertRecipientRepository.js";
 import { ReviewRequestNotifier } from "./reviewRequestNotifier.js";
-import { ALERT_TYPES, ADMIN_ALERT_TYPES } from "../model/reviewAlertRules.js";
+import { ALERT_TYPES, ADMIN_ALERT_TYPES, GUEST_ALERT_TYPES } from "../model/reviewAlertRules.js";
 import { ReviewAlertPreferencesRepository } from "../../data/reviewAlertPreferencesRepository.js";
 
-const SUPPORTED_TYPES = { ...ALERT_TYPES, ...ADMIN_ALERT_TYPES };
+const SUPPORTED_TYPES = { ...ALERT_TYPES, ...ADMIN_ALERT_TYPES, ...GUEST_ALERT_TYPES };
 const PREFERENCE_KEYS = {
   NEW_REVIEW: "manager_review_received", LOW_RATING: "manager_low_review",
 };
@@ -37,7 +37,8 @@ export class ReviewAlertNotificationService {
         ...(event.reviewId ? { reviewId: event.reviewId } : {}),
         ...Object.fromEntries(["overallRating", "previousRating", "currentRating"]
           .filter(key => rating(event[key])).map(key => [key, event[key]])),
-        destination: Object.values(ADMIN_ALERT_TYPES).includes(event.type)
+        destination: Object.values(GUEST_ALERT_TYPES).includes(event.type) ? "https://domits.com/guestdashboard/reviews"
+          : Object.values(ADMIN_ALERT_TYPES).includes(event.type)
           ? "https://domits.com/hostdashboard/admin/review-approval" : "https://domits.com/hostdashboard/reviews",
         eventTimestamp: new Date(event.eventTimestamp).toISOString(),
       };

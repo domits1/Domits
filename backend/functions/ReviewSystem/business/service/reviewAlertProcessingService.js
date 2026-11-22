@@ -1,13 +1,20 @@
+import { ReviewGuestAlertCandidateService } from "./reviewGuestAlertCandidateService.js";
 import { ReviewAdminAlertCandidateService } from "./reviewAdminAlertCandidateService.js";
 import { ReviewAlertRules, responseOverdueHours } from "../model/reviewAlertRules.js";
 import { readTrendPolicy } from "../model/ratingTrends.js";
-import { ReviewAlertWorkRepository, adminReviewAlertWorkId } from "../../data/reviewAlertWorkRepository.js";
+import { ReviewAlertWorkRepository, adminReviewAlertWorkId, guestReviewAlertWorkId } from "../../data/reviewAlertWorkRepository.js";
 import { ReviewAlertNotificationService } from "./reviewAlertNotificationService.js";
 const DAY = 86400000;
 
 export class ReviewAlertProcessingService {
-  constructor({ repository = new ReviewAlertWorkRepository(), delivery = new ReviewAlertNotificationService(), adminCandidates = new ReviewAdminAlertCandidateService(), now = Date.now } = {}) {
-    Object.assign(this, { repository, delivery, adminCandidates, now });
+  constructor({ repository = new ReviewAlertWorkRepository(), delivery = new ReviewAlertNotificationService(), adminCandidates = new ReviewAdminAlertCandidateService(), guestCandidates = new ReviewGuestAlertCandidateService(), now = Date.now } = {}) {
+    Object.assign(this, { repository, delivery, adminCandidates, guestCandidates, now });
+  }
+  async afterGuestEvent(type, reviewId, responseId) {
+    try {
+      const job = await this.repository.find(guestReviewAlertWorkId(type, reviewId, responseId));
+      if (job && job.due_at != null) await this.process(job);
+    } catch { this.log(); }
   }
   async afterAdminEvent(type, reviewId, flagId) {
     try {
@@ -36,6 +43,12 @@ export class ReviewAlertProcessingService {
   async process(job) {
     const payload = JSON.parse(job.payload), now = this.now();
     try {
+      if (payload.phase === "guest") {
+        for (const event of await this.guestCandidates.evaluate(payload)) await this.send(
+          { ...event, ...(payload.responseId ? { responseId: payload.responseId } : {}) }, async () =>
+            (await this.guestCandidates.evaluate(payload)).some(fresh => fresh.eventKey === event.eventKey));
+        return await this.repository.advance(job, payload, null);
+      }
       if (payload.phase === "admin") {
         const candidates = await this.adminCandidates.evaluate(payload);
         let failed = false;

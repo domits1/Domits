@@ -131,7 +131,9 @@ export class ReviewService {
   }
 
   async saveHostResponse(user, reviewId, body, action) {
-    return this.#hostReviewService.saveHostResponse(user, reviewId, body, action);
+    const response = await this.#hostReviewService.saveHostResponse(user, reviewId, body, action);
+    if (response.status === "published") await this.notifyGuest("HOST_RESPONDED", reviewId.trim(), response.id);
+    return response;
   }
 
   async getResponseEligibleReviews(username) {
@@ -501,6 +503,18 @@ export class ReviewService {
     }, version);
   }
 
+  async rejectReview(userId, username, reviewId, version) {
+    await this.assertReviewApprover(userId, username);
+    if (!Number.isSafeInteger(version) || version < 0 || version >= Number.MAX_SAFE_INTEGER) throw new BadRequestException("A valid review update version is required.");
+    const review = await this.requireReview(reviewId);
+    return this.changePublicationState(review, review.status, "REJECTED", async (_current, manager) => {
+      await this.assertReviewApprover(userId, username, manager); return true;
+    }, version);
+  }
+  async notifyGuest(type, reviewId, responseId) {
+    try { await this.alerts.afterGuestEvent(type, reviewId, responseId); }
+    catch { console.error(JSON.stringify({ event: "REVIEW_GUEST_ALERT_PROCESSING_FAILED", alertType: type, requiresReconciliation: true })); }
+  }
   async notifyAdministrators(type, reviewId, flagId) {
     try { await this.alerts.afterAdminEvent(type, reviewId, flagId); }
     catch { console.error(JSON.stringify({ event: "REVIEW_ADMIN_ALERT_PROCESSING_FAILED", alertType: type, requiresReconciliation: true })); }
@@ -522,7 +536,8 @@ export class ReviewService {
     const result = await this.repository.publishDraft({ reviewId: review.id,
       expectedUpdatedAt: version, updatedAt: this.now(), from, to, validate, authorize });
     if (!result) throw new ConflictException("Review changed. Reload before continuing.");
-    if (to !== "PUBLISHED") await this.notifyAdministrators(
+    if (to !== "PENDING_APPROVAL") await this.notifyGuest(`REVIEW_${to}`, result.id);
+    if (["PENDING_APPROVAL", "APPROVED"].includes(to)) await this.notifyAdministrators(
       to === "PENDING_APPROVAL" ? "REVIEW_PENDING_APPROVAL" : "REVIEW_PENDING_PUBLICATION", result.id);
     if (to === "PUBLISHED") {
       try { await this.alerts.afterPublication(result); }

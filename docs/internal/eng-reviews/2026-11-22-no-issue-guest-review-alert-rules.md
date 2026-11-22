@@ -4,7 +4,7 @@ Pull request: not provided
 Issue: not provided
 Reviewed commit: 21e0bbaa9
 Base: 0ddabc3e4 (stacked feature parent)
-Result: one P2 finding; fix approved, implementation pending. Review only; no runtime changes made.
+Result: one P2 finding, fixed in the guest delivery change with restored-draft publication and replay coverage.
 
 ## Scope and verification
 
@@ -42,7 +42,7 @@ Recommendation: accept a matching never-published deleted predecessor for first
 publication. Continue rejecting deleted current responses and previously published
 predecessors; retain response ID/publication-time keys. Add regression coverage
 for save draft -> delete -> publish and replay deduplication.
-Decision: user approved option A: support first publication of a matching deleted, never-published response and add regression/replay coverage while preserving duplicate protection. Implementation pending.
+Decision: user approved option A: support first publication of a matching deleted, never-published response and add regression/replay coverage while preserving duplicate protection. Implemented in the guest delivery change; see reviewGuestDelivery.test.js for restored-draft publication and replay coverage.
 
 ## What already exists
 

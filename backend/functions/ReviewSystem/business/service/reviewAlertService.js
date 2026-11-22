@@ -1,3 +1,4 @@
+import { GUEST_ALERT_TYPES } from "../model/reviewAlertRules.js";
 import { ReviewAlertRepository } from "../../data/reviewAlertRepository.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
@@ -5,7 +6,8 @@ import { assertCaller } from "../model/reviewRules.js";
 
 const FIELDS = ["id", "alert_type", "property_id", "review_id", "status", "created_at", "updated_at"];
 const display = alert => ({ ...Object.fromEntries(FIELDS.map(key => [key, alert[key] ?? null])),
-  display: { destination: "/hostdashboard/reviews" } });
+  display: { destination: Object.values(GUEST_ALERT_TYPES).includes(alert.alert_type)
+    ? "/guestdashboard/reviews" : "/hostdashboard/reviews" } });
 const invalid = message => { throw new BadRequestException(message); };
 function pageNumber(value, fallback, minimum, maximum) {
   if (value === undefined) return fallback;
