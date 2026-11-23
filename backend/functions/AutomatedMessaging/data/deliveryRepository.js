@@ -45,6 +45,42 @@ export default class DeliveryRepository {
       .getMany();
   }
 
+  async listScheduledStayByBooking(bookingId) {
+    const client = await Database.getInstance();
+    return client
+      .getRepository(MessageAutomationDelivery)
+      .createQueryBuilder("delivery")
+      .where("delivery.bookingId = :bookingId", { bookingId })
+      .andWhere("delivery.status = :scheduled", { scheduled: "SCHEDULED" })
+      .andWhere("delivery.eventType IN (:...stayTriggers)", { stayTriggers: ["CHECK_IN", "CHECK_OUT"] })
+      .orderBy("delivery.scheduledFor", "ASC")
+      .getMany();
+  }
+
+  async cancelScheduled(id, failureReason) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(MessageAutomationDelivery)
+      .set({ status: "CANCELLED", failureReason, updatedAt: Date.now() })
+      .where("id = :id", { id })
+      .andWhere("status = :scheduled", { scheduled: "SCHEDULED" })
+      .execute();
+    return Number(result?.affected || 0) === 1;
+  }
+
+  async rescheduleScheduled(id, scheduledFor) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(MessageAutomationDelivery)
+      .set({ scheduledFor, updatedAt: Date.now() })
+      .where("id = :id", { id })
+      .andWhere("status = :scheduled", { scheduled: "SCHEDULED" })
+      .execute();
+    return Number(result?.affected || 0) === 1;
+  }
+
   async listDue(now, limit = 50, processingStaleMs = 5 * 60 * 1000) {
     const client = await Database.getInstance();
     return client
