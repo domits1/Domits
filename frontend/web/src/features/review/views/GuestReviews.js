@@ -16,31 +16,47 @@ import DateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
 
 import { requestReview } from "../services/reviewAPI";
 
+const reservationType = "GUEST_TO_RESERVATION";
+const writtenLabels = {
+  [reservationType]: "Reservation Review",
+  GUEST_TO_PROPERTY: "Property Review",
+  GUEST_TO_HOST: "Host Review",
+};
+
 function ReviewCard({ review, isWritten, deletingId, onDelete, navigate }) {
   const rating = Number(review.overall_rating ?? review.rating);
   const hasRating = Number.isFinite(rating) && rating >= 1 && rating <= 5;
+  const isReservation = review.review_type === reservationType;
+  const title = isReservation && review.booking_id && (!review.title || review.title === writtenLabels[reservationType])
+    ? `Booking #${review.booking_id}` : review.title || "Stay review";
+  const date = review.date ?? review.created_at;
+  const editReview = () => {
+    const url = `/review?reviewId=${encodeURIComponent(review.id)}`;
+    if (isReservation) navigate(url, { state: { reviewType: reservationType } });
+    else navigate(url);
+  };
   return (
     <article id={`guest-review-${encodeURIComponent(review.id)}`} tabIndex={-1} key={review.id} className={styles.card}>
       <div className={styles.cardTop}>
-        <span className={styles.badge}>{isWritten ? "Written by you" : "From your host"}</span>
+        <span className={styles.badge}>{isWritten ? writtenLabels[review.review_type] || "Written by you" : "From your host"}</span>
         {hasRating && (
           <span className={styles.rating} aria-label={`${rating} out of 5 stars`}>
             <Star size={15} fill="currentColor" aria-hidden="true" /> {rating}
           </span>
         )}
       </div>
-      <h3>{review.title || "Stay review"}</h3>
+      <h3>{title}</h3>
       <p className={styles.content}>{review.content || review.public_review || "No written feedback provided."}</p>
       {review.response?.published_at != null && <section aria-label="Host response"><strong>Host response</strong><p>{review.response.message}</p></section>}
       <footer className={styles.cardFooter}>
         <span className={styles.date}>
           <CalendarDays size={14} aria-hidden="true" />{" "}
-          {review.date ? DateFormatterDD_MM_YYYY(review.date) : "Date unavailable"}
+          {date ? DateFormatterDD_MM_YYYY(date) : "Date unavailable"}
         </span>
         {isWritten && review.status !== "REJECTED" && (
           <div className={styles.actions}>
             {review.can_edit && Date.now() < review.edit_expires_at && (
-              <button type="button" onClick={() => navigate(`/review?reviewId=${encodeURIComponent(review.id)}`)}>
+              <button type="button" onClick={editReview}>
                 <Pencil size={14} aria-hidden="true" /> Edit review
               </button>
             )}
@@ -109,14 +125,16 @@ function GuestReviews() {
   const [reviewError, setReviewError] = useState("");
   const navigate = useNavigate();
   const { search } = useLocation();
-  const targetId = new URLSearchParams(search).get("reviewId");
+  const params = new URLSearchParams(search);
+  const targetId = params.get("reviewId");
+  const reservationDetail = params.get("review_type") === reservationType;
   const [linkedReview, setLinkedReview] = useState(null);
   useEffect(() => {
     let active = true; const version = session.current;
     setLinkedReview(null);
     if (userId && targetId) {
       setActiveTab("written");
-      requestReview("GET", { reviewId: targetId, view: "history" }).then(async res => {
+      requestReview("GET", { reviewId: targetId, view: "history", ...(reservationDetail ? { review_type: reservationType } : {}) }).then(async res => {
         if (!res.ok) throw new Error("Unavailable review");
         const review = await res.json();
         if (review?.id !== targetId) throw new Error("Mismatched review");
@@ -124,7 +142,7 @@ function GuestReviews() {
       }).catch(() => { if (active && version === session.current) setReviewError("This review is unavailable for your account."); });
     }
     return () => { active = false; };
-  }, [userId, targetId, identityVersion]);
+  }, [userId, targetId, reservationDetail, identityVersion]);
   useEffect(() => {
     if (linkedReview && !isLoading && activeTab === "written") {
       const card = document.getElementById(`guest-review-${encodeURIComponent(linkedReview.id)}`);
@@ -202,6 +220,7 @@ function GuestReviews() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      setLinkedReview(current => current?.id === reviewId ? null : current);
     } catch (e) {
       setReviewError("Could not delete your review. Please try again.");
     } finally {

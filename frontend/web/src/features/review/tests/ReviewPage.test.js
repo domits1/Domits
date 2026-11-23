@@ -122,16 +122,19 @@ it("supports keyboard selection of the host option and rating controls", async (
   expect(communication).toBeChecked();
 });
 
-it("sends the host type and retains conflict status through the shared API utility", async () => {
+it.each([
+  ["GUEST_TO_HOST", { hospitality: 5 }],
+  ["GUEST_TO_RESERVATION", { booking_experience: 5 }],
+])("sends %s and retains conflict status through the shared API utility", async (reviewType, categoryRatings) => {
   const api = jest.requireActual("../services/reviewAPI");
   const originalFetch = global.fetch;
   global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409, text: async () => '{"message":"Duplicate"}' });
   try {
-    await expect(api.createReview({ bookingId: "b1", reviewType: "GUEST_TO_HOST", rating: 4,
-      title: "Host", publicReview: "Helpful", categoryRatings: { hospitality: 5 } }))
+    await expect(api.createReview({ bookingId: "b1", reviewType, rating: 4,
+      title: "Helpful experience", publicReview: "Helpful", categoryRatings }))
       .rejects.toMatchObject({ status: 409 });
-    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toMatchObject({ review_type: "GUEST_TO_HOST",
-      category_ratings: { hospitality: 5 } });
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toMatchObject({ review_type: reviewType,
+      category_ratings: categoryRatings });
   } finally { global.fetch = originalFetch; }
 });
 
@@ -744,4 +747,70 @@ it("previews category stars on hover without changing the selection or other cat
   fireEvent.mouseLeave(row);
   expect(row.querySelectorAll('[data-filled="true"]')).toHaveLength(2);
   expect(cleanliness).toBeChecked();
+});
+
+const reservationReviewType = "GUEST_TO_RESERVATION";
+const openReservationForm = async () => {
+  render(<ReviewPage />);
+  fireEvent.click(await screen.findByRole("radio", { name: "Reservation Review" }));
+};
+const fillReservationForm = () => {
+  fireEvent.click(screen.getByRole("radio", { name: "4 stars: Great" }));
+  fireEvent.change(screen.getByLabelText(/Your review/), { target: { value: " Clear booking updates. " } });
+  ["Booking Experience", "Reservation Communication", "Booking Accuracy"].forEach(label =>
+    fireEvent.click(screen.getByRole("radio", { name: `${label}: 4 stars` })));
+};
+
+it("submits booking feedback with the configured reservation category keys", async () => {
+  publishReview.mockResolvedValueOnce({ status: "PENDING_APPROVAL" });
+  await openReservationForm();
+  expect(screen.getByRole("radio", { name: "Reservation Review" })).toBeChecked();
+  expect(screen.getByRole("region", { name: "Your reservation" })).toHaveTextContent("Booking #reservation-1");
+  expect(screen.queryByRole("radio", { name: "Hospitality: 4 stars" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("textbox", { name: /Review title/ })).not.toBeInTheDocument();
+  fillReservationForm();
+  fireEvent.click(screen.getByRole("button", { name: "Submit Reservation Review" }));
+  await screen.findByRole("heading", { name: "Your reservation review is awaiting approval" });
+  expect(createReview).toHaveBeenCalledWith(expect.objectContaining({ bookingId: booking.id,
+    reviewType: reservationReviewType, rating: 4, title: "Reservation Review", publicReview: "Clear booking updates.",
+    categoryRatings: { booking_experience: 4, reservation_communication: 4, booking_accuracy: 4 } }));
+  expect(publishReview).toHaveBeenCalledWith("review-1");
+});
+
+it.each([409, 500])("handles reservation submission failure %s without discarding input", async status => {
+  createReview.mockRejectedValueOnce(Object.assign(new Error("Could not save"), { status }));
+  await openReservationForm();
+  fillReservationForm();
+  fireEvent.click(screen.getByRole("button", { name: "Submit Reservation Review" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Could not save");
+  expect(screen.getByLabelText(/Your review/)).toHaveValue(" Clear booking updates. ");
+  const button = screen.getByRole("button", { name: "Submit Reservation Review" });
+  if (status === 409) {
+    expect(button).toBeDisabled();
+    expect(screen.getByRole("radio", { name: "Property Review" })).toBeEnabled();
+    fireEvent.submit(button.closest("form"));
+    expect(createReview).toHaveBeenCalledTimes(1);
+  } else expect(button).toBeEnabled();
+  expect(publishReview).not.toHaveBeenCalled();
+});
+
+it("clears reservation context when the authenticated guest changes", async () => {
+  await openReservationForm();
+  Auth.currentUserInfo.mockResolvedValue({ attributes: { sub: "other-guest" } });
+  fireEvent(window, new Event("authChanged"));
+  await screen.findByRole("heading", { name: "Review unavailable" });
+  expect(screen.queryByText(/Booking #reservation-1/)).not.toBeInTheDocument();
+});
+
+it("labels reservation history and passes the review type to the authorized edit flow", async () => {
+  requestReview.mockImplementation(async (_method, query) => ({
+    ok: true, json: async () => query.scope === "written"
+      ? [{ id: "review-1", review_type: reservationReviewType, title: "Quick reservation", content: "Clear updates.",
+        can_edit: true, edit_expires_at: Date.now() + 60000 }] : [],
+  }));
+  render(<GuestReviews />);
+  expect(await screen.findByText("Reservation Review")).toBeInTheDocument();
+  expect(screen.getByText("Clear updates.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Edit review" }));
+  expect(mockNavigate).toHaveBeenCalledWith("/review?reviewId=review-1", { state: { reviewType: reservationReviewType } });
 });

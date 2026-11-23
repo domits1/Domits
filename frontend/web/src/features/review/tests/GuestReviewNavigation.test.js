@@ -63,3 +63,18 @@ test("refreshing the same account reloads its linked review without getting stuc
   fireEvent(window, new Event("authChanged"));
   expect(await screen.findByText("Refreshed own review")).toBeInTheDocument();
 });
+
+test("loads typed reservation detail and removes its linked card after deletion", async () => {
+  const type = "GUEST_TO_RESERVATION";
+  const reservation = { ...detail, review_type: type, status: "PUBLISHED", title: "Reservation Review", booking_id: "b1" };
+  const confirm = jest.spyOn(window, "confirm").mockReturnValue(true);
+  requestReview.mockImplementation(async (_method, query) => ok(query.view === "history" ? reservation : []));
+  try {
+    render(<MemoryRouter initialEntries={[`/guestdashboard/reviews?reviewId=${id}&review_type=${type}`]}><GuestReviews /></MemoryRouter>);
+    expect(await screen.findByRole("heading", { name: "Booking #b1" })).toBeInTheDocument();
+    expect(requestReview).toHaveBeenCalledWith("GET", { reviewId: id, view: "history", review_type: type });
+    fireEvent.click(screen.getByRole("button", { name: "Delete review" }));
+    await waitFor(() => expect(screen.queryByRole("article")).not.toBeInTheDocument());
+    expect(requestReview).toHaveBeenCalledWith("DELETE", { reviewId: id });
+  } finally { confirm.mockRestore(); }
+});
