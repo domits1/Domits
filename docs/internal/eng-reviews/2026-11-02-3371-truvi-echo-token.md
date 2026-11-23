@@ -1,11 +1,15 @@
 # fix: reuse the echoToken per booking so a Truvi retry never creates a second verification #3371
 
-Pull request: #3632
+Pull request: #3632, then folded into #3603; back as its own pull request from branch `feature/3371-truvi-echo-token-per-booking`
 Issue: #3371
-Reviewed commit: d2ab25515
+Reviewed commit: d2ab25515, and the merge onto acceptance 1113aacbb
 Result: 2 blocking findings (Sonar duplication and code comments), fixed in this push. No blocking findings left in the code.
 
 The review ran after the pull request was opened, not before. That was a process miss on my side.
+
+## Why this pull request comes back
+
+This code was reviewed and approved in #3632 (Enes and elcoleta). On 16 November it was folded into #3603 together with the other Truvi parts, which made #3603 too big to review. The cancel part (#3603) and the date changes (#3963) are merged since; this part comes back on its own, unchanged. It merged onto acceptance without a conflict, and all 180 Truvi tests pass.
 
 ## Findings
 
