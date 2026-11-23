@@ -62,3 +62,57 @@ outbox event ─▶ claim ─▶ by eventType
 ### Verification
 
 New tests were red first (20 failing). `functions/AutomatedMessaging`: 15 suites, 181 tests passed. Full backend run: 463 suites and 6733 tests passed; the same three suites fail locally for reasons unrelated to messaging: two need AWS credentials and one needs a live database.
+
+## Commit 2: write `BOOKING_DATES_CHANGED` when a paid booking's dates change
+
+Reviewed: the staged diff (`reservationRepository.js`, `bookingService.js`, their tests, this record)
+
+### Decision
+
+```
+host changes the dates of a booking
+   bookingService.modifyBookingDates ─ was the booking Paid? ─▶ { notifyAutomations }
+        │
+        ▼
+   reservationRepository.updateBookingDates ── one transaction ──┐
+        ├─ UPDATE booking (arrival, departure)                    │ commit, or roll back together
+        ├─ Channex availability rows (as before)                  │
+        └─ if notifyAutomations: INSERT outbox BOOKING_DATES_CHANGED
+              version = MAX(version of this booking and type) + 1 ┘
+```
+
+- The event is written in the same transaction as the date update, so a date change never exists without its event, and a failed event write fails and rolls back the date change. The insert is not `orIgnore`: a swallowed conflict would lose the event.
+- The version is a per-booking counter, because `eventversion` is a 32-bit integer. Two concurrent changes read the same maximum; the second commit conflicts and `withDsqlRetry` runs the transaction again, which reads the counter again. The existing unique index on booking, type and version is the last line of defence.
+- The event is only written when the booking was `Paid` before the change. An unpaid booking has no automation deliveries, and its payment event reads the dates that are current when it is processed.
+- Without the flag, and without Channex rows, the write runs exactly as before, with no transaction.
+- Consequence accepted: the paid check uses the status read before the transaction.
+
+### Findings
+
+| Finding | Confidence | Resolution |
+|---|---|---|
+| `[P3]` `reservationRepository.js` (`#enqueueBookingDatesChanged`): the counter relies on DSQL turning two concurrent writers into a commit conflict. I could not check that against a real cluster. If it does not, the unique index raises `23505`, the transaction rolls back and the host gets an error; nothing is stored half-done. | 6/10 | Accepted. Fails safe. |
+| `[P3]` `bookingService.js` (`isPaidBookingStatus`): a booking that becomes paid between the status read and the write gets no event. Its payment event reads the current dates when it is processed. | 7/10 | Accepted. |
+| `[P2]` Deploy window of commit 1 applies here too: this PR changes two Lambdas. | 7/10 | Accepted by the author. The PR body says to merge, then wait for both Lambdas to finish deploying. |
+
+### Not in scope
+
+- The API validation for the new triggers, which moved to its own PR to keep this one under 1000 lines. Until it is merged, no stay-date automation can be saved, so the event finds no delivery to change.
+- Other ways the dates can change, for example a Channex booking revision.
+
+### What already exists
+
+- `#saveWithOutbox` and `withDsqlRetry`, extended instead of adding a second transaction helper.
+
+### Failure modes
+
+| Path | Failure | Test | Handling | User sees |
+|---|---|---|---|---|
+| Event write fails | Dates saved, event lost | Yes | Same transaction: the date change fails | An error, dates unchanged |
+| Two changes at once | Same version twice | Yes (retry); the conflict itself is not testable here | Commit conflict, retry re-reads the counter | Both changes saved |
+| Unpaid booking | Needless events | Yes | No flag, no transaction | Nothing |
+| Writer deployed before the consumer | Event misread as a paid one | No (deploy order) | Accepted window, merge note | See commit 1 |
+
+### Verification
+
+New tests were red first (13 failing). `reservationRepository.datesChanged.test.js`: one transaction for dates and event, version counting (also as text), no `orIgnore`, no transaction without the flag, Channex rows together with the event, a failing write failing the save, and a conflict that re-runs the transaction and re-reads the counter. `bookingService.channex.test.js`: the existing arguments assertion now includes the flag, and the flag is only true for a paid booking, in any capitalisation. Full backend run: 464 suites and 6749 tests passed; the same three suites fail locally for reasons unrelated to bookings: two need AWS credentials and one needs a live database.
