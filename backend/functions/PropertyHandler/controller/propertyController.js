@@ -22,7 +22,16 @@ import { WebsiteCleanupService } from "../business/service/websiteCleanupService
 import { StaticPageReconciler } from "../business/service/staticPageReconciler.js";
 import { DirectBookingWebsiteRatePlanService } from "../business/service/directBookingWebsiteRatePlanService.js";
 import { WebsiteElitePageSettings } from "../business/service/websiteElitePageSettings.js";
-import { listNewSitePropertyIds, withNormalizedSiteProperties } from "../business/service/websiteSiteProperties.js";
+import {
+    MAX_SITE_PROPERTIES,
+    SITE_PROPERTIES_OVERRIDE_KEY,
+    listNewSitePropertyIds,
+    withNormalizedSiteProperties,
+} from "../business/service/websiteSiteProperties.js";
+import {
+    SITE_PROPERTY_LOAD_BATCH_SIZE,
+    WebsiteSitePropertySnapshots,
+} from "../business/service/websiteSitePropertySnapshots.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
@@ -33,10 +42,11 @@ import { NotFoundException } from "../util/exception/NotFoundException.js";
 import { Unauthorized } from "../util/exception/Unauthorized.js";
 import { Forbidden } from "../util/exception/Forbidden.js";
 import { TypeException } from "../util/exception/TypeException.js";
-import { WebsiteQuoteError } from "../util/exception/WebsiteQuoteError.js";
+import { WebsiteQuoteError, WEBSITE_QUOTE_ERROR_CODES } from "../util/exception/WebsiteQuoteError.js";
 import { WebsitePublishConflictError } from "../util/exception/WebsitePublishConflictError.js";
 import { WebsiteDeleteConflictError } from "../util/exception/WebsiteDeleteConflictError.js";
 import { WebsitePublishNotAllowedError } from "../util/exception/WebsitePublishNotAllowedError.js";
+import { WebsiteSitePropertyNotAllowedError } from "../util/exception/WebsiteSitePropertyNotAllowedError.js";
 import {
     WEBSITE_CUSTOM_DOMAIN_ERROR_CODES,
     WebsiteCustomDomainError,
@@ -92,6 +102,25 @@ const DIRECT_BOOKING_WEBSITE_QUOTE_TOKEN_SECRET_PARAMETER =
 // validation 400s are guest input errors, not conflicts.
 const PUBLIC_REVIEW_ERROR_CODES = new Set(["wrong_status", "stale_review"]);
 const WEBSITE_QUOTE_CONFLICT_ERROR_CODES = new Set(["unavailable_dates", "stay_restriction_violation"]);
+const WEBSITE_QUOTE_PROPERTY_NOT_FOUND_MESSAGE = "No property was found for this website.";
+const WEBSITE_QUOTE_SLOW_MESSAGE = "Live pricing and availability could not be checked. Please try again.";
+export const WEBSITE_QUOTE_BATCH_TIMEOUT_MS = 12000;
+const isNonEmptyText = (value) => typeof value === "string" && value.trim() !== "";
+const parseWebsiteQuotePropertyIds = (value) => {
+    if (!Array.isArray(value) || value.length < 1 || value.length > MAX_SITE_PROPERTIES || !value.every(isNonEmptyText)) {
+        return null;
+    }
+    const propertyIds = value.map((propertyId) => propertyId.trim());
+    return new Set(propertyIds).size === propertyIds.length ? propertyIds : null;
+};
+const toWebsiteQuoteBatchEntry = (propertyId, response) => {
+    const answer = JSON.parse(response.body);
+    return response.statusCode === 200
+        ? { propertyId, quote: answer }
+        : { propertyId, error: { code: answer.error.code, message: answer.error.message } };
+};
+const otherQuotedPropertyFields = (site, quotedPropertyId) =>
+    quotedPropertyId === site.propertyId ? {} : { propertyId: quotedPropertyId };
 const DIRECT_BOOKING_WEBSITE_DOMAIN_STATUSES = new Set(["PENDING", "VERIFIED", "ACTIVE", "FAILED", "DISABLED"]);
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_FALLBACK = "FALLBACK";
 const DIRECT_BOOKING_WEBSITE_DOMAIN_TYPE_CUSTOM = "CUSTOM";
@@ -1758,14 +1787,18 @@ export class PropertyController {
         propertySnapshot = undefined,
         primaryDomain = null,
         host = null,
-        contentOverrides = site?.publishedContentOverrides
+        contentOverrides = site?.publishedContentOverrides,
+        siteProperties = []
     ) {
         const resolution = this.buildPublicDirectBookingWebsiteResolution(site, domain);
         if (!resolution) {
             return null;
         }
 
-        return {
+        const publicContentOverrides = Object.fromEntries(
+            Object.entries(contentOverrides || {}).filter(([key]) => key !== SITE_PROPERTIES_OVERRIDE_KEY)
+        );
+        const payload = {
             resolution,
             site: toPublicWebsiteSiteView(site),
             domain: toPublicWebsiteDomainView(domain),
@@ -1776,10 +1809,11 @@ export class PropertyController {
                     ? propertySnapshot
                     : site.publishedPropertySnapshot || {}
             ),
-            contentOverrides: contentOverrides || {},
+            contentOverrides: publicContentOverrides,
             themeOverrides: site.publishedThemeOverrides || {},
             renderSource: "published_site",
         };
+        return siteProperties.length > 0 ? { ...payload, siteProperties } : payload;
     }
 
     async buildPublicPropertySnapshotForWebsiteRender(site) {
@@ -2100,13 +2134,16 @@ export class PropertyController {
         return buildLiveSiteDomain(site.siteName, site.id) === normalizedDomain ? site : null;
     }
 
-    async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId }) {
+    async publishDirectBookingWebsiteForDraft({ draft, hostId, propertyId, sitePropertyIds = null }) {
         const publishStartedAt = Date.now();
         const propertyDetails = await this.propertyService.getFullPropertyAttributesWithFullLocation(
             propertyId,
             { includeCalendarAvailability: true }
         );
         this.ensureDirectBookingWebsitePublishEligibility(propertyDetails);
+        const sitePropertySnapshots = sitePropertyIds
+            ? await this.getWebsiteSitePropertySnapshots().buildForPublish(sitePropertyIds)
+            : undefined;
 
         const siteName = this.buildDirectBookingWebsiteName({
             draft,
@@ -2125,6 +2162,7 @@ export class PropertyController {
             publishedThemeOverrides: draft.publishedThemeOverrides || {},
             publishedAt: Date.now(),
             suspendedAt: null,
+            sitePropertySnapshots,
         });
 
         const liveDomainStatus = this.normalizeDirectBookingWebsiteDomainStatus(
@@ -3098,11 +3136,19 @@ export class PropertyController {
                 };
             }
 
-            await this.authorizeSitePropertyOwners(accessToken, propertyId, [draft.publishedContentOverrides]);
+            const sitePropertyIds = await this.getWebsiteSitePropertySnapshots().listForPublish({
+                hostId,
+                mainPropertyId: propertyId,
+                overrides: draft.publishedContentOverrides,
+            });
+            if (sitePropertyIds) {
+                await this.authorizeSitePropertyOwners(accessToken, propertyId, [draft.publishedContentOverrides]);
+            }
             const siteSummary = await this.publishDirectBookingWebsiteForDraft({
                 draft,
                 hostId,
                 propertyId,
+                sitePropertyIds,
             });
 
             return {
@@ -3115,7 +3161,11 @@ export class PropertyController {
             if (this.isWebsiteDraftClientError(error)) {
                 return this.badRequest(error.message);
             }
-            if (error instanceof WebsitePublishConflictError || error instanceof WebsitePublishNotAllowedError) {
+            if (
+                error instanceof WebsitePublishConflictError ||
+                error instanceof WebsitePublishNotAllowedError ||
+                error instanceof WebsiteSitePropertyNotAllowedError
+            ) {
                 return {
                     statusCode: error.statusCode,
                     headers: draftResponseHeaders,
@@ -3273,6 +3323,10 @@ export class PropertyController {
                     overrides: resolutionResult.site.publishedContentOverrides,
                 }),
             ]);
+            const siteProperties = await this.getWebsiteSitePropertySnapshots().serveForRender({
+                site: resolutionResult.site,
+                overrides: contentOverrides,
+            });
 
             return {
                 statusCode: 200,
@@ -3283,7 +3337,8 @@ export class PropertyController {
                     propertySnapshot,
                     primaryDomain,
                     servePublicWebsiteHostForSite(host, contentOverrides),
-                    contentOverrides
+                    contentOverrides,
+                    siteProperties
                 )),
             };
         } catch (error) {
@@ -3301,6 +3356,7 @@ export class PropertyController {
     async createPublicWebsiteQuote(event) {
         const requestId = cleanWebsiteText(event?.requestContext?.requestId) || randomUUID();
         let site = null;
+        let quotedPropertyId = null;
         try {
             let requestBody = null;
             try {
@@ -3316,6 +3372,16 @@ export class PropertyController {
             if (!siteId) {
                 return this.websiteQuoteErrorResponse(400, "invalid_request", "siteId is required.", requestId);
             }
+            const requestedPropertyId = requestBody.propertyId ?? null;
+            if (requestedPropertyId !== null && (typeof requestedPropertyId !== "string" || !requestedPropertyId.trim())) {
+                return this.websiteQuoteErrorResponse(400, "invalid_request", "propertyId must be a non-empty string.", requestId);
+            }
+            const requestedPropertyIds = requestBody.propertyIds ?? null;
+            const batchPropertyIds = requestedPropertyIds === null ? null : parseWebsiteQuotePropertyIds(requestedPropertyIds);
+            if (requestedPropertyIds !== null && (requestedPropertyId !== null || batchPropertyIds === null)) {
+                const message = `propertyIds must list 1 to ${MAX_SITE_PROPERTIES} different property ids, without propertyId.`;
+                return this.websiteQuoteErrorResponse(400, "invalid_request", message, requestId);
+            }
 
             site = await this.directBookingWebsiteSiteRepository.getSiteById(siteId);
             if (!site) {
@@ -3328,6 +3394,65 @@ export class PropertyController {
                 return this.websiteQuoteErrorResponse(409, "site_not_published", "This website is not published.", requestId);
             }
 
+            if (batchPropertyIds) {
+                return await this.createPublicWebsiteQuoteBatch({ site, propertyIds: batchPropertyIds, requestBody, requestId });
+            }
+            quotedPropertyId = await this.resolveWebsiteQuotePropertyId(site, requestedPropertyId);
+            return await this.quoteWebsiteProperty({ site, quotedPropertyId, requestBody, requestId });
+        } catch (error) {
+            return this.websiteQuoteFailureResponse({ error, site, quotedPropertyId, requestId });
+        }
+    }
+
+    async createPublicWebsiteQuoteBatch({ site, propertyIds, requestBody, requestId }) {
+        const servedOtherIds = await this.getWebsiteSitePropertySnapshots().listServedOtherPropertyIds({ site, propertyIds });
+        const answers = new Map();
+        let nextIndex = 0;
+        let isPastDeadline = false;
+        const quoteWaiting = async () => {
+            while (nextIndex < propertyIds.length) {
+                if (isPastDeadline) {
+                    return;
+                }
+                const propertyId = propertyIds[nextIndex];
+                nextIndex += 1;
+                answers.set(propertyId, await this.quoteWebsiteBatchEntry({ site, propertyId, servedOtherIds, requestBody, requestId }));
+            }
+        };
+        let deadlineTimer;
+        const deadline = new Promise((resolve) => {
+            deadlineTimer = setTimeout(resolve, WEBSITE_QUOTE_BATCH_TIMEOUT_MS);
+        });
+        await Promise.race([Promise.all(Array.from({ length: SITE_PROPERTY_LOAD_BATCH_SIZE }, quoteWaiting)), deadline]);
+        clearTimeout(deadlineTimer);
+        isPastDeadline = true;
+
+        const slow = new WebsiteQuoteError(WEBSITE_QUOTE_ERROR_CODES.PRICING_SERVICE_UNAVAILABLE, WEBSITE_QUOTE_SLOW_MESSAGE);
+        const quotes = [];
+        for (const propertyId of propertyIds) {
+            quotes.push(
+                answers.get(propertyId) ??
+                    toWebsiteQuoteBatchEntry(
+                        propertyId,
+                        await this.websiteQuoteFailureResponse({ error: slow, site, quotedPropertyId: propertyId, requestId })
+                    )
+            );
+        }
+        return { statusCode: 200, headers: draftResponseHeaders, body: JSON.stringify({ siteId: site.id, quotes }) };
+    }
+
+    async quoteWebsiteBatchEntry({ site, propertyId, servedOtherIds, requestBody, requestId }) {
+        if (propertyId === site.propertyId || servedOtherIds.has(propertyId)) {
+            const response = await this.quoteWebsiteProperty({ site, quotedPropertyId: propertyId, requestBody, requestId });
+            return toWebsiteQuoteBatchEntry(propertyId, response);
+        }
+        const error = new WebsiteQuoteError(WEBSITE_QUOTE_ERROR_CODES.PROPERTY_NOT_FOUND, WEBSITE_QUOTE_PROPERTY_NOT_FOUND_MESSAGE);
+        return toWebsiteQuoteBatchEntry(propertyId, await this.websiteQuoteFailureResponse({ error, site, quotedPropertyId: null, requestId }));
+    }
+
+    async quoteWebsiteProperty({ site, quotedPropertyId, requestBody, requestId }) {
+        try {
+            const quotedPropertyFields = otherQuotedPropertyFields(site, quotedPropertyId);
             const sessionId = cleanWebsiteText(requestBody.session?.sessionId) || null;
             await this.recordStandaloneWebsiteEventSafely({
                 draftId: null,
@@ -3337,6 +3462,7 @@ export class PropertyController {
                 payload: {
                     requestId,
                     siteId: site.id,
+                    ...quotedPropertyFields,
                     sessionId,
                     checkIn: requestBody.checkIn ?? null,
                     checkOut: requestBody.checkOut ?? null,
@@ -3344,10 +3470,9 @@ export class PropertyController {
                 },
             });
 
-            // The quoted property is the site's own; a client-supplied propertyId is never used.
             const quote = await this.getWebsiteQuoteService().createQuote({
                 siteId: site.id,
-                propertyId: site.propertyId,
+                propertyId: quotedPropertyId,
                 checkIn: requestBody.checkIn,
                 checkOut: requestBody.checkOut,
                 guests: requestBody.guests,
@@ -3362,6 +3487,7 @@ export class PropertyController {
                 payload: {
                     requestId,
                     siteId: site.id,
+                    ...quotedPropertyFields,
                     sessionId,
                     quoteId: quote.quoteId,
                     nights: quote.nights,
@@ -3374,7 +3500,7 @@ export class PropertyController {
                 outcome: "returned",
                 requestId,
                 siteId: site.id,
-                propertyId: site.propertyId,
+                propertyId: quotedPropertyId,
                 quoteId: quote.quoteId,
             }));
             return {
@@ -3383,28 +3509,32 @@ export class PropertyController {
                 body: JSON.stringify(quote),
             };
         } catch (error) {
-            if (error instanceof WebsiteQuoteError) {
-                if (site && WEBSITE_QUOTE_CONFLICT_ERROR_CODES.has(error.code)) {
-                    await this.recordStandaloneWebsiteEventSafely({
-                        draftId: null,
-                        propertyId: site.propertyId,
-                        hostId: site.hostId,
-                        eventType: "SITE_QUOTE_CONFLICTED",
-                        payload: { requestId, siteId: site.id, code: error.code },
-                    });
-                }
-                console.log(JSON.stringify({
-                    scope: "websiteQuote",
-                    outcome: error.code,
-                    requestId,
-                    siteId: site?.id ?? null,
-                    propertyId: site?.propertyId ?? null,
-                }));
-                return this.websiteQuoteErrorResponse(error.statusCode, error.code, error.message, requestId);
-            }
-            console.error("Website quote request failed.", error);
-            return this.websiteQuoteErrorResponse(500, "internal_error", "We could not complete this quote request. Please try again.", requestId);
+            return this.websiteQuoteFailureResponse({ error, site, quotedPropertyId, requestId });
         }
+    }
+
+    async websiteQuoteFailureResponse({ error, site, quotedPropertyId, requestId }) {
+        if (error instanceof WebsiteQuoteError) {
+            if (site && WEBSITE_QUOTE_CONFLICT_ERROR_CODES.has(error.code)) {
+                await this.recordStandaloneWebsiteEventSafely({
+                    draftId: null,
+                    propertyId: site.propertyId,
+                    hostId: site.hostId,
+                    eventType: "SITE_QUOTE_CONFLICTED",
+                    payload: { requestId, siteId: site.id, ...otherQuotedPropertyFields(site, quotedPropertyId), code: error.code },
+                });
+            }
+            console.log(JSON.stringify({
+                scope: "websiteQuote",
+                outcome: error.code,
+                requestId,
+                siteId: site?.id ?? null,
+                propertyId: quotedPropertyId ?? site?.propertyId ?? null,
+            }));
+            return this.websiteQuoteErrorResponse(error.statusCode, error.code, error.message, requestId);
+        }
+        console.error("Website quote request failed.", error);
+        return this.websiteQuoteErrorResponse(500, "internal_error", "We could not complete this quote request. Please try again.", requestId);
     }
 
     // -------------------------
@@ -3568,6 +3698,15 @@ export class PropertyController {
         return this.websitePublicHostService;
     }
 
+    getWebsiteSitePropertySnapshots() {
+        this.websiteSitePropertySnapshots ??= new WebsiteSitePropertySnapshots({
+            propertyService: this.propertyService,
+            siteRepository: this.directBookingWebsiteSiteRepository,
+            pageSettings: this.getWebsiteElitePageSettings(),
+        });
+        return this.websiteSitePropertySnapshots;
+    }
+
     getWebsiteElitePageSettings() {
         this.websiteElitePageSettings ??= new WebsiteElitePageSettings(this.directBookingWebsiteRatePlanService);
         return this.websiteElitePageSettings;
@@ -3589,6 +3728,21 @@ export class PropertyController {
             eventRepository: this.directBookingWebsiteEventRepository,
         });
         return this.websiteCustomDomainService;
+    }
+
+    async resolveWebsiteQuotePropertyId(site, requestedPropertyId) {
+        const propertyId = requestedPropertyId?.trim() ?? site.propertyId;
+        if (propertyId === site.propertyId) {
+            return propertyId;
+        }
+        const servedOtherIds = await this.getWebsiteSitePropertySnapshots().listServedOtherPropertyIds({
+            site,
+            propertyIds: [propertyId],
+        });
+        if (servedOtherIds.has(propertyId)) {
+            return propertyId;
+        }
+        throw new WebsiteQuoteError(WEBSITE_QUOTE_ERROR_CODES.PROPERTY_NOT_FOUND, WEBSITE_QUOTE_PROPERTY_NOT_FOUND_MESSAGE);
     }
 
     websiteQuoteErrorResponse(statusCode, code, message, requestId) {

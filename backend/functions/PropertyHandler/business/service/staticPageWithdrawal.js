@@ -20,6 +20,13 @@ const pathsFor = (hostname, sitePageSlugs = []) => [
   ...sitePageSlugs.flatMap((slug) => ["/" + buildStaticSitePageKey(hostname, slug), "/" + slug]),
 ];
 
+const writtenPagePaths = (hostname) => ["/" + buildStaticPageKey(hostname), "/", "/index.html"];
+
+const withdrawnPathsOf =
+  (removedSitePages = {}) =>
+  (hostname) =>
+    pathsFor(hostname, removedSitePages[hostname]);
+
 export class StaticPageWithdrawal {
   constructor({
     pageStore,
@@ -70,7 +77,12 @@ export class StaticPageWithdrawal {
       }
     }
 
-    return { removed, kept, failures, invalidationErrors: await this.#invalidate(deleted, removedSitePages) };
+    return {
+      removed,
+      kept,
+      failures,
+      invalidationErrors: await this.#invalidate(deleted, withdrawnPathsOf(removedSitePages), "withdraw"),
+    };
   }
 
   async withdraw({ siteId, domains }) {
@@ -95,10 +107,14 @@ export class StaticPageWithdrawal {
     return {
       siteId,
       hostnames,
-      invalidationErrors: await this.#invalidate(hostnames, removedSitePages),
+      invalidationErrors: await this.#invalidate(hostnames, withdrawnPathsOf(removedSitePages), "withdraw"),
       redirectErrors,
       sitePageErrors,
     };
+  }
+
+  async invalidatePages(hostnames) {
+    return this.#invalidate(hostnames, writtenPagePaths, "publish");
   }
 
   async #listSitePageSlugs({ siteId, hostname, errors }) {
@@ -110,7 +126,7 @@ export class StaticPageWithdrawal {
     }
   }
 
-  async #invalidate(hostnames, removedSitePages = {}) {
+  async #invalidate(hostnames, pathsOf, purpose) {
     const errors = [];
     const pathsByTenant = new Map();
     const wildcardTenants = this.#wildcardTenantsOnce();
@@ -121,10 +137,7 @@ export class StaticPageWithdrawal {
           errors.push({ hostname, message: "no tenant serves this hostname" });
           continue;
         }
-        pathsByTenant.set(tenantId, [
-          ...(pathsByTenant.get(tenantId) || []),
-          ...pathsFor(hostname, removedSitePages[hostname]),
-        ]);
+        pathsByTenant.set(tenantId, [...(pathsByTenant.get(tenantId) || []), ...pathsOf(hostname)]);
       } catch (error) {
         errors.push({ hostname, message: error.message });
       }
@@ -135,7 +148,7 @@ export class StaticPageWithdrawal {
         await this.tenantRepository.createInvalidation({
           tenantId,
           paths: [...new Set(paths)],
-          callerReference: `withdraw-${randomUUID()}`,
+          callerReference: `${purpose}-${randomUUID()}`,
         });
       } catch (error) {
         errors.push({ tenantId, message: error.message });
