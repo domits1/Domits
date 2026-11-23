@@ -1,3 +1,4 @@
+import { Auth } from "aws-amplify";
 import { getChannexAdminAccess } from "../hostintegrations/channexApi";
 
 export const CHANNEX_CERTIFICATION_ADMIN_ROUTE = "admin/channex-diagnostics";
@@ -13,4 +14,10 @@ export const checkChannexCertificationAccess = async (userId) => {
   } catch {
     return false;
   }
+};
+
+// Shared by the sidebar link and the Distribution route guard so both use the same check.
+export const loadChannexAccess = async () => {
+  const user = await Auth.currentAuthenticatedUser();
+  return checkChannexCertificationAccess(user?.attributes?.sub);
 };
