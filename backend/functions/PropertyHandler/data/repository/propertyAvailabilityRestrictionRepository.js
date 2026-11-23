@@ -30,8 +30,8 @@ export class PropertyAvailabilityRestrictionRepository {
         return result ? result : null;
     }
 
-    async getPropertyAvailabilityRestrictionById(id) {
-        const client = await Database.getInstance();
+    async getPropertyAvailabilityRestrictionById(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_Availability_Restriction)
             .createQueryBuilder("property_availabilityrestriction")
@@ -50,8 +50,8 @@ export class PropertyAvailabilityRestrictionRepository {
         return result.length > 0 ? result.map(item => AvailabilityRestrictionMapping.mapDatabaseEntryToAvailabilityRestriction(item)) : null;
     }
 
-    async create(availabilityRestriction) {
-        const client = await Database.getInstance();
+    async create(availabilityRestriction, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -63,7 +63,7 @@ export class PropertyAvailabilityRestrictionRepository {
                 value: availabilityRestriction.value
             })
             .execute();
-        const result = await this.getPropertyAvailabilityRestrictionById(availabilityRestriction.id);
+        const result = await this.getPropertyAvailabilityRestrictionById(availabilityRestriction.id, transactionManager);
         return result ? result: null;
     }
 
