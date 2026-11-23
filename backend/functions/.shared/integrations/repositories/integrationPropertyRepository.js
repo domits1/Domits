@@ -6,7 +6,7 @@ import { ChannelIntegrationProperty } from "database/models/unified/integrations
 
 // Same statuses as the partial unique index on (integrationAccountId, domitsPropertyId);
 // one legacy row is stored as lowercase "active" (design note D2, #506).
-const IN_USE_STATUSES = ["PROVISIONING", "ACTIVE", "active"];
+export const IN_USE_STATUSES = ["PROVISIONING", "ACTIVE", "active"];
 
 // Thrown when a listing already has an in-use mapping to another external property.
 // The caller decides the answer (409); the data layer knows nothing about HTTP.
