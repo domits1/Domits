@@ -13,8 +13,10 @@ import {
 } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
-export default function ReviewApprovalDetails({ review, approving, onApprove, onPublish, onClose }) {
+export default function ReviewApprovalDetails({ review, approving, onApprove, onClose, onFlag, onPublish }) {
   const pending = review.status === "PENDING_APPROVAL";
+  const flagged = review.has_pending_flag === true;
+  const canFlag = !flagged && ["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status);
   const submitted = formatSubmittedAt(review.created_at);
   const location = formatPropertyLocation(review);
   const verificationClassName = isVerifiedStatus(review.verification_status) ? styles.pillVerified : styles.pillNeutral;
@@ -77,7 +79,7 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
         <dt>Status</dt>
         <dd>
           <span className={`${styles.pill} ${pending ? styles.pillPending : styles.pillNeutral}`}>
-            {getReviewStatusLabel(review.status)}
+            {flagged ? "Flagged" : getReviewStatusLabel(review.status)}
           </span>
         </dd>
         <dt>Verification status</dt>
@@ -90,24 +92,31 @@ export default function ReviewApprovalDetails({ review, approving, onApprove, on
         <dd>Guest review</dd>
       </dl>
 
-      {pending && <div className={styles.detailsActions}>
-        <button
-          type="button"
-          className={`${styles.approveButton} ${styles.approveButtonLarge}`}
-          disabled={approving}
-          onClick={() => onApprove(review)}>
-          {approving ? "Approving…" : "Approve review"}
-        </button>
-      </div>}
-      {review.status === "APPROVED" && review.publication_status === "UNPUBLISHED" && <div className={styles.detailsActions}>
-        <button
-          type="button"
-          className={`${styles.approveButton} ${styles.approveButtonLarge}`}
-          disabled={approving}
-          onClick={() => onPublish(review)}>
-          {approving ? "Publishing…" : "Publish review"}
-        </button>
-      </div>}
+      {(canFlag || pending) && (
+        <div className={styles.detailsActions}>
+          {canFlag && (
+            <button type="button" className={styles.secondaryButton} disabled={approving} onClick={() => onFlag(review)}>
+              Flag for review
+            </button>
+          )}
+          {pending && !flagged && (
+            <button
+              type="button"
+              className={`${styles.approveButton} ${styles.approveButtonLarge}`}
+              disabled={approving}
+              onClick={() => onApprove(review)}>
+              {approving ? "Approving…" : "Approve review"}
+            </button>
+          )}
+        </div>
+      )}
+      {review.status === "APPROVED" && review.publication_status === "UNPUBLISHED" && (
+        <div className={styles.detailsActions}>
+          <button type="button" className={`${styles.approveButton} ${styles.approveButtonLarge}`} disabled={approving} onClick={() => onPublish(review)}>
+            {approving ? "Publishing…" : "Publish review"}
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
