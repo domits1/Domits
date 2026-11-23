@@ -150,11 +150,11 @@ describe('Review entities and creation persistence', () => {
     expect(repositories.get(Review).findOne).toHaveBeenCalledWith({ where: key, select: ["id"] });
   });
 
-  it("loads active categories by review type", async () => {
+  it.each(["GUEST_TO_PROPERTY", "GUEST_TO_HOST"])("loads active categories by review type: %s", async (reviewType) => {
     repositories.get(Review_Category).find.mockResolvedValue([{ key: "cleanliness" }]);
-    expect(await repository.findActiveCategoryKeys("GUEST_TO_PROPERTY")).toEqual(new Set(["cleanliness"]));
+    expect(await repository.findActiveCategoryKeys(reviewType)).toEqual(new Set(["cleanliness"]));
     expect(repositories.get(Review_Category).find).toHaveBeenCalledWith({
-      where: { reviewType: "GUEST_TO_PROPERTY", isActive: true }, select: ["key"],
+      where: { reviewType, isActive: true }, select: ["key"],
     });
   });
 
@@ -220,9 +220,9 @@ it("returns empty public aggregates without querying child tables", async () => 
 
 
   // Creation: verify the repository groups related writes and leaves existing requests untouched.
-  it("persists review, category ratings and draft request in one transaction", async () => {
+  it.each(["GUEST_TO_PROPERTY", "GUEST_TO_HOST"])("persists review, ratings and request transactionally: %s", async (reviewType) => {
     const record = { id: "r1", booking_id: "b1", property_id: "p1", host_id: "h1", reviewer_user_id: "g1",
-      review_type: "GUEST_TO_PROPERTY", created_at: 123, updated_at: 123, private_feedback: "Host only" };
+      review_type: reviewType, created_at: 123, updated_at: 123, private_feedback: "Host only" };
     expect(await repository.create(record, { cleanliness: 4.5 })).toEqual(record);
     expect(dataSource.transaction).toHaveBeenCalledTimes(1);
     expect(repositories.get(Review).save).toHaveBeenCalledWith(record);
@@ -231,7 +231,7 @@ it("returns empty public aggregates without querying child tables", async () => 
     })]);
     const requestInsert = repositories.get(Review_Request).createQueryBuilder.mock.results[0].value;
     expect(requestInsert.values).toHaveBeenCalledWith(expect.objectContaining({
-      bookingId: "b1", reviewType: "GUEST_TO_PROPERTY", guestId: "g1", status: "OPEN", completedAt: null,
+      bookingId: "b1", reviewType, guestId: "g1", status: "OPEN", completedAt: null,
     }));
     // Do not overwrite existing request IDs, completion status or timing fields.
     expect(requestInsert.orIgnore).toHaveBeenCalledTimes(1);

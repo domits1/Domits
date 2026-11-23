@@ -18,7 +18,7 @@ import { Team_Member } from "database/models/Team_Member";
 import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
-import { assertEligibleBooking } from "../business/model/reviewRules.js";
+import { assertEligibleBooking, GUEST_REVIEW_TYPES } from "../business/model/reviewRules.js";
 import { HostReviewRepository } from "./hostReviewRepository.js";
 import { PublicReviewRepository } from "./publicReviewRepository.js";
 import { nextTimestamp, REVIEW_FIELDS, runTransaction } from "./reviewRepositoryShared.js";
@@ -370,7 +370,7 @@ export class ReviewRepository {
   async findUnpublishedReviews(status) {
     const database = await Database.getInstance();
     const reviews = await database.getRepository(Review).find({
-      where: { review_type: "GUEST_TO_PROPERTY", status, publication_status: "UNPUBLISHED" },
+      where: { review_type: In(GUEST_REVIEW_TYPES), status, publication_status: "UNPUBLISHED" },
       select: REVIEW_FIELDS, order: { created_at: "ASC", id: "ASC" }, take: 100,
     });
     return this.addModerationDetails(database, reviews);
@@ -379,7 +379,7 @@ export class ReviewRepository {
   async findModeratedReviews(statuses) {
     const database = await Database.getInstance();
     const reviews = await database.getRepository(Review).find({
-      where: { review_type: "GUEST_TO_PROPERTY", status: In(statuses) },
+      where: { review_type: In(GUEST_REVIEW_TYPES), status: In(statuses) },
       select: REVIEW_FIELDS, order: { created_at: "DESC", id: "DESC" }, take: 100,
     });
     return this.addModerationDetails(database, reviews);

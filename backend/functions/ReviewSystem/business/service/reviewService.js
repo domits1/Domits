@@ -8,7 +8,7 @@ import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
-import { assertCaller, assertEligibleBooking, assertId, INVALID_TEXT_CONTROLS, isPublished, requireReview } from "../model/reviewRules.js";
+import { assertCaller, assertEligibleBooking, assertId, GUEST_REVIEW_TYPES, INVALID_TEXT_CONTROLS, isPublished, requireReview } from "../model/reviewRules.js";
 import { DomitsAdminReviewService } from "./domitsAdminReviewService.js";
 import { HostReviewService } from "./hostReviewService.js";
 
@@ -525,7 +525,7 @@ export class ReviewService {
       throw new ConflictException("Review cannot transition in its current state.");
     }
     const validate = (current) => {
-      if (current.review_type !== GUEST_REVIEW_TYPE
+      if (!GUEST_REVIEW_TYPES.includes(current.review_type)
         || !["UNVERIFIED", "VERIFIED", "VERIFIED_STAY"].includes(current.verification_status)) {
         throw new ConflictException("Review is not eligible for moderation.");
       }
@@ -607,6 +607,7 @@ export class ReviewService {
   async createReview(callerUserId, reviewData) {
     this.assertCaller(callerUserId);
     const publicReview = this.validateReviewPayload(reviewData);
+    const reviewType = reviewData.review_type === undefined ? GUEST_REVIEW_TYPE : reviewData.review_type;
     const domitsPrivateFeedback = this.normalizeDomitsPrivateFeedback(reviewData.domits_private_feedback);
 
     const bookingId = reviewData.booking_id.trim();
@@ -628,13 +629,13 @@ export class ReviewService {
     const stayError = completedStayError(booking, now);
     if (stayError) throw new BadRequestException(stayError);
 
-    const duplicateKey = { booking_id: bookingId, review_type: GUEST_REVIEW_TYPE, reviewer_user_id: callerUserId };
+    const duplicateKey = { booking_id: bookingId, review_type: reviewType, reviewer_user_id: callerUserId };
     if (await this.repository.findReviewByBookingTypeAndReviewer(duplicateKey)) {
       throw new ConflictException("This reservation already has a review.");
     }
     const categoryRatings = reviewData.category_ratings || {};
     if (Object.keys(categoryRatings).length) {
-      const supported = await this.repository.findActiveCategoryKeys(GUEST_REVIEW_TYPE);
+      const supported = await this.repository.findActiveCategoryKeys(reviewType);
       if (Object.keys(categoryRatings).some((key) => !supported.has(key))) {
         throw new BadRequestException("Unsupported rating category.");
       }
@@ -653,7 +654,7 @@ export class ReviewService {
           public_review: publicReview,
           private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
           domits_private_feedback: domitsPrivateFeedback,
-          verification_status: "UNVERIFIED",
+          verification_status: reviewType === "GUEST_TO_HOST" ? "VERIFIED_STAY" : "UNVERIFIED",
           publication_status: "UNPUBLISHED",
           status: "DRAFT",
           created_at: now,
@@ -675,6 +676,9 @@ export class ReviewService {
   validateReviewPayload(reviewData) {
     if (!reviewData || typeof reviewData !== "object" || Array.isArray(reviewData)) {
       throw new BadRequestException("Request body must be a review object");
+    }
+    if (reviewData.review_type !== undefined && !GUEST_REVIEW_TYPES.includes(reviewData.review_type)) {
+      throw new BadRequestException("Unsupported review type.");
     }
 
     if (typeof reviewData.booking_id !== "string") {

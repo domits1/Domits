@@ -236,7 +236,7 @@ describe('Review creation and existing operations', () => {
       reviewer_user_id: "spoof",
       property_id: "spoof",
       host_id: "spoof",
-      reviewee_user_id: "spoof", review_type: "HOST_TO_GUEST",
+      reviewee_user_id: "spoof", review_type: "GUEST_TO_PROPERTY",
       status: "PUBLISHED", verification_status: "VERIFIED_STAY", publication_status: "PUBLISHED",
     });
     expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({
