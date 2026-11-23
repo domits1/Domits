@@ -1,14 +1,5 @@
-import SchedulingService from "../business/schedulingService.js";
+import { NOW, PAID_BOOKING, buildSchedulingService } from "./stayScheduleFixtures.js";
 
-const NOW = Date.parse("2026-06-01T00:00:00Z");
-const PAID_BOOKING = {
-  id: "booking-1",
-  hostid: "host-1",
-  property_id: "property-1",
-  status: "Paid",
-  arrivaldate: Date.parse("2026-06-20T00:00:00Z"),
-  departuredate: Date.parse("2026-06-23T00:00:00Z"),
-};
 const PLANNED = Date.parse("2026-06-17T08:00:00Z");
 const CHECK_IN_RULE = {
   triggerType: "CHECK_IN",
@@ -35,10 +26,6 @@ const setup = ({ booking = PAID_BOOKING, deliveries = [], automations = {}, even
     createScheduled: jest.fn(async (data) => ({ id: "created", ...data })),
     createCancelled: jest.fn(async (data) => ({ id: "cancelled", ...data })),
   };
-  const bookingContextRepository = {
-    getBooking: jest.fn(async () => booking),
-    getPropertyCheckIn: jest.fn(async () => ({ checkInFrom: "15:00:00", checkOutTill: "11:00:00" })),
-  };
   const outboxRepository = {
     listProcessable: jest.fn(async () => events),
     claim: jest.fn(async () => true),
@@ -49,12 +36,11 @@ const setup = ({ booking = PAID_BOOKING, deliveries = [], automations = {}, even
     getById: jest.fn(async (id) => automations[id] ?? null),
     listActiveForBooking: jest.fn(async () => []),
   };
-  const service = new SchedulingService({
+  const { service, bookingContextRepository } = buildSchedulingService({
+    booking,
     outboxRepository,
     automationRepository,
     deliveryRepository,
-    bookingContextRepository,
-    clock: () => NOW,
   });
   return { service, deliveryRepository, bookingContextRepository, outboxRepository, automationRepository };
 };

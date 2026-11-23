@@ -116,3 +116,46 @@ host changes the dates of a booking
 ### Verification
 
 New tests were red first (13 failing). `reservationRepository.datesChanged.test.js`: one transaction for dates and event, version counting (also as text), no `orIgnore`, no transaction without the flag, Channex rows together with the event, a failing write failing the save, and a conflict that re-runs the transaction and re-reads the counter. `bookingService.channex.test.js`: the existing arguments assertion now includes the flag, and the flag is only true for a paid booking, in any capitalisation. Full backend run: 464 suites and 6749 tests passed; the same three suites fail locally for reasons unrelated to bookings: two need AWS credentials and one needs a live database.
+
+## Commit 3: share the scheduling test setup
+
+Reviewed: the staged diff (`stayScheduleFixtures.js`, `schedulingService.test.js`, `schedulingService.datesChanged.test.js`, this record)
+
+### Decision
+
+```
+schedulingService.test.js ──────┐
+                                ├─▶ stayScheduleFixtures.js  NOW, PAID_BOOKING, CHECK_IN_ROW,
+schedulingService.datesChanged ─┘                            buildSchedulingService({ booking, checkIn, repositories })
+```
+
+- Sonar's quality gate failed on duplication (4.1%, limit 3%): the booking constants and the service construction with its booking-context fake were copied between the two test files.
+- The shared parts moved into one helper. What each test checks is unchanged: same tests, same assertions, same count.
+- The delivery, outbox and automation fakes stay in their own files, because they differ per suite.
+- Three Sonar S9382 findings (`await` inside a loop, `schedulingService.js` lines 88, 95 and 144) are left as they are. The loops are sequential on purpose, one database update at a time, and a parallel version would change the failure behaviour.
+
+### Findings
+
+| Finding | Confidence | Resolution |
+|---|---|---|
+| `[P3]` `stayScheduleFixtures.js`: uses the global `jest` in a non-test module. Jest injects it into every module it loads. | 8/10 | Accepted. |
+| `[P3]` The repository fakes are still similar between the two suites, so Sonar may report a smaller remaining duplication. | 7/10 | Accepted. Check the next Sonar run. |
+
+### Not in scope
+
+- Changing the sequential loops flagged by S9382.
+- Any production code.
+
+### What already exists
+
+- The two suites' own setups, reduced to what differs.
+
+### Failure modes
+
+| Path | Failure | Test | Handling | User sees |
+|---|---|---|---|---|
+| Shared fixture changed for one suite | The other suite checks the wrong thing | Both suites run the same assertions | The helper holds only constants and the service wiring | Nothing |
+
+### Verification
+
+No new behaviour, so no red step. `functions/AutomatedMessaging`: 15 suites, 181 tests passed, the same count as before the change.
