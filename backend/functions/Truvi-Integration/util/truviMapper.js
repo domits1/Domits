@@ -123,3 +123,18 @@ export function toCancelRequest({ verificationId, reservationId, now = new Date(
     reservation: { reservationId },
   };
 }
+
+export function toModifyRequest({ verificationId, reservationId, arrivaldate, departuredate, now = new Date() }) {
+  if (!verificationId || !reservationId) {
+    throw new Error("verificationId and reservationId are required to modify a Truvi verification");
+  }
+  return {
+    metadata: { timeStamp: toTruviTimestamp(now), echoToken: randomUUID() },
+    verification: { verificationId },
+    reservation: { reservationId, checkIn: toIsoDate(arrivaldate), checkOut: toIsoDate(departuredate) },
+  };
+}
+
+export function sameTruviDates(left, right) {
+  return toIsoDate(left.arrivaldate) === toIsoDate(right.arrivaldate) && toIsoDate(left.departuredate) === toIsoDate(right.departuredate);
+}

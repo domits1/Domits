@@ -20,12 +20,15 @@ describe("SiteMinderReservationsReader", () => {
   test("asks for the undelivered reservations of the PMS and reads them", async () => {
     const client = soapClient();
 
-    const reservations = await new SiteMinderReservationsReader({ soapClient: client }).readUndelivered({ now: NOW });
+    const { reservations, skipped } = await new SiteMinderReservationsReader({ soapClient: client }).readUndelivered({
+      now: NOW,
+    });
 
     const [body, { echoToken }] = client.send.mock.calls[0];
     expect(body).toContain('<RequestorID Type="22" ID="PMSXTEST"/>');
     expect(body).toContain('<SelectionCriteria SelectionType="Undelivered"/>');
     expect(body).toContain(`EchoToken="${echoToken}"`);
+    expect(skipped).toBe(0);
     expect(reservations).toHaveLength(1);
     expect(reservations[0]).toMatchObject({
       status: "Book",

@@ -19,8 +19,8 @@ export class PropertyTypeRepository {
         return result ? result : null;
     }
 
-    async getPropertyTypeByPropertyId(id) {
-        const client = await Database.getInstance();
+    async getPropertyTypeByPropertyId(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_Type)
             .createQueryBuilder("property_type")
@@ -29,8 +29,8 @@ export class PropertyTypeRepository {
         return result ? TypeMapping.mapDatabaseEntryToType(result) : null;
     }
 
-    async create(type) {
-        const client = await Database.getInstance();
+    async create(type, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -41,7 +41,7 @@ export class PropertyTypeRepository {
                 type: type.property_type
             })
             .execute();
-        const result = await this.getPropertyTypeByPropertyId(type.property_id);
+        const result = await this.getPropertyTypeByPropertyId(type.property_id, transactionManager);
         return result ? result : null;
     }
 

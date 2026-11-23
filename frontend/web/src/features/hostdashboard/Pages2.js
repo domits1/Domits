@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Auth } from "aws-amplify";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import CalendarIcon from "@mui/icons-material/CalendarToday";
 import EventIcon from "@mui/icons-material/Event";
@@ -20,10 +19,7 @@ import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import useEffectiveHostId from "../../hooks/useEffectiveHostId";
-import {
-  CHANNEX_CERTIFICATION_ADMIN_ROUTE,
-  checkChannexCertificationAccess,
-} from "./channexadmin/channexCertificationAccess";
+import { CHANNEX_CERTIFICATION_ADMIN_ROUTE, loadChannexAccess } from "./channexadmin/channexCertificationAccess";
 import {
   PROPERTY_REVIEW_ACCESS,
   PROPERTY_REVIEW_ADMIN_ROUTE,
@@ -32,11 +28,6 @@ import {
 import { REVIEW_APPROVAL_ADMIN_ROUTE } from "../review/navigation/reviewApprovalRoute";
 
 const NO_ADMIN_ACCESS = { channex: false, propertyReview: false };
-
-const loadChannexAccess = async () => {
-  const user = await Auth.currentAuthenticatedUser();
-  return checkChannexCertificationAccess(user?.attributes?.sub);
-};
 
 // Absolute targets: this menu renders inside the "/hostdashboard/*" splat route, where React Router 7 resolves
 // relative links against the full current URL (e.g. "messages" from /hostdashboard/reservations).

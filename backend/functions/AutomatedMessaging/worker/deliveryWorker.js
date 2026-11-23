@@ -1,8 +1,11 @@
 import { buildBookingVariables } from "../business/automationService.js";
 import { renderTemplate } from "../renderer/templateRenderer.js";
-import { APPROVED_VARIABLES } from "../util/constants.js";
+import { calculateStayScheduledFor } from "../business/scheduleCalculator.js";
+import { APPROVED_VARIABLES, AUTOMATION_TRIGGERS, STAY_SEND_GRACE_MS } from "../util/constants.js";
 
 const isPaid = (booking) => String(booking?.status || "").trim().toLowerCase() === "paid";
+const isStayTrigger = (triggerType) =>
+  triggerType === AUTOMATION_TRIGGERS.CHECK_IN || triggerType === AUTOMATION_TRIGGERS.CHECK_OUT;
 const idsEqual = (left, right) => String(left || "") === String(right || "");
 
 const missingValuesReason = (error) => {
@@ -33,6 +36,38 @@ export default class DeliveryWorker {
     }
   }
 
+  async cancel(delivery, reason) {
+    await this.deliveries.markCancelled(delivery.id, reason);
+    return { id: delivery.id, status: "CANCELLED" };
+  }
+
+  async verifyStaySchedule(delivery, automation, context, now) {
+    let schedule;
+    try {
+      schedule = calculateStayScheduledFor({
+        triggerType: automation.triggerType,
+        offsetAmount: automation.offsetAmount,
+        offsetUnit: automation.offsetUnit,
+        offsetDirection: automation.offsetDirection,
+        sendTime: automation.sendTime,
+        booking: context.booking,
+        checkIn: context.checkIn,
+        now,
+      });
+    } catch {
+      return this.cancel(delivery, "Send time could not be calculated.");
+    }
+
+    if (schedule.scheduledFor !== Number(delivery.scheduledFor)) {
+      if (schedule.isPast) return this.cancel(delivery, "Stay dates changed and the send time has passed.");
+      await this.deliveries.reschedule(delivery.id, schedule.scheduledFor);
+      return { id: delivery.id, status: "RESCHEDULED" };
+    }
+
+    if (now - Number(delivery.scheduledFor) > STAY_SEND_GRACE_MS) return this.cancel(delivery, "Send time has passed.");
+    return null;
+  }
+
   async processDelivery(delivery, now) {
     const automation = await this.automations.getById(delivery.automationId);
     if (automation?.status !== "ACTIVE") {
@@ -54,6 +89,11 @@ export default class DeliveryWorker {
       return { id: delivery.id, status: "CANCELLED" };
     }
 
+    if (isStayTrigger(automation.triggerType)) {
+      const outcome = await this.verifyStaySchedule(delivery, automation, context, now);
+      if (outcome) return outcome;
+    }
+
     const { renderedContent } = renderTemplate(delivery.templateSnapshot, buildBookingVariables(context));
     const sendPayload = {
       deliveryId: delivery.id,
@@ -69,6 +109,8 @@ export default class DeliveryWorker {
       bookingId: context.booking.id,
       hostId: automation.hostId,
       propertyId: context.booking.property_id,
+      arrivalDate: context.booking.arrivaldate,
+      departureDate: context.booking.departuredate,
       now,
     });
     if (!authorized) {
