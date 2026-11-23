@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useMatch } from "react-router-dom";
 
 import Pages from "./Pages2";
 import HostDashboard from "./HostDashboard";
@@ -42,6 +42,9 @@ import {
 import PropertyReviewPage from "./propertyreview/PropertyReviewPage";
 import PropertyReviewDetailPage from "./propertyreview/detail/PropertyReviewDetailPage";
 import { PROPERTY_REVIEW_ADMIN_ROUTE } from "./propertyreview/propertyReviewPaths";
+import ReviewApprovalPage from "../review/views/ReviewApprovalPage";
+import ReviewApprovalNavigation from "../review/components/ReviewApprovalNavigation";
+import { REVIEW_APPROVAL_ADMIN_PATH } from "../review/navigation/reviewApprovalRoute";
 import { BuilderProvider } from "../../context/propertyBuilderContext";
 import OnboardingLayout from "../hostonboarding/OnboardingLayout";
 import StepGuard from "../hostonboarding/hooks/StepGuard";
@@ -66,6 +69,16 @@ import HostSettingsDirectBookingRatePlan from "./hostsettings/pages/HostSettings
 import HostSettingsDirectBookingWebsiteRatePlan from "./hostsettings/pages/HostSettingsDirectBookingWebsiteRatePlan";
 
 function MainDashboardHost() {
+  const isReviewApproval = useMatch(REVIEW_APPROVAL_ADMIN_PATH);
+
+  if (isReviewApproval) {
+    return (
+      <ReviewApprovalNavigation>
+        <ReviewApprovalPage />
+      </ReviewApprovalNavigation>
+    );
+  }
+
   return (
     <div className="main-dashboard-guest">
       <div className="main-dashboard-sidebar">
@@ -123,7 +136,7 @@ function MainDashboardHost() {
             <Route path="legal/registrationnumber" element={<RegistrationNumberView />} />
             <Route path="summary" element={<SummaryViewAndSubmit />} />
 
-            <Route path="*" element={<Navigate to="." replace />} />
+            <Route path="*" element={<Navigate to="/hostdashboard/hostonboarding" replace />} />
           </Route>
 
           <Route path="calendar-pricing" element={<HostCalendar />} />
@@ -189,7 +202,7 @@ function MainDashboardHost() {
           <Route path="settings/onboarding/go-live" element={<HostOnboardingGoLive />} />
 
           <Route path="reservations/:id" element={<HostReservationDetails />} />
-          <Route path="*" element={<Navigate to="." replace />} />
+          <Route path="*" element={<Navigate to="/hostdashboard" replace />} />
         </Routes>
       </div>
     </div>

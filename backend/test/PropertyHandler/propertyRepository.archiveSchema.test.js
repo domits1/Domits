@@ -48,7 +48,7 @@ describe("PropertyRepository archive metadata schema", () => {
   it("qualifies the clearing update with the client schema and filters the columns on it", async () => {
     mockClient({ schema: "main" });
 
-    await repository.transitionStatus("property-1", ["ARCHIVED"], "PENDING_REVIEW");
+    await repository.updatePropertyStatus("property-1", "INACTIVE");
 
     expect(client.query).toHaveBeenNthCalledWith(1, expect.stringContaining("table_schema = $1"), ["main"]);
     expect(client.query).toHaveBeenNthCalledWith(
@@ -62,7 +62,7 @@ describe("PropertyRepository archive metadata schema", () => {
     process.env.TEST = "true";
     mockClient({ schema: "main" });
 
-    await repository.transitionStatus("property-1", ["ARCHIVED"], "PENDING_REVIEW");
+    await repository.updatePropertyStatus("property-1", "INACTIVE");
 
     expect(client.query).toHaveBeenNthCalledWith(1, expect.any(String), ["test"]);
     expect(client.query.mock.calls[1][0]).toContain('"test"."property"');
@@ -79,7 +79,7 @@ describe("PropertyRepository archive metadata schema", () => {
   ])("resolves client schema %p to %p", async (configured, expected) => {
     mockClient(configured === undefined ? undefined : { schema: configured });
 
-    await repository.transitionStatus("property-1", ["ARCHIVED"], "PENDING_REVIEW");
+    await repository.updatePropertyStatus("property-1", "INACTIVE");
 
     expect(client.query).toHaveBeenNthCalledWith(1, expect.any(String), [expected]);
     expect(client.query.mock.calls[1][0]).toContain(`"${expected}"."property"`);

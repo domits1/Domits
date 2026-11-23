@@ -1,11 +1,18 @@
 import { buildBookingVariables } from "../business/automationService.js";
 import { renderTemplate } from "../renderer/templateRenderer.js";
+import { APPROVED_VARIABLES } from "../util/constants.js";
 
 const isPaid = (booking) => String(booking?.status || "").trim().toLowerCase() === "paid";
 const idsEqual = (left, right) => String(left || "") === String(right || "");
 
+const missingValuesReason = (error) => {
+  const missing = Array.isArray(error?.details?.missingVariables) ? error.details.missingVariables : [];
+  const approvedMissing = missing.filter((variable) => APPROVED_VARIABLES.includes(variable));
+  return approvedMissing.length ? `Missing values: ${approvedMissing.join(", ")}` : null;
+};
+
 const safeFailureReason = (error) => {
-  if (error?.code === "BAD_REQUEST") return "Approved template values are missing.";
+  if (error?.code === "BAD_REQUEST") return missingValuesReason(error) || "Approved template values are missing.";
   if (error?.code === "DOMITS_DIRECT_DELIVERY_FAILED") return "Domits Direct delivery failed.";
   return "Automated message delivery failed.";
 };

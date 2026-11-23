@@ -103,6 +103,23 @@ describe("serving page settings in the overrides of a site", () => {
   });
 });
 
+describe("deciding at publish whether a host may have several properties", () => {
+  it.each([
+    ["a paid Elite plan", PAID_ELITE_ROW, true],
+    ["an Essentials plan", ratePlanRow(), false],
+  ])("answers for %s", async (_label, row, expected) => {
+    expect(await buildPageSettings(buildRatePlanRepository(row)).allowsSiteProperties(HOST_ID)).toBe(expected);
+  });
+
+  it("answers no and logs once when the plan cannot be read, so the publish goes on without the list", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const ratePlanService = { getCurrentEntitlements: jest.fn().mockRejectedValue(new Error("connection timed out")) };
+
+    expect(await new WebsiteElitePageSettings(ratePlanService).allowsSiteProperties(HOST_ID)).toBe(false);
+    expect(consoleError).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("serving page settings in a draft preview", () => {
   const draft = (overrides = {}) => ({
     id: "draft-1",

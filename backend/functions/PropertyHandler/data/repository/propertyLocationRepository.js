@@ -1,6 +1,11 @@
 import { LocationMapping } from "../../util/mapping/location.js";
 import { PaginatedPropertyMapping } from "../../util/mapping/paginatedProperty.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
+import {
+    applyListingCursor,
+    joinLatestApproval,
+    orderByListingPosition,
+} from "./listingPosition.js";
 import { geocodeAddress } from "../../util/geocoding.js";
 import Database from "database";
 import {Property_Location} from "database/models/Property_Location";
@@ -12,8 +17,8 @@ export class PropertyLocationRepository {
         this.systemManager = systemManager
     }
 
-    async getPropertyLocationById(id) {
-        const client = await Database.getInstance();
+    async getPropertyLocationById(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_Location)
             .createQueryBuilder("property_location")
@@ -32,8 +37,8 @@ export class PropertyLocationRepository {
         return result ? LocationMapping.mapDatabaseEntryToFullLocation(result) : null;
     }
 
-    async create(location) {
-        const client = await Database.getInstance();
+    async create(location, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         // Derive coordinates from the address (best effort — null on failure).
         // External integrations such as PriceLabs require latitude/longitude.
         const coords = await geocodeAddress(location);
@@ -53,7 +58,7 @@ export class PropertyLocationRepository {
                 longitude: coords?.longitude ?? null
             })
             .execute();
-        const result = await this.getPropertyLocationById(location.property_id);
+        const result = await this.getPropertyLocationById(location.property_id, transactionManager);
         return result ? result : null;
     }
 
@@ -85,25 +90,21 @@ export class PropertyLocationRepository {
 
     async getActivePropertiesByCountry(country, lastEvaluatedKey) {
         const client = await Database.getInstance();
-        const query = await client
+        let query = client
             .getRepository(Property)
             .createQueryBuilder("property")
+            .select(["property.id", "property.createdat"])
             .innerJoin("property_location", "pl", "pl.property_id = property.id")
             .where("pl.country = :country", { country: country })
-            .andWhere("property.status = :status", { status: "ACTIVE" })
-            .orderBy("property.createdat", "DESC")
-            .addOrderBy("property.id", "DESC")
-            .limit(12);
+            .andWhere("property.status = :status", { status: "ACTIVE" });
+        query = orderByListingPosition(joinLatestApproval(query)).limit(12);
 
-        if (lastEvaluatedKey?.createdAt && lastEvaluatedKey?.id) {
-            query.andWhere(
-                "(property.createdat < :createdAt OR (property.createdat = :createdAt AND property.id < :id))",
-                {
-                    createdAt: lastEvaluatedKey.createdAt,
-                    id: lastEvaluatedKey.id,
-                }
-            );
-        }
+        // The cursor lookup is limited to this country: a cursor from another country is a 400, not a skipped page.
+        const inThisCountry = (lookup) =>
+            lookup
+                .innerJoin("property_location", "pl", "pl.property_id = property.id")
+                .andWhere("pl.country = :country", { country: country });
+        query = await applyListingCursor(client, query, lastEvaluatedKey, inThisCountry);
 
         const result = await query.getMany();
 

@@ -516,6 +516,7 @@ export const applyWebsiteDraftContentOverrides = (model, overrides = {}, templat
       eyebrow: heroEyebrow || model.hero.eyebrow,
       title: heroTitle || model.hero.title,
       description: heroDescription || model.hero.description,
+      isDescriptionGenerated: heroDescription ? false : model.hero.isDescriptionGenerated === true,
       contentAlignment: resolveWebsiteHeroContentAlignment(
         heroContentAlignment,
         model?.hero?.contentAlignment

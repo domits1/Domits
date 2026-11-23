@@ -1,4 +1,5 @@
 import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
+import { signAttachments, signUrlList } from "../util/attachmentUrlSigner.js";
 
 const REGION = process.env.AWS_REGION || "eu-north-1";
 const FUNCTION_NAME =
@@ -24,8 +25,8 @@ export default async function publishRealtimeMessage(message) {
     recipientId,
     text: message.text || message.content || "",
     content: message.content || message.text || "",
-    fileUrls: Array.isArray(message.fileUrls) ? message.fileUrls : [],
-    attachments: message.attachments || null,
+    fileUrls: await signUrlList(Array.isArray(message.fileUrls) ? message.fileUrls : []),
+    attachments: await signAttachments(message.attachments || null),
     propertyId: message.propertyId || null,
     threadId: message.threadId || null,
     platform: message.platform || "DOMITS",

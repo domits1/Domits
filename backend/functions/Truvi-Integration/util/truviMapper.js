@@ -112,3 +112,29 @@ export function mapCreateResponse(response) {
     flaggedReason: flaggedReason ?? null,
   };
 }
+
+export function toCancelRequest({ verificationId, reservationId, now = new Date() }) {
+  if (!verificationId || !reservationId) {
+    throw new Error("verificationId and reservationId are required to cancel a Truvi verification");
+  }
+  return {
+    metadata: { timeStamp: toTruviTimestamp(now), echoToken: randomUUID() },
+    verification: { verificationId },
+    reservation: { reservationId },
+  };
+}
+
+export function toModifyRequest({ verificationId, reservationId, arrivaldate, departuredate, now = new Date() }) {
+  if (!verificationId || !reservationId) {
+    throw new Error("verificationId and reservationId are required to modify a Truvi verification");
+  }
+  return {
+    metadata: { timeStamp: toTruviTimestamp(now), echoToken: randomUUID() },
+    verification: { verificationId },
+    reservation: { reservationId, checkIn: toIsoDate(arrivaldate), checkOut: toIsoDate(departuredate) },
+  };
+}
+
+export function sameTruviDates(left, right) {
+  return toIsoDate(left.arrivaldate) === toIsoDate(right.arrivaldate) && toIsoDate(left.departuredate) === toIsoDate(right.departuredate);
+}

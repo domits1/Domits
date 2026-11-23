@@ -17,6 +17,7 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import HubIcon from "@mui/icons-material/Hub";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import useEffectiveHostId from "../../hooks/useEffectiveHostId";
 import { CHANNEX_CERTIFICATION_ADMIN_ROUTE, loadChannexAccess } from "./channexadmin/channexCertificationAccess";
 import {
@@ -24,8 +25,13 @@ import {
   PROPERTY_REVIEW_ADMIN_ROUTE,
   checkPropertyReviewAccess,
 } from "./propertyreview/propertyReviewAccess";
+import { REVIEW_APPROVAL_ADMIN_ROUTE } from "../review/navigation/reviewApprovalRoute";
 
 const NO_ADMIN_ACCESS = { channex: false, propertyReview: false };
+
+// Absolute targets: this menu renders inside the "/hostdashboard/*" splat route, where React Router 7 resolves
+// relative links against the full current URL (e.g. "messages" from /hostdashboard/reservations).
+const hostDashboardPath = (to) => (to.startsWith("/") ? to : to === "." ? "/hostdashboard" : `/hostdashboard/${to}`);
 
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
@@ -55,6 +61,14 @@ const NAV = [
     label: "Property review",
     icon: <FactCheckOutlinedIcon />,
     to: PROPERTY_REVIEW_ADMIN_ROUTE,
+    internalOnly: "propertyReview",
+  },
+  // Shown to internal admins; the page itself enforces the ReviewSystem approver role.
+  {
+    key: "ReviewApproval",
+    label: "Review approval",
+    icon: <RateReviewOutlinedIcon />,
+    to: REVIEW_APPROVAL_ADMIN_ROUTE,
     internalOnly: "propertyReview",
   },
   {
@@ -152,7 +166,7 @@ function Pages({ onNavigate }) {
             {visibleNav.map((item) => (
               <li key={item.key}>
                 <NavLink
-                  to={item.to}
+                  to={hostDashboardPath(item.to)}
                   end={item.to === "."}
                   onClick={() => onNavigate?.(item.key)}
                   className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}>

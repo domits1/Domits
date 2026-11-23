@@ -2173,6 +2173,22 @@
     }
   },
   "hostIntegrations": {
+    "title": "Marketplace de integraciones",
+    "subtitle": "Conecta con Domits las herramientas que ya usas y descubre lo que viene.",
+    "listLabel": "Integraciones",
+    "setUpWhatsApp": "Configurar WhatsApp",
+    "filtersLabel": "Buscar una integración",
+    "searchLabel": "Buscar integraciones",
+    "searchPlaceholder": "Buscar por nombre",
+    "categoryLabel": "Categoría",
+    "statusLabel": "Estado",
+    "allCategories": "Todas las categorías",
+    "allStatuses": "Todos los estados",
+    "resultCountOne": "{count} integración",
+    "resultCountOther": "{count} integraciones",
+    "emptyTitle": "No se encontraron integraciones",
+    "emptyText": "Prueba con otro nombre o borra los filtros para ver todas las integraciones.",
+    "clearFilters": "Borrar filtros",
     "talkToSales": "Hablar con ventas",
     "statuses": {
       "available": "Disponible",
