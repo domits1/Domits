@@ -158,6 +158,7 @@ describe("SiteMinderReservationImporter", () => {
         arrivalDateMs: ARRIVAL_MS,
         departureDateMs: ARRIVAL_MS + 3 * DAY_MS,
         totalPrice: 495,
+        currency: "EUR",
         guestCount: 2,
         bookingSource: "Booking.com",
         channexChanges: [
@@ -352,5 +353,24 @@ describe("SiteMinderReservationImporter", () => {
 
     await expect(importer.importReservation(reservation())).rejects.toThrow("connection reset");
     expect(links.rows).toHaveLength(0);
+  });
+
+  test("saves the price with its currency on a new booking and on a change, so pounds never show as euros", async () => {
+    importer = new SiteMinderReservationImporter({ ...tables, bookings, resLinks: links, currency: "GBP", now: () => NOW });
+    const villaInPounds = room({ total: { amountBeforeTax: 450, amountAfterTax: 495, currency: "GBP" } });
+
+    await importer.importReservation(reservation({ rooms: [villaInPounds] }));
+    await importer.importReservation(reservation({ status: "Modify", messageId: "msg-2", rooms: [villaInPounds] }));
+
+    expect(bookings.calls.create[0]).toMatchObject({ totalPrice: 495, currency: "GBP" });
+    expect(bookings.calls.update[0]).toMatchObject({ totalPrice: 495, currency: "GBP" });
+  });
+
+  test("saves no currency when the price is in another currency, so the price and its currency stay a pair", async () => {
+    const villaInDollars = room({ total: { amountBeforeTax: 450, amountAfterTax: 495, currency: "USD" } });
+
+    await importer.importReservation(reservation({ rooms: [villaInDollars] }));
+
+    expect(bookings.calls.create[0]).toMatchObject({ totalPrice: null, currency: null });
   });
 });

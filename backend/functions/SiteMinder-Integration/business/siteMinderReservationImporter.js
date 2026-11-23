@@ -109,6 +109,7 @@ export class SiteMinderReservationImporter {
       arrivalDateMs: booking.arrivalDateMs,
       departureDateMs: booking.departureDateMs,
       totalPrice: booking.totalPrice,
+      currency: booking.totalPrice === null ? null : this.currency,
       guestCount: booking.guestCount,
     };
     const newNights = nightsChange(booking.domitsPropertyId, booking.arrivalDateMs, booking.departureDateMs);
