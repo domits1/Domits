@@ -8,8 +8,12 @@ import {
 } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
 
 describe("Channex ARI outbox constants", () => {
-  test("bookings and Channex imports are the sources that skip the quiet period", () => {
-    expect(URGENT_SOURCES).toEqual([CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT]);
+  test("bookings, Channex imports and SiteMinder imports are the sources that skip the quiet period", () => {
+    expect(URGENT_SOURCES).toStrictEqual([
+      CHANNEX_ARI_OUTBOX_SOURCE.BOOKING,
+      CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT,
+      CHANNEX_ARI_OUTBOX_SOURCE.SITEMINDER_IMPORT,
+    ]);
   });
 
   test("a calendar, global settings or go-live change is not urgent, so it waits for the quiet period", () => {
@@ -56,6 +60,7 @@ describe("Channex ARI outbox constants", () => {
       "BOOKING",
       "CHANNEX_IMPORT",
       "GO_LIVE",
+      "SITEMINDER_IMPORT",
     ]);
     expect(Object.values(CHANNEX_ARI_CHANGE_TYPE)).toEqual(["availability", "rates", "restrictions"]);
   });

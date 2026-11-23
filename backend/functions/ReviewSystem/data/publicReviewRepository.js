@@ -90,7 +90,7 @@ export class PublicReviewRepository {
       if (filters.endExclusive !== undefined) query.andWhere("review.created_at < :filterEnd", { filterEnd: filters.endExclusive });
       return query;
     };
-    const summary = await eligible().select("AVG(review.overall_rating)", "score").getRawOne();
+    const summary = await eligible().select("AVG(review.overall_rating)", "score").addSelect("COUNT(*)", "count").getRawOne();
     const matching = await matchingReviews().select("COUNT(*)", "count").getRawOne();
     const page = matchingReviews()
       .select(["review.id", "review.overall_rating", "review.public_review", "review.created_at", "review.verification_status"]);
@@ -125,7 +125,7 @@ export class PublicReviewRepository {
       select: ["reviewId", "message", "publishedAt"],
     }) : [];
     return { property_id: propertyId, overall_score: summary.score == null ? null : Number(summary.score),
-      review_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
+      review_count: Number(summary.count), matching_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
       next_cursor: nextCursor,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
         text: review.public_review, date: Number(review.created_at), verified: review.verification_status === "VERIFIED_STAY",

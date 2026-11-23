@@ -50,7 +50,6 @@ export default class AutomationRepository {
       .createQueryBuilder("automation")
       .where("automation.hostId = :hostId", { hostId })
       .andWhere("automation.status = :status", { status: "ACTIVE" })
-      .andWhere("automation.triggerType = :triggerType", { triggerType: "BOOKING_PAID" })
       .andWhere("(automation.propertyId IS NULL OR automation.propertyId = :propertyId)", { propertyId })
       .getMany();
   }

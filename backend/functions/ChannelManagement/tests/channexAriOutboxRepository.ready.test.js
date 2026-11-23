@@ -35,7 +35,7 @@ describe("ChannexAriOutboxRepository.findReadyProperties", () => {
     expect(sql).toContain("MAX(pending.createdat) <= $4");
     expect(sql).toContain("MIN(pending.createdat) <= $5");
     expect(sql).toContain("ORDER BY oldestcreatedat ASC");
-    expect(params).toEqual(["PENDING", NOW, ["BOOKING", "CHANNEX_IMPORT"], NOW - 60_000, NOW - 300_000, 25]);
+    expect(params).toEqual(["PENDING", NOW, ["BOOKING", "CHANNEX_IMPORT", "SITEMINDER_IMPORT"], NOW - 60_000, NOW - 300_000, 25]);
   });
 
   test("a property is only ready when the claim could take one of its rows: both use the same rule", async () => {

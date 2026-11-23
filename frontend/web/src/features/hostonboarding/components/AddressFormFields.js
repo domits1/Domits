@@ -2,7 +2,7 @@ import React from "react";
 import LabeledSelect from "./LabeledSelect";
 import LabeledInput from "./LabeledInput";
 
-function AddressFormFields({ location, setLocation, countryOptions }) {
+function AddressFormFields({ location, setLocation, countryOptions, houseNumberError = "" }) {
 
   const handleChange = (field, value) => {
     setLocation({ [field]: value });
@@ -41,7 +41,14 @@ function AddressFormFields({ location, setLocation, countryOptions }) {
         onChange={(e) => handleChange("houseNumber", e.target.value)}
         placeholder="Enter your house number + house number extension"
         required
+        aria-invalid={houseNumberError ? true : undefined}
+        aria-describedby={houseNumberError ? "houseNumber-error" : undefined}
       />
+      {houseNumberError ? (
+        <p id="houseNumber-error" className="error-text">
+          {houseNumberError}
+        </p>
+      ) : null}
       <LabeledInput
         label="Postal Code*"
         name="postalCode"

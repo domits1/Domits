@@ -8,14 +8,20 @@ const DEFAULT_ATTEMPTS = 3;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const randomJitterMs = () => 20 + Math.floor(Math.random() * 31);
 
-export const isDsqlConflict = (error) => CONFLICT_CODES.has(String(error?.code || error?.driverError?.code || ""));
+const errorCode = (error) => String(error?.code || error?.driverError?.code || "");
 
-export const withDsqlRetry = async (work, { attempts = DEFAULT_ATTEMPTS, wait = sleep, jitterMs = randomJitterMs } = {}) => {
+export const isDsqlConflict = (error) => CONFLICT_CODES.has(errorCode(error));
+
+export const withDsqlRetry = async (
+  work,
+  { attempts = DEFAULT_ATTEMPTS, wait = sleep, jitterMs = randomJitterMs, retryCodes = [] } = {}
+) => {
+  const isRetryable = (error) => isDsqlConflict(error) || retryCodes.includes(errorCode(error));
   for (let attempt = 1; ; attempt += 1) {
     try {
       return await work();
     } catch (error) {
-      if (!isDsqlConflict(error) || attempt >= attempts) throw error;
+      if (!isRetryable(error) || attempt >= attempts) throw error;
       await wait(jitterMs());
     }
   }

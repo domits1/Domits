@@ -30,7 +30,7 @@ describe("public review retrieval", () => {
   test("anonymous response uses the path property and excludes private fields", async () => {
     const result = await controller.getPublicReviews(request());
     expect(result.statusCode).toBe(200);
-    expect(JSON.parse(result.body)).toEqual({ property_id: "p1", overall_score: 4, review_count: 11,
+    expect(JSON.parse(result.body)).toEqual({ property_id: "p1", overall_score: 4, review_count: 11, matching_count: 11,
       next_offset: null, next_cursor: null, reviews: [{ id: "r1", rating: 4, text: "Good stay", date: 1000, verified: false, response: { message: "Thanks", publishedAt: 2000 },
         categories: [{ key: "comfort", label: "Comfort", rating: 4.5 }] }] });
     expect(query.where).toHaveBeenCalledWith("review.property_id = :propertyId", { propertyId: "p1" });
@@ -73,7 +73,7 @@ describe("public review retrieval", () => {
     const result = await controller.getPublicReviews(request({ minRating: "4", maxRating: "5",
       startDate: "2026-01-01", endDate: "2026-01-31", sort: "highest", offset: "10" }));
     expect(result.statusCode).toBe(200);
-    expect(JSON.parse(result.body)).toMatchObject({ review_count: 11, next_offset: null });
+    expect(JSON.parse(result.body)).toMatchObject({ review_count: 11, matching_count: 11, next_offset: null });
     expect(query.andWhere.mock.calls.filter(([sql]) => sql.includes(":filterMinimum"))).toHaveLength(2);
     expect(query.andWhere).toHaveBeenCalledWith("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum",
       { filterMinimum: 4, filterMaximum: 5 });
@@ -88,15 +88,15 @@ describe("public review retrieval", () => {
     summary = { score: null, count: "0" };
     reviews = [];
     const result = JSON.parse((await controller.getPublicReviews(request({ minRating: "5" }))).body);
-    expect(result).toEqual({ property_id: "p1", overall_score: null, review_count: 0, next_offset: null, next_cursor: null, reviews: [] });
+    expect(result).toEqual({ property_id: "p1", overall_score: null, review_count: 0, matching_count: 0, next_offset: null, next_cursor: null, reviews: [] });
     expect(query.getRawMany).not.toHaveBeenCalled();
   });
   test.each([0, 2])("preserves the property score with %s filtered matches", async (count) => {
-    query.getRawOne.mockResolvedValueOnce({ score: "4.2" }).mockResolvedValueOnce({ count: String(count) });
+    query.getRawOne.mockResolvedValueOnce({ score: "4.2", count: "23" }).mockResolvedValueOnce({ count: String(count) });
     reviews = [];
     const result = JSON.parse((await controller.getPublicReviews(request({ minRating: "5",
       startDate: "2026-01-01" }))).body);
-    expect(result).toMatchObject({ overall_score: 4.2, review_count: count, next_offset: null });
+    expect(result).toMatchObject({ overall_score: 4.2, review_count: 23, matching_count: count, next_offset: null });
   });
   test("rejects unavailable properties without retrieving review data", async () => {
     property = null;
@@ -202,10 +202,11 @@ test("applies filters to count and list but never to the overall rating SQL", as
   Database.getInstance.mockResolvedValue(database);
   const result = await new ReviewRepository().getPublicReviewPage("p1", 0,
     { minRating: 5, maxRating: 5, start: 1000, endExclusive: 2000 });
-  expect(result).toMatchObject({ overall_score: 4.2, review_count: 0 });
+  expect(result).toMatchObject({ overall_score: 4.2, review_count: 0, matching_count: 0 });
   expect(queries).toHaveLength(3);
   expect(queries[0].getQuery()).toContain('AVG("review"."overall_rating")');
   expect(queries[0].getQuery()).not.toContain(":filter");
+  expect(queries[0].getQuery()).toContain("COUNT(*)");
   for (const query of queries.slice(1)) {
     expect(query.getParameters()).toMatchObject({ filterMinimum: 5, filterMaximum: 5,
       filterStart: 1000, filterEnd: 2000 });

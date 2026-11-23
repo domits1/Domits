@@ -34,6 +34,7 @@ import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
 import HostChannelDistribution from "./hostchanneldistribution/views/HostChannelDistribution";
+import ChannexInternalRoute from "./hostchanneldistribution/components/ChannexInternalRoute";
 import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
 import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
@@ -166,7 +167,14 @@ function MainDashboardHost({ reviewAlerts = [], reviewAlertsLoading = false, rev
 
           <Route path="finance" element={<HostFinanceTab />} />
           <Route path="pricelabs" element={<HostPriceLabs />} />
-          <Route path="distribution" element={<HostChannelDistribution />} />
+          <Route
+            path="distribution"
+            element={
+              <ChannexInternalRoute>
+                <HostChannelDistribution />
+              </ChannexInternalRoute>
+            }
+          />
           <Route path="listings" element={<HostListings />} />
           <Route path="owners" element={<HostOwners />} />
           <Route path="owners/:id" element={<HostOwnerDetail />} />

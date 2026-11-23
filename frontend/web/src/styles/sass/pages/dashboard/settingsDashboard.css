@@ -855,6 +855,21 @@ dialog.team-modal .team-cancel-btn:hover {
     font-size: 0.85rem;
 }
 
+.team-page .team-modal-permissions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: -8px 0 16px;
+}
+
+.team-page .team-modal-permissions-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .team-page .team-row-menu-btn {
     background: transparent;
     border: none;
