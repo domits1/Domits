@@ -45,8 +45,16 @@ const requestModeration = async (method, fallback, query = {}, body) => {
   return payload;
 };
 
-export const getReviewFlags = (query) =>
-  requestModeration("GET", "Could not load the moderation queue.", query);
+export const getReviewFlags = async (query) => {
+  const payload = await requestModeration("GET", "Could not load the moderation queue.", query);
+  if (!payload || !Array.isArray(payload.flags) ||
+    payload.flags.some((flag) => !flag || typeof flag !== "object" || Array.isArray(flag)) ||
+    !(payload.next_offset === null ||
+      (Number.isSafeInteger(payload.next_offset) && payload.next_offset >= 0))) {
+    throw new Error("Could not load the moderation queue. The server returned an unexpected response. Please try again.");
+  }
+  return payload;
+};
 
 export const flagReview = (reviewId, reason, notes) =>
   requestModeration("POST", "Could not flag this review.", {}, { review_id: reviewId, reason, notes });

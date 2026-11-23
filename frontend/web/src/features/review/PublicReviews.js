@@ -11,21 +11,25 @@ const PropertyReviews = ({ propertyId }) => {
   const [draft, setDraft] = useState(defaults);
   const [expanded, setExpanded] = useState(true);
   const [offset, setOffset] = useState(0);
+  const [cursors, setCursors] = useState([null]);
+  const cursor = cursors[cursors.length - 1], recent = filters.sort === "recent";
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState({ loading: true });
   useEffect(() => {
     const controller = new AbortController();
     setState({ loading: true });
-    getPublicReviews(propertyId, offset, controller.signal, filters)
+    getPublicReviews(propertyId, recent ? 0 : offset, controller.signal,
+      { ...filters, ...(recent && cursor ? { cursor } : {}) })
       .then((data) => { if (!controller.signal.aborted) setState({ data, loading: false }); })
       .catch((error) => {
         if (!controller.signal.aborted) setState({ error: error.message, loading: false });
       });
     return () => controller.abort();
-  }, [propertyId, offset, filters, attempt]);
+  }, [propertyId, offset, filters, cursor, recent, attempt]);
   const apply = (next) => {
     setState({ loading: true });
     setOffset(0);
+    setCursors([null]);
     setFilters({ ...next });
   };
   const change = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
@@ -103,10 +107,18 @@ const PropertyReviews = ({ propertyId }) => {
     <ReviewsSection overallRating={data.overall_score} totalReviews={data.review_count}
       reviews={data.reviews.map((review) => ({ ...review,
         timeAgo: new Date(review.date).toLocaleDateString() }))} emptyMessage="" />
-    {offset > 0 && <button type="button" className="reviews-section__show-all-btn"
-      onClick={() => setOffset(offset - 10)}>Previous reviews</button>}
-    {data.next_offset !== null && <button type="button" className="reviews-section__show-all-btn"
-      onClick={() => setOffset(data.next_offset)}>Next reviews</button>}
+    {(recent ? cursors.length > 1 : offset > 0) && <button type="button" className="reviews-section__show-all-btn"
+      onClick={() => {
+        setState({ loading: true });
+        if (recent) setCursors((current) => current.slice(0, -1));
+        else setOffset((current) => current - 10);
+      }}>Previous reviews</button>}
+    {(recent ? Boolean(data.next_cursor) : data.next_offset != null) && <button type="button" className="reviews-section__show-all-btn"
+      onClick={() => {
+        setState({ loading: true });
+        if (recent) setCursors((current) => [...current, data.next_cursor]);
+        else setOffset(data.next_offset);
+      }}>Next reviews</button>}
     </>}
   </section>;
 };
