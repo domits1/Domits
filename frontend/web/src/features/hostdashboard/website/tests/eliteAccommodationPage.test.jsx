@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
@@ -15,12 +15,19 @@ jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
 }));
 
 const ACCOMMODATION_ON = Object.freeze({ accommodation: { enabled: true, navLabel: "The villa" } });
+const LONG_SENTENCE = `The terrace ${"looks over the rice fields and the river ".repeat(7).trim()}.`;
 
 const buildSnapshot = (changes = {}) => ({
   ...renderPayload.propertySnapshot,
   property: { ...renderPayload.propertySnapshot.property, ...changes.property },
   checkIn: { checkIn: { from: "15:00:00" }, checkOut: { till: "11:00:00" } },
   pricing: { ...renderPayload.propertySnapshot.pricing, roomRate: 2733 },
+  rules: [
+    { rule: "SmokingAllowed", value: false },
+    { rule: "PetsAllowed", value: false },
+    { rule: "CancellationPolicy:Strict", value: true },
+    { rule: "QuietHours", value: true },
+  ],
   ...changes.snapshot,
 });
 
@@ -94,6 +101,66 @@ describe("the Elite accommodation page", () => {
     ]);
   });
 
+  it("lists every house rule with its own icon", () => {
+    renderPage();
+    const rules = within(screen.getByRole("region", { name: "House rules" })).getAllByRole("listitem");
+
+    expect(
+      rules.map((rule) => [rule.textContent, rule.dataset.houseRule, rule.querySelector("svg").dataset.testid])
+    ).toEqual([
+      ["No smoking", "SmokingAllowed", "SmokeFreeRoundedIcon"],
+      ["No pets", "PetsAllowed", "PetsRoundedIcon"],
+      ["Limited (Cancel up to 14 days before)", "CancellationPolicy:Strict", "EventAvailableRoundedIcon"],
+      ["Quiet Hours", "other", "RuleRoundedIcon"],
+    ]);
+    expect(rules.every((rule) => rule.querySelector("svg[aria-hidden='true']"))).toBe(true);
+  });
+
+  it("shows two photos that are not the header photo", () => {
+    const images = renderPayload.propertySnapshot.images;
+    const thirdImage = { ...images[1], image_id: "third", sort_order: 2, web_key: "images/property/third/web.jpg" };
+    const { container } = renderPage(
+      buildModel({ snapshot: buildSnapshot({ snapshot: { images: [...images, thirdImage] } }) })
+    );
+    const photos = elitePage(container).querySelector("[data-photo-count]");
+
+    const headerPhoto = elitePage(container).querySelector("header img").getAttribute("src");
+    const rowPhotos = Array.from(photos.querySelectorAll("img"));
+
+    expect(photos.dataset.photoCount).toBe("2");
+    expect(rowPhotos.map((image) => image.alt)).toEqual([
+      "Wellness Villa Bisous residence view",
+      "Wellness Villa Bisous view 3",
+    ]);
+    expect(new Set([headerPhoto, ...rowPhotos.map((image) => image.getAttribute("src"))]).size).toBe(3);
+  });
+
+  it("keeps the photo row still when the host turned on photo rotation", () => {
+    const images = renderPayload.propertySnapshot.images;
+    const thirdImage = { ...images[1], image_id: "third", sort_order: 2, web_key: "images/property/third/web.jpg" };
+    const snapshot = buildSnapshot({ snapshot: { images: [...images, thirdImage] } });
+    const overrides = { imageRotation: { residence: true, gallery: [true, true, true] } };
+    const { container } = renderPage(buildModel({ snapshot, overrides }));
+
+    expect(elitePage(container).querySelectorAll("[data-photo-count] img")).toHaveLength(2);
+  });
+
+  it("opens and closes the rest of a long description", () => {
+    const description = ["A quiet villa.", LONG_SENTENCE, LONG_SENTENCE, LONG_SENTENCE].join(" ");
+    renderPage(buildModel({ snapshot: buildSnapshot({ property: { description } }) }));
+    const toggle = screen.getByRole("button", { name: "Read more" });
+    const more = document.getElementById(toggle.getAttribute("aria-controls"));
+
+    expect(more).not.toBeVisible();
+    fireEvent.click(toggle);
+    expect(more).toBeVisible();
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveTextContent("Read less");
+    fireEvent.click(toggle);
+    expect(more).not.toBeVisible();
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("opens the full amenities panel from the highlights", () => {
     renderPage();
 
@@ -104,11 +171,12 @@ describe("the Elite accommodation page", () => {
 });
 
 describe("the Elite accommodation page with little data", () => {
-  it("leaves out the facts, the description and the highlights the listing does not have", () => {
+  it("leaves out the facts, description, highlights, house rules and photos the listing does not have", () => {
     const snapshot = buildSnapshot({
       property: { description: "" },
       snapshot: {
         amenities: [],
+        rules: [],
         images: [],
         generalDetails: [],
         availabilityRestrictions: [],
@@ -121,10 +189,38 @@ describe("the Elite accommodation page with little data", () => {
     expect(page.querySelector("[data-preview-target-id='residence.description']")).toBeNull();
     expect(page.textContent).not.toContain("Ubud, Indonesia for");
     expect(screen.queryByRole("region", { name: "Facts" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "House rules" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Read more" })).toBeNull();
+    expect(page.querySelector("[data-photo-count]")).toBeNull();
     expect(page.querySelector("header img")).toBeNull();
     expect(page.querySelector("header").dataset.eliteHeader).toBe("light");
     expect(topBar(container)).toHaveClass("panoramaTopBarShellElite", "panoramaTopBarShellEliteLight");
     expect(screen.queryByText("Show all")).toBeNull();
+  });
+
+  it("leaves out the highlights when the host hid the amenities", () => {
+    renderPage(buildModel({ overrides: { visibility: { amenitiesPanel: false } } }));
+
+    expect(screen.queryByRole("button", { name: "Show all" })).toBeNull();
+    expect(screen.queryByText(buildModel().amenities.all[0].label)).toBeNull();
+  });
+
+  it("shows only the site name in the header and footer when the listing has no location", () => {
+    const { container } = renderPage(buildModel({ snapshot: buildSnapshot({ snapshot: { location: {} } }) }));
+    const page = elitePage(container);
+
+    expect(page.querySelectorAll("footer span")).toHaveLength(1);
+    expect(page.querySelector("header p")).toBeNull();
+  });
+
+  it("turns the dark top bar of a light header solid once the guest scrolls past it", async () => {
+    const { container } = renderPage(buildModel({ snapshot: buildSnapshot({ snapshot: { images: [] } }) }));
+    elitePage(container).querySelector("header").getBoundingClientRect = () => ({ top: -200, height: 300 });
+
+    fireEvent.scroll(globalThis);
+
+    await waitFor(() => expect(topBar(container)).toHaveClass("panoramaTopBarShellSolid"));
+    expect(topBar(container)).not.toHaveClass("panoramaTopBarShellEliteLight");
   });
 
   it("leaves out the price card when there is no price and availability is hidden", () => {
