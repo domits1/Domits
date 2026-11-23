@@ -57,6 +57,7 @@ test("combines filters, resets the page, keeps filters during pagination, and cl
   fireEvent.click(await screen.findByText("Next reviews"));
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 10, expect.anything(), expect.any(Object)));
   fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "4" } });
+  fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
     expect.objectContaining({ minRating: "4" })));
   fireEvent.click(await screen.findByText("Next reviews"));
@@ -80,6 +81,7 @@ test.each([0, 1])("keeps the property rating visible with %s matches and removes
   render(<PublicReviews propertyId="p1" />);
   expect(await screen.findByText("4.2")).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "5" } });
+  fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
     expect.objectContaining({ minRating: "5" })));
   expect(await screen.findByText("4.2")).toBeInTheDocument();
@@ -93,10 +95,31 @@ test("resets filters when switching properties and ignores the old request", asy
     ? new Promise((resolve) => { oldResult = resolve; }) : Promise.resolve(empty));
   const { rerender } = render(<PublicReviews propertyId="p1" />);
   fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "5" } });
+  fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
   rerender(<PublicReviews propertyId="p2" />);
   await screen.findByText("0 matching reviews");
   oldResult({ ...empty, review_count: 99 });
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p2", 0, expect.anything(),
     expect.objectContaining({ minRating: "" })));
   expect(screen.queryByText("99 matching reviews")).not.toBeInTheDocument();
+});
+
+
+test("applies draft filters on submit, removes rating chips, and collapses controls", async () => {
+  getPublicReviews.mockResolvedValue(empty);
+  render(<PublicReviews propertyId="p1" />);
+  await screen.findByText("0 matching reviews");
+  const calls = getPublicReviews.mock.calls.length;
+  fireEvent.change(screen.getByLabelText("Minimum rating"), { target: { value: "4" } });
+  expect(getPublicReviews).toHaveBeenCalledTimes(calls);
+  fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
+  await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
+    expect.objectContaining({ minRating: "4" })));
+  fireEvent.click(screen.getByRole("button", { name: "Remove rating filter" }));
+  await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
+    expect.objectContaining({ minRating: "" })));
+  fireEvent.click(screen.getByRole("button", { name: "Collapse review filters" }));
+  expect(screen.getByLabelText("Minimum rating")).not.toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Expand review filters" }));
+  expect(screen.getByLabelText("Minimum rating")).toBeVisible();
 });
