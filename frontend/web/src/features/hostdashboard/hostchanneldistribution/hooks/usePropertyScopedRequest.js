@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export const PROPERTY_REQUEST_STATE = {
   IDLE: "idle",
@@ -17,12 +17,18 @@ const isIntegrationNotFound = (err) =>
 
 // Loads data of one property. Without a property nothing is requested and the state stays IDLE. A
 // property change drops the previous data at once, and a response that arrives for a property that
-// is no longer selected is ignored. `request` and `select` must be stable (module-level) functions.
+// is no longer selected is ignored. `request` and `select` are read through a ref, so a new function
+// on every render cannot restart the request.
 export function usePropertyScopedRequest({ propertyId, request, select, errorMessage }) {
   // Every result remembers its property, so a result is never shown for another property. Without
   // that, the render in which the selection changes would pair the previous property's data with
   // the new property, because the effect below only runs after that render.
   const [result, setResult] = useState({ propertyId: null, data: null, loadState: PROPERTY_REQUEST_STATE.LOADING });
+  const callbacks = useRef({ request, select });
+
+  useEffect(() => {
+    callbacks.current = { request, select };
+  });
 
   useEffect(() => {
     if (!propertyId) return undefined;
@@ -33,8 +39,9 @@ export function usePropertyScopedRequest({ propertyId, request, select, errorMes
     };
 
     settle(null, PROPERTY_REQUEST_STATE.LOADING);
-    request(propertyId)
-      .then((response) => settle(select(response), PROPERTY_REQUEST_STATE.LOADED))
+    callbacks.current
+      .request(propertyId)
+      .then((response) => settle(callbacks.current.select(response), PROPERTY_REQUEST_STATE.LOADED))
       .catch((err) => {
         if (cancelled) return;
         if (isIntegrationNotFound(err)) {
@@ -48,7 +55,7 @@ export function usePropertyScopedRequest({ propertyId, request, select, errorMes
     return () => {
       cancelled = true;
     };
-  }, [propertyId, request, select, errorMessage]);
+  }, [propertyId, errorMessage]);
 
   return useMemo(() => {
     if (!propertyId) return { data: null, loadState: PROPERTY_REQUEST_STATE.IDLE };
