@@ -430,6 +430,31 @@
   color: #d92d20;
 }
 
+.reviewTypes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 14px;
+  border: 1px solid #dceee2;
+  border-radius: 9px;
+  min-width: 0;
+}
+.reviewTypes legend { font-weight: 700; font-size: 14px; }
+.reviewTypes label {
+  flex: 1 1 220px;
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #dceee2;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.reviewTypes label[data-selected="true"] { border-color: #009b16; background: #eef8f0; }
+.reviewTypes input { accent-color: #009b16; }
+.reviewTypes small { display: block; margin-top: 4px; }
+.hostCategories { grid-template-columns: minmax(0, 1fr); }
+
 @media (min-width: 1024px) {
   .reviewDashboard {
     column-gap: 0;

@@ -298,6 +298,7 @@ export const submitReviewForApproval = async (reviewId) => {
 // Create a new review
 export const createReview = async ({
   bookingId,
+  reviewType,
   rating,
   title,
   publicReview,
@@ -315,6 +316,7 @@ export const createReview = async ({
     },
     body: JSON.stringify({
       booking_id: bookingId,
+      ...(reviewType ? { review_type: reviewType } : {}),
       overall_rating: Number(rating),
       title,
       public_review: publicReview,
@@ -327,7 +329,7 @@ export const createReview = async ({
   const payload = await parseResponse(response);
 
   if (!response.ok) {
-    throw new Error(getReviewErrorMessage(response.status, payload));
+    throw Object.assign(new Error(getReviewErrorMessage(response.status, payload)), { status: response.status });
   }
 
   return payload;

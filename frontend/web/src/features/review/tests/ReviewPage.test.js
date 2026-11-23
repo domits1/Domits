@@ -17,6 +17,124 @@ import {
 
 const mockNavigate = jest.fn();
 
+const openHostForm = async () => {
+  render(<ReviewPage />);
+  fireEvent.click(await screen.findByRole("radio", { name: "Host Review" }));
+};
+const fillHostForm = () => {
+  fireEvent.click(screen.getByRole("radio", { name: "5 stars: Amazing" }));
+  fireEvent.change(screen.getByLabelText(/Review title/), { target: { value: "Helpful host" } });
+  fireEvent.change(screen.getByLabelText(/Written review/), { target: { value: " Welcoming and responsive. " } });
+  ["Communication", "Responsiveness", "Hospitality"].forEach(label =>
+    fireEvent.click(screen.getByRole("radio", { name: `${label}: 4 stars` })));
+};
+
+it("switches between property and host categories without carrying mixed feedback", async () => {
+  await openHostForm();
+  expect(screen.getByRole("heading", { name: "Review your host" })).toBeInTheDocument();
+  expect(screen.queryByRole("radio", { name: "Cleanliness: 4 stars" })).not.toBeInTheDocument();
+  fillHostForm();
+  fireEvent.click(screen.getByRole("radio", { name: "Property Review" }));
+  expect(screen.getByRole("radio", { name: "Cleanliness: 4 stars" })).toBeInTheDocument();
+  expect(screen.queryByRole("radio", { name: "Hospitality: 4 stars" })).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/Written review/)).toHaveValue("");
+  expect(screen.getByRole("radio", { name: "Communication: 4 stars" })).not.toBeChecked();
+});
+
+it("submits host ratings separately and confirms moderation without claiming publication", async () => {
+  publishReview.mockResolvedValueOnce({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" });
+  await openHostForm(); fillHostForm();
+  fireEvent.click(screen.getByRole("button", { name: "Submit Host Review" }));
+  await screen.findByRole("heading", { name: "Your host review is awaiting approval" });
+  expect(createReview).toHaveBeenCalledWith(expect.objectContaining({ bookingId: "reservation-1",
+    reviewType: "GUEST_TO_HOST", rating: 5, title: "Helpful host", publicReview: "Welcoming and responsive.",
+    categoryRatings: { communication: 4, responsiveness: 4, hospitality: 4 } }));
+  expect(publishReview).toHaveBeenCalledWith("review-1");
+  fireEvent.click(screen.getByRole("button", { name: "Review the property" }));
+  expect(screen.getByRole("radio", { name: "Host Review" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Submit review" })).toBeEnabled();
+});
+
+it.each(["rating", "title", "review", "category"])("validates host %s before submission", async missing => {
+  await openHostForm();
+  if (missing !== "rating") fireEvent.click(screen.getByRole("radio", { name: "5 stars: Amazing" }));
+  if (missing !== "title") fireEvent.change(screen.getByLabelText(/Review title/), { target: { value: "Host" } });
+  if (missing !== "review") fireEvent.change(screen.getByLabelText(/Written review/), { target: { value: "Helpful" } });
+  if (missing !== "category") ["Communication", "Responsiveness", "Hospitality"].forEach(label =>
+    fireEvent.click(screen.getByRole("radio", { name: `${label}: 4 stars` })));
+  fireEvent.click(screen.getByRole("button", { name: "Submit Host Review" }));
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+  expect(createReview).not.toHaveBeenCalled();
+  if (missing === "category") expect(screen.getByRole("radio", { name: "Communication: 1 stars" })).toHaveFocus();
+});
+
+it("locks host submissions after a duplicate but still permits property reviews", async () => {
+  createReview.mockRejectedValueOnce(Object.assign(new Error("Already reviewed"), { status: 409 }));
+  await openHostForm(); fillHostForm();
+  fireEvent.click(screen.getByRole("button", { name: "Submit Host Review" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Already reviewed");
+  expect(screen.getByRole("button", { name: "Submit Host Review" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("radio", { name: "Property Review" }));
+  expect(screen.getByRole("button", { name: "Submit review" })).toBeEnabled();
+  expect(createReview).toHaveBeenCalledTimes(1);
+});
+
+it("keeps host input after a server error and allows retry", async () => {
+  createReview.mockRejectedValueOnce(new Error("Try later"));
+  await openHostForm(); fillHostForm();
+  fireEvent.click(screen.getByRole("button", { name: "Submit Host Review" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Try later");
+  expect(screen.getByLabelText(/Written review/)).toHaveValue(" Welcoming and responsive. ");
+  expect(screen.getByRole("button", { name: "Submit Host Review" })).toBeEnabled();
+  expect(publishReview).not.toHaveBeenCalled();
+});
+
+it("prevents rapid duplicate submission and type switching during a request", async () => {
+  createReview.mockReturnValueOnce(new Promise(() => {}));
+  await openHostForm(); fillHostForm();
+  const button = screen.getByRole("button", { name: "Submit Host Review" });
+  fireEvent.submit(button.closest("form")); fireEvent.submit(button.closest("form"));
+  expect(createReview).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole("radio", { name: "Property Review" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
+});
+
+it("retries the saved host draft without creating another review", async () => {
+  publishReview.mockRejectedValueOnce(new Error("Connection lost"))
+    .mockResolvedValueOnce({ status: "PENDING_APPROVAL", publication_status: "UNPUBLISHED" });
+  await openHostForm(); fillHostForm();
+  fireEvent.click(screen.getByRole("button", { name: "Submit Host Review" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Retry publication" }));
+  await screen.findByRole("heading", { name: "Your host review is awaiting approval" });
+  expect(createReview).toHaveBeenCalledTimes(1);
+  expect(publishReview).toHaveBeenCalledTimes(2);
+});
+
+it("supports keyboard selection of the host option and rating controls", async () => {
+  render(<ReviewPage />);
+  const host = await screen.findByRole("radio", { name: "Host Review" });
+  host.focus();
+  await userEvent.keyboard(" ");
+  expect(host).toBeChecked();
+  const communication = screen.getByRole("radio", { name: "Communication: 4 stars" });
+  communication.focus();
+  await userEvent.keyboard(" ");
+  expect(communication).toBeChecked();
+});
+
+it("sends the host type and retains conflict status through the shared API utility", async () => {
+  const api = jest.requireActual("../services/reviewAPI");
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409, text: async () => '{"message":"Duplicate"}' });
+  try {
+    await expect(api.createReview({ bookingId: "b1", reviewType: "GUEST_TO_HOST", rating: 4,
+      title: "Host", publicReview: "Helpful", categoryRatings: { hospitality: 5 } }))
+      .rejects.toMatchObject({ status: 409 });
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toMatchObject({ review_type: "GUEST_TO_HOST",
+      category_ratings: { hospitality: 5 } });
+  } finally { global.fetch = originalFetch; }
+});
+
 it("previews hovered stars without changing the selected rating", async () => {
   render(<ReviewPage />);
   await screen.findByRole("group", { name: "Overall experience (required)" });

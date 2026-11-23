@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Auth } from "aws-amplify";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Pages from "../../guestdashboard/Pages";
@@ -23,6 +23,7 @@ const RATING_LABELS = {
 };
 
 const CATEGORIES = ["Cleanliness", "Communication", "Location", "Check-in", "Comfort", "Amenities", "Value", "Accuracy"];
+const HOST_CATEGORIES = ["Communication", "Responsiveness", "Hospitality"];
 const categoryKey = label => label === "Check-in" ? "checkIn" : label.toLowerCase();
 
 const INITIAL_FORM = {
@@ -52,6 +53,21 @@ const ReviewForm = () => {
   const [categoryRatings, setCategoryRatings] = useState({});
   const [hoveredCategories, setHoveredCategories] = useState({});
   const [categoryError, setCategoryError] = useState("");
+  const [reviewType, setReviewType] = useState("GUEST_TO_PROPERTY");
+  const [reviewedTypes, setReviewedTypes] = useState([]);
+  const submissionInFlight = useRef(false);
+  const isHostReview = reviewType === "GUEST_TO_HOST";
+  const categories = isHostReview ? HOST_CATEGORIES : CATEGORIES;
+
+  const selectReviewType = type => {
+    setReviewType(type);
+    setForm(INITIAL_FORM);
+    setCategoryRatings({});
+    setHoveredCategories({});
+    setCategoryError(""); setRatingError(""); setReviewError("");
+    setDomitsFeedbackError(""); setSubmitError(""); setHoveredRating(0);
+    setIsSubmitted(false);
+  };
 
   const propertyTitle = location.state?.propertyTitle || "your stay";
 
@@ -84,6 +100,8 @@ const ReviewForm = () => {
     setCategoryRatings({});
     setHoveredCategories({});
     setCategoryError("");
+    setReviewType("GUEST_TO_PROPERTY");
+    setReviewedTypes([]);
     setRatingError("");
     setHoveredRating(0);
     setReviewError("");
@@ -106,6 +124,7 @@ const ReviewForm = () => {
           const review = await getEditableReview(reviewId);
           if (!active) return;
           setEditingReview(review);
+          setReviewType(review.review_type || "GUEST_TO_PROPERTY");
           setForm({ ...INITIAL_FORM, rating: String(review.overall_rating), publicReview: review.public_review || "" });
           return;
         }
@@ -187,6 +206,7 @@ const ReviewForm = () => {
       setPendingPublicationId("");
       setForm(INITIAL_FORM);
       setIsSubmitted(true);
+      setReviewedTypes(current => [...new Set([...current, reviewType])]);
     } catch (error) {
       setSubmitError(error.message || "Could not publish your saved review. Please try again.");
     } finally {
@@ -196,6 +216,7 @@ const ReviewForm = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submissionInFlight.current || isSubmitting || reviewedTypes.includes(reviewType)) return;
 
 
     if (!targetId || checkedBookingId !== targetId || eligibilityError || (reviewId && !editingReview)) {
@@ -243,7 +264,7 @@ const ReviewForm = () => {
       }
     }
 
-    const missingCategory = !reviewId && CATEGORIES.find(label => ![1, 2, 3, 4, 5].includes(categoryRatings[categoryKey(label)]));
+    const missingCategory = !reviewId && categories.find(label => ![1, 2, 3, 4, 5].includes(categoryRatings[categoryKey(label)]));
     if (missingCategory) {
       setCategoryError("Please rate every category before submitting your review.");
       event.currentTarget.querySelector(`input[name="category-${categoryKey(missingCategory)}"]`)?.focus();
@@ -251,6 +272,7 @@ const ReviewForm = () => {
     }
 
     setIsSubmitting(true);
+    submissionInFlight.current = true;
     setSubmitError("");
 
     try {
@@ -260,6 +282,7 @@ const ReviewForm = () => {
       } else {
         const draft = await createReview({
           bookingId,
+          ...(isHostReview ? { reviewType } : {}),
           title: form.title.trim(),
           rating: Number(form.rating),
           publicReview,
@@ -279,8 +302,10 @@ const ReviewForm = () => {
       setForm(INITIAL_FORM);
       setIsSubmitted(true);
     } catch (error) {
-      setSubmitError(error.message);
+      setSubmitError(error.message || "Could not save your review. Please try again.");
+      if (error.status === 409) setReviewedTypes(current => [...new Set([...current, reviewType])]);
     } finally {
+      submissionInFlight.current = false;
       setIsSubmitting(false);
     }
   };
@@ -312,7 +337,7 @@ const ReviewForm = () => {
   const stayPicture = normalizeImageUrl(stay?.propertyImage || stay?.image);
   const stayPictureContent = stayPicture ? <img src={stayPicture} alt={stayTitle} /> : <House size={38} aria-hidden="true" />;
 
-  const idleSubmitLabel = reviewId ? "Save changes" : "Submit review";
+  const idleSubmitLabel = reviewId ? "Save changes" : isHostReview ? "Submit Host Review" : "Submit review";
   const submitLabel = isSubmitting ? "Saving..." : idleSubmitLabel;
 
   if (isCheckingSession || checkedBookingId !== targetId) {
@@ -361,13 +386,17 @@ const ReviewForm = () => {
       <main className={`${styles.main} ${styles.publicationPage}`}>
         <section className={styles.statusCard}>
           <span className={styles.eyebrow}>THANK YOU FOR SHARING</span>
-          <h1>{reviewId ? "Review updated" : awaitingApproval ? "Your review is awaiting approval" : "Your review is published"}</h1>
+          <h1>{reviewId ? "Review updated" : isHostReview ? (awaitingApproval ? "Your host review is awaiting approval" : "Your host review is published") : awaitingApproval ? "Your review is awaiting approval" : "Your review is published"}</h1>
           <p role="status">{reviewId ? "Your changes have been saved as a draft for review."
             : awaitingApproval ? "Your review has been submitted and will appear after approval."
             : "Your experience can now help future guests choose their next stay."}</p>
-          <button type="button" onClick={() => navigate("/guestdashboard/reviews")}>
-            View my reviews
+          <button type="button" onClick={() => navigate(isHostReview ? "/guestdashboard/bookings" : "/guestdashboard/reviews")}>
+            {isHostReview ? "Back to reservations" : "View my reviews"}
           </button>
+          {!reviewId && !reviewedTypes.includes(isHostReview ? "GUEST_TO_PROPERTY" : "GUEST_TO_HOST") &&
+            <button type="button" onClick={() => selectReviewType(isHostReview ? "GUEST_TO_PROPERTY" : "GUEST_TO_HOST")}>
+              {isHostReview ? "Review the property" : "Review your host"}
+            </button>}
         </section>
       </main>
     );
@@ -397,7 +426,19 @@ const ReviewForm = () => {
         <div className={styles.stayHost}>{stayHostName && <p>Hosted by<br />{stayHostName}</p>}
         </div>
       </section>}
+      {!reviewId && <fieldset className={styles.reviewTypes} disabled={isSubmitting}>
+        <legend>What would you like to review?</legend>
+        {[["GUEST_TO_PROPERTY", "Property Review", "Rate the accommodation, amenities and overall stay."],
+          ["GUEST_TO_HOST", "Host Review", "Rate your host’s communication, responsiveness and hospitality."]].map(([type, label, description]) =>
+          <label key={type} data-selected={reviewType === type}>
+            <input type="radio" name="review-type" value={type} checked={reviewType === type}
+              disabled={reviewedTypes.includes(type)} onChange={() => selectReviewType(type)} aria-label={label} />
+            <span><strong>{label}</strong><small>{description}</small>
+              {reviewedTypes.includes(type) && <small>Already reviewed</small>}</span>
+          </label>)}
+      </fieldset>}
       <form className={styles.reviewForm} onSubmit={handleSubmit} noValidate>
+        {isHostReview && <h2>Review your host</h2>}
 
         <fieldset className={styles.rating} data-rating={displayedRating} disabled={isSubmitting}>
           <legend>Overall experience <span className={styles.requiredMark} aria-hidden="true">*</span><span className={styles.srOnly}>(required)</span></legend>
@@ -408,8 +449,8 @@ const ReviewForm = () => {
           {ratingError && <p id="rating-error" role="alert">{ratingError}</p>}
         </fieldset>
         {!reviewId && <section className={styles.categories} aria-label="Category ratings (required)">
-          <h2>Category ratings <span className={styles.requiredMark} aria-hidden="true">*</span><span className={styles.srOnly}>(required)</span></h2>
-          <div className={styles.categoryGrid}>{CATEGORIES.map(label => <fieldset key={label} className={styles.category} disabled={isSubmitting}>
+          <h2>{isHostReview ? "Host service ratings" : "Category ratings"} <span className={styles.requiredMark} aria-hidden="true">*</span><span className={styles.srOnly}>(required)</span></h2>
+          <div className={`${styles.categoryGrid} ${isHostReview ? styles.hostCategories : ""}`}>{categories.map(label => <fieldset key={label} className={styles.category} disabled={isSubmitting}>
             <legend>{label}</legend><div onMouseLeave={() => setHoveredCategories(current => ({ ...current, [categoryKey(label)]: 0 }))}>{[1, 2, 3, 4, 5].map(value => <label key={value} onMouseEnter={() => !isSubmitting && setHoveredCategories(current => ({ ...current, [categoryKey(label)]: value }))}>
               <input type="radio" name={`category-${categoryKey(label)}`} aria-label={`${label}: ${value} stars`} required aria-describedby={categoryError ? "category-error" : undefined} checked={categoryRatings[categoryKey(label)] === value} onChange={() => { setCategoryRatings(current => ({ ...current, [categoryKey(label)]: value })); setCategoryError(""); }} />
               <span data-filled={value <= (hoveredCategories[categoryKey(label)] || categoryRatings[categoryKey(label)] || 0)} aria-hidden="true">{value <= (hoveredCategories[categoryKey(label)] || categoryRatings[categoryKey(label)] || 0) ? "★" : "☆"}</span>
@@ -420,7 +461,7 @@ const ReviewForm = () => {
         {!reviewId && <section className={styles.content}>
           <label htmlFor="title">Review title <span className={styles.requiredMark} aria-hidden="true">*</span><span className={styles.srOnly}>(required)</span></label>
           <input id="title" value={form.title} onChange={updateField("title")}
-            maxLength={120} placeholder="Give your stay a short headline" disabled={isSubmitting} required />
+            maxLength={120} placeholder={isHostReview ? "Give your host's service a short headline" : "Give your stay a short headline"} disabled={isSubmitting} required />
           <p className={styles.characterCount}>{form.title.length}/120 characters</p>
         </section>}
         <section className={styles.content}>
@@ -434,7 +475,7 @@ const ReviewForm = () => {
             className={styles.textarea}
             value={form.publicReview}
             onChange={updateField("publicReview")}
-            placeholder="What would you like future guests to know about your stay?"
+            placeholder={isHostReview ? "How was your host's communication, responsiveness and hospitality?" : "What would you like future guests to know about your stay?"}
             required
             minLength={REVIEW_MIN_LENGTH}
             maxLength={REVIEW_MAX_LENGTH}
@@ -487,6 +528,7 @@ const ReviewForm = () => {
         </section>}
 
         {submitError && <p role="alert">{submitError}</p>}
+        {reviewedTypes.includes(reviewType) && <p role="status">You have already reviewed this {isHostReview ? "host" : "property"} for this booking. You can select the other review type.</p>}
 
         <div className={styles.buttonBox}>
           <button type="button" onClick={() => navigate(-1)} disabled={isSubmitting}>
@@ -495,7 +537,7 @@ const ReviewForm = () => {
           <button
             type="submit"
             className={!form.rating || (!reviewId && !form.title.trim()) || !form.publicReview.trim() ? styles.disabled : ""}
-            disabled={isSubmitting}>
+            disabled={isSubmitting || reviewedTypes.includes(reviewType)}>
             {submitLabel}
           </button>
         </div>
