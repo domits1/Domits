@@ -268,3 +268,9 @@
   .chdist-property-row { flex-wrap: wrap; }
   .chdist-property-row__side { align-items: flex-start; text-align: left; }
 }
+
+.chdist-history { list-style: none; margin: .75rem 0 0; padding: 0; }
+.chdist-history__item { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .9rem; padding: .6rem 0; border-top: 1px solid #eee; font-size: .9rem; }
+.chdist-history__date { color: #888; min-width: 9.5rem; }
+.chdist-history__kind { font-weight: 600; color: var(--chdist-dark); }
+.chdist-history__counts { color: #888; font-size: .85rem; }

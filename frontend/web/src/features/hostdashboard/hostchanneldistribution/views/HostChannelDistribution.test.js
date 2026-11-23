@@ -9,6 +9,7 @@ import {
   getLatestSyncEvidence,
   getMappedProperties,
   getPropertyMappingRows,
+  getSyncHistory,
 } from "../services/channexDistributionService";
 
 // Mutable so a test can model useFetchUser resolving the id after the first render.
@@ -33,6 +34,7 @@ describe("HostChannelDistribution", () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
     getMappedProperties.mockResolvedValue(LISTINGS);
     getLatestSyncEvidence.mockResolvedValue({ item: null });
+    getSyncHistory.mockResolvedValue({ items: [] });
     getPropertyMappingRows.mockResolvedValue([]);
   });
 
@@ -197,6 +199,8 @@ describe("HostChannelDistribution", () => {
     expect(getChannexStatus).toHaveBeenCalledWith();
   });
 
+  const findCard = async (name) => (await screen.findByText(name)).closest(".chdist-card");
+
   describe("Last sync card", () => {
     const connect = () => getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
     const evidenceFor = (overrides) => ({
@@ -208,12 +212,12 @@ describe("HostChannelDistribution", () => {
 
       render(<HostChannelDistribution />);
 
-      expect(await screen.findByText("Property: Canal house")).toBeInTheDocument();
+      expect(within(await findCard("Last sync")).getByText("Property: Canal house")).toBeInTheDocument();
       await waitFor(() => expect(getLatestSyncEvidence).toHaveBeenCalledWith({ domitsPropertyId: "property-1" }));
 
       fireEvent.change(await screen.findByRole("combobox"), { target: { value: "property-2" } });
 
-      expect(await screen.findByText("Property: Beach apartment")).toBeInTheDocument();
+      expect(within(await findCard("Last sync")).getByText("Property: Beach apartment")).toBeInTheDocument();
       await waitFor(() => expect(getLatestSyncEvidence).toHaveBeenLastCalledWith({ domitsPropertyId: "property-2" }));
     });
 
@@ -223,7 +227,7 @@ describe("HostChannelDistribution", () => {
 
       render(<HostChannelDistribution />);
 
-      expect(await screen.findByText("Property: Canal house")).toBeInTheDocument();
+      expect(within(await findCard("Last sync")).getByText("Property: Canal house")).toBeInTheDocument();
       expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
       expect(getLatestSyncEvidence).toHaveBeenCalledWith({ domitsPropertyId: "property-1" });
     });
@@ -267,9 +271,9 @@ describe("HostChannelDistribution", () => {
 
     test("shows no card and no sentence on a 404 CHANNEX_NOT_FOUND, because the status card covers it", async () => {
       connect();
-      getLatestSyncEvidence.mockRejectedValue(
-        Object.assign(new Error("not found"), { status: 404, responseBody: { errorCode: "CHANNEX_NOT_FOUND" } })
-      );
+      const notFound = Object.assign(new Error("not found"), { status: 404, responseBody: { errorCode: "CHANNEX_NOT_FOUND" } });
+      getLatestSyncEvidence.mockRejectedValue(notFound);
+      getSyncHistory.mockRejectedValue(notFound);
 
       render(<HostChannelDistribution />);
 
@@ -300,6 +304,129 @@ describe("HostChannelDistribution", () => {
       await screen.findByText("No channel connected yet");
       expect(screen.queryByText("Last sync")).not.toBeInTheDocument();
       expect(getLatestSyncEvidence).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Sync history card", () => {
+    const connect = () => getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
+    const evidence = (id, overrides = {}) => ({
+      id,
+      syncType: "availability",
+      status: "SUCCESS",
+      overallSuccess: true,
+      startedAt: 1758700000000,
+      finishedAt: 1758700005000,
+      warnings: [],
+      errors: [],
+      ...overrides,
+    });
+
+    test("is shown for the first property next to the Last sync card, and follows the picker", async () => {
+      connect();
+
+      render(<HostChannelDistribution />);
+
+      expect(within(await findCard("Sync history")).getByText("Property: Canal house")).toBeInTheDocument();
+      await waitFor(() => expect(getSyncHistory).toHaveBeenCalledWith({ domitsPropertyId: "property-1" }));
+
+      fireEvent.change(await screen.findByRole("combobox"), { target: { value: "property-2" } });
+
+      expect(within(await findCard("Sync history")).getByText("Property: Beach apartment")).toBeInTheDocument();
+      await waitFor(() => expect(getSyncHistory).toHaveBeenLastCalledWith({ domitsPropertyId: "property-2" }));
+    });
+
+    test("replaces the Sync health placeholder, in every state", async () => {
+      getChannexStatus.mockResolvedValue({ status: "NOT_CONNECTED" });
+
+      render(<HostChannelDistribution />);
+
+      await screen.findByText("No channel connected yet");
+      expect(screen.queryByText("Sync health")).not.toBeInTheDocument();
+      expect(screen.queryByText("Sync history")).not.toBeInTheDocument();
+    });
+
+    test("lists the syncs of the property with their kind and outcome", async () => {
+      connect();
+      getSyncHistory.mockResolvedValue({
+        items: [
+          evidence("new", { syncType: "certification_full", status: "FAILED", overallSuccess: false, errors: [{}, {}] }),
+          evidence("old"),
+        ],
+      });
+
+      render(<HostChannelDistribution />);
+
+      const items = within(await findCard("Sync history")).getAllByRole("listitem");
+      expect(items).toHaveLength(2);
+      expect(within(items[0]).getByText("Full sync")).toBeInTheDocument();
+      expect(within(items[0]).getByText("Failed")).toBeInTheDocument();
+      expect(within(items[0]).getByText("2 errors")).toBeInTheDocument();
+      expect(within(items[1]).getByText("Availability")).toBeInTheDocument();
+      expect(within(items[1]).getByText("Synced")).toBeInTheDocument();
+    });
+
+    test("shows a loading sentence while the history loads", async () => {
+      connect();
+      getSyncHistory.mockReturnValue(new Promise(() => {}));
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("Loading the sync history…")).toBeInTheDocument();
+    });
+
+    test("says there are no syncs yet when the property has none", async () => {
+      connect();
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("No syncs yet for this property.")).toBeInTheDocument();
+    });
+
+    test("shows a sentence on the card only when the history cannot be loaded, and the Last sync card stays", async () => {
+      connect();
+      getSyncHistory.mockRejectedValue(Object.assign(new Error("boom"), { status: 500 }));
+
+      render(<HostChannelDistribution />);
+
+      expect(await screen.findByText("We couldn't load the sync history.")).toBeInTheDocument();
+      expect(await screen.findByText("No sync has run for this property yet.")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Something went wrong loading your Channex connection.")).not.toBeInTheDocument();
+    });
+
+    test("shows no card on a 404 CHANNEX_NOT_FOUND, because the status card covers it", async () => {
+      connect();
+      getSyncHistory.mockRejectedValue(
+        Object.assign(new Error("not found"), { status: 404, responseBody: { errorCode: "CHANNEX_NOT_FOUND" } })
+      );
+
+      render(<HostChannelDistribution />);
+
+      await waitFor(() => expect(getSyncHistory).toHaveBeenCalledTimes(1));
+      await screen.findByText("Channex");
+      await waitFor(() => expect(screen.queryByText("Loading the sync history…")).not.toBeInTheDocument());
+      expect(screen.queryByText("Sync history")).not.toBeInTheDocument();
+      expect(screen.queryByText("We couldn't load the sync history.")).not.toBeInTheDocument();
+    });
+
+    test("is not shown, and nothing is requested, when no property is linked", async () => {
+      connect();
+      getMappedProperties.mockResolvedValue([]);
+
+      render(<HostChannelDistribution />);
+
+      await screen.findByText("No properties are linked to Channex yet.");
+      expect(screen.queryByText("Sync history")).not.toBeInTheDocument();
+      expect(getSyncHistory).not.toHaveBeenCalled();
+    });
+
+    test("is not shown, and nothing is requested, when Channex is not connected", async () => {
+      getChannexStatus.mockResolvedValue({ status: "NOT_CONNECTED" });
+
+      render(<HostChannelDistribution />);
+
+      await screen.findByText("No channel connected yet");
+      expect(getSyncHistory).not.toHaveBeenCalled();
     });
   });
 

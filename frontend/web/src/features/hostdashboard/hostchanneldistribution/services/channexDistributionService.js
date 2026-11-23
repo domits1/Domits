@@ -1,5 +1,5 @@
-// Data layer for the Distribution tab. getChannexStatus, getMappedProperties and
-// getLatestSyncEvidence below call the real backend, read-only, via the existing
+// Data layer for the Distribution tab. getChannexStatus, getMappedProperties, getLatestSyncEvidence
+// and getSyncHistory below call the real backend, read-only, via the existing
 // hostintegrations/channexApi.js helpers (which already send Authorization: Bearer <Cognito ID
 // token> -- no new fetch code here, and the token is never logged). Every other function stays a
 // mock, mirroring the response shape of its matching real endpoint in
@@ -8,6 +8,7 @@ import {
   getChannexStatus as fetchRealChannexStatus,
   getLatestChannexSyncEvidence,
   getLinkedChannexRoomTypes,
+  listChannexSyncEvidence,
 } from "../../hostintegrations/channexApi";
 import { getAccessToken } from "../../../../services/getAccessToken";
 import { fetchListingsFromHostDashboard } from "../../../../services/hostPropertyService";
@@ -164,6 +165,18 @@ export const getMappedProperties = async () => {
 // real failure.
 export const getLatestSyncEvidence = async ({ domitsPropertyId } = {}) =>
   getLatestChannexSyncEvidence({ domitsPropertyId });
+
+export const SYNC_HISTORY_LIMIT = 10;
+
+// Real endpoint, read-only: GET /integrations/channex/sync-evidence?domitsPropertyId=&limit=, newest
+// first, with no userId (the backend takes the user from the token). Unlike /latest, the endpoint
+// accepts a missing property and then answers the whole account, so it is refused here instead.
+export const getSyncHistory = async ({ domitsPropertyId } = {}) => {
+  if (!domitsPropertyId) {
+    throw new Error("getSyncHistory needs a property id.");
+  }
+  return listChannexSyncEvidence({ domitsPropertyId, limit: SYNC_HISTORY_LIMIT });
+};
 
 // Not a single real endpoint yet -- see the comment on MOCK_PROPERTY_MAPPING_ROWS above.
 export const getPropertyMappingRows = async () => MOCK_PROPERTY_MAPPING_ROWS;

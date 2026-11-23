@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { LATEST_SYNC_STATE, useLatestSyncEvidence } from "./useLatestSyncEvidence";
 import { getLatestSyncEvidence } from "../services/channexDistributionService";
 
@@ -104,8 +104,9 @@ describe("useLatestSyncEvidence", () => {
     rerender({ domitsPropertyId: "property-2" });
     await waitFor(() => expect(result.current.item).toEqual({ ...ITEM, id: "evidence-2" }));
 
-    first.resolve({ item: { ...ITEM, id: "stale" } });
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await act(async () => {
+      first.resolve({ item: { ...ITEM, id: "stale" } });
+    });
 
     expect(result.current.item).toEqual({ ...ITEM, id: "evidence-2" });
   });

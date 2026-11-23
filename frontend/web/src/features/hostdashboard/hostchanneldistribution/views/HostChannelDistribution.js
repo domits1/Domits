@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
 import { useLatestSyncEvidence } from "../hooks/useLatestSyncEvidence";
+import { useSyncHistory } from "../hooks/useSyncHistory";
 import { MAPPED_PROPERTIES_STATE, useMappedProperties } from "../hooks/useMappedProperties";
 import {
   MOCK_CONNECT_FLOW_ENABLED,
@@ -10,6 +11,7 @@ import {
 } from "../services/channexDistributionService";
 import ChannexStatusCard from "../components/ChannexStatusCard";
 import LastSyncCard from "../components/LastSyncCard";
+import SyncHistoryCard from "../components/SyncHistoryCard";
 import ComingSoonCard from "../components/ComingSoonCard";
 import ConnectChannexModal from "../components/ConnectChannexModal";
 import DisconnectChannexModal from "../components/DisconnectChannexModal";
@@ -19,7 +21,6 @@ import "../styles/HostChannelDistribution.css";
 const COMING_SOON_CARDS = [
   { title: "Room & rate mapping", description: "Map your Domits rooms and rates to each channel's rooms and rates." },
   { title: "Per-channel toggles", description: "Turn distribution on or off for each channel individually." },
-  { title: "Sync health", description: "See sync history and errors across all your channels." },
 ];
 
 const FORBIDDEN_STATUS = 403;
@@ -56,6 +57,9 @@ function HostChannelDistribution() {
   const selectedPropertyName = propertyOptions.find((option) => option.value === selectedPropertyId)?.label ?? "";
   // Real data, requested only once a property is selected.
   const { item: latestSyncItem, loadState: latestSyncLoadState } = useLatestSyncEvidence({
+    domitsPropertyId: selectedPropertyId,
+  });
+  const { rows: syncHistoryRows, loadState: syncHistoryLoadState } = useSyncHistory({
     domitsPropertyId: selectedPropertyId,
   });
   const isLoadingProperties = propertiesLoadState === MAPPED_PROPERTIES_STATE.LOADING;
@@ -177,7 +181,14 @@ function HostChannelDistribution() {
             </label>
           )}
           {showLastSync && (
-            <LastSyncCard propertyName={selectedPropertyName} loadState={latestSyncLoadState} item={latestSyncItem} />
+            <>
+              <LastSyncCard propertyName={selectedPropertyName} loadState={latestSyncLoadState} item={latestSyncItem} />
+              <SyncHistoryCard
+                propertyName={selectedPropertyName}
+                loadState={syncHistoryLoadState}
+                rows={syncHistoryRows}
+              />
+            </>
           )}
         </div>
       )}
