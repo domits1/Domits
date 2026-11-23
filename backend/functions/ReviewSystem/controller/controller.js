@@ -1,5 +1,6 @@
 import { AuthManager } from "../auth/authManager.js";
 import { canReadDomitsFeedbackAsStaff } from "../auth/domitsFeedbackAccess.js";
+import { RESERVATION_REVIEW_TYPE } from "../business/model/reviewRules.js";
 import { ReviewService } from "../business/service/reviewService.js";
 import { ReviewAlertService } from "../business/service/reviewAlertService.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
@@ -119,6 +120,9 @@ export class Controller {
     if (event.queryStringParameters?.scope === "property-review-schedule") return this.manageReviewSchedule(event);
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
+      if (query.scope === "reservation-history") {
+        return this.moderationResponse(200, await this.service.getManagedReservationHistory(userId, user.username, query));
+      }
       if (query.scope === "moderation") {
         return this.moderationResponse(200, await this.service.getModerationQueue(userId, user.username, query));
       }
@@ -130,10 +134,11 @@ export class Controller {
       if (query.scope === "host-dashboard") {
         result = await this.service.getHostReviews(userId, query);
       } else if (query.reviewId !== undefined && query.view !== undefined) {
-        if (query.view !== "history" || Object.keys(query).some((key) => !["reviewId", "view"].includes(key))) {
+        if (query.view !== "history" || Object.keys(query).some((key) => !["reviewId", "view", "review_type"].includes(key))) {
           throw new BadRequestException("Unsupported review detail parameter.");
         }
-        result = await this.service.getGuestReviewDetail(userId, query.reviewId);
+        result = query.review_type === undefined ? await this.service.getGuestReviewDetail(userId, query.reviewId)
+          : await this.service.getGuestReviewDetail(userId, query.reviewId, query.review_type);
       } else if (query.scope === "guest-history") {
         result = await this.service.getGuestReviewHistory(userId, query);
       } else if (query.scope === "pending-approval" || query.scope === "approved") {
@@ -156,7 +161,7 @@ export class Controller {
       } else {
         result = await this.service.getReviews(userId, query.scope ?? "written");
       }
-      return this.jsonResponse(200, result);
+      return query.review_type === RESERVATION_REVIEW_TYPE ? this.moderationResponse(200, result) : this.jsonResponse(200, result);
     });
   }
 

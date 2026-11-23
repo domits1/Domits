@@ -772,31 +772,70 @@ export class ReviewService {
       category_ratings: review.categoryRatings || {},
       response: review.response ? { message: review.response.message, published_at: review.response.publishedAt } : null,
       can_edit: review.status === "DRAFT" && review.publication_status === "UNPUBLISHED"
-        && timestamp >= Number(review.created_at) && timestamp < deadline, edit_expires_at: deadline || null };
+        && timestamp >= Number(review.created_at) && timestamp < deadline, edit_expires_at: deadline || null,
+      ...(review.review_type === RESERVATION_REVIEW_TYPE ? this.reservationHistoryItem(review) : {}) };
+  }
+
+  reservationHistoryItem(review) {
+    const stay = review.reservation;
+    return { review_type: RESERVATION_REVIEW_TYPE, booking_id: review.booking_id,
+      reservation: stay ? { arrival_at: stay.arrivaldate, departure_at: stay.departuredate, status: stay.status } : null };
+  }
+
+  reviewHistoryType(value) {
+    if (value !== undefined && !["GUEST_TO_PROPERTY", RESERVATION_REVIEW_TYPE].includes(value)) {
+      throw new BadRequestException("Unsupported review history type.");
+    }
+    return value === undefined ? {} : { reviewType: value };
+  }
+
+  reviewHistoryOffset(offset) {
+    const value = offset ?? "0";
+    if (typeof value !== "string" || !/^(0|[1-9]\d*)$/.test(value) || Number(value) > 100000) {
+      throw new BadRequestException("Invalid review history offset.");
+    }
+    return Number(value);
+  }
+
+  reviewHistoryPage(rows, offset, toItem) {
+    return { reviews: rows.slice(0, 10).map(toItem), next_offset: rows.length > 10 ? offset + 10 : null };
+  }
+
+  async getManagedReservationHistory(callerUserId, username, query) {
+    this.assertCaller(callerUserId);
+    if (typeof username !== "string" || !username.trim()) {
+      throw new ForbiddenException("A verified property management identity is required.");
+    }
+    if (Object.keys(query).some((key) => !["scope", "propertyId", "offset", "review_type"].includes(key))
+      || (query.review_type !== undefined && query.review_type !== RESERVATION_REVIEW_TYPE)) {
+      throw new BadRequestException("Unsupported reservation history parameter.");
+    }
+    this.assertId(query.propertyId, "property ID");
+    const offset = this.reviewHistoryOffset(query.offset);
+    const now = this.now();
+    const rows = await this.repository.findManagedReservationHistory(username, query.propertyId.trim(), { offset, now });
+    return this.reviewHistoryPage(rows, offset, (review) => ({
+      ...this.guestHistoryItem(review, now), can_edit: false, edit_expires_at: null,
+    }));
   }
 
   async getGuestReviewHistory(callerUserId, query = {}) {
     if (typeof callerUserId !== "string" || !callerUserId.trim()) throw new UnauthorizedException("A verified guest identity is required.");
-    if (Object.keys(query).some((key) => !["scope", "offset"].includes(key))) {
+    if (Object.keys(query).some((key) => !["scope", "offset", "review_type"].includes(key))) {
       throw new BadRequestException("Unsupported review history parameter.");
     }
-    const offset = query.offset ?? "0";
-    if (typeof offset !== "string" || !/^(0|[1-9]\d*)$/.test(offset)
-      || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
-      throw new BadRequestException("Invalid review history offset.");
-    }
-    const rows = await this.repository.findGuestReviewHistory(callerUserId, { offset: Number(offset) });
+    const offset = this.reviewHistoryOffset(query.offset);
+    const rows = await this.repository.findGuestReviewHistory(callerUserId, { offset, ...this.reviewHistoryType(query.review_type) });
     const timestamp = this.now();
-    return { reviews: rows.slice(0, 10).map((review) => this.guestHistoryItem(review, timestamp)),
-      next_offset: rows.length > 10 ? Number(offset) + 10 : null };
+    return this.reviewHistoryPage(rows, offset, (review) => this.guestHistoryItem(review, timestamp));
   }
 
-  async getGuestReviewDetail(callerUserId, reviewId) {
+  async getGuestReviewDetail(callerUserId, reviewId, reviewType) {
     if (typeof callerUserId !== "string" || !callerUserId.trim()) throw new UnauthorizedException("A verified guest identity is required.");
     if (typeof reviewId !== "string" || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(reviewId)) {
       throw new BadRequestException("A valid review ID is required.");
     }
-    const reviews = await this.repository.findGuestReviewHistory(callerUserId, { id: reviewId });
+    const reviews = await this.repository.findGuestReviewHistory(callerUserId, { id: reviewId, ...this.reviewHistoryType(reviewType) });
     if (!reviews.length) throw new NotFoundException("Review not found.");
     return this.guestHistoryItem(reviews[0], this.now());
   }

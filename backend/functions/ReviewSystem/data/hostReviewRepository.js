@@ -14,14 +14,18 @@ import { assertHostResponseAccess } from "../business/model/reviewRules.js";
 import { attachPublicDetails, eligibleReviewQuery, nextTimestamp, REVIEW_FIELDS, runTransaction } from "./reviewRepositoryShared.js";
 
 export class HostReviewRepository {
-  hostResponseQuery(database, username) {
-    return eligibleReviewQuery(database)
+  managedPublishedReviewQuery(database, username, propertyId, reviewType) {
+    return eligibleReviewQuery(database, propertyId, reviewType)
       .innerJoin(Property, "property", "property.id = review.property_id")
       .leftJoin(Team_Member, "member", "member.host_id = property.hostid AND member.member_user_id = :username AND member.status = :active AND member.role = :role",
         { username, active: "active", role: "Property Operations Manager" })
       .andWhere("(property.hostid = :username OR member.id IS NOT NULL)", { username })
       .andWhere("property.status = :propertyStatus", { propertyStatus: "ACTIVE" })
       .andWhere("TRIM(review.public_review) <> ''");
+  }
+
+  hostResponseQuery(database, username) {
+    return this.managedPublishedReviewQuery(database, username);
   }
 
   async findResponseEligibleReviews(username) {

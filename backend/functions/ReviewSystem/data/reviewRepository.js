@@ -18,7 +18,7 @@ import { Team_Member } from "database/models/Team_Member";
 import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
-import { assertEligibleBooking, GUEST_REVIEW_TYPES } from "../business/model/reviewRules.js";
+import { assertEligibleBooking, GUEST_REVIEW_TYPES, RESERVATION_REVIEW_TYPE } from "../business/model/reviewRules.js";
 import { HostReviewRepository } from "./hostReviewRepository.js";
 import { PublicReviewRepository } from "./publicReviewRepository.js";
 import { nextTimestamp, REVIEW_FIELDS, runTransaction } from "./reviewRepositoryShared.js";
@@ -52,17 +52,42 @@ export class ReviewRepository {
     return this.#publicReviews.getHostReviewPage(hostId, options);
   }
 
-  async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
+  async findGuestReviewHistory(guestId, { offset = 0, id, reviewType = "GUEST_TO_PROPERTY" } = {}) {
     const database = await Database.getInstance();
     const query = database.getRepository(Review).createQueryBuilder("review")
       .select(REVIEW_FIELDS.map((field) => `review.${field}`))
       .where("review.reviewer_user_id = :guestId", { guestId })
       .andWhere("review.status <> :deletedStatus", { deletedStatus: "DELETED" })
-      .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
+      .andWhere("review.review_type = :reviewType", { reviewType });
     if (id !== undefined) query.andWhere("review.id = :id", { id });
-    // A guest's own history includes rejected entries and properties no longer publicly active.
+    // Owners can see rejected reviews and retain history if booking context becomes unavailable.
+    if (reviewType === RESERVATION_REVIEW_TYPE) this.joinReservationContext(query, "leftJoinAndMapOne");
+    return this.loadReviewHistory(database, query, offset, id === undefined ? 11 : 1);
+  }
+
+  async findManagedReservationHistory(username, propertyId, { offset, now }) {
+    const database = await Database.getInstance();
+    const query = this.#hostReviews.managedPublishedReviewQuery(database, username, propertyId, RESERVATION_REVIEW_TYPE)
+      // Multiple active team memberships must still yield one result per review.
+      .distinct(true)
+      .andWhere("review.verification_status = :verified", { verified: "VERIFIED_STAY" })
+      .andWhere("property.hostid = review.host_id");
+    this.joinReservationContext(query, "innerJoinAndMapOne");
+    return this.loadReviewHistory(database, applyCompletedStayConditions(query, now), offset, 11);
+  }
+
+  joinReservationContext(query, join) {
+    const fields = [...REVIEW_FIELDS.map((field) => `review.${field}`),
+      "stay.id", "stay.arrivaldate", "stay.departuredate", "stay.status"];
+    query[join]("review.reservation", Booking, "stay",
+      "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id " +
+      "AND stay.property_id = review.property_id AND stay.hostid = review.host_id " +
+      "AND stay.guestid <> stay.hostid").select(fields);
+  }
+
+  async loadReviewHistory(database, query, offset, limit) {
     const reviews = await query.orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
-      .offset(offset).limit(id === undefined ? 11 : 1).getMany();
+      .offset(offset).limit(limit).getMany();
     if (!reviews.length) return [];
     const properties = await database.getRepository(Property).find({
       where: { id: In([...new Set(reviews.map((review) => review.property_id))]) }, select: ["id", "title"],
