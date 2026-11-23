@@ -10,7 +10,9 @@ import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Request } from "database/models/Review_Request";
+import { Review_Flag } from "database/models/Review_Flag";
 import { Team_Member } from "database/models/Team_Member";
+import { NotFoundException } from "../util/exception/notFoundException.js";
 import { ConflictException } from "../util/exception/conflictException.js";
 import { ForbiddenException } from "../util/exception/forbiddenException.js";
 import { assertEligibleBooking } from "../business/model/reviewRules.js";
@@ -86,8 +88,8 @@ export class ReviewRepository {
     return this.#hostReviews.softDeleteResponse(changes);
   }
 
-  async getPublicReviewPage(propertyId, offset) {
-    return this.#publicReviews.getPublicReviewPage(propertyId, offset);
+  async getPublicReviewPage(propertyId, offset, filters) {
+    return this.#publicReviews.getPublicReviewPage(propertyId, offset, filters);
   }
 
   async findReviews(where) {
@@ -271,7 +273,7 @@ export class ReviewRepository {
     if (!reviews.length) return reviews;
 
     const propertyIds = [...new Set(reviews.map((review) => review.property_id))];
-    const [properties, locations, imageKeys, bookings] = await Promise.all([
+    const [properties, locations, imageKeys, bookings, pendingFlags] = await Promise.all([
       database.getRepository(Property).find({ where: { id: In(propertyIds) }, select: ["id", "title"] }),
       database.getRepository(Property_Location).find({
         where: { property_id: In(propertyIds) }, select: ["property_id", "city", "country"] }),
@@ -279,7 +281,12 @@ export class ReviewRepository {
       database.getRepository(Booking).find({
         where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
         select: ["id", "guestid", "guestname"] }),
+      database.getRepository(Review_Flag).find({
+        where: { review_id: In(reviews.map((review) => review.id)), status: "PENDING" },
+        select: ["review_id"],
+      }),
     ]);
+    const flaggedIds = new Set(pendingFlags.map((flag) => flag.review_id));
     const titles = new Map(properties.map((property) => [property.id, property.title]));
     const locationsById = new Map(locations.map((location) => [location.property_id, location]));
     const bookingsById = new Map(bookings.map((booking) => [booking.id, booking]));
@@ -289,7 +296,7 @@ export class ReviewRepository {
       const booking = bookingsById.get(review.booking_id);
       const bookedByReviewer = Boolean(booking) && booking.guestid === review.reviewer_user_id;
       const guestName = bookedByReviewer ? booking.guestname?.trim() || null : null;
-      return { ...review, property_title: titles.get(review.property_id) ?? null,
+      return { ...review, has_pending_flag: flaggedIds.has(review.id), property_title: titles.get(review.property_id) ?? null,
         property_city: location?.city ?? null, property_country: location?.country ?? null,
         property_image_key: imageKeys.get(review.property_id) ?? null, guest_name: guestName };
     });
@@ -481,6 +488,63 @@ export class ReviewRepository {
     );
   }
 
+  async createReviewFlag(flag) {
+    try {
+      return await runTransaction(async (manager) => {
+        const reviews = manager.getRepository(Review);
+        const review = await reviews.findOneBy({ id: flag.review_id });
+        if (!review || ["DELETED", "REJECTED"].includes(review.status)) {
+          throw new NotFoundException("Review not found.");
+        }
+        if (!["PENDING_APPROVAL", "APPROVED", "PUBLISHED"].includes(review.status)) {
+          throw new ConflictException("Only submitted reviews can be flagged.");
+        }
+        const result = await reviews.update({ id: review.id, updated_at: review.updated_at },
+          { updated_at: nextTimestamp(flag.created_at, review.updated_at) });
+        if (result.affected !== 1) throw new ConflictException("Review changed. Reload before continuing.");
+        await manager.getRepository(Review_Flag).insert(flag);
+        return flag;
+      });
+    } catch (error) {
+      const cause = error.driverError || error;
+      if (cause.code === "23505" && String(cause.constraint || cause.message).includes("review_flag_pending_unique")) {
+        throw new ConflictException("This review already has a pending flag.");
+      }
+      throw error;
+    }
+  }
+
+  async findReviewFlags({ status, limit, offset }) {
+    const database = await Database.getInstance();
+    const rows = await database.getRepository(Review_Flag).createQueryBuilder("flag")
+      .innerJoin(Review, "review", "review.id = flag.review_id")
+      .select("flag.*").addSelect(REVIEW_FIELDS.filter((field) => field !== "host_id").map((field) => `review.${field} AS review_${field}`)).addSelect("review.title", "title").addSelect("review.public_review", "public_review")
+      .addSelect("review.overall_rating", "overall_rating").where("flag.status = :status", { status })
+      .orderBy("flag.created_at", "ASC").addOrderBy("flag.id", "ASC").limit(limit).offset(offset).getRawMany();
+    const reviews = await this.addModerationDetails(database, rows.map((row) =>
+      Object.fromEntries(REVIEW_FIELDS.filter((field) => field !== "host_id").map((field) => [field, row[`review_${field}`]]))));
+    return rows.map((row, index) => {
+      const flag = Object.fromEntries(Object.entries(row).filter(([key]) => !key.startsWith("review_") || key === "review_id"));
+      const review = reviews[index];
+      return { ...flag, review: review ? { ...review,
+        created_at: Number(review.created_at), updated_at: Number(review.updated_at) } : undefined,
+        overall_rating: Number(row.overall_rating), created_at: Number(row.created_at), updated_at: Number(row.updated_at) };
+    });
+  }
+
+  async resolveReviewFlag(id, userId, now) {
+    return runTransaction(async (manager) => {
+      const flags = manager.getRepository(Review_Flag);
+      const flag = await flags.findOneBy({ id });
+      if (!flag) throw new NotFoundException("Review flag not found.");
+      if (flag.status === "RESOLVED") return flag;
+      const updates = { status: "RESOLVED", resolved_by: userId, updated_at: nextTimestamp(now, flag.updated_at) };
+      const result = await flags.update({ id, status: "PENDING" }, updates);
+      if (result.affected !== 1) throw new ConflictException("Review flag changed. Reload before continuing.");
+      return { ...flag, ...updates };
+    });
+  }
+
   // Publication
 
   // Publish a draft review after the eligibility checks pass.
@@ -514,6 +578,11 @@ export class ReviewRepository {
         updatedAt,
         authorize
       );
+      if ((to === "APPROVED" || to === "PUBLISHED") &&
+          await manager.getRepository(Review_Flag).findOneBy({ review_id: reviewId, status: "PENDING" })) {
+        const action = to === "APPROVED" ? "approving" : "publishing";
+        throw new ConflictException(`Resolve the pending review flag before ${action} this review.`);
+      }
 
       const timestamp = nextTimestamp(
         updatedAt,

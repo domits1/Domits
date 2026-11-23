@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { Auth } from "aws-amplify";
 import Pages from "./Pages2";
 import { getChannexAdminAccess } from "./hostintegrations/channexApi";
@@ -61,8 +61,13 @@ describe("Pages2 owners navigation", () => {
 
     renderPages();
 
+<<<<<<< HEAD
     const ownersLink = await screen.findByRole("link", { name: "Owner Management" });
     expect(ownersLink.getAttribute("href")).toBe("/owners");
+=======
+    const ownersLink = await screen.findByRole("link", { name: "Owners" });
+    expect(ownersLink.getAttribute("href")).toBe("/hostdashboard/owners");
+>>>>>>> origin/acceptance
   });
 
   test("hides the Owner Management link from a team member who acts for another host", async () => {
@@ -183,7 +188,25 @@ describe("Pages2 property review navigation", () => {
     renderPages();
 
     const link = await screen.findByRole("link", { name: /property review/i });
-    expect(link.getAttribute("href")).toBe("/admin/property-review");
+    expect(link.getAttribute("href")).toBe("/hostdashboard/admin/property-review");
+  });
+
+  test("shows the Review approval nav item to internal admins", async () => {
+    checkPropertyReviewAccess.mockResolvedValue("allowed");
+
+    renderPages();
+
+    const link = await screen.findByRole("link", { name: /review approval/i });
+    expect(link.getAttribute("href")).toBe("/hostdashboard/admin/review-approval");
+  });
+
+  test("hides the Review approval nav item when the internal admin check denies the user", async () => {
+    checkPropertyReviewAccess.mockResolvedValue("denied");
+
+    renderPages();
+
+    await waitFor(() => expect(checkPropertyReviewAccess).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText("Review approval")).toBeNull();
   });
 
   test("hides the Property review nav item when the review access check denies the user", async () => {
@@ -253,5 +276,26 @@ describe("Pages2 property review navigation", () => {
 
     expect(await screen.findByText("Channex diagnostics")).toBeTruthy();
     expect(await screen.findByText("Property review")).toBeTruthy();
+  });
+});
+
+describe("Pages2 links inside the /hostdashboard/* route", () => {
+  test("point at the dashboard sections, not below the current page", async () => {
+    getChannexAdminAccess.mockResolvedValue({ allowed: false });
+    checkPropertyReviewAccess.mockResolvedValue("denied");
+    Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
+
+    render(
+      <MemoryRouter initialEntries={["/hostdashboard/reservations"]}>
+        <Routes>
+          <Route path="/hostdashboard/*" element={<Pages />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect((await screen.findByRole("link", { name: /Messages/ })).getAttribute("href")).toBe("/hostdashboard/messages");
+    expect(screen.getByRole("link", { name: /^Dashboard/ }).getAttribute("href")).toBe("/hostdashboard");
+    expect(screen.getByRole("link", { name: /Reservations/ }).getAttribute("href")).toBe("/hostdashboard/reservations");
+    expect(screen.getByRole("link", { name: /List your property/ }).getAttribute("href")).toBe("/hostonboarding");
   });
 });

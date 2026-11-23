@@ -32,15 +32,15 @@ const contentByLanguage = { en, nl, de, es };
 const STEP_KEYS = [
   "company",
   "team",
-  "security",
   "owners",
-  "messaging",
   "listProperties",
   "website",
   "channels",
   "payments",
   "pricing",
   "tasks",
+  "messaging",
+  "security",
   "marketplace",
 ];
 const REQUIRED_STEP_KEYS = new Set(["company", "team", "listProperties", "website", "payments"]);

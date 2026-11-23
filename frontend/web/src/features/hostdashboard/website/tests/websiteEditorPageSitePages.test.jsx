@@ -281,7 +281,7 @@ describe("website editor for an Elite host", () => {
     switchPage("Gallery");
     fireEvent.click(screen.getByRole("menuitem", { name: "Publish live site", hidden: true }));
 
-    await waitFor(() => expect(publishWebsiteSite).toHaveBeenCalledWith(PROPERTY_ID));
+    await waitFor(() => expect(publishWebsiteSite).toHaveBeenCalledWith(PROPERTY_ID, expect.any(Object)));
     const payload = upsertWebsiteDraft.mock.calls[0][0];
     expect(payload.publishedContentOverrides).toEqual(payload.contentOverrides);
     expect(payload.contentOverrides.sitePages.gallery).toEqual({ enabled: true, navLabel: "Gallery" });
