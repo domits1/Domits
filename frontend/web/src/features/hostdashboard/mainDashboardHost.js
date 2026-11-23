@@ -157,7 +157,7 @@ function MainDashboardHost({ reviewAlerts = [], reviewAlertsLoading = false, rev
           <Route path={PROPERTY_REVIEW_ADMIN_ROUTE} element={<PropertyReviewPage />} />
           <Route path={`${PROPERTY_REVIEW_ADMIN_ROUTE}/:propertyId`} element={<PropertyReviewDetailPage />} />
           <Route path="revenues" element={<HostReports />} />
-          <Route path="reviews" element={<HostReviews />} />
+          <Route path="reviews" element={<HostReviews key={params.get("reviewView")} initialView={params.get("reviewView") === "reviews" ? "reviews" : "host"} />} />
           <Route path="review-notifications" element={<ReviewNotifications alerts={reviewAlerts}
             loading={reviewAlertsLoading} error={reviewAlertsError} />} />
 

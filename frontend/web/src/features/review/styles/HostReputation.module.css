@@ -1,0 +1,51 @@
+.reputation { color: #0c1234; min-width: 0; }
+.summary { display: grid; grid-template-columns: 1.45fr repeat(3, minmax(0, 1fr)); gap: 22px; margin: 26px 0 24px; }
+.metric { display: flex; align-items: flex-start; gap: 24px; position: relative; min-width: 0; min-height: 135px; padding: 22px 28px; border: 1px solid #e3e9f0; border-radius: 16px; background: white; box-shadow: 0 2px 5px #193d1e08; }
+.metric h3 { margin: 0 0 14px; font-size: 16px; }
+.metric strong { display: block; margin-bottom: 8px; font-size: 30px; }
+.metric p { margin: 8px 0 0; font-size: 13px; }
+.icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: #00a414; background: #effaf0; border-radius: 50%; flex-shrink: 0; }
+.metric > .icon { width: 62px; height: 62px; }
+.stars { display: inline-flex; color: #ffb800; }
+.listHeading, .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.listHeading h3 { font-size: 22px; }
+.listHeading { border-top: 1px solid #f0f2f6; padding-top: 8px; margin-bottom: 7px; }
+.listHeading select { min-width: 202px; padding: 12px 16px; border: 1px solid #dce4ef; border-radius: 8px; background: white; color: #0c1234; font: inherit; font-size: 14px; font-weight: 600; }
+.tableHeader, .reputation .row { display: grid; grid-template-columns: 250px 145px 210px minmax(180px, 1fr) 115px 110px; align-items: center; gap: 16px; }
+.reputation .row { padding: 12px 18px; border: 0; border-top: 1px solid #edf0f6; min-height: 82px; border-radius: 0; background: white; }
+.guest { display: grid; grid-template-columns: 60px 1fr; align-items: center; gap: 5px 18px; }
+.guest .icon { grid-row: span 2; }
+.guest strong { font-size: 14px; }
+.verified { display: inline-flex; align-items: center; justify-self: start; gap: 4px; padding: 5px 10px; border-radius: 18px; background: #e6fae9; color: #008c15; font-size: 12px; white-space: nowrap; }
+.reviewRating { display: flex; align-items: center; gap: 20px; }
+.content { min-width: 0; overflow-wrap: anywhere; }
+.content h4 { margin: 0 0 2px; font-size: 14px; }
+.content p { margin: 0; line-height: 1.6; white-space: pre-wrap; font-size: 13px; color: #172753; }
+.row time { font-size: 13px; }
+.pagination { margin-top: 20px; }
+.pagination nav { display: flex; align-items: center; gap: 12px; }
+.reputation button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; color: #111733; cursor: pointer; font: inherit; }
+.reputation button:disabled { opacity: .5; cursor: default; }
+.reputation button:focus-visible, .reputation h3:focus-visible { outline: 2px solid #00a414; outline-offset: 3px; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+.overall { display: block; padding-right: 130px; }
+.overall h3 { display: flex; align-items: center; gap: 7px; }
+.overallScore { display: flex; align-items: center; gap: 24px; }
+.overallScore > strong { font-size: 46px; margin: 0; }
+.overallScore p { margin: 7px 0 0; white-space: nowrap; font-size: 14px; color: #172753; }
+.hostIcon { position: absolute; right: 28px; top: 24px; display: grid; place-items: center; width: 84px; height: 84px; color: #00a414; background: #effaf0; border-radius: 50%; }
+.hostIcon::before { content: ""; position: absolute; left: -25px; height: 80%; border-left: 1px solid #edf0f4; }
+.table { border: 1px solid #e5eaf2; border-radius: 12px; overflow-x: auto; background: #fff; }
+.tableHeader { min-height: 38px; padding: 0 18px; background: #f1faf3; font-size: 14px; font-weight: 750; }
+.tableHeader > :first-child { padding-left: 61px; }
+.avatar { grid-row: span 2; display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; font-size: 20px; font-weight: 750; color: #36227a; background: #f4efff; }
+.avatar[data-tone="1"] { color: #16356c; background: #eaf4ff; }
+.avatar[data-tone="2"] { color: #715c1b; background: #fff6e2; }
+.stay { font-size: 13px; color: #253b77; }
+.pagination button { min-width: 44px; }
+.pagination button[aria-current="page"] { border-color: #00ab13; color: #009d12; background: #f8fff7; }
+.reputation .reply { font-size: 13px; font-weight: 650; box-shadow: 0 1px 3px #1522490c; }
+@media (max-width: 1600px) { .tableHeader, .reputation .row { grid-template-columns: 210px 100px 130px minmax(170px, 1fr) 95px 90px; gap: 12px; } .reviewRating { flex-wrap: wrap; gap: 6px; } .metric { padding: 20px; gap: 15px; } .overall { padding-right: 115px; } .hostIcon { right: 16px; } .overallScore { gap: 14px; } }
+@media (max-width: 1450px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1200px) { .tableHeader, .reputation .row { min-width: 950px; } }
+@media (max-width: 600px) { .summary { grid-template-columns: minmax(0, 1fr); gap: 12px; } .metric { min-height: 120px; } .listHeading select { min-width: 145px; } .pagination nav { flex-wrap: wrap; gap: 7px; } }

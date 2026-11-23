@@ -36,6 +36,16 @@ const renderPages = () =>
     </MemoryRouter>
   );
 
+test("keeps Reviews as a single sidebar link without review sub-tabs", async () => {
+  getChannexAdminAccess.mockResolvedValue({ allowed: false });
+  checkPropertyReviewAccess.mockResolvedValue("denied");
+  render(<MemoryRouter initialEntries={["/hostdashboard/reviews?reviewView=host"]}><Pages /></MemoryRouter>);
+  expect(await screen.findByRole("link", { name: "Reviews", exact: true })).toHaveAttribute("href", "/hostdashboard/reviews");
+  expect(screen.queryByRole("link", { name: "Host Reviews" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Property Reviews" })).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Host Dashboard" })).toBeInTheDocument();
+});
+
 describe("Pages2 missed revenue navigation", () => {
   test("does not show a missed revenue nav link while the tab is hidden", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });

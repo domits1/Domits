@@ -127,7 +127,7 @@ function Pages({ onNavigate }) {
 
   useEffect(() => {
     setOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -170,7 +170,7 @@ function Pages({ onNavigate }) {
 
       <nav className={`sidebar ${open ? "open" : ""}`} aria-label="Host navigation" id="host-menu">
         <div className="menu-content">
-          <h2 className="sidebar-title">Menu</h2>
+          <h2 className="sidebar-title">{location.pathname.endsWith("/reviews") ? "Host Dashboard" : "Menu"}</h2>
           <ul className="menu-list">
             {visibleNav.map((item) => (
               <li key={item.key}>

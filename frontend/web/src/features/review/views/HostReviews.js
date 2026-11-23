@@ -5,16 +5,18 @@ import { requestReview } from "../services/reviewAPI";
 import ReviewPerformance from "./ReviewPerformance";
 import DecliningPropertyRatings from "./DecliningPropertyRatings";
 import ReceivedReviews from "../components/ReceivedReviews";
+import HostReputation from "../components/HostReputation";
 import styles from "../styles/HostReviews.module.css";
 
 const REVIEW_VIEWS = [
-  { key: "reviews", label: "Review" },
+  { key: "host", label: "Host Reviews" },
+  { key: "reviews", label: "Property Reviews" },
   { key: "performance", label: "Review performance over time" },
   { key: "trends", label: "Properties with declining ratings" },
 ];
 
-export default function HostReviews() {
-  const [activeView, setActiveView] = useState("reviews");
+export default function HostReviews({ initialView = "host" }) {
+  const [activeView, setActiveView] = useState(initialView);
   const [receivedReviews, setReceivedReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
@@ -87,7 +89,7 @@ export default function HostReviews() {
         if (!response.ok) throw new Error("Could not load your reviews. Please try again.");
         const data = await response.json();
         if (!Array.isArray(data)) throw new Error("Could not load your reviews. Please try again.");
-        if (active) setReceivedReviews(data);
+        if (active) setReceivedReviews(data.filter(review => !review.review_type || review.review_type === "GUEST_TO_PROPERTY"));
       })
       .catch(() => {
         if (active) setError("Could not load your reviews. Please try again.");
@@ -103,22 +105,27 @@ export default function HostReviews() {
   return (
     <main className={`page-body ${styles.page}`}>
       <header className={styles.pageHeading}>
-        <h2>Reviews</h2>
-        <p>Manage guest feedback, reply to reviews and track your performance.</p>
+        <h2>{activeView === "host" ? "Host Reviews" : "Reviews"}</h2>
+        <p>{activeView === "host" ? "Your host reputation and guest feedback about your service, communication, and hospitality."
+          : "Manage guest feedback, reply to reviews and track your property performance."}</p>
       </header>
       <nav className={styles.viewMenu} aria-label="Review views">
-        {REVIEW_VIEWS.map(({ key, label }) => (
+        {REVIEW_VIEWS.slice(0, 2).map(({ key, label }) => (
           <button
             key={key}
             type="button"
             aria-pressed={activeView === key}
             aria-controls="review-view"
-            onClick={() => setActiveView(key)}>
+            onClick={() => { setActiveView(key); navigate(`/hostdashboard/reviews?reviewView=${key}`); }}>
             {label}
           </button>
         ))}
       </nav>
+      {activeView !== "host" && <nav className={styles.propertyMenu} aria-label="Property review tools">
+        {REVIEW_VIEWS.slice(2).map(({ key, label }) => <button type="button" key={key} aria-pressed={activeView === key} onClick={() => setActiveView(key)}>{label}</button>)}
+      </nav>}
       <div id="review-view" role="region" aria-label={REVIEW_VIEWS.find(({ key }) => key === activeView).label}>
+        {activeView === "host" && userId && <HostReputation key={userId} userId={userId} />}
         {activeView === "performance" && userId && <ReviewPerformance userId={userId} />}
         {activeView === "trends" && userId && <DecliningPropertyRatings userId={userId} />}
         {activeView !== "reviews" && !userId && <p role="status">Loading your account...</p>}

@@ -26,6 +26,10 @@ const dateLabel = (review) =>
       })
     : "Date unavailable";
 
+export function ReviewCard({ children, className = "", ...props }) {
+  return <article {...props} className={`${styles.reviewCard} ${className}`}>{children}</article>;
+}
+
 function Stars({ value }) {
   return <RatingStars value={value} className={styles.stars} />;
 }
@@ -243,11 +247,11 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
                 .toUpperCase();
               const value = rating(review);
               return (
-                <article
+                <ReviewCard
                   key={review.id}
                   data-review-id={review.id}
                   tabIndex={-1}
-                  className={`${styles.reviewCard} ${selected?.id === review.id ? styles.selected : ""}`}>
+                  className={selected?.id === review.id ? styles.selected : ""}>
                   <PropertyImage property={property} />
                   <div className={styles.cardContent}>
                     <h4>
@@ -289,7 +293,7 @@ export default function ReceivedReviews({ userId, reviews, loading, error, onRet
                       )}
                     </div>
                   </div>
-                </article>
+                </ReviewCard>
               );
             })}
         </section>

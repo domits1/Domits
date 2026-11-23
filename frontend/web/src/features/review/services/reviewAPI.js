@@ -184,6 +184,25 @@ const parseResponse = async (response) => {
   }
 };
 
+export const getHostReviewDashboard = async (hostId, offset = 0) => {
+  const response = await requestReview("GET", { scope: "host-dashboard", limit: "10", offset: String(offset) });
+  const data = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, data, "Could not load your host reviews. Please try again.");
+  const score = value => value === null || (Number.isFinite(value) && value >= 1 && value <= 5);
+  if (!data || data.host_id !== hostId || !score(data.overall_score)
+    || !Number.isSafeInteger(data.review_count) || data.review_count < 0
+    || !["communication", "responsiveness", "hospitality"].every(key => score(data.category_ratings?.[key]))
+    || !Array.isArray(data.reviews) || data.reviews.length > 10
+    || data.reviews.some(review => !review || typeof review.id !== "string" || !review.id
+      || !Number.isFinite(review.overall_rating) || !score(review.overall_rating)
+      || typeof review.title !== "string" || typeof review.public_review !== "string"
+      || !Number.isFinite(review.created_at) || !Number.isFinite(new Date(review.created_at).getTime()))
+    || !(data.next_offset === null || (data.next_offset === offset + 10 && data.next_offset <= 100000))) {
+    throw new Error("Could not load your host reviews. The server returned an unexpected response.");
+  }
+  return data;
+};
+
 const readEditResponse = async (response) => {
   const payload = await parseResponse(response);
 

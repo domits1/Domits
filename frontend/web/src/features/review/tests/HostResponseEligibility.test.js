@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 test("keeps the complete received list and shows forms only for server-authorized IDs", async () => {
-  render(<HostReviews />);
+  render(<HostReviews initialView="reviews" />);
   for (const review of received) expect(await screen.findByRole("heading", { name: review.title })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: received[0].title, exact: true }));
   expect(await screen.findByRole("button", { name: "Respond to eligible: Existing reply" })).toBeInTheDocument();
@@ -55,7 +55,7 @@ test("keeps the complete received list and shows forms only for server-authorize
 });
 
 test("keeps a published reply after switching reviews and visiting Performance", async () => {
-  render(<HostReviews />);
+  render(<HostReviews initialView="reviews" />);
   const review = await screen.findByRole("button", { name: received[0].title, exact: true });
   fireEvent.click(review);
   fireEvent.click(await screen.findByRole("button", { name: "Respond to eligible: Existing reply" }));
@@ -67,7 +67,7 @@ test("keeps a published reply after switching reviews and visiting Performance",
   fireEvent.click(screen.getByRole("button", { name: "Review performance over time" }));
   expect(screen.queryByRole("button", { name: "Respond to eligible: Updated reply" })).not.toBeInTheDocument();
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Review", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Property Reviews", exact: true }));
   });
   fireEvent.click(screen.getByRole("button", { name: received[0].title, exact: true }));
   expect(screen.getByRole("button", { name: "Respond to eligible: Updated reply" })).toBeInTheDocument();
@@ -88,7 +88,7 @@ test.each(["network", "malformed", "rejected"])("keeps received reviews on %s el
     }
     return response([]);
   });
-  render(<HostReviews />);
+  render(<HostReviews initialView="reviews" />);
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not check which reviews");
   expect(await screen.findByRole("heading", { name: received[3].title })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /^Respond to/ })).not.toBeInTheDocument();
@@ -106,7 +106,7 @@ test("shows received reviews without waiting for the eligibility request", async
     if (scope === "respondable") return new Promise((resolve) => { finish = resolve; });
     return response([]);
   });
-  render(<HostReviews />);
+  render(<HostReviews initialView="reviews" />);
   await screen.findByRole("heading", { name: received[0].title });
   expect(screen.queryByRole("button", { name: /^Respond to/ })).not.toBeInTheDocument();
   await waitFor(() => expect(finish).toBeDefined());

@@ -21,10 +21,10 @@ jest.mock("../views/DecliningPropertyRatings", () => ({ __esModule: true,
 }));
 
 test("switches between the three review views and shows only the selected content", async () => {
-  render(<MemoryRouter><HostReviews /></MemoryRouter>);
+  render(<MemoryRouter><HostReviews initialView="reviews" /></MemoryRouter>);
   await screen.findByText("Received reviews (0)");
   expect(screen.queryByRole("button", { name: "My reviews" })).not.toBeInTheDocument();
-  const review = screen.getByRole("button", { name: "Review", exact: true });
+  const review = screen.getByRole("button", { name: "Property Reviews", exact: true });
   expect(review).toHaveAttribute("aria-pressed", "true");
   expect(screen.queryByText("Performance panel")).not.toBeInTheDocument();
   expect(screen.queryByText("Trends panel")).not.toBeInTheDocument();
