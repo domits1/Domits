@@ -2,15 +2,22 @@ import {
   getChannexStatus as fetchRealChannexStatus,
   getLatestChannexSyncEvidence,
   getLinkedChannexRoomTypes,
+  listChannexSyncEvidence,
 } from "../../hostintegrations/channexApi";
 import { getAccessToken } from "../../../../services/getAccessToken";
 import { fetchListingsFromHostDashboard } from "../../../../services/hostPropertyService";
-import { getChannexStatus, getLatestSyncEvidence, getMappedProperties } from "./channexDistributionService";
+import {
+  getChannexStatus,
+  getLatestSyncEvidence,
+  getMappedProperties,
+  getSyncHistory,
+} from "./channexDistributionService";
 
 jest.mock("../../hostintegrations/channexApi", () => ({
   getChannexStatus: jest.fn(),
   getLatestChannexSyncEvidence: jest.fn(),
   getLinkedChannexRoomTypes: jest.fn(),
+  listChannexSyncEvidence: jest.fn(),
 }));
 jest.mock("../../../../services/getAccessToken", () => ({ getAccessToken: jest.fn() }));
 jest.mock("../../../../services/hostPropertyService", () => ({ fetchListingsFromHostDashboard: jest.fn() }));
@@ -152,5 +159,38 @@ describe("channexDistributionService getMappedProperties", () => {
 
     await expect(getMappedProperties()).rejects.toBe(conflict);
     expect(fetchListingsFromHostDashboard).not.toHaveBeenCalled();
+  });
+});
+
+describe("channexDistributionService getSyncHistory", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("asks for the last 10 syncs of the given property only, without a userId, and returns the answer", async () => {
+    const response = { channel: "CHANNEX", items: [] };
+    listChannexSyncEvidence.mockResolvedValue(response);
+
+    const result = await getSyncHistory({ domitsPropertyId: "property-1" });
+
+    expect(listChannexSyncEvidence).toHaveBeenCalledTimes(1);
+    expect(listChannexSyncEvidence).toHaveBeenCalledWith({ domitsPropertyId: "property-1", limit: 10 });
+    expect(result).toBe(response);
+  });
+
+  test.each([[undefined], [""], [null]])(
+    "refuses %p as the property and makes no request, because the endpoint would answer the whole account",
+    async (domitsPropertyId) => {
+      await expect(getSyncHistory({ domitsPropertyId })).rejects.toThrow("needs a property id");
+      await expect(getSyncHistory()).rejects.toThrow("needs a property id");
+      expect(listChannexSyncEvidence).not.toHaveBeenCalled();
+    }
+  );
+
+  test("propagates a thrown error, including its status and body, unchanged", async () => {
+    const error = Object.assign(new Error("not found"), { status: 404, responseBody: { errorCode: "CHANNEX_NOT_FOUND" } });
+    listChannexSyncEvidence.mockRejectedValue(error);
+
+    await expect(getSyncHistory({ domitsPropertyId: "property-1" })).rejects.toBe(error);
   });
 });
