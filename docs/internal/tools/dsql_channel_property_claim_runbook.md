@@ -14,6 +14,13 @@ Connect as in [dsql_booking_columns_runbook.md](./dsql_booking_columns_runbook.m
 - The older of two April test mappings of "test house" (`5f3fc6b0-…`, 16 Apr, disconnected account "Channex Test", inactive listing) becomes `ARCHIVED`. The 23 Apr row (`cfc7f383-…`) stays `ACTIVE`. Nothing is deleted: the room types, rate plans, booking revisions and sync evidence of that listing stay.
 - A partial unique index: one in-use mapping per account and listing, `WHERE status IN ('PROVISIONING', 'ACTIVE', 'active')`. The lowercase value is a legacy row (one `active` row on 20 Nov). The list must equal `IN_USE_STATUSES` in `integrationPropertyRepository.js`; `test/ORM/channelIntegrationPropertyClaim.test.js` fails the build when they differ.
 
+## Deploy order
+
+1. Merge and deploy the pull request that adds this migration first. It brings the refuse rule in `integrationPropertyRepository.upsert` (a second in-use mapping gets 409) and the nullable entity column. A nullable entity on a column that is still `NOT NULL` changes nothing.
+2. Only then run the blocks below.
+
+The other order leaves a window in which the old `upsert`, without the refuse rule, can add a second in-use row: before the index build that row makes the build fail (`Found duplicate key`, an `INVALID` index), after it the save fails with a 500 instead of a 409.
+
 ## Blocks in the `.sql` file, in order
 
 1. Pre-flight: account and listing pairs with more than one in-use row. On 20 Nov: exactly one, `aa021180-…` × `2d6e737c-…`. Any other pair: stop, and decide which row to archive before continuing.
