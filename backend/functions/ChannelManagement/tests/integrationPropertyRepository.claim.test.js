@@ -8,16 +8,21 @@ import IntegrationPropertyRepository, {
   IN_USE_STATUSES,
 } from "../../.shared/integrations/repositories/integrationPropertyRepository.js";
 
-const setup = (found = null) => {
+const setup = (found = null, count = 0) => {
   const read = {
     where: jest.fn(() => read),
     andWhere: jest.fn(() => read),
     getOne: jest.fn().mockResolvedValue(found),
+    getCount: jest.fn().mockResolvedValue(count),
   };
   const write = {
     insert: jest.fn(() => write),
     into: jest.fn(() => write),
     values: jest.fn(() => write),
+    update: jest.fn(() => write),
+    set: jest.fn(() => write),
+    where: jest.fn(() => write),
+    andWhere: jest.fn(() => write),
     execute: jest.fn(async () => undefined),
   };
   Database.getInstance.mockResolvedValue({
@@ -44,6 +49,31 @@ describe("IntegrationPropertyRepository claim", () => {
     setup(undefined);
 
     await expect(new IntegrationPropertyRepository().findInUseByAccountAndListing("a", "l")).resolves.toBeNull();
+  });
+
+  // Look before create: a Channex property is only adopted when no in-use mapping points to it.
+  test.each([
+    [0, false],
+    [1, true],
+  ])("with %p in-use mappings on a Channex property, isExternalPropertyInUse is %p", async (count, expected) => {
+    const { repository, read } = setup(null, count);
+
+    await expect(repository.isExternalPropertyInUse("channex-1")).resolves.toBe(expected);
+    expect(read.where).toHaveBeenCalledWith("p.externalPropertyId = :e", { e: "channex-1" });
+    expect(read.andWhere).toHaveBeenCalledWith("p.status IN (:...inUse)", { inUse: IN_USE_STATUSES });
+  });
+
+  // Saved before the next Channex call, so a later attempt continues from here.
+  test("saves the Channex property on the claim while it is still PROVISIONING", async () => {
+    const { repository, write } = setup();
+
+    await repository.setClaimExternalProperty("claim-1", "channex-1", "Villa Malee");
+
+    expect(write.set).toHaveBeenCalledWith(
+      expect.objectContaining({ externalPropertyId: "channex-1", externalPropertyName: "Villa Malee" })
+    );
+    expect(write.where).toHaveBeenCalledWith("id = :id", { id: "claim-1" });
+    expect(write.andWhere).toHaveBeenCalledWith("status = :s", { s: "PROVISIONING" });
   });
 
   // The partial unique key decides the race; the insert does not look first.

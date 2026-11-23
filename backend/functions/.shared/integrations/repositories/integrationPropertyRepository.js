@@ -116,6 +116,30 @@ class IntegrationPropertyRepository {
       .execute();
   }
 
+  // Look before create (design note D2): a Channex property is only adopted when no in-use mapping uses it.
+  async isExternalPropertyInUse(externalPropertyId) {
+    const client = await Database.getInstance();
+    const count = await client
+      .getRepository(ChannelIntegrationProperty)
+      .createQueryBuilder("p")
+      .where("p.externalPropertyId = :e", { e: externalPropertyId })
+      .andWhere("p.status IN (:...inUse)", { inUse: IN_USE_STATUSES })
+      .getCount();
+    return count > 0;
+  }
+
+  // Saved before the next Channex call, so a later attempt continues from this property.
+  async setClaimExternalProperty(claimId, externalPropertyId, externalPropertyName) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationProperty)
+      .set({ externalPropertyId, externalPropertyName, updatedAt: Date.now() })
+      .where("id = :id", { id: claimId })
+      .andWhere("status = :s", { s: "PROVISIONING" })
+      .execute();
+  }
+
   async listByAccountId(integrationAccountId) {
     const client = await Database.getInstance();
     return client
