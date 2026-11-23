@@ -13,11 +13,10 @@ const readyListing = (overrides = {}) => ({
 });
 
 const buildService = (listing) => {
-  const claim = jest.fn();
   const service = new ChannexProvisioningService({
     listings: { findListing: jest.fn().mockResolvedValue(listing) },
-    claimListing: claim,
   });
+  const claim = jest.spyOn(service, "claimListing").mockResolvedValue(undefined);
   return { service, claim };
 };
 

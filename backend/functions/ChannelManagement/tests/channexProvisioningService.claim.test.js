@@ -1,0 +1,178 @@
+import ChannexProvisioningService from "../../.shared/channelManagement/services/channexProvisioningService.js";
+
+// Design note D2 and D8 (#506): the host gets one Channex account row pointing to Domits' single key,
+// then the listing is claimed with a PROVISIONING mapping row before Channex is called, so a double
+// click or a second tab never creates a second Channex property.
+const NOW = 1_795_000_000_000;
+const listing = { propertyId: "listing-1", hostId: "host-1", title: "Villa", guests: 4 };
+const place = { countryCode: "NL", timezone: "Europe/Amsterdam" };
+
+const uniqueViolation = () => Object.assign(new Error("duplicate key"), { code: "23505" });
+const commitConflict = () => Object.assign(new Error("OC000"), { code: "40001" });
+
+const build = ({ account = null, inUse = null, insertClaim = jest.fn().mockResolvedValue(undefined) } = {}) => {
+  const accounts = {
+    findByUserIdAndChannel: jest.fn().mockResolvedValue(account),
+    create: jest.fn(async (row) => row),
+    update: jest.fn(async (id, patch) => ({ ...account, ...patch })),
+  };
+  const props = {
+    findInUseByAccountAndListing: jest.fn().mockResolvedValue(inUse),
+    insertClaim,
+  };
+  const service = new ChannexProvisioningService({
+    accounts,
+    props,
+    credentialsRef: "domits-channex-secret",
+    now: () => NOW,
+    newId: () => "new-id",
+  });
+  const createChannexObjects = jest
+    .spyOn(service, "createChannexObjects")
+    .mockResolvedValue({ statusCode: 200, response: { status: "PROVISIONED" } });
+  return { service, accounts, props, createChannexObjects };
+};
+
+describe("ChannexProvisioningService.claimListing: the host's account row (D8)", () => {
+  test("creates a connected Channex account row for a host who has none, pointing to Domits' key", async () => {
+    const { service, accounts } = build();
+
+    await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(accounts.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "new-id",
+        userId: "host-1",
+        channel: "CHANNEX",
+        status: "CONNECTED",
+        credentialsRef: "domits-channex-secret",
+      })
+    );
+  });
+
+  test("reuses the host's connected account row", async () => {
+    const account = { id: "account-1", status: "CONNECTED", credentialsRef: "domits-channex-secret" };
+    const { service, accounts, props } = build({ account });
+
+    await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(accounts.create).not.toHaveBeenCalled();
+    expect(accounts.update).not.toHaveBeenCalled();
+    expect(props.findInUseByAccountAndListing).toHaveBeenCalledWith("account-1", "listing-1");
+  });
+
+  // A new host's double click: both requests create an account row; the unique key on
+  // ("userId", channel) for CHANNEX lets one win, and the loser continues with the winner's row.
+  test.each([
+    ["the unique key", uniqueViolation],
+    ["a commit conflict", commitConflict],
+  ])("losing the account create on %s continues with the winner's row", async (_label, error) => {
+    const winner = { id: "account-winner", status: "CONNECTED", credentialsRef: "domits-channex-secret" };
+    const { service, accounts, props } = build();
+    accounts.findByUserIdAndChannel.mockResolvedValueOnce(null).mockResolvedValueOnce(winner);
+    accounts.create.mockRejectedValueOnce(error());
+
+    await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(props.findInUseByAccountAndListing).toHaveBeenCalledWith("account-winner", "listing-1");
+  });
+
+  // A disconnect resets the shared key on the row (#3365); turning a listing on connects it again.
+  test("reconnects a disconnected account row to Domits' key", async () => {
+    const account = { id: "account-1", status: "DISCONNECTED", credentialsRef: null };
+    const { service, accounts } = build({ account });
+
+    await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(accounts.update).toHaveBeenCalledWith(
+      "account-1",
+      expect.objectContaining({ status: "CONNECTED", credentialsRef: "domits-channex-secret" })
+    );
+  });
+});
+
+describe("ChannexProvisioningService.claimListing: configuration", () => {
+  // Without Domits' key reference every host row would point nowhere, so nothing is written.
+  test("answers 503 when Domits' Channex key reference is not configured", async () => {
+    const accounts = { findByUserIdAndChannel: jest.fn(), create: jest.fn(), update: jest.fn() };
+    const service = new ChannexProvisioningService({ accounts, props: {}, credentialsRef: "" });
+
+    const result = await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(result).toEqual({
+      statusCode: 503,
+      response: expect.objectContaining({ errorCode: "DISTRIBUTION_NOT_CONFIGURED" }),
+    });
+    expect(accounts.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("ChannexProvisioningService.claimListing: the claim (D2)", () => {
+  const account = { id: "account-1", status: "CONNECTED", credentialsRef: "domits-channex-secret" };
+
+  test("claims a free listing with a PROVISIONING row, then creates the Channex side", async () => {
+    const { service, props, createChannexObjects } = build({ account });
+
+    const result = await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(props.insertClaim).toHaveBeenCalledWith({
+      id: "new-id",
+      integrationAccountId: "account-1",
+      domitsPropertyId: "listing-1",
+      now: NOW,
+    });
+    expect(createChannexObjects).toHaveBeenCalledWith(
+      expect.objectContaining({ claim: expect.objectContaining({ id: "new-id", externalPropertyId: null }), listing, place })
+    );
+    expect(result).toEqual({ statusCode: 200, response: { status: "PROVISIONED" } });
+  });
+
+  // A claim left by an attempt that stopped halfway is continued, not claimed again.
+  test("continues an earlier PROVISIONING claim", async () => {
+    const earlier = { id: "claim-1", status: "PROVISIONING", externalPropertyId: "channex-property-1" };
+    const { service, props, createChannexObjects } = build({ account, inUse: earlier });
+
+    await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(props.insertClaim).not.toHaveBeenCalled();
+    expect(createChannexObjects).toHaveBeenCalledWith(expect.objectContaining({ claim: earlier }));
+  });
+
+  test("a listing that is already connected answers so, without calling Channex", async () => {
+    const connected = { id: "mapping-1", status: "ACTIVE", externalPropertyId: "channex-property-1" };
+    const { service, createChannexObjects } = build({ account, inUse: connected });
+
+    const result = await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(result).toEqual({
+      statusCode: 200,
+      response: expect.objectContaining({ status: "ALREADY_CONNECTED", channexPropertyId: "channex-property-1" }),
+    });
+    expect(createChannexObjects).not.toHaveBeenCalled();
+  });
+
+  // On Aurora DSQL the loser of two simultaneous claims fails on the key (23505) or at commit (40001).
+  test.each([
+    ["the unique key", uniqueViolation],
+    ["a commit conflict", commitConflict],
+  ])("losing the claim on %s answers 409 already in progress, without retrying", async (_label, error) => {
+    const insertClaim = jest.fn().mockRejectedValue(error());
+    const { service, createChannexObjects } = build({ account, insertClaim });
+
+    const result = await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(result).toEqual({
+      statusCode: 409,
+      response: expect.objectContaining({ errorCode: "DISTRIBUTION_ALREADY_IN_PROGRESS" }),
+    });
+    expect(insertClaim).toHaveBeenCalledTimes(1);
+    expect(createChannexObjects).not.toHaveBeenCalled();
+  });
+
+  test("any other database error is not hidden as 'in progress'", async () => {
+    const insertClaim = jest.fn().mockRejectedValue(new Error("connection lost"));
+    const { service } = build({ account, insertClaim });
+
+    await expect(service.claimListing({ userId: "host-1", listing, place })).rejects.toThrow("connection lost");
+  });
+});

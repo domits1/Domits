@@ -83,6 +83,39 @@ class IntegrationPropertyRepository {
     return row;
   }
 
+  async findInUseByAccountAndListing(integrationAccountId, domitsPropertyId) {
+    const client = await Database.getInstance();
+    const row = await client
+      .getRepository(ChannelIntegrationProperty)
+      .createQueryBuilder("p")
+      .where("p.integrationAccountId = :a", { a: integrationAccountId })
+      .andWhere("p.domitsPropertyId = :d", { d: domitsPropertyId })
+      .andWhere("p.status IN (:...inUse)", { inUse: IN_USE_STATUSES })
+      .getOne();
+    return row ?? null;
+  }
+
+  // Reserves a listing before Channex is called (design note D2). It does not look first: two
+  // simultaneous claims are decided by the partial unique key, and the loser's error reaches the caller.
+  async insertClaim({ id, integrationAccountId, domitsPropertyId, now }) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .insert()
+      .into(ChannelIntegrationProperty)
+      .values({
+        id,
+        integrationAccountId,
+        domitsPropertyId,
+        externalPropertyId: null,
+        externalPropertyName: null,
+        status: "PROVISIONING",
+        createdAt: now,
+        updatedAt: now,
+      })
+      .execute();
+  }
+
   async listByAccountId(integrationAccountId) {
     const client = await Database.getInstance();
     return client
