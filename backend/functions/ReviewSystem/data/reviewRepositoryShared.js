@@ -49,13 +49,13 @@ const retryTransaction = async (dataSource, callback, attempt = 1) => {
   }
 };
 
-export function eligibleReviewQuery(database, propertyId) {
+export function eligibleReviewQuery(database, propertyId, reviewType = "GUEST_TO_PROPERTY") {
   return database.getRepository(Review).createQueryBuilder("review")
     .where(propertyId === undefined ? "1 = 1" : Array.isArray(propertyId) ? "review.property_id IN (:...propertyIds)" : "review.property_id = :propertyId",
       Array.isArray(propertyId) ? { propertyIds: propertyId } : { propertyId })
     .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
     .andWhere("review.status = :status", { status: "PUBLISHED" })
-    .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
+    .andWhere("review.review_type = :reviewType", { reviewType })
     .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
     .andWhere("review.overall_rating * 2 = FLOOR(review.overall_rating * 2)");
 }

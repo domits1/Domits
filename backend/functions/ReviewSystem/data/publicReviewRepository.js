@@ -36,6 +36,40 @@ const toPublicReview = (review) => ({
 });
 
 export class PublicReviewRepository {
+  async getHostReviewPage(hostId, { limit, offset, now }) {
+    const database = await Database.getInstance();
+    const eligible = () => applyCompletedStayConditions(eligibleReviewQuery(database, undefined, "GUEST_TO_HOST")
+      .andWhere("review.host_id = :hostId AND review.reviewee_user_id = :hostId", { hostId })
+      .andWhere("review.verification_status = :verified", { verified: "VERIFIED_STAY" })
+      .innerJoin(Booking, "stay", `stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id
+        AND stay.hostid = review.host_id AND stay.property_id = review.property_id
+        AND stay.guestid <> stay.hostid`), now);
+    const categories = query => query.innerJoin(Review_Rating, "rating", "rating.reviewId = review.id")
+      .innerJoin(Review_Category, "category", `category.key = rating.category
+        AND category.reviewType = :hostType AND category.isActive = :active`, { hostType: "GUEST_TO_HOST", active: true })
+      .andWhere("rating.category IN (:...hostCategories)", { hostCategories: ["communication", "responsiveness", "hospitality"] })
+      .andWhere("rating.rating BETWEEN 1 AND 5")
+      .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)");
+    const summary = await eligible().select("AVG(review.overall_rating)", "score")
+      .addSelect("COUNT(*)", "count").getRawOne();
+    const averages = await categories(eligible()).select("rating.category", "key")
+      .addSelect("AVG(rating.rating)", "score").groupBy("rating.category").getRawMany();
+    const rows = await eligible().select(["review.id", "review.overall_rating", "review.title", "review.public_review", "review.created_at"])
+      .orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC").offset(offset).limit(limit + 1).getMany();
+    const page = rows.slice(0, limit), ids = page.map(review => review.id);
+    const ratings = ids.length ? await categories(eligible()).andWhere("review.id IN (:...ids)", { ids })
+      .select("review.id", "review_id").addSelect("rating.category", "key").addSelect("rating.rating", "rating").getRawMany() : [];
+    const number = value => value == null ? null : Number(value);
+    return { host_id: hostId, overall_score: number(summary?.score), review_count: Number(summary?.count ?? 0),
+      category_ratings: Object.fromEntries(["communication", "responsiveness", "hospitality"]
+        .map(key => [key, number(averages.find(row => row.key === key)?.score)])),
+      next_offset: rows.length > limit ? offset + limit : null,
+      reviews: page.map(review => ({ id: review.id, overall_rating: Number(review.overall_rating),
+        title: review.title, public_review: review.public_review, created_at: Number(review.created_at),
+        category_ratings: Object.fromEntries(ratings.filter(row => row.review_id === review.id)
+          .map(row => [row.key, Number(row.rating)])) })) };
+  }
+
   async getPublicReviewPage(propertyId, offset, filters = {}) {
     const database = await Database.getInstance();
     const property = await database.getRepository(Property).findOne({

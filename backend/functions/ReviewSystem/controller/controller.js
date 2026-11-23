@@ -112,6 +112,10 @@ export class Controller {
   }
 
   async getReviews(event) {
+    if (event.queryStringParameters?.scope === "host-public") {
+      try { return this.jsonResponse(200, await this.service.getHostReviews(null, event.queryStringParameters)); }
+      catch (error) { return this.handleError(error); }
+    }
     if (event.queryStringParameters?.scope === "property-review-schedule") return this.manageReviewSchedule(event);
     return this.executeAuthenticated(event, async (userId, user) => {
       const query = event.queryStringParameters ?? {};
@@ -123,7 +127,9 @@ export class Controller {
         throw new BadRequestException("Property aggregate and individual review requests cannot be combined.");
       }
       let result;
-      if (query.reviewId !== undefined && query.view !== undefined) {
+      if (query.scope === "host-dashboard") {
+        result = await this.service.getHostReviews(userId, query);
+      } else if (query.reviewId !== undefined && query.view !== undefined) {
         if (query.view !== "history" || Object.keys(query).some((key) => !["reviewId", "view"].includes(key))) {
           throw new BadRequestException("Unsupported review detail parameter.");
         }

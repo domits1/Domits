@@ -49,6 +49,18 @@ const isDuplicateBookingReviewError = (error) => {
 };
 
 export class ReviewService {
+  async getHostReviews(userId, query = {}) {
+    const publicView = query.scope === "host-public";
+    if (!publicView) this.assertCaller(userId);
+    const allowed = publicView ? ["scope", "hostId", "limit", "offset"] : ["scope", "limit", "offset"];
+    if (Object.keys(query).some(key => !allowed.includes(key))) throw new BadRequestException("Unsupported host review parameter.");
+    const hostId = publicView ? query.hostId : userId;
+    this.assertId(hostId, "host ID");
+    const pagination = this.parseReviewPagination(query);
+    if (pagination.offset > 100000) throw new BadRequestException("Invalid host review offset.");
+    return this.repository.getHostReviewPage(hostId.trim(), { ...pagination, now: this.now() });
+  }
+
   #hostReviewService;
   #domitsAdminReviewService;
 

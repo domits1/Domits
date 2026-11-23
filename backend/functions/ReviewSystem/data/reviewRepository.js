@@ -48,6 +48,10 @@ const buildRatingRecords = (reviewId, categoryRatings, createdAt) =>
   }));
 
 export class ReviewRepository {
+  async getHostReviewPage(hostId, options) {
+    return this.#publicReviews.getHostReviewPage(hostId, options);
+  }
+
   async findGuestReviewHistory(guestId, { offset = 0, id } = {}) {
     const database = await Database.getInstance();
     const query = database.getRepository(Review).createQueryBuilder("review")
