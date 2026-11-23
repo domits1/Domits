@@ -2,6 +2,7 @@ jest.mock("database", () => ({ __esModule: true, default: { getInstance: jest.fn
 import Database from "database";
 import { In } from "typeorm";
 import { Review } from "database/models/Review";
+import { Review_Flag } from "database/models/Review_Flag";
 import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
 import { Property_Location } from "database/models/Property_Location";
@@ -14,7 +15,7 @@ describe("pending review details for the approval queue", () => {
   let repositories;
 
   beforeEach(() => {
-    repositories = new Map([Review, Booking, Property, Property_Location, Property_Image, Property_Image_Variant]
+    repositories = new Map([Review_Flag, Review, Booking, Property, Property_Location, Property_Image, Property_Image_Variant]
       .map((entity) => [entity, { find: jest.fn().mockResolvedValue([]) }]));
     Database.getInstance.mockResolvedValue({ getRepository: jest.fn((entity) => repositories.get(entity)) });
   });
@@ -24,6 +25,7 @@ describe("pending review details for the approval queue", () => {
       { id: "r1", property_id: "p1", booking_id: "b1", reviewer_user_id: "guest-1" },
       { id: "r2", property_id: "p2", booking_id: "b2", reviewer_user_id: "guest-2" },
     ]);
+    repositories.get(Review_Flag).find.mockResolvedValue([{ review_id: "r1" }]);
     repositories.get(Property).find.mockResolvedValue([{ id: "p1", title: "Riverside Apartment" }]);
     repositories.get(Property_Location).find.mockResolvedValue([
       { property_id: "p1", city: "Amsterdam", country: "Netherlands" },
@@ -43,9 +45,9 @@ describe("pending review details for the approval queue", () => {
 
     const [withDetails, withoutDetails] = await new ReviewRepository().findUnpublishedReviews(status);
 
-    expect(withDetails).toMatchObject({ property_title: "Riverside Apartment", property_city: "Amsterdam",
+    expect(withDetails).toMatchObject({ has_pending_flag: true, property_title: "Riverside Apartment", property_city: "Amsterdam",
       property_country: "Netherlands", property_image_key: "images/p1/thumb", guest_name: "Jessica Smith" });
-    expect(withoutDetails).toMatchObject({ property_title: null, property_city: null, property_country: null,
+    expect(withoutDetails).toMatchObject({ has_pending_flag: false, property_title: null, property_city: null, property_country: null,
       property_image_key: null, guest_name: null });
     expect(repositories.get(Property_Image).find).toHaveBeenCalledWith(expect.objectContaining({
       where: { property_id: In(["p1", "p2"]), status: "READY" }, order: { sort_order: "ASC" } }));
@@ -80,7 +82,7 @@ describe("pending review details for the approval queue", () => {
         hasActiveReviewApproverRole: jest.fn().mockResolvedValue(true),
         findUnpublishedReviews: jest.fn().mockResolvedValue([{ id: "r1", booking_id: "b1", property_id: "p1",
           host_id: "host-1", reviewer_user_id: "guest-1", review_type: "GUEST_TO_PROPERTY", overall_rating: "5.0",
-          title: "Great stay!", public_review: "Clean", private_feedback: "secret", status,
+          has_pending_flag: true, title: "Great stay!", public_review: "Clean", private_feedback: "secret", status,
           publication_status: "UNPUBLISHED", verification_status: "VERIFIED", created_at: 1, updated_at: 2,
           property_title: "Riverside Apartment", property_city: "Amsterdam", property_country: "Netherlands",
           property_image_key: "images/p1/thumb", guest_name: "Jessica Smith" }]),
@@ -88,7 +90,7 @@ describe("pending review details for the approval queue", () => {
 
       const [review] = await new ReviewService({ repository }).getReviewApprovalQueue("staff", "admin", status);
 
-      expect(review).toMatchObject({ id: "r1", overall_rating: 5, property_title: "Riverside Apartment",
+      expect(review).toMatchObject({ has_pending_flag: true, id: "r1", overall_rating: 5, property_title: "Riverside Apartment",
         property_city: "Amsterdam", property_country: "Netherlands", property_image_key: "images/p1/thumb",
         guest_name: "Jessica Smith" });
       expect(JSON.stringify(review)).not.toMatch(/secret|private_feedback|host_id/);

@@ -23,6 +23,9 @@ it("authenticates, validates, lists and resolves flags through the moderation sc
   Database.getInstance.mockResolvedValue({ getRepository: () => ({ createQueryBuilder: () => query }) });
   const service = new ReviewService({ now: () => 10 });
   Object.assign(service.repository, repository);
+  const reviewDetails = { id: "r1", title: "Stay", public_review: "Good", status: "PENDING_APPROVAL",
+    overall_rating: "4.5", created_at: "1", updated_at: "9", has_pending_flag: false };
+  jest.spyOn(service.repository, "addModerationDetails").mockResolvedValue([reviewDetails, reviewDetails]);
   const authManager = { getUser: async () => ({ userId: "admin-id", username: "staff" }) };
   const controller = new Controller({ service, authManager });
   const event = { resource: "/reviews", queryStringParameters: { scope: "moderation" },
@@ -44,7 +47,8 @@ it("authenticates, validates, lists and resolves flags through the moderation sc
       ...event.queryStringParameters, status: "RESOLVED", limit: "1", offset: "2",
     } });
     expect(result.headers["Cache-Control"]).toBe("no-store");
-    expect(JSON.parse(result.body)).toEqual({ flags: [{ ...row, created_at: 1, updated_at: 2, overall_rating: 4.5 }], next_offset: 3 });
+    expect(JSON.parse(result.body)).toMatchObject({ flags: [{ ...row, created_at: 1, updated_at: 2, overall_rating: 4.5,
+      review: { id: "r1", status: "PENDING_APPROVAL", updated_at: 9, has_pending_flag: false } }], next_offset: 3 });
     expect(query.getQuery()).toContain('ORDER BY "flag"."created_at" ASC, "flag"."id" ASC LIMIT 2 OFFSET 2');
     expect(query.getQuery()).not.toContain("private_feedback");
     expect(query.getParameters()).toMatchObject({ status: "RESOLVED" });

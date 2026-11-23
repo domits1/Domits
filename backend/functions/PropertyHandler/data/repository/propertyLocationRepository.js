@@ -17,8 +17,8 @@ export class PropertyLocationRepository {
         this.systemManager = systemManager
     }
 
-    async getPropertyLocationById(id) {
-        const client = await Database.getInstance();
+    async getPropertyLocationById(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_Location)
             .createQueryBuilder("property_location")
@@ -37,8 +37,8 @@ export class PropertyLocationRepository {
         return result ? LocationMapping.mapDatabaseEntryToFullLocation(result) : null;
     }
 
-    async create(location) {
-        const client = await Database.getInstance();
+    async create(location, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         // Derive coordinates from the address (best effort — null on failure).
         // External integrations such as PriceLabs require latitude/longitude.
         const coords = await geocodeAddress(location);
@@ -58,7 +58,7 @@ export class PropertyLocationRepository {
                 longitude: coords?.longitude ?? null
             })
             .execute();
-        const result = await this.getPropertyLocationById(location.property_id);
+        const result = await this.getPropertyLocationById(location.property_id, transactionManager);
         return result ? result : null;
     }
 

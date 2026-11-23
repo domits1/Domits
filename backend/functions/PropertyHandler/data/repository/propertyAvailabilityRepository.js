@@ -8,8 +8,8 @@ export class PropertyAvailabilityRepository {
         this.systemManager = systemManager
     }
     
-    async getAvailabilityByPropertyIdAndStartDate(id, availableStartDate) {
-        const client = await Database.getInstance();
+    async getAvailabilityByPropertyIdAndStartDate(id, availableStartDate, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_Availability)
             .createQueryBuilder("property_availability")
@@ -29,8 +29,8 @@ export class PropertyAvailabilityRepository {
         return result ? result.map(item => AvailabilityMapping.mapDatabaseEntryToAvailability(item)) : null;
     }
 
-    async create(availability) {
-        const client = await Database.getInstance();
+    async create(availability, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -41,7 +41,11 @@ export class PropertyAvailabilityRepository {
                 availableenddate: availability.availableEndDate
             })
             .execute();
-        const result = await this.getAvailabilityByPropertyIdAndStartDate(availability.property_id, availability.availableStartDate);
+        const result = await this.getAvailabilityByPropertyIdAndStartDate(
+            availability.property_id,
+            availability.availableStartDate,
+            transactionManager
+        );
         return result ? result: null;
     }
 

@@ -2,11 +2,14 @@ import React, { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ListFilter, Search } from "lucide-react";
 import ReviewApprovalTable from "../components/ReviewApprovalTable";
 import ReviewApprovalDetails from "../components/ReviewApprovalDetails";
+import ReviewFlagDialog from "../components/ReviewFlagDialog";
+import ReviewModerationQueue from "../components/ReviewModerationQueue";
 import useReviewApprovalQueue, { QUEUE_STATE } from "../hooks/useReviewApprovalQueue";
 import { matchesReviewSearch } from "../utils/reviewApprovalFormat";
 import styles from "../styles/ReviewApproval.module.css";
 
 const PAGE_SIZE = 8;
+const MODERATION_TAB = { scope: null, label: "Moderation queue", id: "moderation-tab", panel: "moderation-panel" };
 const REVIEW_TABS = [
   { scope: "pending-approval", label: "Pending approval", tableLabel: "Reviews pending approval",
     empty: "No reviews are waiting for approval." },
@@ -15,6 +18,7 @@ const REVIEW_TABS = [
   { scope: "admin-published", label: "Published", tableLabel: "Published reviews", empty: "No published reviews." },
   { scope: "admin-rejected", label: "Rejected", tableLabel: "Rejected reviews", empty: "No rejected reviews." },
   { scope: "admin-all", label: "All reviews", tableLabel: "All reviews", empty: "No submitted reviews." },
+  MODERATION_TAB,
 ];
 const RATING_OPTIONS = ["5", "4", "3", "2", "1"];
 // undefined follows the first visible review; null means the admin closed the panel.
@@ -71,12 +75,15 @@ function Pagination({ page, pageCount, total, onChange }) {
 export default function ReviewApprovalPage() {
   const [tabIndex, setTabIndex] = useState(0);
   const tab = REVIEW_TABS[tabIndex];
+  const showModeration = tab === MODERATION_TAB;
   const { reviews, queueState, loadError, retry, approve, publish, approvingIds, notice } = useReviewApprovalQueue(tab.scope);
   const [query, setQuery] = useState("");
   const [rating, setRating] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(FOLLOW_FIRST);
+  const [flagTarget, setFlagTarget] = useState(null);
+  const [flagNotice, setFlagNotice] = useState("");
 
   const visibleReviews = useMemo(
     () => reviews.filter((review) => matchesReviewSearch(review, query) && matchesRating(review, rating)),
@@ -105,6 +112,7 @@ export default function ReviewApprovalPage() {
   };
   const changeTab = (index) => {
     setTabIndex(index);
+    if (REVIEW_TABS[index] !== MODERATION_TAB) setFlagNotice("");
     setPage(1);
     setSelectedId(FOLLOW_FIRST);
   };
@@ -125,7 +133,7 @@ export default function ReviewApprovalPage() {
 
   const noMatches = tabIndex === 0 ? "No pending reviews match your search." : "No reviews match your search or filters.";
   const emptyMessage = reviews.length ? noMatches : tab.empty;
-  const layoutClassName = selectedReview ? styles.layout : `${styles.layout} ${styles.layoutSingle}`;
+  const layoutClassName = selectedReview && !showModeration ? styles.layout : `${styles.layout} ${styles.layoutSingle}`;
   const closeDetails = () => setSelectedId(CLOSED);
 
   return (
@@ -184,14 +192,14 @@ export default function ReviewApprovalPage() {
       <div className={layoutClassName}>
         <div className={styles.listColumn}>
           <div className={styles.tabs} role="tablist" aria-label="Review status">
-            {REVIEW_TABS.map(({ scope, label }, index) => (
+            {REVIEW_TABS.map(({ scope, label, id, panel }, index) => (
               <button
                 type="button"
-                key={scope}
+                key={label}
                 role="tab"
-                id={`review-tab-${scope}`}
+                id={id ?? `review-tab-${scope}`}
                 aria-selected={index === tabIndex}
-                aria-controls="review-status-panel"
+                aria-controls={panel ?? "review-status-panel"}
                 tabIndex={index === tabIndex ? 0 : -1}
                 className={styles.tab}
                 onClick={() => changeTab(index)}
@@ -202,53 +210,72 @@ export default function ReviewApprovalPage() {
               </button>
             ))}
           </div>
-          <section id="review-status-panel" role="tabpanel" aria-labelledby={`review-tab-${tab.scope}`}>
-            {queueState === QUEUE_STATE.LOADING && <p role="status" className={styles.emptyState}>Loading reviews…</p>}
-            {queueState === QUEUE_STATE.FAILED && (
-              <div className={styles.emptyState}>
-                <p role="alert">{loadError}</p>
-                <button type="button" className={styles.approveButton} onClick={retry}>Retry</button>
-              </div>
-            )}
-            {queueState === QUEUE_STATE.READY && (
-              pageReviews.length ? (
-                <>
-                  <div className={styles.tableCard}>
-                    <ReviewApprovalTable
-                      label={tab.tableLabel}
-                      reviews={pageReviews}
-                      selectedId={selectedReview?.id}
-                      approvingIds={approvingIds}
-                      onApprove={approve}
-                      onPublish={publish}
-                      onView={setSelectedId}
-                      onClose={closeDetails}
+          {showModeration ? (
+            <>
+              {flagNotice && <p role="status" className={`${styles.notice} ${styles.noticeSuccess}`}>{flagNotice}</p>}
+              <ReviewModerationQueue />
+            </>
+          ) : (
+            <section id="review-status-panel" role="tabpanel" aria-labelledby={`review-tab-${tab.scope}`}>
+              {queueState === QUEUE_STATE.LOADING && <p role="status" className={styles.emptyState}>Loading reviews…</p>}
+              {queueState === QUEUE_STATE.FAILED && (
+                <div className={styles.emptyState}>
+                  <p role="alert">{loadError}</p>
+                  <button type="button" className={styles.approveButton} onClick={retry}>Retry</button>
+                </div>
+              )}
+              {queueState === QUEUE_STATE.READY && (
+                pageReviews.length ? (
+                  <>
+                    <div className={styles.tableCard}>
+                      <ReviewApprovalTable
+                        label={tab.tableLabel}
+                        reviews={pageReviews}
+                        selectedId={selectedReview?.id}
+                        approvingIds={approvingIds}
+                        onApprove={approve}
+                        onPublish={publish}
+                        onView={setSelectedId}
+                        onClose={closeDetails}
+                      />
+                    </div>
+                    <Pagination
+                      page={currentPage}
+                      pageCount={pageCount}
+                      total={visibleReviews.length}
+                      onChange={setPage}
                     />
-                  </div>
-                  <Pagination
-                    page={currentPage}
-                    pageCount={pageCount}
-                    total={visibleReviews.length}
-                    onChange={setPage}
-                  />
-                </>
-              ) : (
-                <p className={styles.emptyState}>{emptyMessage}</p>
-              )
-            )}
-          </section>
+                  </>
+                ) : (
+                  <p className={styles.emptyState}>{emptyMessage}</p>
+                )
+              )}
+            </section>
+          )}
         </div>
 
-        {selectedReview && (
+        {selectedReview && !showModeration && (
           <ReviewApprovalDetails
             review={selectedReview}
             approving={approvingIds.has(selectedReview.id)}
             onApprove={approve}
             onPublish={publish}
+            onFlag={setFlagTarget}
             onClose={closeDetails}
           />
         )}
       </div>
+      {flagTarget && (
+        <ReviewFlagDialog
+          review={flagTarget}
+          onClose={() => setFlagTarget(null)}
+          onFlagged={(review) => {
+            setFlagTarget(null);
+            setFlagNotice(`“${review.title}” was flagged for manual review.`);
+            changeTab(REVIEW_TABS.indexOf(MODERATION_TAB));
+          }}
+        />
+      )}
     </main>
   );
 }
