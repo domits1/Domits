@@ -38,6 +38,22 @@ export const getAdminReviews = async (scope) => {
   return payload;
 };
 
+const requestModeration = async (method, fallback, query = {}, body) => {
+  const response = await requestReview(method, { ...query, scope: "moderation" }, body);
+  const payload = await parseResponse(response);
+  if (!response.ok) throw reviewApprovalError(response, payload, fallback);
+  return payload;
+};
+
+export const getReviewFlags = (query) =>
+  requestModeration("GET", "Could not load the moderation queue.", query);
+
+export const flagReview = (reviewId, reason, notes) =>
+  requestModeration("POST", "Could not flag this review.", {}, { review_id: reviewId, reason, notes });
+
+export const resolveReviewFlag = (flagId) =>
+  requestModeration("PATCH", "Could not resolve this flag.", {}, { flag_id: flagId });
+
 export const getPendingApprovalReviews = () => getAdminReviews("pending-approval");
 
 export const publishApprovedReview = async (reviewId) => {
@@ -50,13 +66,62 @@ export const publishApprovedReview = async (reviewId) => {
   return payload;
 };
 
+const ACCESS_TIMEOUT_MS = 5000;
+const ACCESS_CACHE_MS = 5 * 60 * 1000;
+let approvalAccessCache = null;
+
+export const clearReviewApprovalAccessCache = () => { approvalAccessCache = null; };
+if (typeof globalThis.addEventListener === "function") {
+  globalThis.addEventListener("authChanged", clearReviewApprovalAccessCache);
+}
+
+// Cache only confirmed approval access, never denials or queue rows. Token scoping prevents
+// sharing answers across accounts/sessions; the short TTL bounds role staleness.
 export const hasReviewApprovalAccess = async () => {
+  const controller = new AbortController();
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => { controller.abort(); resolve(null); }, ACCESS_TIMEOUT_MS);
+  });
+  const check = async () => {
+    const token = await getIdToken();
+    if (controller.signal.aborted || !token) return null;
+    if (approvalAccessCache?.token === token && approvalAccessCache.expiresAt > Date.now()) {
+      const shared = approvalAccessCache;
+      const allowed = await Promise.race([shared.answer, timeout]);
+      // The shared request belongs to its first caller. If its deadline expires,
+      // a later caller may retry using the time left on its own deadline.
+      if (!shared.controller.signal.aborted || controller.signal.aborted) return allowed;
+      if (approvalAccessCache === shared) approvalAccessCache = null;
+    }
+    const entry = { token, controller, expiresAt: Date.now() + ACCESS_CACHE_MS };
+    approvalAccessCache = entry;
+    const request = (async () => {
+      try {
+        const response = await fetch(`${API_REVIEW_BASE}/reviews?scope=pending-approval`, {
+          method: "GET", headers: { Authorization: token }, signal: controller.signal,
+        });
+        if (response.status === 401 || response.status === 403) return false;
+        if (!response.ok) return null;
+        const payload = await parseResponse(response);
+        return Array.isArray(payload) ? true : null;
+      } catch {
+        return null;
+      }
+    })();
+    entry.answer = Promise.race([request, timeout]);
+    const allowed = await entry.answer;
+    if ((allowed !== true || controller.signal.aborted) && approvalAccessCache === entry) {
+      approvalAccessCache = null;
+    }
+    return allowed;
+  };
   try {
-    await getPendingApprovalReviews();
-    return true;
-  } catch (error) {
-    if (error?.status === 401 || error?.status === 403) return false;
+    return await Promise.race([check(), timeout]);
+  } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 };
 
@@ -181,7 +246,7 @@ export const updateReview = async ({
 };
 
 // Fetch written or received reviews
-export const requestReview = async (method = "GET", query = {}) => {
+export const requestReview = async (method = "GET", query = {}, body) => {
   const token = await getIdToken();
 
   const { reviewId, ...parameters } = query;
@@ -199,7 +264,9 @@ export const requestReview = async (method = "GET", query = {}) => {
       method,
       headers: {
         Authorization: token,
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     }
   );
 };

@@ -34,11 +34,29 @@ const formatDate = (value) => {
   }).format(date);
 };
 
-export const buildBookingVariables = ({ booking, property }) => ({
+const formatTime = (value) => /^\d{2}:\d{2}/.exec(String(value ?? ""))?.[0] ?? "";
+
+const formatGuestCount = (value) => (Number.isInteger(value) && value > 0 ? String(value) : "");
+
+const formatAddress = (location) => {
+  const street = String(location?.street ?? "").trim();
+  if (!street) return "";
+
+  const houseNumber = `${location?.housenumber ?? ""}${location?.housenumberextension ?? ""}`.trim();
+  const postalCode = String(location?.postalcode ?? "").trim();
+  return [[street, houseNumber].filter(Boolean).join(" "), postalCode].filter(Boolean).join(", ");
+};
+
+export const buildBookingVariables = ({ booking, property, checkIn, location }) => ({
   guestName: booking?.guestname || "",
   propertyName: property?.title || "",
   checkInDate: formatDate(booking?.arrivaldate),
   checkOutDate: formatDate(booking?.departuredate),
+  checkInTime: formatTime(checkIn?.checkInFrom),
+  checkOutTime: formatTime(checkIn?.checkOutTill),
+  propertyAddress: formatAddress(location),
+  propertyCity: String(location?.city ?? "").trim(),
+  numberOfGuests: formatGuestCount(booking?.guests),
 });
 
 const toAutomationDto = (automation) =>

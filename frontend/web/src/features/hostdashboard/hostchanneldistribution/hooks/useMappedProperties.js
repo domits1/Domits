@@ -1,35 +1,63 @@
 import { useEffect, useMemo, useState } from "react";
 import { getMappedProperties } from "../services/channexDistributionService";
 
+export const MAPPED_PROPERTIES_STATE = {
+  IDLE: "idle",
+  LOADING: "loading",
+  LOADED: "loaded",
+  // Channex is not connected or needs a reconnect (HTTP 409): the status card already explains it.
+  UNAVAILABLE: "unavailable",
+  ERROR: "error",
+};
+
+const HTTP_CONFLICT = 409;
+
 const toOption = (listing) => {
   const id = String(listing?.property?.id || "").trim();
   if (!id) return null;
   return { value: id, label: listing?.property?.title || id };
 };
 
-// `enabled: false` makes the hook inert: no request, and no options. The view uses it to keep the
-// picker (and with it the mock listing list) out of the tab while those listings are mock data.
-export function useMappedProperties({ userId, enabled = true } = {}) {
-  const [listings, setListings] = useState([]);
+// `enabled: false` makes the hook inert: no request, no options, state IDLE. The view enables it
+// only once Channex is connected, so a host without a connection triggers no request at all.
+// The request carries no user id: the backend identifies the user from the token.
+export function useMappedProperties({ enabled = true } = {}) {
+  const [result, setResult] = useState({ listings: [], loadState: MAPPED_PROPERTIES_STATE.LOADING });
 
   useEffect(() => {
     if (!enabled) return undefined;
 
     let cancelled = false;
-    getMappedProperties({ userId })
-      .then((result) => {
-        if (!cancelled) setListings(Array.isArray(result) ? result : []);
+    setResult({ listings: [], loadState: MAPPED_PROPERTIES_STATE.LOADING });
+    getMappedProperties()
+      .then((listings) => {
+        if (!cancelled) {
+          setResult({
+            listings: Array.isArray(listings) ? listings : [],
+            loadState: MAPPED_PROPERTIES_STATE.LOADED,
+          });
+        }
       })
       .catch((err) => {
-        // The picker is a convenience: without a list the view shows no picker instead of an error
-        // block, which would be confusing next to the main status error. Logged for debugging only.
-        console.error("Failed to load mapped properties for the Distribution tab:", err);
-        if (!cancelled) setListings([]);
+        if (cancelled) return;
+        if (err?.status === HTTP_CONFLICT) {
+          setResult({ listings: [], loadState: MAPPED_PROPERTIES_STATE.UNAVAILABLE });
+          return;
+        }
+        // The host sees a fixed sentence; the real detail goes to the console.
+        console.error("Failed to load the properties for the Distribution tab:", err);
+        setResult({ listings: [], loadState: MAPPED_PROPERTIES_STATE.ERROR });
       });
     return () => {
       cancelled = true;
     };
-  }, [userId, enabled]);
+  }, [enabled]);
 
-  return useMemo(() => (enabled ? listings.map(toOption).filter(Boolean) : []), [enabled, listings]);
+  return useMemo(
+    () =>
+      enabled
+        ? { options: result.listings.map(toOption).filter(Boolean), loadState: result.loadState }
+        : { options: [], loadState: MAPPED_PROPERTIES_STATE.IDLE },
+    [enabled, result]
+  );
 }

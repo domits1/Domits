@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
-import { Link, useInRouterContext, useLocation } from "react-router-dom";
+import { useInRouterContext, useLocation } from "react-router-dom";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import styles from "../WebsiteTemplatePreview.module.scss";
@@ -15,7 +15,10 @@ import {
   TemplateImageSlotVisual,
   TemplateTopBar,
 } from "./templateSharedSections";
-import PanoramaPageHeader from "./PanoramaPageHeader";
+import PanoramaPageLink from "./PanoramaPageLink";
+import { buildPanoramaContactContent } from "./panoramaContactContent";
+import PanoramaEliteSitePage from "./elite/PanoramaEliteSitePage";
+import { isEliteRestyledPage, resolveEliteHeaderTone } from "./elite/eliteSitePageContent";
 import {
   amenityPropType,
   amenitiesSectionPropType,
@@ -37,13 +40,8 @@ import {
   quoteContextPropType,
 } from "./templatePropTypes";
 import {
-  DEFAULT_WEBSITE_CONTACT_DESCRIPTION,
   DEFAULT_WEBSITE_CONTACT_SECTION_TITLE,
-  DEFAULT_WEBSITE_CONTACT_TITLE,
-  WEBSITE_CONTACT_AVATAR_MODE_CUSTOM,
-  WEBSITE_CONTACT_AVATAR_MODE_HOST,
   resolveWebsiteContactAccentColor,
-  resolveWebsiteContactAvatarMode,
   resolveWebsiteContactBackgroundColor,
   resolveWebsiteContactSectionCopy,
 } from "../../config/websiteContactSectionConfig";
@@ -136,23 +134,6 @@ const handlePanoramaNavItemClick = (href, onAfterNavigate = undefined) => (event
   onAfterNavigate?.();
 };
 
-function PanoramaPageLink({ href, ariaCurrent, onNavigate, children }) {
-  const isInRouter = useInRouterContext();
-  if (!isInRouter) {
-    return (
-      <a href={href} aria-current={ariaCurrent}>
-        {children}
-      </a>
-    );
-  }
-
-  return (
-    <Link to={href} aria-current={ariaCurrent} onClick={onNavigate}>
-      {children}
-    </Link>
-  );
-}
-
 function PanoramaAvailabilityScrollAfterPageChange({ pageKey }) {
   const { hash } = useLocation();
 
@@ -172,13 +153,6 @@ function PanoramaAvailabilityScrollAfterPageChange({ pageKey }) {
 
 PanoramaAvailabilityScrollAfterPageChange.propTypes = {
   pageKey: PropTypes.string.isRequired,
-};
-
-PanoramaPageLink.propTypes = {
-  href: PropTypes.string.isRequired,
-  ariaCurrent: PropTypes.oneOf(["page"]),
-  onNavigate: PropTypes.func,
-  children: PropTypes.node.isRequired,
 };
 
 const renderPanoramaNavItem = (
@@ -596,6 +570,7 @@ const renderPanoramaTopBar = ({
   isNavDrawerOpen,
   onToggleNavDrawer,
   onCloseNavDrawer,
+  eliteHeaderTone,
 }) => {
   const isInteractivePreview = Boolean(onSelectTarget);
 
@@ -606,6 +581,8 @@ const renderPanoramaTopBar = ({
         isTopBarSolid ? styles.panoramaTopBarShellSolid : styles.panoramaTopBarShellTransparent
       } ${
         isInteractivePreview ? styles.panoramaTopBarShellInteractive : styles.panoramaTopBarShellPublic
+      } ${eliteHeaderTone ? styles.panoramaTopBarShellElite : ""} ${
+        eliteHeaderTone === "light" && !isTopBarSolid ? styles.panoramaTopBarShellEliteLight : ""
       }`.trim()}
     >
       <div data-panorama-top-bar-inner="true">
@@ -1202,30 +1179,8 @@ const renderPanoramaContactSection = ({
   activeTargetId,
   shouldDeferContent = false,
 }) => {
-  const resolvedContactSectionCopy = resolveWebsiteContactSectionCopy(model.contactSection);
-  const contactTitle =
-    String(resolvedContactSectionCopy.title || "").trim() || DEFAULT_WEBSITE_CONTACT_SECTION_TITLE;
-  const contactCaption =
-    String(resolvedContactSectionCopy.caption || "").trim() || DEFAULT_WEBSITE_CONTACT_TITLE;
-  const contactDescription =
-    String(model.contactSection?.description || "").trim() || DEFAULT_WEBSITE_CONTACT_DESCRIPTION;
-  const hostName = String(model.host?.name || "").trim() || "Host";
-  const hostInitial = String(model.host?.initial || hostName.charAt(0) || "H")
-    .trim()
-    .charAt(0)
-    .toUpperCase() || "H";
-  const avatarMode = resolveWebsiteContactAvatarMode(
-    model.contactSection?.avatarMode,
-    String(model.contactSection?.avatarImage || "").trim()
-      ? WEBSITE_CONTACT_AVATAR_MODE_CUSTOM
-      : WEBSITE_CONTACT_AVATAR_MODE_HOST
-  );
-  let hostProfileImage = "";
-  if (avatarMode === WEBSITE_CONTACT_AVATAR_MODE_CUSTOM) {
-    hostProfileImage = String(model.contactSection?.avatarImage || "").trim();
-  } else if (avatarMode === WEBSITE_CONTACT_AVATAR_MODE_HOST) {
-    hostProfileImage = String(model.host?.profileImage || "").trim();
-  }
+  const { contactTitle, contactCaption, contactDescription, hostName, hostInitial, hostProfileImage } =
+    buildPanoramaContactContent(model);
   const accentColor = resolveWebsiteContactAccentColor(model.contactSection?.accentColor);
   const backgroundColor = resolveWebsiteContactBackgroundColor(model.contactSection?.backgroundColor);
   const contactSectionStyle = {
@@ -1316,7 +1271,9 @@ export default function PanoramaLandingTemplate({
     [model.sitePages, activePageKey]
   );
   const currentPageKey = pageState?.currentPage.key;
-  const showsPageSection = (section) => !pageState || pageState.sections.includes(section);
+  const elitePageKey = isEliteRestyledPage(currentPageKey) ? currentPageKey : "";
+  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media, elitePageKey) : "";
+  const showsPageSection = (section) => !elitePageKey && (!pageState || pageState.sections.includes(section));
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
   const [galleryBrowserInitialIndex, setGalleryBrowserInitialIndex] = useState(0);
@@ -1407,6 +1364,28 @@ export default function PanoramaLandingTemplate({
     availabilityCalendar
   );
 
+  const renderPageOpening = () =>
+    elitePageKey ? (
+      <PanoramaEliteSitePage
+        pageKey={elitePageKey}
+        pageTitle={pageState.currentPage.navLabel}
+        headerTone={eliteHeaderTone}
+        model={model}
+        viewState={viewState}
+        availabilityHref={
+          viewState.showAvailabilityCalendar
+            ? `${buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY, pageSearch)}${PANORAMA_AVAILABILITY_ANCHOR}`
+            : ""
+        }
+        headerRef={heroSectionRef}
+        onShowAllAmenities={() => setShowAmenitiesModal(true)}
+        onOpenGalleryBrowser={handleOpenGalleryBrowser}
+        canOpenGalleryBrowser={canOpenGalleryBrowser}
+        onSelectTarget={onSelectTarget}
+        activeTargetId={activeTargetId}
+      />
+    ) : null;
+
   return (
     <>
       <article className={`${styles.templateSite} ${styles.templateSitePanorama}`.trim()}>
@@ -1420,6 +1399,7 @@ export default function PanoramaLandingTemplate({
               isNavDrawerOpen,
               onToggleNavDrawer: () => setIsNavDrawerOpen((currentState) => !currentState),
               onCloseNavDrawer: () => setIsNavDrawerOpen(false),
+              eliteHeaderTone,
             })
           : null}
         {showsPageSection("hero") ? (
@@ -1434,12 +1414,7 @@ export default function PanoramaLandingTemplate({
             featuredTrustCards: viewState.featuredTrustCards,
           })
         ) : (
-          <PanoramaPageHeader
-            title={pageState.currentPage.navLabel}
-            siteTitle={model.site.title}
-            headerRef={heroSectionRef}
-            showTopBar={viewState.showTopBar}
-          />
+          renderPageOpening()
         )}
         {showsPageSection("residence")
           ? renderPanoramaResidenceSection({

@@ -18,7 +18,15 @@ const DELIVERY_STATUS_INDICATORS = {
   failed: "!",
 };
 
-const ChatMessage = ({ message, userId, contactName, contactImage, onRetry, isRetrying = false }) => {
+const ChatMessage = ({
+  message,
+  userId,
+  contactName,
+  contactImage,
+  onRetry,
+  onAttachmentError,
+  isRetrying = false,
+}) => {
   const { userId: senderId, text, createdAt, isSent, fileUrls, isAutomated, messageType, deliveryStatus } = message;
 
   const formatTime = (v) => {
@@ -65,6 +73,10 @@ const ChatMessage = ({ message, userId, contactName, contactImage, onRetry, isRe
   const hasText = typeof text === "string" && text.trim().length > 0;
 
   const openImage = (url) => setModalImage(url);
+  const reportAttachmentError = (url) => {
+    if (typeof onAttachmentError !== "function" || url.startsWith("blob:")) return;
+    onAttachmentError(message);
+  };
 
   return (
     <div className={`chat-message-row ${directionClass} ${isAutomatedMessage ? "automated-message" : ""}`}>
@@ -114,7 +126,12 @@ const ChatMessage = ({ message, userId, contactName, contactImage, onRetry, isRe
                   aria-label="Open attachment"
                   style={{ background: "transparent", border: 0, padding: 0, cursor: "pointer" }}
                 >
-                  <img src={fileUrl} alt="Attachment" className="message-image" />
+                  <img
+                    src={fileUrl}
+                    alt="Attachment"
+                    className="message-image"
+                    onError={() => reportAttachmentError(fileUrl)}
+                  />
                 </button>
               );
             })}
@@ -160,6 +177,7 @@ ChatMessage.propTypes = {
   contactName: PropTypes.string,
   contactImage: PropTypes.string,
   onRetry: PropTypes.func,
+  onAttachmentError: PropTypes.func,
   isRetrying: PropTypes.bool,
   message: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
