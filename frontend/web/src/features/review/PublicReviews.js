@@ -98,7 +98,7 @@ const PropertyReviews = ({ propertyId }) => {
       <button type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button>
     </div>}
     {data && <>
-    <p className={styles.matchCount} aria-live="polite">{data.matching_count} matching reviews</p>
+    <p className={styles.matchCount} aria-live="polite">{data.matching_count}Matching reviews</p>
     {data.matching_count === 0 && <p className={styles.empty}>No reviews match your selected filters.</p>}
     <ReviewsSection overallRating={data.overall_score} totalReviews={data.review_count}
       reviews={data.reviews.map((review) => ({ ...review,
