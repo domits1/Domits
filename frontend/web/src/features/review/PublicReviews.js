@@ -37,6 +37,10 @@ const PropertyReviews = ({ propertyId }) => {
     apply(next);
   };
   const sortLabels = { recent: "Most recent", highest: "Highest rating", lowest: "Lowest rating" };
+  const rangeError = draft.minRating && draft.maxRating && Number(draft.minRating) > Number(draft.maxRating)
+    ? "Minimum rating must not exceed maximum rating."
+    : draft.startDate && draft.endDate && draft.startDate > draft.endDate
+      ? "From date must be on or before To date." : "";
   const { data } = state;
   return <section id="listing-reviews" className="listing-section-block">
     <div className={styles.filters}>
@@ -54,7 +58,7 @@ const PropertyReviews = ({ propertyId }) => {
       </div>
       <div id="review-filter-controls" hidden={!expanded}>
         <form className={styles.controls} aria-labelledby="review-filter-title"
-          onSubmit={(event) => { event.preventDefault(); apply(draft); }}>
+          onSubmit={(event) => { event.preventDefault(); if (!rangeError) apply(draft); }}>
           {["minRating", "maxRating"].map((key) => <label key={key}>
             {key === "minRating" ? "Minimum rating" : "Maximum rating"}
             <select value={draft[key]} onChange={(event) => change(key, event.target.value)}>
@@ -62,16 +66,17 @@ const PropertyReviews = ({ propertyId }) => {
               {[1, 2, 3, 4, 5].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
             </select>
           </label>)}
-          <label>From date<input type="date" value={draft.startDate}
+          <label>From date<input type="date" value={draft.startDate} max={draft.endDate || undefined}
             onChange={(event) => change("startDate", event.target.value)} /></label>
-          <label>To date<input type="date" value={draft.endDate}
+          <label>To date<input type="date" value={draft.endDate} min={draft.startDate || undefined}
             onChange={(event) => change("endDate", event.target.value)} /></label>
           <label>Sort reviews<select value={draft.sort} onChange={(event) => change("sort", event.target.value)}>
             {Object.entries(sortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select></label>
           <button className={styles.clear} type="button" onClick={clear}>Clear filters</button>
-          <button className={styles.apply} type="submit">Apply filters</button>
+          <button className={styles.apply} type="submit" disabled={Boolean(rangeError)} aria-describedby={rangeError ? "review-filter-error" : undefined}>Apply filters</button>
         </form>
+        {rangeError && <p id="review-filter-error" className={styles.validation} role="alert">{rangeError}</p>}
         <div className={styles.active} aria-label="Active filters">
           <strong>Active filters:</strong>
           {(filters.minRating || filters.maxRating) && <button type="button" className={styles.chip}
@@ -88,13 +93,13 @@ const PropertyReviews = ({ propertyId }) => {
         </div>
       </div>
     </div>
-    {state.loading && <p role="status">Loading guest reviews…</p>}
+    {state.loading && <output className={styles.loading}>Loading guest reviews…</output>}
     {state.error && <div role="alert">{state.error}
       <button type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button>
     </div>}
     {data && <>
-    <p className={styles.matchCount} aria-live="polite">{data.review_count} matching reviews</p>
-    {data.review_count === 0 && <p className={styles.empty}>No reviews match your selected filters.</p>}
+    <p className={styles.matchCount} aria-live="polite">{data.matching_count} matching reviews</p>
+    {data.matching_count === 0 && <p className={styles.empty}>No reviews match your selected filters.</p>}
     <ReviewsSection overallRating={data.overall_score} totalReviews={data.review_count}
       reviews={data.reviews.map((review) => ({ ...review,
         timeAgo: new Date(review.date).toLocaleDateString() }))} emptyMessage="" />
@@ -105,7 +110,6 @@ const PropertyReviews = ({ propertyId }) => {
     </>}
   </section>;
 };
-// Remount when the selected property changes so its filters and page cannot carry over.
 const PublicReviews = ({ propertyId }) => <PropertyReviews key={propertyId} propertyId={propertyId} />;
 PropertyReviews.propTypes = { propertyId: PropTypes.string.isRequired };
 PublicReviews.propTypes = { propertyId: PropTypes.string.isRequired };
