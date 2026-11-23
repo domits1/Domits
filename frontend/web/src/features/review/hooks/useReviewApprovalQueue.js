@@ -20,6 +20,7 @@ export default function useReviewApprovalQueue(scope) {
   const inFlight = useRef(new Set());
 
   useEffect(() => {
+    if (!scope) return;
     let mounted = true;
     setQueueState(QUEUE_STATE.LOADING);
 

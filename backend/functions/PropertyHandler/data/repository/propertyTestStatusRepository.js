@@ -7,8 +7,8 @@ export class PropertyTestStatusRepository {
     this.systemManager = systemManager;
   }
 
-  async getPropertyTestStatusByPropertyId(id) {
-    const client = await Database.getInstance();
+  async getPropertyTestStatusByPropertyId(id, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
     const result = await client
       .getRepository(Property_Test_Status)
       .createQueryBuilder("property_test_status")
@@ -17,8 +17,8 @@ export class PropertyTestStatusRepository {
     return result ? PropertyTestStatusMapping.mapDatabaseEntryToPropertyTestStatus(result) : null;
   }
 
-  async create(testStatus) {
-    const client = await Database.getInstance();
+  async create(testStatus, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
     await client
       .createQueryBuilder()
       .insert()
@@ -28,7 +28,7 @@ export class PropertyTestStatusRepository {
         istest: testStatus.isTest,
       })
       .execute();
-    const result = await this.getPropertyTestStatusByPropertyId(testStatus.property_id);
+    const result = await this.getPropertyTestStatusByPropertyId(testStatus.property_id, transactionManager);
     return result ? result : null;
   }
 }

@@ -1,4 +1,45 @@
 import { renderTemplate, validateTemplate } from "../renderer/templateRenderer.js";
+import { APPROVED_VARIABLES, SAFE_PREVIEW_VALUES } from "../util/constants.js";
+
+const NEW_VARIABLES = ["checkInTime", "checkOutTime", "propertyAddress", "propertyCity", "numberOfGuests"];
+
+describe("AutomatedMessaging approved variables", () => {
+  test("are the four original ones plus the five new ones", () => {
+    expect([...APPROVED_VARIABLES]).toEqual([
+      "guestName",
+      "propertyName",
+      "checkInDate",
+      "checkOutDate",
+      ...NEW_VARIABLES,
+    ]);
+  });
+
+  test.each(NEW_VARIABLES)("accepts {{%s}}, also with whitespace around it", (variable) => {
+    expect(validateTemplate(`Hello {{${variable}}} and {{ ${variable} }}`).variables).toEqual([variable]);
+  });
+
+  test("has a preview value for every approved variable", () => {
+    expect(Object.keys(SAFE_PREVIEW_VALUES).sort()).toEqual([...APPROVED_VARIABLES].sort());
+    for (const variable of APPROVED_VARIABLES) {
+      expect(String(SAFE_PREVIEW_VALUES[variable]).trim()).not.toBe("");
+    }
+  });
+
+  test("renders a template that uses every approved variable", () => {
+    const template = APPROVED_VARIABLES.map((variable) => `{{${variable}}}`).join("|");
+
+    const { renderedContent, missingVariables } = renderTemplate(template, SAFE_PREVIEW_VALUES);
+
+    expect(missingVariables).toEqual([]);
+    expect(renderedContent).toBe(APPROVED_VARIABLES.map((variable) => SAFE_PREVIEW_VALUES[variable]).join("|"));
+  });
+
+  test("still rejects a variable that is not approved", () => {
+    expect(() => validateTemplate("Hi {{checkInTime}} {{wifiPassword}}")).toThrow(
+      expect.objectContaining({ details: expect.objectContaining({ unknownVariables: ["wifiPassword"] }) })
+    );
+  });
+});
 
 describe("AutomatedMessaging template renderer", () => {
   test("preview and delivery use the same renderer result", () => {

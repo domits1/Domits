@@ -1,11 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import styles from "./eliteSitePage.module.scss";
-import { TemplateImageSlotVisual } from "../templateSharedSections";
+import { getInteractiveTargetProps, TemplateImageSlotVisual } from "../templateSharedSections";
 
 export default function ElitePageHeader({
   title,
   eyebrow,
+  intro = "",
   tone,
   model,
   headerRef,
@@ -38,6 +39,17 @@ export default function ElitePageHeader({
           {eyebrow ? <p className={styles.eliteEyebrow}>{eyebrow}</p> : null}
           <h1 className={styles.eliteHeaderTitle}>{title}</h1>
         </div>
+        {intro ? (
+          <p
+            {...getInteractiveTargetProps(
+              styles.eliteHeaderIntro,
+              onSelectTarget,
+              { sectionId: "gallery", targetId: "gallery.description" },
+              activeTargetId
+            )}>
+            {intro}
+          </p>
+        ) : null}
       </div>
     </header>
   );
@@ -46,6 +58,7 @@ export default function ElitePageHeader({
 ElitePageHeader.propTypes = {
   title: PropTypes.string.isRequired,
   eyebrow: PropTypes.string.isRequired,
+  intro: PropTypes.string,
   tone: PropTypes.oneOf(["photo", "light"]).isRequired,
   model: PropTypes.shape({ media: PropTypes.object.isRequired }).isRequired,
   headerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]).isRequired,

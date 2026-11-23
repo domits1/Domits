@@ -177,10 +177,15 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
   gap: 28px;
 }
 
-.eliteDescriptionText {
+.eliteDescriptionText,
+.eliteDescriptionMore {
   display: flex;
   flex-direction: column;
   gap: 28px;
+}
+
+.eliteDescriptionMore[hidden] {
+  display: none;
 }
 
 .eliteDescriptionLead {
@@ -202,6 +207,9 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
 
 .eliteTextButton {
   align-self: flex-start;
+  max-width: 100%;
+  text-align: left;
+  overflow-wrap: anywhere;
   padding: 0 0 2px;
   border: 0;
   border-bottom: 1px solid $accent;
@@ -275,6 +283,34 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
   text-align: center;
 }
 
+.elitePhotos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.elitePhotos .elitePhotoFrame {
+  grid-column: span 2;
+  height: 460px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.elitePhotos .elitePhotoFrame + .elitePhotoFrame {
+  grid-column: span 1;
+}
+
+.elitePhotos[data-photo-count="1"] .elitePhotoFrame {
+  grid-column: 1 / -1;
+}
+
+.elitePhotos .elitePhoto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .eliteHighlights {
   display: flex;
   flex-wrap: wrap;
@@ -312,6 +348,39 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
   overflow-wrap: anywhere;
 }
 
+.eliteRules {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-bottom: 104px;
+}
+
+.eliteRulesList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.eliteRuleCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid $card-rule;
+  border-radius: 14px;
+  background: $paper;
+  overflow-wrap: anywhere;
+}
+
+.eliteRuleIcon {
+  flex: none;
+  color: $accent;
+}
+
 .eliteFooter {
   padding: 40px 0;
   background: $ink;
@@ -332,6 +401,156 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
   font-family: fonts.$elite-serif-stack;
   font-size: 22px;
   color: $ivory;
+}
+
+.eliteHeaderIntro {
+  flex: 0 1 380px;
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: $body-ink;
+  overflow-wrap: anywhere;
+}
+
+.eliteGallery {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 32px;
+}
+
+.eliteGalleryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 300px;
+  gap: 16px;
+}
+
+.eliteGalleryGrid .eliteGalleryFrame {
+  min-height: 0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.eliteGalleryGrid .eliteGalleryImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eliteGalleryGrid[data-gallery-layout="mosaic"] .eliteGalleryFrame:first-child,
+.eliteGalleryGrid[data-gallery-layout="trio"] .eliteGalleryFrame:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.eliteGalleryGrid[data-gallery-layout="pair"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 460px;
+}
+
+.eliteGalleryGrid[data-gallery-layout="single"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 560px;
+}
+
+.eliteContact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 64px;
+  padding-top: 72px;
+  padding-bottom: 32px;
+}
+
+.eliteContactCopy {
+  flex: 999 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.eliteContactCopy .eliteEyebrow {
+  margin: 0;
+}
+
+.eliteContactText {
+  margin: 0;
+  max-width: 620px;
+  font-size: 17px;
+  line-height: 1.75;
+  color: $body-ink;
+  overflow-wrap: anywhere;
+}
+
+.eliteHostCard {
+  flex: 1 1 300px;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 28px;
+  border: 1px solid $card-rule;
+  border-radius: 18px;
+  background: $paper;
+}
+
+.eliteHostAvatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: $ivory;
+  font-family: fonts.$elite-serif-stack;
+  font-size: 30px;
+  color: $accent;
+}
+
+.eliteHostAvatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eliteHostCopy {
+  min-width: 0;
+}
+
+.eliteHostLabel {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: $muted;
+}
+
+.eliteHostName {
+  margin: 4px 0 0;
+  font-family: fonts.$elite-serif-stack;
+  font-size: 28px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.eliteClosing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 72px;
+  padding-bottom: 104px;
+}
+
+.eliteClosingHeading {
+  flex: 0 1 560px;
 }
 
 @media (max-width: 720px) {
@@ -373,6 +592,16 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
     padding: 24px;
   }
 
+  .elitePhotos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .elitePhotos .elitePhotoFrame,
+  .elitePhotos .elitePhotoFrame + .elitePhotoFrame {
+    grid-column: auto;
+    height: 280px;
+  }
+
   .eliteHighlights {
     gap: 32px;
     padding-top: 64px;
@@ -381,5 +610,30 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
 
   .eliteHighlightsList {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .eliteRules {
+    padding-bottom: 72px;
+  }
+
+  .eliteGalleryGrid,
+  .eliteGalleryGrid[data-gallery-layout] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 260px;
+  }
+
+  .eliteGalleryGrid[data-gallery-layout] .eliteGalleryFrame:first-child {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .eliteContact {
+    gap: 32px;
+    padding-top: 48px;
+  }
+
+  .eliteClosing {
+    padding-top: 56px;
+    padding-bottom: 72px;
   }
 }
