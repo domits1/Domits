@@ -1,6 +1,6 @@
 # feat(distribution): turn a platform channel off from its card switch (#506)
 
-Pull request: not opened yet (stacked on #3984, which is stacked on #3982, which is stacked on #3978)
+Pull request: #4007 (stacked on #3984, #3982 and #3978)
 Issue: #506
 Reviewed commits: `6b8275fc0`, `9507ff2f6`, `f97f7efe9`, `2eeca0319`, `40bfc5740`, `72290fa97`, `5d10cf895`
 Result: no blocking findings open
