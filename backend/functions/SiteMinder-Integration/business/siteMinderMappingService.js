@@ -1,5 +1,6 @@
 import { groupByRoomType, mapRoomRates } from "../util/roomRates.js";
 import { SITEMINDER_CHANNEL } from "../util/siteMinderConfig.js";
+import { MappingConflictError } from "../.shared/integrations/repositories/integrationPropertyRepository.js";
 
 const ACTIVE = "ACTIVE";
 const INACTIVE = "INACTIVE";
@@ -50,7 +51,7 @@ export class SiteMinderMappingService {
     }
 
     const base = { integrationAccountId: account.id, domitsPropertyId: propertyId, externalPropertyId: hotel };
-    await this.props.upsert({ ...base, status: ACTIVE });
+    await this.#linkProperty(base);
     await this.roomTypes.upsert({ ...base, externalRoomTypeId: room.roomTypeCode, externalRoomTypeName: room.roomTypeName, status: ACTIVE });
     for (const plan of room.ratePlans) {
       await this.ratePlans.upsert({
@@ -103,6 +104,20 @@ export class SiteMinderMappingService {
       createdAt: now,
       updatedAt: now,
     });
+  }
+
+  // The shared repository refuses a listing that is already linked to another hotel (#506, design
+  // note D2); SiteMinder has no flow to move a listing, so the refusal stays, with a SiteMinder code.
+  async #linkProperty(base) {
+    try {
+      await this.props.upsert({ ...base, status: ACTIVE });
+    } catch (error) {
+      if (!(error instanceof MappingConflictError)) throw error;
+      throw new SiteMinderMappingError(
+        "SITEMINDER_PROPERTY_ALREADY_MAPPED",
+        `Domits property ${base.domitsPropertyId} is already linked to SiteMinder hotel ${error.existingExternalPropertyId}`
+      );
+    }
   }
 
   async #checkHotelIsFree(hotelCode, accountId) {

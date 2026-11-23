@@ -72,8 +72,8 @@ export class ReviewService {
       || !Number.isSafeInteger(Number(offset)) || Number(offset) > 100000) {
       throw new BadRequestException("Invalid review page offset.");
     }
-    const allowed = new Set(["minRating", "maxRating", "startDate", "endDate", "sort", "cursor"]);
-    if (Object.keys(filters).some((key) => !allowed.has(key))) {
+    const allowed = ["minRating", "maxRating", "startDate", "endDate", "sort", "cursor"];
+    if (Object.keys(filters).some((key) => !allowed.includes(key))) {
       throw new BadRequestException("Unsupported review filter.");
     }
     const rating = (value, fallback) => {
