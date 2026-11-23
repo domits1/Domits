@@ -9,6 +9,10 @@ export const accommodationData = {
   accommodation: {
     types: ["Villa", "House", "Apartment", "Boat", "Camper", "Cottage"],
     visibleTypes: ["Villa", "House", "Apartment"],
+    labels: {
+      House: "Home",
+      Apartment: "Residence",
+    },
     icons: {
       Villa,
       House,

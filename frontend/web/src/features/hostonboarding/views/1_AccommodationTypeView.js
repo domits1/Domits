@@ -29,6 +29,7 @@ export default function AccommodationTypeView() {
         <AccommodationTypeSelector
           options={accommodationData.accommodation.visibleTypes}
           icons={accommodationData.accommodation.icons}
+          labels={accommodationData.accommodation.labels}
           selectedType={selectedAccommodationType}
           onSelectType={setAccommodationType}
         />
