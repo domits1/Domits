@@ -8,7 +8,7 @@ import { ConflictException } from "../../util/exception/conflictException.js";
 import { ForbiddenException } from "../../util/exception/forbiddenException.js";
 import { NotFoundException } from "../../util/exception/notFoundException.js";
 import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
-import { assertCaller, assertEligibleBooking, assertId, GUEST_REVIEW_TYPES, INVALID_TEXT_CONTROLS, isPublished, requireReview } from "../model/reviewRules.js";
+import { assertCaller, assertEligibleBooking, assertId, GUEST_REVIEW_TYPES, INVALID_TEXT_CONTROLS, isPublished, requireReview, RESERVATION_REVIEW_TYPE } from "../model/reviewRules.js";
 import { DomitsAdminReviewService } from "./domitsAdminReviewService.js";
 import { HostReviewService } from "./hostReviewService.js";
 
@@ -660,13 +660,13 @@ export class ReviewService {
           ...duplicateKey,
           property_id: booking.property_id,
           host_id: booking.hostid,
-          reviewee_user_id: booking.hostid,
+          reviewee_user_id: reviewType === RESERVATION_REVIEW_TYPE ? null : booking.hostid,
           overall_rating: reviewData.overall_rating,
           title: reviewData.title.trim(),
           public_review: publicReview,
           private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
           domits_private_feedback: domitsPrivateFeedback,
-          verification_status: reviewType === "GUEST_TO_HOST" ? "VERIFIED_STAY" : "UNVERIFIED",
+          verification_status: reviewType === GUEST_REVIEW_TYPE ? "UNVERIFIED" : "VERIFIED_STAY",
           publication_status: "UNPUBLISHED",
           status: "DRAFT",
           created_at: now,

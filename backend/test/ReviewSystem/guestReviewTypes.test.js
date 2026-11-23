@@ -2,11 +2,17 @@ jest.mock("../../functions/ReviewSystem/data/reviewRepository.js", () => ({ Revi
 import { ReviewService } from "../../functions/ReviewSystem/business/service/reviewService.js";
 import { SeedHostReviewCategories20261123 } from "../../ORM/migrations/20261123_seed_host_review_categories.js";
 
-describe("Guest to host reviews", () => {
+const categoriesByType = {
+  GUEST_TO_PROPERTY: { cleanliness: 4 },
+  GUEST_TO_HOST: { communication: 5, responsiveness: 4, hospitality: 5 },
+  GUEST_TO_RESERVATION: { booking_experience: 5, reservation_communication: 4, booking_accuracy: 5 },
+};
+
+describe.each(["GUEST_TO_HOST", "GUEST_TO_RESERVATION"])("%s reviews", (reviewType) => {
   const now = 1800000000000;
-  const payload = { booking_id: "booking", review_type: "GUEST_TO_HOST", overall_rating: 5,
-    title: "Welcoming host", public_review: "Excellent communication.",
-    category_ratings: { communication: 5, responsiveness: 4, hospitality: 5 } };
+  const payload = { booking_id: "booking", review_type: reviewType, overall_rating: 5,
+    title: "Helpful communication", public_review: "I received timely updates.",
+    category_ratings: categoriesByType[reviewType] };
   let booking, repository, service, records;
   beforeEach(() => {
     booking = { id: "booking", guestid: "guest", hostid: "host", property_id: "property",
@@ -16,8 +22,7 @@ describe("Guest to host reviews", () => {
       findBookingById: jest.fn(async () => booking),
       findReviewByBookingTypeAndReviewer: jest.fn(async (key) => records.find((record) =>
         Object.entries(key).every(([field, value]) => record[field] === value))),
-      findActiveCategoryKeys: jest.fn(async (type) => new Set(type === "GUEST_TO_HOST"
-        ? ["communication", "responsiveness", "hospitality"] : ["cleanliness"])),
+      findActiveCategoryKeys: jest.fn(async (type) => new Set(Object.keys(categoriesByType[type]))),
       create: jest.fn(async (record) => { records.push(record); return record; }),
       findById: jest.fn(async (id) => records.find((record) => record.id === id)),
       publishDraft: jest.fn(async (options) => {
@@ -37,9 +42,10 @@ describe("Guest to host reviews", () => {
   it("uses authenticated and booking identities, configured ratings and existing states", async () => {
     const result = await service.createReview("guest", { ...payload, reviewer_user_id: "spoof",
       host_id: "spoof", reviewee_user_id: "spoof", property_id: "spoof" });
-    expect(result).toMatchObject({ reviewer_user_id: "guest", host_id: "host", reviewee_user_id: "host",
-      property_id: "property", verification_status: "VERIFIED_STAY", status: "DRAFT", publication_status: "UNPUBLISHED" });
-    expect(repository.findActiveCategoryKeys).toHaveBeenCalledWith("GUEST_TO_HOST");
+    expect(result).toMatchObject({ reviewer_user_id: "guest", host_id: "host", reviewee_user_id: reviewType === "GUEST_TO_HOST" ? "host" : null,
+      booking_id: "booking", property_id: "property", review_type: reviewType,
+      overall_rating: 5, title: payload.title, public_review: payload.public_review, verification_status: "VERIFIED_STAY", status: "DRAFT", publication_status: "UNPUBLISHED" });
+    expect(repository.findActiveCategoryKeys).toHaveBeenCalledWith(reviewType);
     expect(repository.create).toHaveBeenCalledWith(result, payload.category_ratings);
     await expect(service.publishReview("guest", result.id)).resolves.toMatchObject({ status: "PENDING_APPROVAL" });
   });
@@ -62,7 +68,8 @@ describe("Guest to host reviews", () => {
   });
 
   it.each([
-    ["GUEST_TO_HOST", { cleanliness: 5 }], ["GUEST_TO_PROPERTY", { hospitality: 5 }],
+    [reviewType, { cleanliness: 5 }], ["GUEST_TO_PROPERTY", categoriesByType[reviewType]],
+    [reviewType, categoriesByType[reviewType === "GUEST_TO_HOST" ? "GUEST_TO_RESERVATION" : "GUEST_TO_HOST"]],
   ])("rejects categories belonging to another type: %s", async (review_type, category_ratings) => {
     await expect(service.createReview("guest", { ...payload, review_type, category_ratings }))
       .rejects.toMatchObject({ statusCode: 400 });
@@ -84,12 +91,14 @@ describe("Guest to host reviews", () => {
     await expect(service.createReview("", payload)).rejects.toMatchObject({ statusCode: 401 });
   });
 
-  it.each([false, true])("allows both types in either order, but prevents a second host review (%s)", async (hostFirst) => {
-    const property = { ...payload, review_type: "GUEST_TO_PROPERTY", category_ratings: {} };
-    for (const item of hostFirst ? [payload, property] : [property, payload]) await service.createReview("guest", item);
-    expect(records.map((record) => record.review_type).sort()).toEqual(["GUEST_TO_HOST", "GUEST_TO_PROPERTY"]);
+  it("allows all three types on one booking and rejects a duplicate of the submitted type", async () => {
+    await service.createReview("guest", payload);
+    for (const [type, ratings] of Object.entries(categoriesByType)) {
+      if (type === reviewType) continue;
+      await service.createReview("guest", { ...payload, review_type: type, category_ratings: ratings });
+    }
     await expect(service.createReview("guest", payload)).rejects.toMatchObject({ statusCode: 409 });
-    expect(records).toHaveLength(2);
+    expect(records.map((record) => record.review_type).sort()).toEqual(Object.keys(categoriesByType).sort());
   });
   it("translates a concurrent duplicate database error", async () => {
     repository.create.mockRejectedValue({ driverError: { code: "23505", constraint: "review_booking_type_reviewer_unique" } });
@@ -114,6 +123,9 @@ describe("Guest to host reviews", () => {
       expect(repository.publishDraft).not.toHaveBeenCalled();
     });
 
+});
+
+describe("Host review category configuration", () => {
   it("seeds the three categories for both schemas through configuration only", async () => {
     const queryRunner = { query: jest.fn() };
     await new SeedHostReviewCategories20261123().up(queryRunner);

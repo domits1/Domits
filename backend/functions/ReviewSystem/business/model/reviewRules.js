@@ -5,7 +5,8 @@ import { ConflictException } from "../../util/exception/conflictException.js";
 import { UnauthorizedException } from "../../util/exception/unauthorizedException.js";
 
 export const isPublished = (review) => review.status === "PUBLISHED" && review.publication_status === "PUBLISHED";
-export const GUEST_REVIEW_TYPES = ["GUEST_TO_PROPERTY", "GUEST_TO_HOST"];
+export const RESERVATION_REVIEW_TYPE = "GUEST_TO_RESERVATION";
+export const GUEST_REVIEW_TYPES = ["GUEST_TO_PROPERTY", "GUEST_TO_HOST", RESERVATION_REVIEW_TYPE];
 
 // Validate that a reservation can legally receive a guest review.
 // This prevents invalid submissions and preserves the guest-only review authorization rules.
