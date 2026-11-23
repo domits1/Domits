@@ -1,6 +1,6 @@
 # feat(channex): claim a listing before provisioning (#506)
 
-Pull request: not opened yet
+Pull request: #4013
 Issue: #506
 Reviewed commits: 9d448ab7b (design note), 4cea3a6f8 (refuse rule), a321109b7 (409 and SiteMinder code), b054fed1d (migration)
 Result: no blocking findings; 2 P2 points fixed before their commit, the rest accepted
