@@ -257,6 +257,48 @@ const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody, reque
   }
 };
 
+// Creates one Channex object (design note D2, #506). A 4xx is a known refusal: nothing was created.
+// A timeout, a 5xx, a network error or a success without an id may still have created it in Channex,
+// so those report outcomeUnknown and the caller must look before it creates again.
+const CREATE_REQUEST_TIMEOUT_MS = 8000;
+
+const createChannexObject = async ({ credentials, endpointPath, requestBody, requestTimeoutMs = CREATE_REQUEST_TIMEOUT_MS }) => {
+  const apiKey = requireStr(credentials?.apiKey);
+  if (!apiKey) {
+    return { success: false, outcomeUnknown: false, errorCode: "MISSING_API_KEY", errorMessage: "Channex credentials must include apiKey." };
+  }
+
+  let response;
+  let parsed;
+  try {
+    ({ response, parsed } = await postChannexPushRequest({ apiKey, endpointPath, requestBody, requestTimeoutMs }));
+  } catch (error) {
+    const timedOut = error?.code === "CHANNEX_PUSH_REQUEST_TIMEOUT";
+    return {
+      success: false,
+      outcomeUnknown: true,
+      errorCode: timedOut ? "CHANNEX_CREATE_TIMEOUT" : error?.code || "CHANNEX_CREATE_REQUEST_FAILED",
+      errorMessage: error?.message || "Channex create request failed.",
+    };
+  }
+
+  if (!response.ok) {
+    return {
+      success: false,
+      outcomeUnknown: response.status >= 500,
+      errorCode: parsed?.errors?.code || `CHANNEX_CREATE_${response.status}`,
+      errorMessage: parsed?.errors?.title || `Channex create failed with status ${response.status}.`,
+      validationDetails: parsed?.errors?.details ?? null,
+    };
+  }
+
+  const externalId = requireStr(parsed?.data?.id);
+  if (!externalId) {
+    return { success: false, outcomeUnknown: true, errorCode: "CHANNEX_CREATE_INVALID_RESPONSE", errorMessage: "Channex create response had no id." };
+  }
+  return { success: true, externalId, outcomeUnknown: false };
+};
+
 const pushGroupedPayloads = async ({
   apiKey,
   groups,
@@ -722,6 +764,18 @@ export default class ChannexProviderClient {
         errorMessage: error?.message || "Channex rate plan list request failed.",
       };
     }
+  }
+
+  async createProperty(credentials, body, { requestTimeoutMs } = {}) {
+    return createChannexObject({ credentials, endpointPath: "/api/v1/properties", requestBody: body, requestTimeoutMs });
+  }
+
+  async createRoomType(credentials, body, { requestTimeoutMs } = {}) {
+    return createChannexObject({ credentials, endpointPath: "/api/v1/room_types", requestBody: body, requestTimeoutMs });
+  }
+
+  async createRatePlan(credentials, body, { requestTimeoutMs } = {}) {
+    return createChannexObject({ credentials, endpointPath: "/api/v1/rate_plans", requestBody: body, requestTimeoutMs });
   }
 
   async pushAvailability(credentials, groupedAvailabilityPayloads, options = {}) {
