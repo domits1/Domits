@@ -88,8 +88,8 @@ export class ReviewRepository {
     return this.#hostReviews.softDeleteResponse(changes);
   }
 
-  async getPublicReviewPage(propertyId, offset) {
-    return this.#publicReviews.getPublicReviewPage(propertyId, offset);
+  async getPublicReviewPage(propertyId, offset, filters) {
+    return this.#publicReviews.getPublicReviewPage(propertyId, offset, filters);
   }
 
   async findReviews(where) {
