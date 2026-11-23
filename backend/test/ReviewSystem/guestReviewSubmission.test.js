@@ -3,16 +3,24 @@ import { ReviewRepository } from "../../functions/ReviewSystem/data/reviewReposi
 import { handler } from "../../functions/ReviewSystem/index.js";
 
 // Exercise the real route, authorization, controller and service; stub only persistence.
-describe("POST /reviews host submission", () => {
+const categories = {
+  GUEST_TO_PROPERTY: { cleanliness: 4 },
+  GUEST_TO_HOST: { communication: 5, responsiveness: 4, hospitality: 5 },
+  GUEST_TO_RESERVATION: { booking_experience: 5, reservation_communication: 4, booking_accuracy: 5 },
+};
+
+const repository = {
+  findBookingById: jest.fn(), findReviewByBookingTypeAndReviewer: jest.fn(),
+  findActiveCategoryKeys: jest.fn(), create: jest.fn(), publishDraft: jest.fn(),
+};
+beforeAll(() => ReviewRepository.mockImplementation(() => repository));
+
+describe.each(["GUEST_TO_HOST", "GUEST_TO_RESERVATION"])("POST /reviews %s submission", (reviewType) => {
   const now = Date.parse("2026-11-23T12:00:00Z");
-  const payload = { booking_id: "booking", review_type: "GUEST_TO_HOST", overall_rating: 5,
-    title: " Welcoming host ", public_review: " Helpful and responsive. ",
-    category_ratings: { communication: 5, responsiveness: 4, hospitality: 5 } };
+  const payload = { booking_id: "booking", review_type: reviewType, overall_rating: 5,
+    title: " Clear communication ", public_review: " I received timely updates. ",
+    category_ratings: categories[reviewType] };
   let booking, records;
-  const repository = {
-    findBookingById: jest.fn(), findReviewByBookingTypeAndReviewer: jest.fn(),
-    findActiveCategoryKeys: jest.fn(), create: jest.fn(), publishDraft: jest.fn(),
-  };
   const event = (body = payload, guest = "guest") => ({
     resource: "/reviews", httpMethod: "POST", body: JSON.stringify(body),
     requestContext: { authorizer: { claims: { sub: guest } } },
@@ -21,7 +29,6 @@ describe("POST /reviews host submission", () => {
     const response = await handler(event(body, guest));
     return { status: response.statusCode, body: JSON.parse(response.body) };
   };
-  beforeAll(() => ReviewRepository.mockImplementation(() => repository));
   beforeEach(() => {
     jest.spyOn(Date, "now").mockReturnValue(now);
     records = [];
@@ -30,23 +37,24 @@ describe("POST /reviews host submission", () => {
     repository.findBookingById.mockImplementation(async () => booking);
     repository.findReviewByBookingTypeAndReviewer.mockImplementation(async (key) =>
       records.find(record => Object.entries(key).every(([field, value]) => record[field] === value)));
-    repository.findActiveCategoryKeys.mockImplementation(async type => new Set(type === "GUEST_TO_HOST"
-      ? ["communication", "responsiveness", "hospitality"] : ["cleanliness"]));
+    repository.findActiveCategoryKeys.mockImplementation(async type => new Set(Object.keys(categories[type])));
     repository.create.mockImplementation(async record => { records.push(record); return record; });
     jest.clearAllMocks();
   });
   afterEach(() => jest.restoreAllMocks());
 
-  it("accepts a host review through the existing endpoint as an unpublished draft", async () => {
+  it("accepts the review through the existing endpoint as an unpublished draft", async () => {
     const result = await submit({ ...payload, reviewer_user_id: "unrelated-guest", host_id: "unrelated-host",
       reviewee_user_id: "unrelated-host", property_id: "unrelated-property",
       status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "UNVERIFIED" });
     expect(result).toMatchObject({ status: 201, body: {
-      booking_id: "booking", review_type: "GUEST_TO_HOST", reviewer_user_id: "guest",
-      host_id: "host", reviewee_user_id: "host", property_id: "property", overall_rating: 5,
-      title: "Welcoming host", public_review: "Helpful and responsive.",
+      booking_id: "booking", review_type: reviewType, reviewer_user_id: "guest",
+      host_id: "host", reviewee_user_id: reviewType === "GUEST_TO_HOST" ? "host" : null, property_id: "property", overall_rating: 5,
+      title: "Clear communication", public_review: "I received timely updates.",
       verification_status: "VERIFIED_STAY", status: "DRAFT", publication_status: "UNPUBLISHED",
     } });
+    expect(repository.findBookingById).toHaveBeenCalledWith("booking");
+    expect(repository.findActiveCategoryKeys).toHaveBeenCalledWith(reviewType);
     expect(repository.create).toHaveBeenCalledWith(expect.objectContaining(result.body), payload.category_ratings);
     expect(repository.publishDraft).not.toHaveBeenCalled();
   });
@@ -74,8 +82,11 @@ describe("POST /reviews host submission", () => {
     { overall_rating: 0 }, { overall_rating: 6 }, { overall_rating: 2.5 },
     { title: " " }, { title: "x".repeat(121) },
     { public_review: " " }, { public_review: "x".repeat(501) }, { public_review: "bad\u0000text" },
-    { category_ratings: { communication: 0 } }, { category_ratings: { hospitality: 6 } },
-    { category_ratings: { responsiveness: "5" } }, { category_ratings: { cleanliness: 5 } },
+    { category_ratings: { [Object.keys(payload.category_ratings)[0]]: 0 } },
+    { category_ratings: { [Object.keys(payload.category_ratings)[0]]: 6 } },
+    { category_ratings: { [Object.keys(payload.category_ratings)[0]]: "5" } },
+    { category_ratings: { cleanliness: 5 } },
+    { category_ratings: categories[reviewType === "GUEST_TO_HOST" ? "GUEST_TO_RESERVATION" : "GUEST_TO_HOST"] },
     { review_type: "HOST_TO_GUEST" },
   ])("validates the submission payload: %o", async changes => {
     expect(await submit({ ...payload, ...changes })).toMatchObject({ status: 400 });
@@ -100,8 +111,12 @@ describe("POST /reviews host submission", () => {
     expect(await submit({ ...payload, review_type, category_ratings: { cleanliness: 4 } }))
       .toMatchObject({ status: 201, body: { review_type: "GUEST_TO_PROPERTY",
         verification_status: "UNVERIFIED", status: "DRAFT", publication_status: "UNPUBLISHED" } });
-    expect(await submit()).toMatchObject({ status: 201, body: { review_type: "GUEST_TO_HOST" } });
-    expect(records).toHaveLength(2);
+    expect(await submit()).toMatchObject({ status: 201, body: { review_type: reviewType } });
+    const otherType = reviewType === "GUEST_TO_HOST" ? "GUEST_TO_RESERVATION" : "GUEST_TO_HOST";
+    expect(await submit({ ...payload, review_type: otherType, category_ratings: categories[otherType] }))
+      .toMatchObject({ status: 201, body: { review_type: otherType } });
+    expect(records.map((record) => record.review_type).sort()).toEqual(Object.keys(categories).sort());
+    expect(await submit()).toMatchObject({ status: 409 });
   });
   it("rejects malformed JSON before accessing the booking", async () => {
     expect((await handler({ ...event(), body: "{" })).statusCode).toBe(400);
