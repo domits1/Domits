@@ -37,6 +37,8 @@ describe("GuestRiskAssessmentRepository.saveResult", () => {
       status: "PASSED",
       flaggedReason: null,
       errorMessage: null,
+      arrivalDate: null,
+      departureDate: null,
       createdAt: 1000,
       updatedAt: 1000,
     });
