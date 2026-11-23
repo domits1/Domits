@@ -61,13 +61,8 @@ describe("Pages2 owners navigation", () => {
 
     renderPages();
 
-<<<<<<< HEAD
     const ownersLink = await screen.findByRole("link", { name: "Owner Management" });
-    expect(ownersLink.getAttribute("href")).toBe("/owners");
-=======
-    const ownersLink = await screen.findByRole("link", { name: "Owners" });
     expect(ownersLink.getAttribute("href")).toBe("/hostdashboard/owners");
->>>>>>> origin/acceptance
   });
 
   test("hides the Owner Management link from a team member who acts for another host", async () => {
