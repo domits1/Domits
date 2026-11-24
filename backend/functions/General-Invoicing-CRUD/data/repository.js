@@ -50,9 +50,11 @@ export class Repository {
       return existing;
     }
 
+    const bookingType = String(booking.bookingtype || "").trim().toLowerCase();
+    const hasStoredBookingPrice = booking.total_price !== null && booking.total_price !== undefined;
     const currency =
       String(booking.currency || "").trim().toUpperCase() ||
-      (String(booking.bookingtype || "").trim().toLowerCase() === "channex" ? "" : "EUR");
+      (bookingType === "channex" && !hasStoredBookingPrice ? "" : "EUR");
     if (!/^[A-Z]{3}$/.test(currency)) {
       throw new BadRequestException("The booking currency is unavailable; an invoice cannot be created safely.");
     }
