@@ -1,7 +1,6 @@
 import countryList from "react-select-country-list";
 
-// Country code and timezone for a listing's Channex property (design note D4, #506).
-// Names come from the same list host onboarding uses (react-select-country-list), so the backend
+// Design note D4. Names come from the same list host onboarding uses (react-select-country-list), so the backend
 // reads exactly what the frontend writes; Intl only supplies the timezones of a country.
 
 export const TIMEZONE_PROBLEM = Object.freeze({

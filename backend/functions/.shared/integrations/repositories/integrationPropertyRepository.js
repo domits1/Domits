@@ -95,8 +95,7 @@ class IntegrationPropertyRepository {
     return row ?? null;
   }
 
-  // Reserves a listing before Channex is called (design note D2). It does not look first: two
-  // simultaneous claims are decided by the partial unique key, and the loser's error reaches the caller.
+  // Does not look first (design note D2): two simultaneous claims are decided by the partial unique key, and the loser's error reaches the caller.
   async insertClaim({ id, integrationAccountId, domitsPropertyId, now }) {
     const client = await Database.getInstance();
     await client

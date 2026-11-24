@@ -171,7 +171,6 @@ export default class ChannexProvisioningService {
     }
   }
 
-  // One account row per host, pointing to Domits' single Channex key (D8).
   async ensureHostAccount(userId) {
     const now = this.now();
     const account = await this.accounts.findByUserIdAndChannel(userId, CHANNEL);
@@ -205,8 +204,7 @@ export default class ChannexProvisioningService {
     }
   }
 
-  // Returns the new claim, or null when another request won it. Not retried: a retry would only find
-  // the winner's claim.
+  // Not retried: a retry would only find the winner's claim.
   async insertClaim(account, listing) {
     const claim = {
       id: this.newId(),
@@ -223,8 +221,7 @@ export default class ChannexProvisioningService {
     return { ...claim, externalPropertyId: null, status: PROVISIONING };
   }
 
-  // Property, room type and rate plan, each found or created, and saved before the next call (D2).
-  // Any step that cannot finish returns its answer; a later attempt continues from the saved ids.
+  // Each id is saved before the next call, so a later attempt continues from the first missing object.
   async createChannexObjects({ account, claim, listing, place }) {
     const secret = await this.credentialStore.readSecretOrNull(account.credentialsRef);
     if (!secret?.apiKey) {
@@ -298,7 +295,6 @@ export default class ChannexProvisioningService {
     });
   }
 
-  // Look before create: list what exists, adopt exactly one match, create when there is none.
   // Without the list Domits cannot know whether the object exists, so a failed list never creates.
   async findOrCreate({ list, rows, idOf, isMatch, create }) {
     const listed = await list();

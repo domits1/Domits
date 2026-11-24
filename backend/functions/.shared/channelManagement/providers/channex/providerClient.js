@@ -257,7 +257,7 @@ const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody, reque
   }
 };
 
-// Creates one Channex object (design note D2, #506). A 4xx is a known refusal: nothing was created.
+// A 4xx is a known refusal: nothing was created (design note D2).
 // A timeout, a 5xx, a network error or a success without an id may still have created it in Channex,
 // so those report outcomeUnknown and the caller must look before it creates again.
 const CREATE_REQUEST_TIMEOUT_MS = 8000;

@@ -1,6 +1,4 @@
-// Request bodies for creating a listing's Channex property, room type and rate plan (design note D2, #506).
-// Field rules from the Channex API docs (properties, room_types, rate_plans; read 23 Nov 2026).
-// Pure: the provisioning service supplies the listing, the country code and timezone (D4) and the created ids.
+// Field rules from the Channex API docs (properties, room_types, rate_plans; read 23 Nov 2026), design note D2.
 
 const CURRENCY = "EUR";
 const MAX_TEXT = 255;
