@@ -87,8 +87,10 @@ describe("Repository.findBookingFinancialCandidates", () => {
     expect(bookingQueryBuilder.select).toHaveBeenCalledWith(expect.arrayContaining([
       "booking.id",
       "booking.total_price",
+      "booking.total_price_minor",
       "booking.currency",
       "booking.paymentid",
+      "booking.refund_requested_amount",
       "booking.refunded_amount",
       "booking.refund_status",
     ]));
@@ -133,9 +135,14 @@ describe("Repository.findInvoiceFinancialSnapshots", () => {
     const options = invoiceRepository.find.mock.calls[0][0];
     expect(options.select).toEqual(expect.objectContaining({
       booking_id: true,
+      currency: true,
       gross_amount: true,
+      gross_amount_minor: true,
       commission_amount: true,
+      commission_amount_minor: true,
       net_amount: true,
+      net_amount_minor: true,
+      rate_per_night_minor: true,
     }));
     expect(options.where.host_id).toBe("host-1");
     expect(options.where.booking_id.type).toBe("in");

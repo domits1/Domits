@@ -120,6 +120,8 @@ CREATE TABLE IF NOT EXISTS main.booking (
   special_request TEXT,
   cancelled_at BIGINT,
   currency VARCHAR(3),
+  total_price_minor BIGINT,
+  refund_requested_amount BIGINT,
   PRIMARY KEY (id)
 );
 CREATE UNIQUE INDEX ASYNC id_UNIQUE_booking ON main.booking (id);
@@ -629,6 +631,8 @@ ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS checked_out_at BIGINT;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS special_request TEXT;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS currency VARCHAR(3);
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS total_price_minor BIGINT;
+ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS refund_requested_amount BIGINT;
 CREATE UNIQUE INDEX ASYNC booking_public_booking_ref_unique_test ON test.booking (public_booking_ref);
 CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique_test ON test.booking (idempotency_key);
 

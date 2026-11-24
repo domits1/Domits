@@ -123,6 +123,7 @@ describe("Service.getFinancialSourceData", () => {
         checked_out_at: null,
         cancelled_at: null,
         total_price: 250,
+        total_price_minor: "25000",
         currency: null,
         paymentid: "pi_123",
         refunded_amount: 0,
@@ -141,7 +142,9 @@ describe("Service.getFinancialSourceData", () => {
         checked_out_at: null,
         cancelled_at: PERIOD_START + 3000,
         total_price: 100,
+        total_price_minor: "10000",
         currency: "EUR",
+        refund_requested_amount: "5000",
         paymentid: "pi_456",
         refunded_amount: "5000",
         stripe_refund_id: "re_123",
@@ -156,9 +159,14 @@ describe("Service.getFinancialSourceData", () => {
       property_id: "property-1",
       arrival_date: PERIOD_START,
       departure_date: PERIOD_END,
+      currency: "EUR",
+      rate_per_night_minor: "6250",
       gross_amount: "250.00",
+      gross_amount_minor: "25000",
       commission_amount: "25.00",
+      commission_amount_minor: "2500",
       net_amount: "225.00",
+      net_amount_minor: "22500",
       status: "finalized",
       created_at: PERIOD_START,
     }];
@@ -204,11 +212,13 @@ describe("Service.getFinancialSourceData", () => {
     expect(result.bookingCandidates[0]).toMatchObject({
       bookingId: "booking-1",
       rawTotalPrice: 250,
+      rawTotalPriceMinor: "25000",
       currency: "EUR",
       paymentReference: "pi_123",
     });
     expect(result.bookingCandidates[1]).toMatchObject({
       bookingId: "booking-2",
+      rawRefundRequestedAmount: "5000",
       rawRefundedAmount: "5000",
       stripeRefundId: "re_123",
       refundStatus: "succeeded",
@@ -220,9 +230,14 @@ describe("Service.getFinancialSourceData", () => {
       propertyId: "property-1",
       arrivalDateMs: PERIOD_START,
       departureDateMs: PERIOD_END,
+      currency: "EUR",
+      ratePerNightMinor: "6250",
       grossAmount: "250.00",
+      grossAmountMinor: "25000",
       commissionAmount: "25.00",
+      commissionAmountMinor: "2500",
       netAmount: "225.00",
+      netAmountMinor: "22500",
       status: "finalized",
       createdAtMs: PERIOD_START,
     }]);
@@ -231,6 +246,7 @@ describe("Service.getFinancialSourceData", () => {
     expect(result.pagination).toEqual({ limit: 2, offset: 4, returned: 2, hasMore: true, nextOffset: 6 });
     expect(result.dataQuality.missingCurrencyBookingIds).toEqual([]);
     expect(result.dataQuality.missingChannexCurrencyBookingIds).toEqual([]);
+    expect(result.dataQuality.missingMinorUnitAmountBookingIds).toEqual(["booking-3"]);
     expect(result.dataQuality.limitations.join(" ")).toMatch(/accounting-period attribution policy has not been selected/i);
   });
 

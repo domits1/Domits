@@ -309,7 +309,12 @@ describe("IntegrationService Channex booking pull import", () => {
     await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
 
     expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
-      expect.objectContaining({ totalPrice: 200, currency: expected, bookingSource: "Booking.com" })
+      expect.objectContaining({
+        totalPrice: 200,
+        totalPriceMinor: "20000",
+        currency: expected,
+        bookingSource: "Booking.com",
+      })
     );
   });
 
@@ -325,9 +330,22 @@ describe("IntegrationService Channex booking pull import", () => {
     await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
 
     expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
-      expect.objectContaining({ totalPrice: null, currency: null })
+      expect.objectContaining({ totalPrice: null, totalPriceMinor: null, currency: null })
     );
     expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("CHANNEX_BOOKING_AMOUNT_CURRENCY_INVALID"));
+  });
+
+  test("does not store a negative external booking amount", async () => {
+    const { service, externalBookingImportRepository } = createService({
+      feedRevisions: [buildFeedRevision({ amount: -10 })],
+      existingRevision: null,
+    });
+
+    await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
+
+    expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ totalPrice: null, totalPriceMinor: null, currency: null })
+    );
   });
 
   test.each([
@@ -357,7 +375,7 @@ describe("IntegrationService Channex booking pull import", () => {
     await service.pullLatestChannexBookings("user-1", "domits-property-1", { skipEvidence: true });
 
     expect(externalBookingImportRepository.createExternalBooking).toHaveBeenCalledWith(
-      expect.objectContaining({ totalPrice: null, currency: null })
+      expect.objectContaining({ totalPrice: null, totalPriceMinor: null, currency: null })
     );
   });
 
@@ -418,6 +436,7 @@ describe("IntegrationService Channex booking pull import", () => {
         departureDateMs: utcDateMs("2026-06-03"),
         // The amount the guest paid on the OTA, not the Domits listing price (#3483).
         totalPrice: 200,
+        totalPriceMinor: "20000",
         bookingSource: "Booking.com",
         channexChanges: [
           {

@@ -140,6 +140,7 @@ class ChannexExternalBookingImportRepository {
     arrivalDateMs,
     departureDateMs,
     totalPrice = null,
+    totalPriceMinor = null,
     currency = null,
     guestCount = null,
     bookingSource = null,
@@ -168,6 +169,7 @@ class ChannexExternalBookingImportRepository {
       // What the guest paid on the OTA, and which OTA; the pages show these instead of
       // the Domits listing price and a card payment (#3483).
       total_price: totalPrice,
+      total_price_minor: totalPriceMinor,
       booking_source: requireStr(bookingSource),
       // The currency of total_price; without it an amount in pounds would show as euros (#3583).
       currency,
@@ -178,9 +180,9 @@ class ChannexExternalBookingImportRepository {
         `
           INSERT INTO ${qualifyTableName(client, "booking")}
             (id, arrivaldate, departuredate, createdat, guestid, guests, hostid, latepayment, paymentid,
-             property_id, status, guestname, hostname, cancellation_policy, bookingtype, total_price, booking_source, currency)
+             property_id, status, guestname, hostname, cancellation_policy, bookingtype, total_price, total_price_minor, booking_source, currency)
           VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         `,
         [
           row.id,
@@ -199,6 +201,7 @@ class ChannexExternalBookingImportRepository {
           row.cancellation_policy,
           row.bookingtype,
           row.total_price,
+          row.total_price_minor,
           row.booking_source,
           row.currency,
         ]
@@ -216,6 +219,7 @@ class ChannexExternalBookingImportRepository {
     totalPrice = null,
     guestCount = null,
     currency = null,
+    totalPriceMinor = null,
     channexChanges = [],
   }) {
     const normalizedBookingId = requireStr(bookingId);
@@ -233,7 +237,8 @@ class ChannexExternalBookingImportRepository {
               status = $5,
               total_price = COALESCE($6, total_price),
               guests = COALESCE($7, guests),
-              currency = COALESCE($8, currency)
+              currency = COALESCE($8, currency),
+              total_price_minor = COALESCE($9, total_price_minor)
           WHERE id = $1
         `,
         [
@@ -245,6 +250,7 @@ class ChannexExternalBookingImportRepository {
           totalPrice,
           guestCount,
           currency,
+          totalPriceMinor,
         ]
       )
     );

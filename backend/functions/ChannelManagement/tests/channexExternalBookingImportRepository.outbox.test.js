@@ -120,7 +120,7 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
 
     const [sql, params] = client.query.mock.calls[0];
     expect(sql).toContain("total_price, booking_source, currency)");
-    expect(params[17]).toBe(expected);
+    expect(params[18]).toBe(expected);
   });
 
   test("an imported booking stores the guest count from Channex", async () => {

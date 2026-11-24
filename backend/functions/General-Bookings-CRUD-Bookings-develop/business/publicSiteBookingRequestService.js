@@ -262,7 +262,7 @@ class PublicSiteBookingRequestService {
     }
 
     const liveTotal = Number(requote.quote?.priceBreakdown?.total);
-    if (!Number.isFinite(liveTotal) || liveTotal !== stay.quotedTotal) {
+    if (!Number.isSafeInteger(liveTotal) || liveTotal < 0 || liveTotal !== stay.quotedTotal) {
       throw new PublicBookingRequestError(CODES.QUOTE_EXPIRED, MESSAGES.priceChanged);
     }
     return liveTotal;
@@ -331,6 +331,7 @@ class PublicSiteBookingRequestService {
       guestname: contact.name,
       hostname: hostContact.name || HOSTNAME_FALLBACK,
       total_price: total / 100,
+      total_price_minor: String(total),
       cancellation_policy: cancellationPolicy,
       bookingtype: BOOKING_TYPE_INQUIRY,
       booking_source: BOOKING_SOURCE_STANDALONE_SITE,
@@ -392,7 +393,10 @@ class PublicSiteBookingRequestService {
     return this.buildResult({
       publicBookingRef: existing.public_booking_ref,
       stay,
-      total: Math.round(Number(existing.total_price) * 100),
+      total:
+        existing.total_price_minor !== null && existing.total_price_minor !== undefined
+          ? Number(existing.total_price_minor)
+          : Math.round(Number(existing.total_price) * 100),
     });
   }
 

@@ -12,6 +12,7 @@ import { buildChannexPullIssue } from "../utils/channexBookingRevisionUtils.js";
 import { bookingAvailabilityChange } from "../utils/channexBookingChange.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../utils/channexAriOutboxConstants.js";
 import { isPermanentlyUnacknowledged } from "../utils/channexBookingWebhookClassification.js";
+import { parseDecimalToMinorUnits } from "../../money/currencyAmount.js";
 
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
 const CHANNEX_BOOKING_WEBHOOK_TRIGGER = "WEBHOOK";
@@ -84,14 +85,14 @@ const toAmountOrNull = (value) => {
   return Number.isFinite(amount) ? amount : null;
 };
 const ISO_CURRENCY_CODE = /^[A-Z]{3}$/;
-const NO_BOOKING_AMOUNT = Object.freeze({ totalPrice: null, currency: null });
+const NO_BOOKING_AMOUNT = Object.freeze({ totalPrice: null, totalPriceMinor: null, currency: null });
 
 // The amount is stored with its own currency, so a booking paid in pounds shows pounds (#3583).
 // An amount without a readable currency could get the wrong symbol, and a currency without an
 // amount labels nothing: in both cases neither is stored and the pages use their own price.
 const toBookingAmount = (revision) => {
   const amount = toAmountOrNull(revision?.amount);
-  if (amount === null) return NO_BOOKING_AMOUNT;
+  if (amount === null || amount < 0) return NO_BOOKING_AMOUNT;
 
   const currency = requireStr(revision?.currency)?.toUpperCase() ?? null;
   if (!ISO_CURRENCY_CODE.test(currency ?? "")) {
@@ -104,7 +105,24 @@ const toBookingAmount = (revision) => {
     );
     return NO_BOOKING_AMOUNT;
   }
-  return { totalPrice: amount, currency };
+
+  try {
+    return {
+      totalPrice: amount,
+      totalPriceMinor: parseDecimalToMinorUnits(revision.amount, currency),
+      currency,
+    };
+  } catch (error) {
+    console.warn(
+      JSON.stringify({
+        event: "CHANNEX_BOOKING_AMOUNT_CURRENCY_INVALID",
+        revisionId: requireStr(revision?.revisionId),
+        currency,
+        reason: error?.message || "Invalid amount or currency",
+      })
+    );
+    return NO_BOOKING_AMOUNT;
+  }
 };
 const parseIsoDateParam = (value) => {
   const normalized = requireStr(value);
