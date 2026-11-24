@@ -470,6 +470,102 @@ describe("useConnectFlow", () => {
     });
   });
 
+  describe("reset", () => {
+    test("returns an open flow to idle, so it no longer counts as active", () => {
+      const { result } = setup();
+      act(() => result.current.start({ platform: PLATFORM, listing: READY_LISTING }));
+      expect(result.current.isActive).toBe(true);
+
+      act(() => result.current.reset());
+
+      expect(result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(result.current.isActive).toBe(false);
+    });
+
+    test("drops a session answer that arrives afterwards, so no Channex screen opens", async () => {
+      const pending = deferred();
+      createConnectSession.mockReturnValue(pending.promise);
+      const { result } = setup();
+      act(() => result.current.start({ platform: PLATFORM, listing: READY_LISTING }));
+      act(() => {
+        result.current.continueFromChecklist();
+      });
+      expect(result.current.step).toBe(CONNECT_STEP.CONNECTING);
+
+      act(() => result.current.reset());
+      await act(async () => pending.resolve({ iframeUrl: URL_OK }));
+
+      expect(result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(result.current.url).toBeNull();
+    });
+
+    test("drops a session failure that arrives afterwards, so no message appears", async () => {
+      const pending = deferred();
+      createConnectSession.mockReturnValue(pending.promise);
+      const { result, rereadListings } = setup();
+      act(() => result.current.start({ platform: PLATFORM, listing: READY_LISTING }));
+      act(() => {
+        result.current.continueFromChecklist();
+      });
+
+      act(() => result.current.reset());
+      await act(async () => pending.reject(new Error("boom")));
+
+      expect(result.current.errorMessage).toBe("");
+      expect(rereadListings).not.toHaveBeenCalled();
+    });
+
+    test("exposes the flow's listing id from the checklist step on, where only the listing is held", () => {
+      const hook = setup();
+
+      startFlow(hook, NOT_ENABLED_LISTING);
+
+      expect(hook.result.current.propertyId).toBe("p1");
+    });
+
+    test("drops an enable answer that arrives afterwards: no re-read, no session", async () => {
+      const pending = deferred();
+      enableDistribution.mockReturnValue(pending.promise);
+      const hook = setup();
+      startFlow(hook, NOT_ENABLED_LISTING);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+      expect(hook.result.current.step).toBe(CONNECT_STEP.ENABLING);
+
+      act(() => hook.result.current.reset());
+      await act(async () => pending.resolve({ status: "PROVISIONED" }));
+
+      expect(hook.rereadListings).not.toHaveBeenCalled();
+      expect(createConnectSession).not.toHaveBeenCalled();
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+    });
+
+    test("drops an enable failure that arrives afterwards: no message, no re-read", async () => {
+      const pending = deferred();
+      enableDistribution.mockReturnValue(pending.promise);
+      const hook = setup();
+      startFlow(hook, NOT_ENABLED_LISTING);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+
+      act(() => hook.result.current.reset());
+      await act(async () => pending.reject(requestError(503, "DISTRIBUTION_TRY_AGAIN")));
+
+      expect(hook.result.current.errorMessage).toBe("");
+      expect(hook.rereadListings).not.toHaveBeenCalled();
+    });
+
+    test("does nothing while idle", () => {
+      const { result } = setup();
+
+      act(() => result.current.reset());
+
+      expect(result.current.step).toBe(CONNECT_STEP.IDLE);
+    });
+  });
+
   test("start is ignored while a flow is open", () => {
     const hook = setup();
     startFlow(hook);

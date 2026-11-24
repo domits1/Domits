@@ -75,11 +75,12 @@ export function useConnectFlow({ refresh, rereadListings }) {
       moveTo({ step: CONNECT_STEP.CONNECTING, platform, listing: null, url: null, propertyId });
       try {
         const { iframeUrl } = await createConnectSession({ propertyId });
-        if (!mountedRef.current) return;
+        // A reset while the session was being created ended this attempt: its answer must not open a screen.
+        if (!mountedRef.current || stepRef.current !== CONNECT_STEP.CONNECTING) return;
         moveTo({ step: CONNECT_STEP.IFRAME, platform, listing: null, url: iframeUrl, propertyId });
       } catch (err) {
         console.error("Failed to create a Channex connect session:", err);
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || stepRef.current !== CONNECT_STEP.CONNECTING) return;
         const { reread, message } = classifyConnectSessionError(err);
         setErrorMessage(message);
         moveTo(IDLE_FLOW);
@@ -106,20 +107,22 @@ export function useConnectFlow({ refresh, rereadListings }) {
   const enableThenConnect = useCallback(
     async ({ platform, propertyId, timezone }) => {
       moveTo({ step: CONNECT_STEP.ENABLING, platform, listing: null, url: null, propertyId });
+      // A reset (or an unmount) while the request runs ended this attempt: nothing more may happen.
+      const isCurrent = () => mountedRef.current && stepRef.current === CONNECT_STEP.ENABLING;
       let enabled;
       try {
         // The timezone is sent only where the listing asked for one (D4).
         await enableDistribution({ propertyId, ...(timezone ? { chosenTimezone: timezone } : {}) });
-        if (!mountedRef.current) return;
+        if (!isCurrent()) return;
         // The answer says nothing about the listing, so the listings are read again to see its state.
         const fresh = await rereadListings();
         enabled = fresh?.find((candidate) => candidate.propertyId === propertyId);
         if (!enabled) throw new Error("The listings read after turning on did not contain the listing.");
       } catch (err) {
-        failEnable(err);
+        if (isCurrent()) failEnable(err);
         return;
       }
-      if (!mountedRef.current) return;
+      if (!isCurrent()) return;
 
       if (enabled.distribution?.status !== DISTRIBUTION_STATUS.READY) {
         // Still setting up: the listing says so and Retry turns it on again. No iframe yet.
@@ -189,6 +192,13 @@ export function useConnectFlow({ refresh, rereadListings }) {
     [enableThenConnect, flow]
   );
 
+  // For a section that reloaded or lost the flow's listing: its modals are gone, so the step goes with
+  // them. Otherwise the step would stay, and keep every switch locked with nothing on screen.
+  const reset = useCallback(() => {
+    if (stepRef.current === CONNECT_STEP.IDLE) return;
+    moveTo(IDLE_FLOW);
+  }, [moveTo]);
+
   // Every way out of the iframe lands here, whether or not the host finished in Channex.
   const closeIframe = useCallback(() => {
     if (stepRef.current !== CONNECT_STEP.IFRAME) return;
@@ -201,11 +211,13 @@ export function useConnectFlow({ refresh, rereadListings }) {
     step: flow.step,
     platform: flow.platform,
     listing: flow.listing,
+    propertyId: flow.propertyId ?? flow.listing?.propertyId ?? null,
     url: flow.url,
     errorMessage,
     isActive: flow.step !== CONNECT_STEP.IDLE,
     start,
     cancel,
+    reset,
     continueFromChecklist,
     continueFromTimezone,
     retry,

@@ -24,6 +24,13 @@ export const buildEmptyPublicWebsiteHost = () => ({
   },
 });
 
+const isWhatsAppWidgetEnabled = (contentOverrides) => contentOverrides?.visibility?.chatWidget !== false;
+
+export const servePublicWebsiteHostForSite = (host, contentOverrides) =>
+  host && !isWhatsAppWidgetEnabled(contentOverrides)
+    ? { ...host, whatsapp: buildEmptyPublicWebsiteHost().whatsapp }
+    : host;
+
 const readAttribute = (attributes, names) => {
   for (const name of names) {
     const value = cleanText(attributes.get(name));

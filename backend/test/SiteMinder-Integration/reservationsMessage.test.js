@@ -1,5 +1,10 @@
 import { describe, expect, test } from "@jest/globals";
-import { readReservations } from "../../functions/SiteMinder-Integration/util/reservationsMessage.js";
+import {
+  buildReservationFailure,
+  buildReservationsConfirmation,
+  buildReservationsRead,
+  readReservations,
+} from "../../functions/SiteMinder-Integration/util/reservationsMessage.js";
 
 const envelope = (body) =>
   `<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Header/><SOAP-ENV:Body>` +
@@ -60,7 +65,7 @@ const withReservations = (...reservations) =>
 
 describe("readReservations", () => {
   test("reads a new reservation with its ids, channel, rooms, primary guest and total", () => {
-    const [reservation] = readReservations(withReservations(hotelReservation()));
+    const [reservation] = readReservations(withReservations(hotelReservation())).reservations;
 
     expect(reservation).toEqual({
       status: "Book",
@@ -88,7 +93,7 @@ describe("readReservations", () => {
   });
 
   test("never reads the payment card", () => {
-    const text = JSON.stringify(readReservations(withReservations(hotelReservation())));
+    const text = JSON.stringify(readReservations(withReservations(hotelReservation())).reservations);
 
     expect(text).not.toContain("4111111111111111");
     expect(text).not.toContain("1129");
@@ -106,7 +111,7 @@ describe("readReservations", () => {
           messageId: "msg-3",
         })
       )
-    );
+    ).reservations;
 
     expect(
       reservations.map(({ status, messageId, createdAt, lastModifiedAt }) => ({
@@ -124,7 +129,7 @@ describe("readReservations", () => {
   test("reads every room of a multi-room reservation", () => {
     const [reservation] = readReservations(
       withReservations(hotelReservation({ rooms: [roomStay(), roomStay({ roomTypeCode: "TW", ratePlanCode: "BAR" })] }))
-    );
+    ).reservations;
 
     expect(reservation.rooms.map((room) => [room.roomTypeCode, room.ratePlanCodes])).toEqual([
       ["DR", ["RAC1"]],
@@ -135,7 +140,7 @@ describe("readReservations", () => {
   test("leaves the room type and rate plan empty when SiteMinder has no mapping for them", () => {
     const [reservation] = readReservations(
       withReservations(hotelReservation({ rooms: [roomStay({ roomTypeCode: null, ratePlanCode: null })] }))
-    );
+    ).reservations;
 
     expect(reservation.rooms[0]).toMatchObject({ roomTypeCode: null, ratePlanCodes: [], arrival: "2027-03-12" });
   });
@@ -147,13 +152,13 @@ describe("readReservations", () => {
         `<RatePlan RatePlanCode="RAC2" EffectiveDate="2027-03-14" ExpireDate="2027-03-15"/></RatePlans>`
     );
 
-    const [reservation] = readReservations(withReservations(hotelReservation({ rooms: [stay] })));
+    const [reservation] = readReservations(withReservations(hotelReservation({ rooms: [stay] }))).reservations;
 
     expect(reservation.rooms[0].ratePlanCodes).toEqual(["RAC1", "RAC2"]);
   });
 
   test("returns an empty list when there are no reservations", () => {
-    expect(readReservations(envelope("<Success/>"))).toEqual([]);
+    expect(readReservations(envelope("<Success/>"))).toEqual({ reservations: [], skipped: 0 });
   });
 
   test("refuses a response with a document type declaration", () => {
@@ -162,9 +167,130 @@ describe("readReservations", () => {
     expect(() => readReservations(xml)).toThrow("SiteMinder reservations response must not contain a DOCTYPE");
   });
 
-  test("refuses a reservation without a SiteMinder id or message id, because it cannot be saved or confirmed", () => {
-    const xml = withReservations(hotelReservation({ id: "", messageId: "" }));
+  test("skips and counts a reservation without a SiteMinder id or message id, and still reads the others", () => {
+    const xml = withReservations(hotelReservation({ id: "", messageId: "" }), hotelReservation({ messageId: "msg-9" }));
 
-    expect(() => readReservations(xml)).toThrow("SiteMinder reservation is missing its id or message id");
+    const { reservations, skipped } = readReservations(xml);
+
+    expect(skipped).toBe(1);
+    expect(reservations.map((reservation) => reservation.messageId)).toEqual(["msg-9"]);
+  });
+});
+
+const NOW = new Date("2026-11-09T10:00:00.000Z");
+
+describe("buildReservationsRead", () => {
+  test("asks SiteMinder for every undelivered reservation of the PMS", () => {
+    const xml = buildReservationsRead({ requestorId: "PMSXTEST", echoToken: "e1", now: NOW });
+
+    expect(xml).toBe(
+      '<OTA_ReadRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0" TimeStamp="2026-11-09T10:00:00.000Z" EchoToken="e1">' +
+        '<POS><Source><RequestorID Type="22" ID="PMSXTEST"/></Source></POS>' +
+        '<ReadRequests><HotelReadRequest><SelectionCriteria SelectionType="Undelivered"/></HotelReadRequest></ReadRequests>' +
+        "</OTA_ReadRQ>"
+    );
+  });
+
+  test("escapes the requestor id", () => {
+    expect(buildReservationsRead({ requestorId: 'A"&B', echoToken: "e1", now: NOW })).toContain('ID="A&quot;&amp;B"');
+  });
+
+  test("refuses to build without a requestor id", () => {
+    expect(() => buildReservationsRead({ requestorId: "", echoToken: "e1", now: NOW })).toThrow(
+      "requestorId is required"
+    );
+  });
+});
+
+const HEADER =
+  '<OTA_NotifReportRQ xmlns="http://www.opentravel.org/OTA/2003/05" Version="1.0" TimeStamp="2026-11-09T10:00:00.000Z" EchoToken="e1">';
+
+describe("buildReservationsConfirmation", () => {
+  test("confirms every saved reservation with its message id and the Domits booking id", () => {
+    const xml = buildReservationsConfirmation({
+      reservations: [
+        { status: "Book", messageId: "msg-1", bookingId: "booking-1", processedAt: "2026-11-09T09:59:00.000Z" },
+        { status: "Cancel", messageId: "msg-2", bookingId: "booking-2", processedAt: "2026-11-09T09:59:30.000Z" },
+      ],
+      echoToken: "e1",
+      now: NOW,
+    });
+
+    expect(xml).toBe(
+      `${HEADER}<Success/><NotifDetails><HotelNotifReport><HotelReservations>` +
+        '<HotelReservation CreateDateTime="2026-11-09T09:59:00.000Z" ResStatus="Book"><UniqueID Type="16" ID="msg-1"/>' +
+        '<ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Type="14" ResID_Value="booking-1"/></HotelReservationIDs></ResGlobalInfo>' +
+        "</HotelReservation>" +
+        '<HotelReservation LastModifyDateTime="2026-11-09T09:59:30.000Z" ResStatus="Cancel"><UniqueID Type="16" ID="msg-2"/>' +
+        '<ResGlobalInfo><HotelReservationIDs><HotelReservationID ResID_Type="14" ResID_Value="booking-2"/></HotelReservationIDs></ResGlobalInfo>' +
+        "</HotelReservation>" +
+        "</HotelReservations></HotelNotifReport></NotifDetails></OTA_NotifReportRQ>"
+    );
+  });
+
+  test.each([
+    [
+      { status: "Hold", messageId: "m", bookingId: "b", processedAt: "2026-11-09T09:59:00.000Z" },
+      "status must be Book, Modify or Cancel",
+    ],
+    [
+      { status: "Book", messageId: "", bookingId: "b", processedAt: "2026-11-09T09:59:00.000Z" },
+      "messageId is required",
+    ],
+    [
+      { status: "Book", messageId: "m", bookingId: "", processedAt: "2026-11-09T09:59:00.000Z" },
+      "bookingId is required",
+    ],
+    [
+      { status: "Book", messageId: "m", bookingId: "b", processedAt: "yesterday" },
+      "processedAt must be an ISO date and time",
+    ],
+  ])("refuses %p", (reservation, message) => {
+    expect(() => buildReservationsConfirmation({ reservations: [reservation], echoToken: "e1", now: NOW })).toThrow(
+      message
+    );
+  });
+
+  test("refuses to confirm nothing", () => {
+    expect(() => buildReservationsConfirmation({ reservations: [], echoToken: "e1", now: NOW })).toThrow(
+      "at least one reservation is required"
+    );
+  });
+});
+
+describe("buildReservationFailure", () => {
+  test("reports one reservation as failed with a readable error and no booking id", () => {
+    const xml = buildReservationFailure({
+      reservation: { status: "Modify", messageId: "msg-3", processedAt: "2026-11-09T09:59:00.000Z" },
+      error: { type: 3, code: 402, message: "Room type <DR> is not mapped" },
+      echoToken: "e1",
+      now: NOW,
+    });
+
+    expect(xml).toBe(
+      `${HEADER}<Errors><Error Type="3" Code="402">Room type &lt;DR&gt; is not mapped</Error></Errors>` +
+        "<NotifDetails><HotelNotifReport><HotelReservations>" +
+        '<HotelReservation LastModifyDateTime="2026-11-09T09:59:00.000Z" ResStatus="Modify"><UniqueID Type="16" ID="msg-3"/></HotelReservation>' +
+        "</HotelReservations></HotelNotifReport></NotifDetails></OTA_NotifReportRQ>"
+    );
+  });
+
+  test("leaves the error code out when there is none", () => {
+    const xml = buildReservationFailure({
+      reservation: { status: "Book", messageId: "msg-4", processedAt: "2026-11-09T09:59:00.000Z" },
+      error: { type: 1, message: "Unknown hotel" },
+      echoToken: "e1",
+      now: NOW,
+    });
+
+    expect(xml).toContain('<Error Type="1">Unknown hotel</Error>');
+  });
+
+  test.each([
+    [{ type: "x", message: "m" }, "error type must be a whole number"],
+    [{ type: 3, message: "  " }, "error message is required"],
+  ])("refuses the error %p", (error, message) => {
+    const reservation = { status: "Book", messageId: "m", processedAt: "2026-11-09T09:59:00.000Z" };
+    expect(() => buildReservationFailure({ reservation, error, echoToken: "e1", now: NOW })).toThrow(message);
   });
 });

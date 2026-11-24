@@ -29,9 +29,10 @@ describe("InvoicesSection invoice states", () => {
 
     render(<InvoicesSection />);
 
-    expect(await screen.findByRole("status")).toHaveTextContent("No invoices yet");
+    expect(await screen.findByRole("status")).toHaveTextContent("There are no invoices yet");
     expect(screen.getByText("Your invoices will appear here once they're available.")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(document.querySelector(".invoices-state--neutral")).toBeInTheDocument();
   });
 
   test("shows a red error state when invoices fail to load", async () => {
@@ -42,6 +43,7 @@ describe("InvoicesSection invoice states", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't load your invoices");
     expect(screen.getByText("We couldn't retrieve your invoices right now. Please try again later.")).toBeInTheDocument();
     expect(document.querySelector(".invoices-state--error")).toBeInTheDocument();
+    expect(document.querySelector(".invoices-state--neutral")).not.toBeInTheDocument();
   });
 
   test("shows a filtered empty state when no invoices match the selected filter", async () => {

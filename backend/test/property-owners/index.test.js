@@ -1,6 +1,7 @@
 const mockController = {
   listOwners: jest.fn(),
   getOwner: jest.fn(),
+  getFinancialSourceData: jest.fn(),
   createOwner: jest.fn(),
   setShares: jest.fn(),
   updateOwner: jest.fn(),
@@ -24,6 +25,7 @@ const event = (httpMethod, queryStringParameters = null) => ({
 beforeEach(() => {
   mockController.listOwners.mockReset().mockResolvedValue({ statusCode: 200, body: "[]" });
   mockController.getOwner.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
+  mockController.getFinancialSourceData.mockReset().mockResolvedValue({ statusCode: 200, body: "{\"bookingCandidates\":[]}" });
   mockController.createOwner.mockReset().mockResolvedValue({ statusCode: 201, body: "{}" });
   mockController.setShares.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
   mockController.updateOwner.mockReset().mockResolvedValue({ statusCode: 200, body: "{}" });
@@ -33,6 +35,7 @@ beforeEach(() => {
 const expectNoControllerCall = () => {
   expect(mockController.listOwners).not.toHaveBeenCalled();
   expect(mockController.getOwner).not.toHaveBeenCalled();
+  expect(mockController.getFinancialSourceData).not.toHaveBeenCalled();
   expect(mockController.createOwner).not.toHaveBeenCalled();
   expect(mockController.setShares).not.toHaveBeenCalled();
   expect(mockController.updateOwner).not.toHaveBeenCalled();
@@ -44,6 +47,33 @@ afterEach(() => {
 });
 
 describe("property-owners router", () => {
+  test("routes GET action financial-data with an id to getFinancialSourceData", async () => {
+    const request = event("GET", {
+      action: "financial-data",
+      id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b",
+      period_start_ms: "1793491200000",
+      period_end_ms: "1796083200000",
+    });
+
+    const response = await handler(request);
+
+    expect(response.statusCode).toBe(200);
+    expect(mockController.getFinancialSourceData).toHaveBeenCalledWith(request);
+    expect(mockController.getOwner).not.toHaveBeenCalled();
+    expect(mockController.listOwners).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["no id", { action: "financial-data" }],
+    ["an unknown action", { action: "other", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+    ["an action in another case", { action: "Financial-data", id: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b" }],
+  ])("returns 405 for GET financial-data with %s without calling the controller", async (_label, query) => {
+    const response = await handler(event("GET", query));
+
+    expect(response.statusCode).toBe(405);
+    expectNoControllerCall();
+  });
+
   test("routes GET without an id to listOwners with the event", async () => {
     const request = event("GET");
 

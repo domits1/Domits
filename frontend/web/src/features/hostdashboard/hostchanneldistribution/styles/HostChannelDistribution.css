@@ -287,8 +287,8 @@
 
 .chdist-notice__list { margin: 0; padding: 0; list-style: none; text-align: center; }
 
-.chdist-modal--wide { max-width: 720px; }
-.chdist-iframe { display: block; width: 100%; height: clamp(360px, 65vh, 640px); margin-bottom: 1rem; border: 1px solid var(--chdist-border); border-radius: 8px; }
+.chdist-modal--wide { max-width: min(45rem, 100%); }
+.chdist-iframe { display: block; width: 100%; height: clamp(22.5rem, 65vh, 40rem); margin-bottom: 1rem; border: 1px solid var(--chdist-border); border-radius: 8px; }
 
 .chdist-checklist { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-direction: column; gap: .75rem; }
 .chdist-checklist__item { display: flex; align-items: flex-start; gap: .6rem; font-size: .9rem; color: #333; line-height: 1.4; cursor: pointer; }

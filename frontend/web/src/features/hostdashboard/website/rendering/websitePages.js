@@ -68,6 +68,7 @@ export const RESERVED_SITE_PATH_SEGMENTS = Object.freeze([
   "login",
   "performance",
   "policy",
+  "properties",
   "register",
   "release",
   "review",
@@ -92,6 +93,7 @@ const UNSAFE_NAV_LABEL_PATTERN = /[<>\p{Cc}\u061c\u200e\u200f\u202a-\u202e\u2066
 const WHITESPACE_RUN_PATTERN = /\s+/g;
 const VISIBLE_CHARACTER_PATTERN = /[\p{L}\p{N}\p{P}\p{S}]/u;
 const SAFE_BASE_PATH_SEGMENT_PATTERN = /^[\w.~%-]+$/;
+const SAFE_SEARCH_PATTERN = /^\?[\w.~%=&!*'()-]+$/;
 
 const CONFIGURABLE_SITE_PAGES = SITE_PAGE_DEFINITIONS.filter((page) => page.key !== MAIN_SITE_PAGE_KEY);
 
@@ -153,6 +155,15 @@ export const listSitePageMenuItems = (sitePages) => {
   ];
 };
 
+export const resolveSitePageTitle = (sitePages, pageKey) => {
+  if (pageKey === MAIN_SITE_PAGE_KEY) {
+    return "";
+  }
+
+  const page = listSitePageMenuItems(sitePages).find((item) => item.key === pageKey);
+  return page ? page.navLabel : "";
+};
+
 export const resolveSitePageFromPath = (pathname, sitePages) => {
   const segments = splitPathSegments(pathname);
   if (segments.length !== 1) {
@@ -164,12 +175,26 @@ export const resolveSitePageFromPath = (pathname, sitePages) => {
   return page ? page.key : MAIN_SITE_PAGE_KEY;
 };
 
-export const buildSitePageHref = (basePath, pageKey) => {
-  const page = CONFIGURABLE_SITE_PAGES.find((candidate) => candidate.key === pageKey);
+export const isSitePagePath = (pathname) => {
+  if (typeof pathname !== "string") {
+    return false;
+  }
+
+  const path = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return pathname === "" || CONFIGURABLE_SITE_PAGES.some((page) => page.slug === path.toLowerCase());
+};
+
+export const buildSiteHref = (basePath, siteSegments, search = "") => {
   const baseSegments = splitPathSegments(basePath);
   const isSafeBasePath = baseSegments.every((segment) => SAFE_BASE_PATH_SEGMENT_PATTERN.test(segment));
   const segments = isSafeBasePath ? baseSegments : [];
-  return `/${(page ? [...segments, page.slug] : segments).join("/")}`;
+  const safeSearch = typeof search === "string" && SAFE_SEARCH_PATTERN.test(search) ? search : "";
+  return `/${[...segments, ...siteSegments].join("/")}${safeSearch}`;
+};
+
+export const buildSitePageHref = (basePath, pageKey, search = "") => {
+  const page = CONFIGURABLE_SITE_PAGES.find((candidate) => candidate.key === pageKey);
+  return buildSiteHref(basePath, page ? [page.slug] : [], search);
 };
 
 export const resolvePanoramaPageSections = (sitePages, pageKey) => {

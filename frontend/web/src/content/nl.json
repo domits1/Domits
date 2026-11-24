@@ -2173,6 +2173,22 @@
     }
   },
   "hostIntegrations": {
+    "title": "Integratie-marketplace",
+    "subtitle": "Koppel de tools die je al gebruikt aan Domits, en zie wat eraan komt.",
+    "listLabel": "Integraties",
+    "setUpWhatsApp": "WhatsApp instellen",
+    "filtersLabel": "Zoek een integratie",
+    "searchLabel": "Integraties zoeken",
+    "searchPlaceholder": "Zoek op naam",
+    "categoryLabel": "Categorie",
+    "statusLabel": "Status",
+    "allCategories": "Alle categorieën",
+    "allStatuses": "Alle statussen",
+    "resultCountOne": "{count} integratie",
+    "resultCountOther": "{count} integraties",
+    "emptyTitle": "Geen integraties gevonden",
+    "emptyText": "Probeer een andere naam, of wis de filters om alle integraties te zien.",
+    "clearFilters": "Filters wissen",
     "talkToSales": "Neem contact op met Sales",
     "statuses": {
       "available": "Beschikbaar",
@@ -2194,5 +2210,17 @@
       "remotelock": "Maak toegang tot je accommodatie eenvoudiger met verbonden slimme sloten en automatisch toegangsbeheer.",
       "whatsapp": "Communiceer met gasten via WhatsApp als onderdeel van je accommodatiebeheer."
     }
+  },
+  "ownerManagementNavigation": {
+    "label": "Eigenaarbeheer",
+    "owners": "Eigenaren",
+    "statements": "Overzichten"
+  },
+  "hostOwnerStatements": {
+    "title": "Eigenaarsoverzichten",
+    "description": "Dit onderdeel wordt voorbereid. Het genereren van eigenaarsoverzichten is nog niet beschikbaar.",
+    "emptyTitle": "Er zijn nog geen overzichten gegenereerd",
+    "emptyDescription": "Zodra het genereren van overzichten beschikbaar is, zie je hier per eigenaar de verslagperiode, inkomsten, inhoudingen, netto-opbrengst en het openstaande saldo.",
+    "payoutNote": "Een overzicht laat zien welk bedrag een eigenaar tegoed heeft. Het start geen bankoverschrijving en vervangt geen geregistreerde uitbetalingen."
   }
 }

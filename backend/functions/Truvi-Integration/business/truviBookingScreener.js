@@ -8,6 +8,9 @@ const isProgrammingError = (error) =>
 const isRetryableError = (error) =>
   !error || error.status === null || error.status === undefined || error.status >= 500 || RETRYABLE_CLIENT_STATUSES.has(error.status);
 
+const sentDates = (booking, result) =>
+  result.providerAssessmentId ? { arrivalDate: booking.arrivaldate, departureDate: booking.departuredate } : {};
+
 export class TruviBookingScreener {
   constructor({ bookingRepository, screeningService, assessmentRepository, contactLookup, extendedAmount }) {
     if (!extendedAmount) {
@@ -35,7 +38,7 @@ export class TruviBookingScreener {
           continue;
         }
 
-        await this.assessmentRepository.saveResult({ bookingId, result, now });
+        await this.assessmentRepository.saveResult({ bookingId, result, now, ...sentDates(candidate.booking, result) });
         summary.saved += 1;
         if (result.rejectedInput) {
           summary.rejected += 1;
