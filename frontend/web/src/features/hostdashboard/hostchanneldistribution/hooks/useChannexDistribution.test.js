@@ -52,4 +52,32 @@ describe("useChannexDistribution", () => {
     expect(result.current.status).toEqual(CONNECTED_STATUS);
     expect(getChannexStatus).toHaveBeenCalledTimes(1);
   });
+
+  test("makes no request and reports nothing while disabled, even after reload", async () => {
+    const { result } = renderHook(() => useChannexDistribution({ enabled: false }));
+    act(() => result.current.reload());
+
+    expect(result.current).toMatchObject({ status: null, loading: false, error: null, errorStatus: null });
+    expect(getChannexStatus).not.toHaveBeenCalled();
+  });
+
+  test("still loads when enabled is passed as true", async () => {
+    const { result } = renderHook(() => useChannexDistribution({ enabled: true }));
+
+    await waitFor(() => expect(result.current.status).toEqual(CONNECTED_STATUS));
+    expect(getChannexStatus).toHaveBeenCalledTimes(1);
+  });
+
+  test("loads once, without a loading flash, when it becomes enabled", async () => {
+    const { result, rerender } = renderHook(({ enabled }) => useChannexDistribution({ enabled }), {
+      initialProps: { enabled: false },
+    });
+    expect(getChannexStatus).not.toHaveBeenCalled();
+
+    rerender({ enabled: true });
+    expect(result.current.loading).toBe(true);
+
+    await waitFor(() => expect(result.current.status).toEqual(CONNECTED_STATUS));
+    expect(getChannexStatus).toHaveBeenCalledTimes(1);
+  });
 });
