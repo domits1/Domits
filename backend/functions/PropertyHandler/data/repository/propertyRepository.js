@@ -8,6 +8,11 @@ import {Property} from "database/models/Property";
 import {Property_Moderation_Event} from "database/models/Property_Moderation_Event";
 import {randomUUID} from "node:crypto";
 import {withDsqlRetry} from "../../.shared/dsqlRetry.js";
+import {
+    applyListingCursor,
+    joinLatestApproval,
+    orderByListingPosition,
+} from "./listingPosition.js";
 
 const UNIQUE_VIOLATION_CODE = "23505";
 const MODERATION_ACTIONS = new Set(["SUBMITTED", "APPROVED", "REJECTED"]);
@@ -35,8 +40,8 @@ export class PropertyRepository {
         this.systemManager = systemManager
     }
 
-    async create(property) {
-        const client = await Database.getInstance();
+    async create(property, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -54,7 +59,7 @@ export class PropertyRepository {
                 bookingtype: property.bookingType || "direct",
             })
             .execute();
-        const result = await this.getPropertyById(property.id);
+        const result = await this.getPropertyById(property.id, transactionManager);
         return result ? result : null;
     }
 
@@ -338,23 +343,14 @@ export class PropertyRepository {
 
     async getActiveProperties(lastEvaluatedKey) {
         const client = await Database.getInstance();
-        const query = await client
+        let query = client
             .getRepository(Property)
             .createQueryBuilder("property")
-            .where("property.status = :status", { status: "ACTIVE" })
-            .orderBy("property.createdat", "DESC")
-            .addOrderBy("property.id", "DESC")
-            .limit(12)
+            .select(["property.id", "property.createdat"])
+            .where("property.status = :status", { status: "ACTIVE" });
+        query = orderByListingPosition(joinLatestApproval(query)).limit(12);
 
-        if (lastEvaluatedKey?.createdAt && lastEvaluatedKey?.id) {
-            query.andWhere(
-                "(property.createdat < :createdAt OR (property.createdat = :createdAt AND property.id < :id))",
-                {
-                    createdAt: lastEvaluatedKey.createdAt,
-                    id: lastEvaluatedKey.id,
-                }
-            );
-        }
+        query = await applyListingCursor(client, query, lastEvaluatedKey);
 
         const result = await query.getMany();
 
@@ -432,8 +428,8 @@ export class PropertyRepository {
         }
     }
 
-    async getPropertyById(id) {
-        const client = await Database.getInstance();
+    async getPropertyById(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property)
             .createQueryBuilder("property")

@@ -35,7 +35,7 @@ export const normalizeSiteProperties = (value, mainPropertyId) => {
     throw invalid(`can hold at most ${MAX_SITE_PROPERTIES} properties.`);
   }
 
-  const entries = value.map(normalizeEntry);
+  const entries = value.map((entry, index) => normalizeEntry(entry, index));
   const propertyIds = new Set();
   const slugs = new Set();
   entries.forEach(({ propertyId, slug }) => {
@@ -46,8 +46,8 @@ export const normalizeSiteProperties = (value, mainPropertyId) => {
     slugs.add(slug);
   });
 
-  const mainEntry = entries.find((entry) => entry.propertyId === cleanText(mainPropertyId));
-  if (entries.length > 0 && !mainEntry) {
+  const listsMainProperty = entries.some((entry) => entry.propertyId === cleanText(mainPropertyId));
+  if (entries.length > 0 && !listsMainProperty) {
     throw invalid("must list the main property of the website.");
   }
 

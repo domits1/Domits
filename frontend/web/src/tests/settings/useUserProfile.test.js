@@ -751,6 +751,150 @@ describe("useUserProfile", () => {
     expect(result.current.nationalityError).toBe("");
   });
 
+  const renderLoadedProfile = async () => {
+    Auth.currentAuthenticatedUser.mockResolvedValue(MOCK_COGNITO_USER);
+    const { result } = renderHook(() => useUserProfile());
+    await waitFor(() => expect(result.current.authStatusLoading).toBe(false));
+    Auth.currentAuthenticatedUser.mockClear();
+    Auth.updateUserAttributes.mockClear();
+    return { result };
+  };
+
+  const changeAllProfileAttributes = (result) => {
+    act(() => {
+      result.current.onDateOfBirthChange(new Date(1985, 5, 15));
+      result.current.onInputChange({ target: { name: "placeOfBirth", value: "Germany" } });
+      result.current.onInputChange({ target: { name: "nationality", value: "German" } });
+      result.current.onTitleChange({ target: { value: "Ms." } });
+      result.current.onSexChange({ target: { value: "Female" } });
+    });
+  };
+
+  const ALL_PROFILE_ATTRIBUTE_KEYS = ["dateOfBirth", "placeOfBirth", "nationality", "title", "sex"];
+
+  test("onSaveProfileAttributes sends all changed fields in one Cognito update and updates user state", async () => {
+    const { result } = await renderLoadedProfile();
+    changeAllProfileAttributes(result);
+
+    let saveResult;
+    await act(async () => {
+      saveResult = await result.current.onSaveProfileAttributes(ALL_PROFILE_ATTRIBUTE_KEYS);
+    });
+
+    expect(Auth.currentAuthenticatedUser).toHaveBeenCalledTimes(1);
+    expect(Auth.updateUserAttributes).toHaveBeenCalledTimes(1);
+    expect(Auth.updateUserAttributes).toHaveBeenCalledWith(MOCK_COGNITO_USER, {
+      birthdate: "1985-06-15",
+      "custom:place_of_birth": "Germany",
+      "custom:nationality": "German",
+      "custom:title": "Ms.",
+      gender: "Female",
+    });
+    expect(result.current.user).toEqual(
+      expect.objectContaining({
+        dateOfBirth: "15-06-1985",
+        placeOfBirth: "Germany",
+        nationality: "German",
+        title: "Ms.",
+        sex: "Female",
+      })
+    );
+    expect(saveResult).toBe(true);
+  });
+
+  test("onSaveProfileAttributes keeps user state and shows each batched field's error when Cognito rejects", async () => {
+    const { result } = await renderLoadedProfile();
+    changeAllProfileAttributes(result);
+    Auth.updateUserAttributes.mockRejectedValueOnce(new Error("TooManyRequestsException"));
+
+    let saveResult;
+    await act(async () => {
+      saveResult = await result.current.onSaveProfileAttributes(ALL_PROFILE_ATTRIBUTE_KEYS);
+    });
+
+    expect(saveResult).toBe(false);
+    expect(result.current.user).toEqual(
+      expect.objectContaining({
+        dateOfBirth: "25-12-1990",
+        placeOfBirth: "Netherlands",
+        nationality: "Dutch",
+        title: "Mr.",
+        sex: "Male",
+      })
+    );
+    expect(result.current.dateOfBirthError).toBe("Failed to update birthdate. Please try again.");
+    expect(result.current.nationalityError).toBe("Failed to update nationality. Please try again.");
+    expect(globalThis.alert).toHaveBeenCalledTimes(3);
+    expect(globalThis.alert).toHaveBeenCalledWith("Failed to update place of birth. Please try again.");
+    expect(globalThis.alert).toHaveBeenCalledWith("Failed to update title. Please try again.");
+    expect(globalThis.alert).toHaveBeenCalledWith("Failed to update gender. Please try again.");
+  });
+
+  test("onSaveProfileAttributes clears earlier save errors when a later batch succeeds", async () => {
+    const { result } = await renderLoadedProfile();
+    act(() => {
+      result.current.onDateOfBirthChange(new Date(1985, 5, 15));
+      result.current.onInputChange({ target: { name: "nationality", value: "German" } });
+    });
+    Auth.updateUserAttributes.mockRejectedValueOnce(new Error("TooManyRequestsException"));
+
+    await act(async () => {
+      await result.current.onSaveProfileAttributes(["dateOfBirth", "nationality"]);
+    });
+    expect(result.current.dateOfBirthError).toBe("Failed to update birthdate. Please try again.");
+    expect(result.current.nationalityError).toBe("Failed to update nationality. Please try again.");
+
+    let saveResult;
+    await act(async () => {
+      saveResult = await result.current.onSaveProfileAttributes(["dateOfBirth", "nationality"]);
+    });
+
+    expect(saveResult).toBe(true);
+    expect(result.current.dateOfBirthError).toBe("");
+    expect(result.current.nationalityError).toBe("");
+    expect(result.current.user.dateOfBirth).toBe("15-06-1985");
+    expect(result.current.user.nationality).toBe("German");
+  });
+
+  test("onSaveProfileAttributes leaves an invalid date of birth out of the batch and reports it", async () => {
+    const { result } = await renderLoadedProfile();
+    act(() => {
+      result.current.onInputChange({ target: { name: "dateOfBirth", value: "31-02-1990" } });
+      result.current.onTitleChange({ target: { value: "Ms." } });
+    });
+
+    let saveResult;
+    await act(async () => {
+      saveResult = await result.current.onSaveProfileAttributes(["dateOfBirth", "title"]);
+    });
+
+    expect(Auth.updateUserAttributes).toHaveBeenCalledTimes(1);
+    expect(Auth.updateUserAttributes).toHaveBeenCalledWith(MOCK_COGNITO_USER, { "custom:title": "Ms." });
+    expect(result.current.dateOfBirthError).toBe("Please enter a valid calendar date.");
+    expect(result.current.user.title).toBe("Ms.");
+    expect(result.current.user.dateOfBirth).toBe("25-12-1990");
+    expect(saveResult).toBe(false);
+  });
+
+  test("onSaveProfileAttributes makes no Cognito call when no changed field is valid", async () => {
+    const { result } = await renderLoadedProfile();
+    act(() => {
+      result.current.onInputChange({ target: { name: "dateOfBirth", value: "31-02-1990" } });
+      result.current.onInputChange({ target: { name: "nationality", value: "A" } });
+    });
+
+    let saveResult;
+    await act(async () => {
+      saveResult = await result.current.onSaveProfileAttributes(["dateOfBirth", "nationality"]);
+    });
+
+    expect(Auth.currentAuthenticatedUser).not.toHaveBeenCalled();
+    expect(Auth.updateUserAttributes).not.toHaveBeenCalled();
+    expect(result.current.dateOfBirthError).toBe("Please enter a valid calendar date.");
+    expect(result.current.nationalityError).toBe("Nationality must be 2 to 64 characters.");
+    expect(saveResult).toBe(false);
+  });
+
   // ─── Key-press handlers ───────────────────────────────────────────────────
 
   test("onKeyPressName: triggers save on Enter key", async () => {

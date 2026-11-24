@@ -8,6 +8,7 @@ import checkIcon from "../../../../images/icons/checkPng.png";
 import crossIcon from "../../../../images/icons/cross.png";
 import { HostPropertyPlaceholderTab } from "./HostPropertyShell";
 import { getAccessToken } from "../../../../services/getAccessToken";
+import { getHouseNumberError } from "../../../../utils/houseNumber";
 import {
   getKeyRangeInclusive,
   keyToDateNumber,
@@ -341,11 +342,25 @@ function CustomRuleEditor({ visible, value, onChange, onConfirm, onCancel, onSho
   );
 }
 
-function TextInputField({ id, label, value, onChange, type = "text" }) {
+function TextInputField({ id, label, value, onChange, type = "text", error = "" }) {
+  const errorId = `${id}-error`;
   return (
     <div className={styles.field}>
       <label htmlFor={id}>{label}</label>
-      <input id={id} type={type} value={value} onChange={onChange} className={styles.input} />
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        className={styles.input}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+      />
+      {error ? (
+        <p id={errorId} className={styles.checkinFieldError}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -359,7 +374,7 @@ function TextareaField({ id, label, value, onChange, rows = 5 }) {
   );
 }
 
-function HostPropertyOverviewTab(props) {
+export function HostPropertyOverviewTab(props) {
   const {
     form,
     updateField,
@@ -476,6 +491,7 @@ function HostPropertyOverviewTab(props) {
           label="House number"
           value={address.houseNumber}
           onChange={(event) => updateAddressField("houseNumber", event.target.value)}
+          error={getHouseNumberError(address.houseNumber)}
         />
       </div>
 

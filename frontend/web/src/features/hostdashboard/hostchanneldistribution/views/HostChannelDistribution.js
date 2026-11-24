@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import useFetchUser from "../../../../hooks/useFetchUser";
 import { useChannexDistribution } from "../hooks/useChannexDistribution";
-import { useMappedProperties } from "../hooks/useMappedProperties";
+import { useLatestSyncEvidence } from "../hooks/useLatestSyncEvidence";
+import { MAPPED_PROPERTIES_STATE, useMappedProperties } from "../hooks/useMappedProperties";
 import {
   MOCK_CONNECT_FLOW_ENABLED,
   MOCK_PREVIEW_SECTIONS_ENABLED,
   getPropertyMappingRows,
 } from "../services/channexDistributionService";
+import { MOCK_HOST_DISTRIBUTION_ENABLED } from "../services/hostDistributionApi";
+import PlatformCardsSection from "../components/PlatformCardsSection";
 import ChannexStatusCard from "../components/ChannexStatusCard";
 import LastSyncCard from "../components/LastSyncCard";
 import ComingSoonCard from "../components/ComingSoonCard";
@@ -23,6 +26,9 @@ const COMING_SOON_CARDS = [
 
 const FORBIDDEN_STATUS = 403;
 const LOAD_ERROR_MESSAGE = "Something went wrong loading your Channex connection.";
+const PROPERTIES_LOADING_MESSAGE = "Loading your properties…";
+const NO_LINKED_PROPERTIES_MESSAGE = "No properties are linked to Channex yet.";
+const PROPERTIES_ERROR_MESSAGE = "We couldn't load your properties.";
 
 // Mirrors the set in components/ChannexStatusCard.js -- kept as a separate local copy rather
 // than a shared export so this feature doesn't gain a cross-file refactor as a side effect.
@@ -30,29 +36,44 @@ const RECONNECT_BUCKET_STATUSES = new Set(["RECONNECT_REQUIRED", "VALIDATION_FAI
 
 function HostChannelDistribution() {
   const userId = useFetchUser();
-  const propertyOptions = useMappedProperties({ userId, enabled: MOCK_PREVIEW_SECTIONS_ENABLED });
   const [pickedPropertyId, setPickedPropertyId] = useState("");
 
-  // Defaults to the first mapped listing, and falls back to it if the picked one disappears.
-  const hasPickedProperty = propertyOptions.some((option) => option.value === pickedPropertyId);
-  const selectedPropertyId = hasPickedProperty ? pickedPropertyId : (propertyOptions[0]?.value ?? "");
-
-  // Explicitly empty while the preview sections are off, so getLatestSyncEvidence cannot run.
-  const { status, syncEvidence, loading, error, errorStatus, reload } = useChannexDistribution({
-    domitsPropertyId: MOCK_PREVIEW_SECTIONS_ENABLED ? selectedPropertyId : "",
-  });
+  // The picker below needs the status first, so the status hook knows nothing about properties.
+  const { status, loading, error, errorStatus, reload } = useChannexDistribution();
   const [activeModal, setActiveModal] = useState(null);
   const [propertyMappings, setPropertyMappings] = useState([]);
 
   // 403 means the host is outside the Channex allowlist: expected, so it gets the empty state.
   const isOutsideAllowlist = errorStatus === FORBIDDEN_STATUS;
-  const hasBlockingError = Boolean(error) && !isOutsideAllowlist;
-  const isConnectedOrNeedsAttention = status && status.status !== "NOT_CONNECTED";
-  const showEmptyState = !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
+  // With the host distribution preview on, the platform cards replace everything account-level: a
+  // host provisioned by the backend has no account row to be "connected" to before the first switch.
+  const showAccountLevel = !MOCK_HOST_DISTRIBUTION_ENABLED;
+  const hasBlockingError = showAccountLevel && Boolean(error) && !isOutsideAllowlist;
+  const isConnectedOrNeedsAttention = showAccountLevel && Boolean(status) && status.status !== "NOT_CONNECTED";
+
+  // Real data. Not requested at all until Channex is connected or needs attention.
+  const { options: propertyOptions, loadState: propertiesLoadState } = useMappedProperties({
+    enabled: isConnectedOrNeedsAttention,
+  });
+  // Defaults to the first mapped listing, and falls back to it if the picked one disappears.
+  const hasPickedProperty = propertyOptions.some((option) => option.value === pickedPropertyId);
+  const selectedPropertyId = hasPickedProperty ? pickedPropertyId : (propertyOptions[0]?.value ?? "");
+  const selectedPropertyName = propertyOptions.find((option) => option.value === selectedPropertyId)?.label ?? "";
+  // Real data, requested only once a property is selected.
+  const { item: latestSyncItem, loadState: latestSyncLoadState } = useLatestSyncEvidence({
+    domitsPropertyId: selectedPropertyId,
+  });
+  const isLoadingProperties = propertiesLoadState === MAPPED_PROPERTIES_STATE.LOADING;
+  const hasPropertyLoadError = propertiesLoadState === MAPPED_PROPERTIES_STATE.ERROR;
+  // The unavailable state (HTTP 409) deliberately shows nothing: the status card already explains it.
+  const hasNoLinkedProperties = propertiesLoadState === MAPPED_PROPERTIES_STATE.LOADED && propertyOptions.length === 0;
+
+  const showEmptyState = showAccountLevel && !loading && !hasBlockingError && !isConnectedOrNeedsAttention;
   const canAddChannel = MOCK_CONNECT_FLOW_ENABLED && !loading && status?.status === "NOT_CONNECTED";
-  const showPropertyPicker = MOCK_PREVIEW_SECTIONS_ENABLED && isConnectedOrNeedsAttention && propertyOptions.length > 1;
-  // Without a property nothing was queried, so "No sync yet" would claim something we never checked.
-  const showLastSync = MOCK_PREVIEW_SECTIONS_ENABLED && isConnectedOrNeedsAttention && Boolean(selectedPropertyId);
+  const showPropertyPicker = isConnectedOrNeedsAttention && propertyOptions.length > 1;
+  // Without a property nothing is queried, so "No sync yet" would claim something we never checked.
+  // The card hides itself when the integration is not found (HTTP 404): the status card explains it.
+  const showLastSync = isConnectedOrNeedsAttention && Boolean(selectedPropertyId);
   // Narrower than isConnectedOrNeedsAttention: excludes PENDING_PROVIDER_VALIDATION, since
   // there's nothing confirmed to map against mid-validation.
   const showPropertyMapping =
@@ -111,6 +132,8 @@ function HostChannelDistribution() {
         </button>
       </div>
 
+      {MOCK_HOST_DISTRIBUTION_ENABLED && <PlatformCardsSection />}
+
       {hasBlockingError && (
         <div className="host-chdist__error" role="alert">
           <p className="host-chdist__error-text">{LOAD_ERROR_MESSAGE}</p>
@@ -134,6 +157,17 @@ function HostChannelDistribution() {
             onDisconnectClick={() => setActiveModal("disconnect")}
             manageEnabled={MOCK_CONNECT_FLOW_ENABLED}
           />
+          {isLoadingProperties && (
+            <output className="host-chdist__empty-text">{PROPERTIES_LOADING_MESSAGE}</output>
+          )}
+          {hasNoLinkedProperties && (
+            <output className="host-chdist__empty-text">{NO_LINKED_PROPERTIES_MESSAGE}</output>
+          )}
+          {hasPropertyLoadError && (
+            <p className="host-chdist__error-text" role="alert">
+              {PROPERTIES_ERROR_MESSAGE}
+            </p>
+          )}
           {showPropertyPicker && (
             <label className="host-chdist__picker">
               <span className="host-chdist__picker-label">Property</span>
@@ -149,7 +183,9 @@ function HostChannelDistribution() {
               </select>
             </label>
           )}
-          {showLastSync && <LastSyncCard syncEvidence={syncEvidence} />}
+          {showLastSync && (
+            <LastSyncCard propertyName={selectedPropertyName} loadState={latestSyncLoadState} item={latestSyncItem} />
+          )}
         </div>
       )}
 

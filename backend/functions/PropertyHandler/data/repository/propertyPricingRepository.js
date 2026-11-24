@@ -16,7 +16,7 @@ export class PropertyPricingRepository {
   }
 
   getSchemaName(client) {
-    const schema = client?.options?.schema;
+    const schema = client?.options?.schema ?? client?.connection?.options?.schema;
     if (typeof schema !== "string") {
       return null;
     }
@@ -103,8 +103,8 @@ export class PropertyPricingRepository {
     return weekendRateSupported;
   }
 
-  async getPricingById(id) {
-    const client = await Database.getInstance();
+  async getPricingById(id, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
     const hasWeekendRateColumn = await this.supportsWeekendRateColumn(client);
     const pricingTable = this.getPricingTableName(client);
 
@@ -126,8 +126,8 @@ export class PropertyPricingRepository {
     return result ? PricingMapping.mapDatabaseEntryToPricing(result) : null;
   }
 
-  async create(pricing) {
-    const client = await Database.getInstance();
+  async create(pricing, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
     const hasWeekendRateColumn = await this.supportsWeekendRateColumn(client);
     const pricingTable = this.getPricingTableName(client);
     const roomRateValue = this.parseRoomRate(pricing);
@@ -152,7 +152,7 @@ export class PropertyPricingRepository {
       );
     }
 
-    const result = await this.getPricingById(pricing.property_id);
+    const result = await this.getPricingById(pricing.property_id, transactionManager);
     return result ? result : null;
   }
 

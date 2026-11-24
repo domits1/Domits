@@ -221,6 +221,10 @@ sequenceDiagram
     Ctl-->>C: 200
 ```
 
+## Owner Statements source data
+
+The Owner Statements phase exposes a read-only financial source-data preview through the existing property-owners Lambda. It returns historical ownership periods, candidate bookings and linked invoice snapshots without calculating statement totals. See [Owner Statements financial source-data preview](./owner_statement_financial_data.md) for the endpoint contract and known limitations.
+
 ## Request formats
 
 - [GET: list owners and read one owner](./property_owners_get_format.md)

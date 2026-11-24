@@ -65,7 +65,7 @@ const withReservations = (...reservations) =>
 
 describe("readReservations", () => {
   test("reads a new reservation with its ids, channel, rooms, primary guest and total", () => {
-    const [reservation] = readReservations(withReservations(hotelReservation()));
+    const [reservation] = readReservations(withReservations(hotelReservation())).reservations;
 
     expect(reservation).toEqual({
       status: "Book",
@@ -93,7 +93,7 @@ describe("readReservations", () => {
   });
 
   test("never reads the payment card", () => {
-    const text = JSON.stringify(readReservations(withReservations(hotelReservation())));
+    const text = JSON.stringify(readReservations(withReservations(hotelReservation())).reservations);
 
     expect(text).not.toContain("4111111111111111");
     expect(text).not.toContain("1129");
@@ -111,7 +111,7 @@ describe("readReservations", () => {
           messageId: "msg-3",
         })
       )
-    );
+    ).reservations;
 
     expect(
       reservations.map(({ status, messageId, createdAt, lastModifiedAt }) => ({
@@ -129,7 +129,7 @@ describe("readReservations", () => {
   test("reads every room of a multi-room reservation", () => {
     const [reservation] = readReservations(
       withReservations(hotelReservation({ rooms: [roomStay(), roomStay({ roomTypeCode: "TW", ratePlanCode: "BAR" })] }))
-    );
+    ).reservations;
 
     expect(reservation.rooms.map((room) => [room.roomTypeCode, room.ratePlanCodes])).toEqual([
       ["DR", ["RAC1"]],
@@ -140,7 +140,7 @@ describe("readReservations", () => {
   test("leaves the room type and rate plan empty when SiteMinder has no mapping for them", () => {
     const [reservation] = readReservations(
       withReservations(hotelReservation({ rooms: [roomStay({ roomTypeCode: null, ratePlanCode: null })] }))
-    );
+    ).reservations;
 
     expect(reservation.rooms[0]).toMatchObject({ roomTypeCode: null, ratePlanCodes: [], arrival: "2027-03-12" });
   });
@@ -152,13 +152,13 @@ describe("readReservations", () => {
         `<RatePlan RatePlanCode="RAC2" EffectiveDate="2027-03-14" ExpireDate="2027-03-15"/></RatePlans>`
     );
 
-    const [reservation] = readReservations(withReservations(hotelReservation({ rooms: [stay] })));
+    const [reservation] = readReservations(withReservations(hotelReservation({ rooms: [stay] }))).reservations;
 
     expect(reservation.rooms[0].ratePlanCodes).toEqual(["RAC1", "RAC2"]);
   });
 
   test("returns an empty list when there are no reservations", () => {
-    expect(readReservations(envelope("<Success/>"))).toEqual([]);
+    expect(readReservations(envelope("<Success/>"))).toEqual({ reservations: [], skipped: 0 });
   });
 
   test("refuses a response with a document type declaration", () => {
@@ -167,10 +167,13 @@ describe("readReservations", () => {
     expect(() => readReservations(xml)).toThrow("SiteMinder reservations response must not contain a DOCTYPE");
   });
 
-  test("refuses a reservation without a SiteMinder id or message id, because it cannot be saved or confirmed", () => {
-    const xml = withReservations(hotelReservation({ id: "", messageId: "" }));
+  test("skips and counts a reservation without a SiteMinder id or message id, and still reads the others", () => {
+    const xml = withReservations(hotelReservation({ id: "", messageId: "" }), hotelReservation({ messageId: "msg-9" }));
 
-    expect(() => readReservations(xml)).toThrow("SiteMinder reservation is missing its id or message id");
+    const { reservations, skipped } = readReservations(xml);
+
+    expect(skipped).toBe(1);
+    expect(reservations.map((reservation) => reservation.messageId)).toEqual(["msg-9"]);
   });
 });
 

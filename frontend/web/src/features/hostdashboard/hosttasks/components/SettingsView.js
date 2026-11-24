@@ -76,7 +76,7 @@ const SettingsView = ({ currentUser, taskContext, managedHostId }) => {
             const hostEmail = membership?.host_email || managedHostId;
             rows.push({ name: hostName, role: 'Host', email: hostEmail, properties: 'All', status: 'Active' });
             if (currentUser.name) {
-                rows.push({ name: currentUser.name, role: 'Property Operations Manager', email: currentUser.email, properties: 'All', status: 'Active' });
+                rows.push({ name: currentUser.name, role: membership?.role || '', email: currentUser.email, properties: 'All', status: 'Active' });
             }
         } else {
             if (currentUser.name) {

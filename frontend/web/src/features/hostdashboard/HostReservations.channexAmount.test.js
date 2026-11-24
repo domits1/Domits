@@ -54,6 +54,17 @@ describe("HostReservations totals of Channex bookings (#3483)", () => {
     expect(within(row.getByText("€300").closest("tr")).getAllByText("–").length).toBeGreaterThan(0);
   });
 
+  // A booking paid in pounds on the OTA must not show a euro sign (#3583).
+  test("shows the amount in the currency the guest paid in", async () => {
+    await renderList([
+      { ...twoNights, id: "b-1", guestname: "Guest A", bookingtype: "channex", total_price: 250, currency: "GBP" },
+    ]);
+
+    const row = within(rowOf("Guest A"));
+    expect(row.getByText("£250")).toBeTruthy();
+    expect(row.queryByText("€250")).toBeNull();
+  });
+
   test("keeps the calculated total and commission for a Domits booking", async () => {
     await renderList([{ ...twoNights, id: "b-1", guestname: "Guest A", total_price: 300 }]);
 
