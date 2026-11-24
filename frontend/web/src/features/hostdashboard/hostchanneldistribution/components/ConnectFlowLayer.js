@@ -4,9 +4,9 @@ import { CONNECT_STEP } from "../hooks/useConnectFlow";
 import ConnectChecklistModal from "./ConnectChecklistModal";
 import TimezoneModal from "./TimezoneModal";
 import ChannexIframeModal from "./ChannexIframeModal";
+import { SETTING_UP_MESSAGE } from "./DistributionNotices";
 
 const CONNECTING_MESSAGE = "Connecting…";
-const ENABLING_MESSAGE = "Setting up your listing…";
 
 // What the connect flow puts on screen for its current step: the message of the last failure, a
 // sentence while a request runs, and the modal of the step. All of it comes from the useConnectFlow
@@ -22,7 +22,7 @@ function ConnectFlowLayer({ connectFlow, showError = true, showEnabling = true }
         </p>
       )}
       {showEnabling && connectFlow.step === CONNECT_STEP.ENABLING && (
-        <output className="host-chdist__empty-text">{ENABLING_MESSAGE}</output>
+        <output className="host-chdist__empty-text">{SETTING_UP_MESSAGE}</output>
       )}
       {connectFlow.step === CONNECT_STEP.CONNECTING && (
         <output className="host-chdist__empty-text">{CONNECTING_MESSAGE}</output>

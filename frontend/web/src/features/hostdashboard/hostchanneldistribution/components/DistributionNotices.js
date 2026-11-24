@@ -20,7 +20,8 @@ NotReadyNotice.propTypes = {
   items: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
-const SETTING_UP_MESSAGE = "Setting up your listing…";
+// Also what the connect flow says while it turns a listing on, so the two never read differently.
+export const SETTING_UP_MESSAGE = "Setting up your listing…";
 
 // Shown instead of the OTA cards while a listing is being set up (D2). A setup that did not finish stays
 // in this state, and Retry turns distribution on again, which resumes it. Disabled while that runs.
