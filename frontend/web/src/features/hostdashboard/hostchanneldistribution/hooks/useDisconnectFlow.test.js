@@ -230,6 +230,68 @@ describe("useDisconnectFlow", () => {
     });
   });
 
+  describe("reset", () => {
+    test("returns an open confirm to idle, so it no longer counts as active", () => {
+      const hook = setup();
+      startFlow(hook);
+
+      act(() => hook.result.current.reset());
+
+      expect(hook.result.current.step).toBe(DISCONNECT_STEP.IDLE);
+      expect(hook.result.current.isActive).toBe(false);
+    });
+
+    test("exposes the flow's listing id while it is open", () => {
+      const hook = setup();
+
+      startFlow(hook);
+
+      expect(hook.result.current.propertyId).toBe("p1");
+    });
+
+    test("drops an answer that arrives afterwards: nothing is applied or refreshed", async () => {
+      const pending = deferred();
+      disconnectChannel.mockReturnValue(pending.promise);
+      const hook = setup();
+      startFlow(hook);
+      act(() => {
+        hook.result.current.confirm();
+      });
+      expect(hook.result.current.step).toBe(DISCONNECT_STEP.DISCONNECTING);
+
+      act(() => hook.result.current.reset());
+      await act(async () => pending.resolve({ listing: ANSWER_LISTING }));
+
+      expect(hook.applyListing).not.toHaveBeenCalled();
+      expect(hook.refresh).not.toHaveBeenCalled();
+      expect(hook.result.current.step).toBe(DISCONNECT_STEP.IDLE);
+    });
+
+    test("drops a failure that arrives afterwards: no message, no refresh", async () => {
+      const pending = deferred();
+      disconnectChannel.mockReturnValue(pending.promise);
+      const hook = setup();
+      startFlow(hook);
+      act(() => {
+        hook.result.current.confirm();
+      });
+
+      act(() => hook.result.current.reset());
+      await act(async () => pending.reject(requestError(500, "DISCONNECT_FAILED")));
+
+      expect(hook.result.current.errorMessage).toBe("");
+      expect(hook.refresh).not.toHaveBeenCalled();
+    });
+
+    test("does nothing while idle", () => {
+      const { result } = setup();
+
+      act(() => result.current.reset());
+
+      expect(result.current.step).toBe(DISCONNECT_STEP.IDLE);
+    });
+  });
+
   describe("unmounting while the request runs", () => {
     test("a success afterwards applies nothing and refreshes nothing", async () => {
       const pending = deferred();

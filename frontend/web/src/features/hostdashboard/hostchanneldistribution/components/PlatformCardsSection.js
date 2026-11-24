@@ -40,12 +40,18 @@ function PlatformCardsSection() {
   const connectFlow = useConnectFlow({ refresh, rereadListings });
   const disconnectFlow = useDisconnectFlow({ refresh, applyListing });
   const { isActive: flowActive, propertyId: flowPropertyId, reset: resetFlow } = connectFlow;
-  const flowListingGone = flowActive && !listings.some((listing) => listing.propertyId === flowPropertyId);
+  const { isActive: disconnectActive, propertyId: disconnectPropertyId, reset: resetDisconnect } = disconnectFlow;
+  const hasListing = (propertyId) => listings.some((listing) => listing.propertyId === propertyId);
+  const flowListingGone = flowActive && !hasListing(flowPropertyId);
+  const disconnectListingGone = disconnectActive && !hasListing(disconnectPropertyId);
 
-  // A reload or a vanished listing unmounts the flow's modals, so the flow ends with them.
+  // A reload or a vanished listing unmounts the flows' modals, so the flows end with them.
   useEffect(() => {
     if (loadState !== HOST_DISTRIBUTION_STATE.LOADED || flowListingGone) resetFlow();
   }, [loadState, flowListingGone, resetFlow]);
+  useEffect(() => {
+    if (loadState !== HOST_DISTRIBUTION_STATE.LOADED || disconnectListingGone) resetDisconnect();
+  }, [loadState, disconnectListingGone, resetDisconnect]);
 
   if (loadState === HOST_DISTRIBUTION_STATE.LOADING) {
     return <output className="host-chdist__empty-text">{LOADING_MESSAGE}</output>;

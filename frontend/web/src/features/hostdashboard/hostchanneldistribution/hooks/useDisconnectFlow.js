@@ -60,19 +60,21 @@ export function useDisconnectFlow({ refresh, applyListing }) {
     const { platform, channel, propertyId } = flow;
     moveTo({ step: DISCONNECT_STEP.DISCONNECTING, platform, channel, propertyId });
 
+    // A reset (or an unmount) while the request runs ended this attempt: its answer must change nothing.
+    const isCurrent = () => mountedRef.current && stepRef.current === DISCONNECT_STEP.DISCONNECTING;
     let answer;
     try {
       answer = await disconnectChannel({ channelId: channel.channelId });
     } catch (err) {
       console.error("Failed to turn off a channel:", err);
-      if (!mountedRef.current) return;
+      if (!isCurrent()) return;
       const { refresh: shouldRefresh, message } = classifyDisconnectError(err);
       setErrorMessage(message);
       moveTo(IDLE_FLOW);
       if (shouldRefresh) refresh(propertyId);
       return;
     }
-    if (!mountedRef.current) return;
+    if (!isCurrent()) return;
 
     moveTo(IDLE_FLOW);
     // The answer replaces the listing, but only if it is this listing: an answer without one, or for
@@ -84,16 +86,25 @@ export function useDisconnectFlow({ refresh, applyListing }) {
     }
   }, [applyListing, flow, moveTo, refresh]);
 
+  // For a section that reloaded or lost the flow's listing: its modal is gone, so the step goes with it.
+  // Otherwise the step would stay, and keep every switch locked with nothing on screen.
+  const reset = useCallback(() => {
+    if (stepRef.current === DISCONNECT_STEP.IDLE) return;
+    moveTo(IDLE_FLOW);
+  }, [moveTo]);
+
   const clearError = useCallback(() => setErrorMessage(""), []);
 
   return {
     step: flow.step,
     platform: flow.platform,
     channel: flow.channel,
+    propertyId: flow.propertyId,
     errorMessage,
     isActive: flow.step !== DISCONNECT_STEP.IDLE,
     start,
     cancel,
+    reset,
     confirm,
     clearError,
   };
