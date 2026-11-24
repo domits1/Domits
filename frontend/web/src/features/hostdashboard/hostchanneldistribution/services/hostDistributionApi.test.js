@@ -54,14 +54,15 @@ describe("hostDistributionApi (mock)", () => {
   });
 
   test("refresh moves a syncing channel to live and leaves the other channels alone", async () => {
-    const { listing } = await refreshChannels({ propertyId: "mock-listing-live" });
+    const answer = await refreshChannels({ propertyId: "mock-listing-live" });
 
-    expect(listing.channels.map((c) => [c.otaCode, c.label])).toEqual([
+    expect(Object.keys(answer)).toEqual(["channels"]);
+    expect(answer.channels.map((c) => [c.otaCode, c.label])).toEqual([
       ["BookingCom", "LIVE"],
       ["Airbnb", "LIVE"],
     ]);
     const mixed = await refreshChannels({ propertyId: "mock-listing-mixed" });
-    expect(mixed.listing.channels.map((c) => c.label)).toEqual([
+    expect(mixed.channels.map((c) => c.label)).toEqual([
       "DISCONNECTING",
       "DISCONNECTED",
       "NEEDS_ATTENTION",
