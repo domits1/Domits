@@ -98,7 +98,7 @@ const FilterUi = ({ onFilterApplied }) => {
   };
 
   const handleSliderCommit = (_event, newValues) => {
-    fetchFilteredAccommodations({ priceValues: newValues });
+    void fetchFilteredAccommodations({ priceValues: newValues });
   };
 
   const handleMinInputChange = (event) => {
