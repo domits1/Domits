@@ -11,6 +11,7 @@ import ChannexCredentialStore from "../providers/channex/credentialStore.js";
 import ChannexProviderClient from "../providers/channex/providerClient.js";
 import ChannexAriOutboxWriter from "./channexAriOutboxWriter.js";
 import ListingDistributionRepository from "../repositories/listingDistributionRepository.js";
+import { refuseUnlessHostListing } from "../utils/hostListingAccess.js";
 import { listingDistributionReadiness } from "../utils/listingDistributionReadiness.js";
 import { TIMEZONE_PROBLEM, resolveListingTimezone } from "../utils/listingTimezone.js";
 import {
@@ -95,12 +96,8 @@ export default class ChannexProvisioningService {
 
   async provisionListing({ userId, domitsPropertyId, chosenTimezone }) {
     const listing = await this.listings.findListing(domitsPropertyId);
-    if (!listing) {
-      return bad(404, { error: "Listing not found.", errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" });
-    }
-    if (listing.hostId !== userId) {
-      return bad(403, { error: "This listing belongs to another host.", errorCode: "DISTRIBUTION_LISTING_NOT_OWNED" });
-    }
+    const refusal = refuseUnlessHostListing(listing, userId);
+    if (refusal) return refusal;
 
     const readiness = listingDistributionReadiness(listing);
     if (!readiness.ready) {
