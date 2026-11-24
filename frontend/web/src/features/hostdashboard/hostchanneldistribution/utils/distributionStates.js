@@ -12,6 +12,7 @@ export const PLATFORMS = [
 
 export const LISTING_VIEW = {
   NOT_READY: "NOT_READY",
+  SETTING_UP: "SETTING_UP",
   CARDS: "CARDS",
 };
 
@@ -46,11 +47,11 @@ const CHANNEL_STATES = {
 // An unknown label must not read as healthy, so it gets the attention state.
 const UNKNOWN_CHANNEL_STATE = CHANNEL_STATES.NEEDS_ATTENTION;
 
-const SETTING_UP = { label: "Setting up…", tone: "pending", switchOn: false, switchDisabled: true };
-
-// A listing with missing items shows what is missing instead of the cards.
+// A listing with missing items shows what is missing, and one being set up shows that, each instead of
+// the cards. Missing items win: a listing that cannot be set up has nothing to resume yet.
 export function describeListingView(listing) {
   if (listing.distribution?.missing?.length) return LISTING_VIEW.NOT_READY;
+  if (listing.distribution?.status === DISTRIBUTION_STATUS.PROVISIONING) return LISTING_VIEW.SETTING_UP;
   return LISTING_VIEW.CARDS;
 }
 
@@ -64,8 +65,6 @@ const describeAttentionNote = (platformName) => `Something needs your attention 
 
 export function describePlatformCard(listing, otaCode) {
   const platformName = PLATFORMS.find((platform) => platform.otaCode === otaCode)?.name ?? otaCode;
-
-  if (listing.distribution?.status === DISTRIBUTION_STATUS.PROVISIONING) return { ...SETTING_UP, note: null };
 
   const channel = listing.channels?.find((candidate) => candidate.otaCode === otaCode);
   if (!channel) return { ...NOT_CONNECTED, note: null };

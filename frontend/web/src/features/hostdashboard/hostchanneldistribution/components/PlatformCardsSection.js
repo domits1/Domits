@@ -11,7 +11,7 @@ import {
 import { useConnectFlow } from "../hooks/useConnectFlow";
 import PlatformCard from "./PlatformCard";
 import ConnectFlowLayer from "./ConnectFlowLayer";
-import { NotReadyNotice } from "./DistributionNotices";
+import { NotReadyNotice, SettingUpNotice } from "./DistributionNotices";
 
 const LOADING_MESSAGE = "Loading your listings…";
 const NO_LISTINGS_MESSAGE = "You have no listings yet.";
@@ -89,6 +89,10 @@ function PlatformCardsSection() {
         <NotReadyNotice items={describeMissingItems(selected.distribution?.missing)} />
       )}
 
+      {listingView === LISTING_VIEW.SETTING_UP && (
+        <SettingUpNotice onRetry={() => connectFlow.retry({ listing: selected })} busy={connectFlow.isActive} />
+      )}
+
       {listingView === LISTING_VIEW.CARDS && (
         <>
           {PLATFORMS.map((platform) => (
@@ -117,8 +121,9 @@ function PlatformCardsSection() {
         </>
       )}
 
-      {/* Outside the cards view, so a Retry from the "Setting up" notice can show its dialogs too. */}
-      <ConnectFlowLayer connectFlow={connectFlow} />
+      {/* Outside the cards view, so a Retry from the "Setting up" notice can show its dialogs too. The
+          notice already says it is setting up, so the flow's own sentence is left out there. */}
+      <ConnectFlowLayer connectFlow={connectFlow} showEnabling={listingView !== LISTING_VIEW.SETTING_UP} />
     </div>
   );
 }

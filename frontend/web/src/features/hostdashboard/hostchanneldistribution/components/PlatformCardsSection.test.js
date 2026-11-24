@@ -157,7 +157,7 @@ describe("PlatformCardsSection", () => {
         screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
       });
 
-      test("stops at the card's Setting up when the fresh listing is not READY, with no Channex screen", async () => {
+      test("stops at the Setting up notice when the fresh listing is not READY, with no Channex screen", async () => {
         const user = userEvent.setup();
         enableDistribution.mockResolvedValue({});
         await openChecklistFor(user, NOT_ENABLED);
@@ -168,10 +168,11 @@ describe("PlatformCardsSection", () => {
 
         await user.click(screen.getByRole("button", { name: "Continue" }));
 
-        await waitFor(() => expect(within(cardFor("Vrbo")).getByText("Setting up…")).toBeInTheDocument());
+        expect(await screen.findByRole("button", { name: "Retry" })).toBeEnabled();
+        expect(screen.getByText("Setting up your listing…")).toBeInTheDocument();
         expect(createConnectSession).not.toHaveBeenCalled();
         expect(screen.queryByTitle("Connect Vrbo through Channex")).not.toBeInTheDocument();
-        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+        expect(screen.queryByRole("switch")).not.toBeInTheDocument();
       });
 
       test("asks for the timezone after the checklist, without enabling, and enables with the picked zone", async () => {
@@ -210,15 +211,17 @@ describe("PlatformCardsSection", () => {
         expect(switchOf("Vrbo")).toBeEnabled();
       });
 
-      test("keeps the switches of a listing that is still setting up disabled", async () => {
+      test("shows only the Setting up notice with Retry for a listing that is still setting up", async () => {
         getHostListings.mockResolvedValue({
           listings: [listing("p4", "Lighthouse Cabin", { distribution: { status: "PROVISIONING", missing: [] } })],
         });
 
         render(<PlatformCardsSection />);
-        await screen.findByText("Booking.com");
 
-        screen.getAllByRole("switch").forEach((control) => expect(control).toBeDisabled());
+        expect(await screen.findByRole("button", { name: "Retry" })).toBeEnabled();
+        expect(screen.getByText("Setting up your listing…").tagName).toBe("OUTPUT");
+        expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Refresh" })).not.toBeInTheDocument();
       });
     });
 
@@ -240,13 +243,13 @@ describe("PlatformCardsSection", () => {
       };
       const turnOn = (user) => turnOnWithFresh(user);
 
-      test("a 409 reads the listings again and the card says Setting up", async () => {
+      test("a 409 reads the listings again and the Setting up notice shows", async () => {
         const user = userEvent.setup();
         enableDistribution.mockRejectedValue(requestError(409, "DISTRIBUTION_ALREADY_IN_PROGRESS"));
 
         await turnOnWithFresh(user, listing("p2", "City Loft", { distribution: { status: "PROVISIONING", missing: [] } }));
 
-        await waitFor(() => expect(within(cardFor("Vrbo")).getByText("Setting up…")).toBeInTheDocument());
+        expect(await screen.findByRole("button", { name: "Retry" })).toBeEnabled();
         expect(getHostListings).toHaveBeenCalledTimes(2);
         expect(refreshChannels).not.toHaveBeenCalled();
         expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -552,7 +555,7 @@ describe("PlatformCardsSection", () => {
   test("a refresh updates the channels only, not what the listings read said about the listing", async () => {
     const user = userEvent.setup();
     getHostListings.mockResolvedValue({
-      listings: [listing("p1", "Canal House", { distribution: { status: "PROVISIONING", missing: [] } })],
+      listings: [listing("p1", "Canal House", { distribution: { status: "NOT_ENABLED", missing: [] } })],
     });
     refreshChannels.mockResolvedValue({ channels: [channel("BookingCom", "LIVE")] });
 
@@ -560,9 +563,103 @@ describe("PlatformCardsSection", () => {
     await screen.findByText("Booking.com");
     await user.click(screen.getByRole("button", { name: "Refresh" }));
 
-    await waitFor(() => expect(refreshChannels).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled());
-    expect(within(cardFor("Booking.com")).getByText("Setting up…")).toBeInTheDocument();
+    await waitFor(() => expect(within(cardFor("Booking.com")).getByText("Live")).toBeInTheDocument());
+    expect(screen.getByRole("switch", { name: "Vrbo distribution" })).toBeEnabled();
+  });
+
+  describe("Retry on a listing that is still setting up", () => {
+    const SETTING_UP = listing("p3", "Windmill Cottage", { distribution: { status: "PROVISIONING", missing: [] } });
+    const requestError = (status, errorCode) =>
+      Object.assign(new Error("failed"), { status, responseBody: { errorCode } });
+
+    const renderSettingUp = async (settingUp = SETTING_UP) => {
+      getHostListings.mockResolvedValue({ listings: [settingUp] });
+      render(<PlatformCardsSection />);
+      await screen.findByRole("button", { name: "Retry" });
+    };
+
+    test("turns it on again with the listing id, with no checklist and no Channex screen, and then the cards show", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockResolvedValue({ status: "PROVISIONED" });
+      await renderSettingUp();
+      getHostListings.mockResolvedValue({ listings: [listing("p3", "Windmill Cottage")] });
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+      expect(enableDistribution).toHaveBeenCalledTimes(1);
+      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p3" });
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(createConnectSession).not.toHaveBeenCalled();
+      expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    });
+
+    test("is disabled while the request runs, and the sentence shows once", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockReturnValue(deferred().promise);
+      await renderSettingUp();
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled();
+      expect(screen.getAllByText("Setting up your listing…")).toHaveLength(1);
+    });
+
+    test("asks for the timezone first where the listing requires one, and turns on with the picked zone", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockResolvedValue({ status: "PROVISIONED" });
+      await renderSettingUp(
+        listing("p3", "Windmill Cottage", {
+          distribution: {
+            status: "PROVISIONING",
+            missing: [],
+            timezone: { required: true, options: ["Asia/Jakarta", "Asia/Makassar"] },
+          },
+        })
+      );
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(screen.getByRole("dialog", { name: "Choose a timezone" })).toBeInTheDocument();
+      expect(enableDistribution).not.toHaveBeenCalled();
+
+      getHostListings.mockResolvedValue({ listings: [listing("p3", "Windmill Cottage")] });
+      await user.selectOptions(screen.getByRole("combobox", { name: "Timezone" }), "Asia/Jakarta");
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+
+      expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p3", chosenTimezone: "Asia/Jakarta" });
+    });
+
+    test("a try again keeps the notice with a single alert, and Retry works again", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockRejectedValueOnce(requestError(503, "DISTRIBUTION_TRY_AGAIN"));
+      enableDistribution.mockResolvedValue({ status: "PROVISIONED" });
+      await renderSettingUp();
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Setting up didn't finish. Try again.");
+      await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+
+      getHostListings.mockResolvedValue({ listings: [listing("p3", "Windmill Cottage")] });
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+    });
+
+    test("a network error keeps the notice, with no re-read, and Retry is enabled again", async () => {
+      const user = userEvent.setup();
+      enableDistribution.mockRejectedValue(new Error("Failed to fetch"));
+      await renderSettingUp();
+
+      await user.click(screen.getByRole("button", { name: "Retry" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't set up this listing. Try again.");
+      await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
+      expect(getHostListings).toHaveBeenCalledTimes(1);
+    });
   });
 
   test("while refreshing, Refresh is disabled and a sentence says so", async () => {

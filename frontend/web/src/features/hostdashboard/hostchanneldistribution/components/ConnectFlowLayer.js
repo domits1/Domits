@@ -11,8 +11,9 @@ const ENABLING_MESSAGE = "Setting up your listing…";
 // What the connect flow puts on screen for its current step: the message of the last failure, a
 // sentence while a request runs, and the modal of the step. All of it comes from the useConnectFlow
 // result, so the section only decides where to put it. showError is off while another notice already
-// tells the host the same thing.
-function ConnectFlowLayer({ connectFlow, showError = true }) {
+// tells the host the same thing, and so is showEnabling while the notice of a listing being set up
+// already says it.
+function ConnectFlowLayer({ connectFlow, showError = true, showEnabling = true }) {
   return (
     <>
       {showError && connectFlow.errorMessage && (
@@ -20,7 +21,7 @@ function ConnectFlowLayer({ connectFlow, showError = true }) {
           {connectFlow.errorMessage}
         </p>
       )}
-      {connectFlow.step === CONNECT_STEP.ENABLING && (
+      {showEnabling && connectFlow.step === CONNECT_STEP.ENABLING && (
         <output className="host-chdist__empty-text">{ENABLING_MESSAGE}</output>
       )}
       {connectFlow.step === CONNECT_STEP.CONNECTING && (
@@ -60,6 +61,7 @@ ConnectFlowLayer.propTypes = {
     closeIframe: PropTypes.func.isRequired,
   }).isRequired,
   showError: PropTypes.bool,
+  showEnabling: PropTypes.bool,
 };
 
 export default ConnectFlowLayer;
