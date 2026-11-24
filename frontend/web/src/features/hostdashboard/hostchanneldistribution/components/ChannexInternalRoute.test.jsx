@@ -87,6 +87,15 @@ describe("ChannexInternalRoute", () => {
     expect(loadChannexAccessState).toHaveBeenCalledTimes(2);
   });
 
+  test("shows the error sentence and Retry when the access check rejects", async () => {
+    loadChannexAccessState.mockRejectedValue(new Error("unexpected"));
+
+    renderGuard();
+
+    expect((await screen.findByRole("alert")).textContent).toBe(ACCESS_ERROR_MESSAGE);
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+  });
+
   test("a Retry that fails again shows the error sentence again", async () => {
     loadChannexAccessState.mockResolvedValue(ERROR);
 

@@ -15,7 +15,9 @@ function ChannexInternalRoute({ children }) {
 
   const runCheck = useCallback(() => {
     setState(CHECKING);
-    loadChannexAccessState().then(setState);
+    loadChannexAccessState()
+      .catch(() => CHANNEX_ACCESS_STATE.ERROR)
+      .then(setState);
   }, []);
 
   useEffect(() => {
