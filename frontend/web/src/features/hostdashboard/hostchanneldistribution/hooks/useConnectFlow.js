@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createConnectSession, enableDistribution } from "../services/hostDistributionApi";
+import { classifyConnectSessionError } from "../utils/connectErrors";
 import { DISTRIBUTION_STATUS } from "../utils/distributionStates";
 import { classifyEnableError } from "../utils/enableErrors";
 
@@ -12,8 +13,6 @@ export const CONNECT_STEP = {
   IFRAME: "iframe",
 };
 
-export const CONNECT_ERROR_MESSAGE = "We couldn't start the connection. Try again.";
-
 const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, listing: null, url: null };
 
 // The connect flow behind a platform switch (design note #3954, D2, D4):
@@ -23,20 +22,21 @@ const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, listing: null, url:
 //     │              Cancel                                      yes ▶ timezone ─Continue(zone)─┐│
 //     │                                                          no ───────────────────────────┤│
 //     │                                                                                        ▼│
-//     │      enabling: enableDistribution ─ok, READY──▶ applyListing ──────────────────────────┤│
-//     │            │   ─ok, not READY──▶ applyListing ──▶ idle ("Setting up…" shows)           ││
-//     │            └─ error ─▶ idle, with the message; a 409, 422, 400 or 5xx also reads the     ││
-//     │                         listing again (see utils/enableErrors.js)                       ││
+//     │      enabling: enableDistribution ─ok──▶ rereadListings ─ READY ──────────────────────┤│
+//     │            │                                          └─ not READY ▶ idle ("Setting up…")││
+//     │            └─ error ─▶ idle, with the message; some codes also read the listings again   ││
+//     │                         (see utils/enableErrors.js)                                      ││
 //     │                                                                                        ▼▼
 //     └──close, refresh(propertyId) once ── iframe ◀──session ok── connecting ◀────────────────┘
-//                                                       session fails: message, idle
+//                                                       session fails: message, idle (404 or 409
+//                                                       also rereadListings)
 //
 // retry({ listing }) is the same machine without the checklist and the session: idle ──▶ [timezone] ──▶
-// enabling ──▶ idle, for the Retry of a setup that failed halfway.
+// enabling ──▶ idle, for the Retry of a setup that did not finish.
 //
 // The checklist comes first and nothing is requested before the host has confirmed it. `refresh` and
-// `applyListing` are useHostDistribution's, so the listing the host sees follows every answer.
-export function useConnectFlow({ refresh, applyListing }) {
+// `rereadListings` are useHostDistribution's: the listing the host sees follows every answer.
+export function useConnectFlow({ refresh, rereadListings }) {
   const [flow, setFlow] = useState(IDLE_FLOW);
   const [errorMessage, setErrorMessage] = useState("");
   // The step as the latest event handler sees it. State alone lags a double click by one render,
@@ -74,50 +74,55 @@ export function useConnectFlow({ refresh, applyListing }) {
     async ({ platform, propertyId }) => {
       moveTo({ step: CONNECT_STEP.CONNECTING, platform, listing: null, url: null, propertyId });
       try {
-        const { url } = await createConnectSession({ propertyId });
+        const { iframeUrl } = await createConnectSession({ propertyId });
         if (!mountedRef.current) return;
-        moveTo({ step: CONNECT_STEP.IFRAME, platform, listing: null, url, propertyId });
+        moveTo({ step: CONNECT_STEP.IFRAME, platform, listing: null, url: iframeUrl, propertyId });
       } catch (err) {
         console.error("Failed to create a Channex connect session:", err);
         if (!mountedRef.current) return;
-        setErrorMessage(CONNECT_ERROR_MESSAGE);
+        const { reread, message } = classifyConnectSessionError(err);
+        setErrorMessage(message);
         moveTo(IDLE_FLOW);
+        if (reread) rereadListings();
       }
     },
-    [moveTo]
+    [moveTo, rereadListings]
   );
 
   const failEnable = useCallback(
-    (err, propertyId) => {
+    (err) => {
       console.error("Failed to turn on distribution for a listing:", err);
       if (!mountedRef.current) return;
-      const { refresh: shouldRefresh, message } = classifyEnableError(err);
+      const { refresh: shouldReread, message } = classifyEnableError(err);
       setErrorMessage(message);
       moveTo(IDLE_FLOW);
-      if (shouldRefresh) refresh(propertyId);
+      if (shouldReread) rereadListings();
     },
-    [moveTo, refresh]
+    [moveTo, rereadListings]
   );
 
-  // Turns distribution on, then goes on to the connect session once the listing is READY.
+  // Turns distribution on, reads the listings again, and goes on to the connect session once the
+  // listing is READY.
   const enableThenConnect = useCallback(
     async ({ platform, propertyId, timezone }) => {
       moveTo({ step: CONNECT_STEP.ENABLING, platform, listing: null, url: null, propertyId });
       let enabled;
       try {
         // The timezone is sent only where the listing asked for one (D4).
-        ({ listing: enabled } = await enableDistribution({ propertyId, ...(timezone ? { timezone } : {}) }));
-        // An answer without a listing must not replace one with nothing, or the section would crash.
-        if (!enabled?.propertyId) throw new Error("The enable response did not contain a listing.");
+        await enableDistribution({ propertyId, ...(timezone ? { timezone } : {}) });
+        if (!mountedRef.current) return;
+        // The answer says nothing about the listing, so the listings are read again to see its state.
+        const fresh = await rereadListings();
+        enabled = fresh?.find((candidate) => candidate.propertyId === propertyId);
+        if (!enabled) throw new Error("The listings read after turning on did not contain the listing.");
       } catch (err) {
-        failEnable(err, propertyId);
+        failEnable(err);
         return;
       }
       if (!mountedRef.current) return;
 
-      applyListing(propertyId, enabled);
       if (enabled.distribution?.status !== DISTRIBUTION_STATUS.READY) {
-        // Still setting up: the card says "Setting up…" and Refresh reconciles it. No iframe yet.
+        // Still setting up: the listing says so and Retry turns it on again. No iframe yet.
         moveTo(IDLE_FLOW);
         return;
       }
@@ -128,7 +133,7 @@ export function useConnectFlow({ refresh, applyListing }) {
       }
       await openSession({ platform, propertyId });
     },
-    [applyListing, failEnable, moveTo, openSession]
+    [failEnable, moveTo, openSession, rereadListings]
   );
 
   // Turns a listing on: asks for the timezone first where the listing requires one (D4), and
@@ -136,10 +141,10 @@ export function useConnectFlow({ refresh, applyListing }) {
   const enableOrAskTimezone = useCallback(
     async ({ platform, listing }) => {
       const { propertyId } = listing;
-      if (listing.timezone?.required) {
+      if (listing.distribution?.timezone?.required) {
         // A required choice with no options would be a dead modal, so it is an error instead.
-        if (!listing.timezone.options?.length) {
-          failEnable(new Error("The listing requires a timezone but offered no options."), propertyId);
+        if (!listing.distribution.timezone.options?.length) {
+          failEnable(new Error("The listing requires a timezone but offered no options."));
           return;
         }
         moveTo({ step: CONNECT_STEP.TIMEZONE, platform, listing, url: null });
@@ -164,7 +169,7 @@ export function useConnectFlow({ refresh, applyListing }) {
     await enableOrAskTimezone({ platform, listing });
   }, [enableOrAskTimezone, flow, openSession]);
 
-  // The Retry of a setup that failed halfway (D2: the next attempt resumes). No checklist and no
+  // The Retry of a setup that did not finish (D2: the next attempt resumes). No checklist and no
   // platform: the listing is only set up, and the host sees the cards when it is READY.
   const retry = useCallback(
     async ({ listing }) => {

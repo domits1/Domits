@@ -11,7 +11,7 @@ import {
 import { useConnectFlow } from "../hooks/useConnectFlow";
 import PlatformCard from "./PlatformCard";
 import ConnectFlowLayer from "./ConnectFlowLayer";
-import { NotReadyNotice, SetupFailedNotice } from "./DistributionNotices";
+import { NotReadyNotice } from "./DistributionNotices";
 
 const LOADING_MESSAGE = "Loading your listings…";
 const NO_LISTINGS_MESSAGE = "You have no listings yet.";
@@ -24,10 +24,10 @@ const STARTABLE_STATUSES = [DISTRIBUTION_STATUS.READY, DISTRIBUTION_STATUS.NOT_E
 // The three OTA cards of the picked listing (design note #3954, D7), or the notice that explains why
 // there are none. Orchestration only: what each card says lives in utils/distributionStates.js.
 function PlatformCardsSection() {
-  const { listings, loadState, reload, refresh, applyListing, refreshingPropertyId, refreshFailedPropertyId } =
+  const { listings, loadState, reload, rereadListings, refresh, refreshingPropertyId, refreshFailedPropertyId } =
     useHostDistribution();
   const [pickedPropertyId, setPickedPropertyId] = useState("");
-  const connectFlow = useConnectFlow({ refresh, applyListing });
+  const connectFlow = useConnectFlow({ refresh, rereadListings });
 
   if (loadState === HOST_DISTRIBUTION_STATE.LOADING) {
     return <output className="host-chdist__empty-text">{LOADING_MESSAGE}</output>;
@@ -86,11 +86,7 @@ function PlatformCardsSection() {
       )}
 
       {listingView === LISTING_VIEW.NOT_READY && (
-        <NotReadyNotice items={describeMissingItems(selected.readiness?.missing)} />
-      )}
-
-      {listingView === LISTING_VIEW.SETUP_FAILED && (
-        <SetupFailedNotice onRetry={() => connectFlow.retry({ listing: selected })} busy={connectFlow.isActive} />
+        <NotReadyNotice items={describeMissingItems(selected.distribution?.missing)} />
       )}
 
       {listingView === LISTING_VIEW.CARDS && (
@@ -121,9 +117,8 @@ function PlatformCardsSection() {
         </>
       )}
 
-      {/* Outside the cards view, so a Retry from the setup-failed notice can show its dialogs too. The
-          setup-failed notice already says the setup went wrong, so the flow's own message is left out there. */}
-      <ConnectFlowLayer connectFlow={connectFlow} showError={listingView !== LISTING_VIEW.SETUP_FAILED} />
+      {/* Outside the cards view, so a Retry from the "Setting up" notice can show its dialogs too. */}
+      <ConnectFlowLayer connectFlow={connectFlow} />
     </div>
   );
 }

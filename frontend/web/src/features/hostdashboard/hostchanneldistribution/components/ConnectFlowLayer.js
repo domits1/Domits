@@ -35,7 +35,7 @@ function ConnectFlowLayer({ connectFlow, showError = true }) {
       )}
       {connectFlow.step === CONNECT_STEP.TIMEZONE && (
         <TimezoneModal
-          options={connectFlow.listing.timezone.options}
+          options={connectFlow.listing.distribution.timezone.options}
           onContinue={connectFlow.continueFromTimezone}
           onClose={connectFlow.cancel}
         />

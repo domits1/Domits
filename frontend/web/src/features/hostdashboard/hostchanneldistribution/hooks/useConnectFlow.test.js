@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
-import { CONNECT_ERROR_MESSAGE, CONNECT_STEP, useConnectFlow } from "./useConnectFlow";
+import { CONNECT_STEP, useConnectFlow } from "./useConnectFlow";
+import { CONNECT_ERROR_MESSAGE } from "../utils/connectErrors";
 import { createConnectSession, enableDistribution } from "../services/hostDistributionApi";
 import { ENABLE_ERROR_MESSAGE, TIMEZONE_REQUIRED_MESSAGE } from "../utils/enableErrors";
 
@@ -8,17 +9,14 @@ jest.mock("../services/hostDistributionApi");
 const PLATFORM = { otaCode: "Vrbo", name: "Vrbo" };
 const URL_OK = "https://staging.channex.io/mock-connect?token=mock";
 
-const listing = (overrides = {}) => ({
-  propertyId: "p1",
-  distribution: { status: "READY" },
-  timezone: { required: false, options: [] },
-  ...overrides,
-});
+const NO_TIMEZONE = { required: false, options: [] };
+const distribution = (status, timezone = NO_TIMEZONE) => ({ status, missing: [], timezone });
+const listing = (overrides = {}) => ({ propertyId: "p1", distribution: distribution("READY"), ...overrides });
 const READY_LISTING = listing();
-const NOT_ENABLED_LISTING = listing({ distribution: { status: "NOT_ENABLED" } });
+const NOT_ENABLED_LISTING = listing({ distribution: distribution("NOT_ENABLED") });
+const PROVISIONING_LISTING = listing({ distribution: distribution("PROVISIONING") });
 const TIMEZONE_LISTING = listing({
-  distribution: { status: "NOT_ENABLED" },
-  timezone: { required: true, options: ["Asia/Jakarta", "Asia/Makassar"] },
+  distribution: distribution("NOT_ENABLED", { required: true, options: ["Asia/Jakarta", "Asia/Makassar"] }),
 });
 
 const deferred = () => {
@@ -35,9 +33,9 @@ const requestError = (status, errorCode) => Object.assign(new Error("failed"), {
 
 const setup = () => {
   const refresh = jest.fn();
-  const applyListing = jest.fn();
-  const hook = renderHook(() => useConnectFlow({ refresh, applyListing }));
-  return { ...hook, refresh, applyListing };
+  const rereadListings = jest.fn();
+  const hook = renderHook(() => useConnectFlow({ refresh, rereadListings }));
+  return { ...hook, refresh, rereadListings };
 };
 
 const startFlow = (hook, flowListing = READY_LISTING) =>
@@ -46,7 +44,7 @@ const startFlow = (hook, flowListing = READY_LISTING) =>
 // Walks to the iframe step and returns the hook.
 const openIframe = async () => {
   const hook = setup();
-  createConnectSession.mockResolvedValue({ url: URL_OK });
+  createConnectSession.mockResolvedValue({ iframeUrl: URL_OK });
   startFlow(hook);
   await act(async () => hook.result.current.continueFromChecklist());
   return hook;
@@ -104,12 +102,12 @@ describe("useConnectFlow", () => {
       expect(createConnectSession).toHaveBeenCalledTimes(1);
       expect(createConnectSession).toHaveBeenCalledWith({ propertyId: "p1" });
 
-      await act(async () => pending.resolve({ url: URL_OK }));
+      await act(async () => pending.resolve({ iframeUrl: URL_OK }));
 
       expect(hook.result.current.step).toBe(CONNECT_STEP.IFRAME);
       expect(hook.result.current.url).toBe(URL_OK);
       expect(enableDistribution).not.toHaveBeenCalled();
-      expect(hook.applyListing).not.toHaveBeenCalled();
+      expect(hook.rereadListings).not.toHaveBeenCalled();
     });
 
     test("a second Continue while connecting does not ask for another session", async () => {
@@ -127,18 +125,18 @@ describe("useConnectFlow", () => {
   });
 
   describe("a listing that is not turned on and needs no timezone", () => {
-    test("enables with the listing id only, applies the answer, then opens the session", async () => {
-      const enabled = listing({ title: "Enabled" });
-      enableDistribution.mockResolvedValue({ listing: enabled });
-      createConnectSession.mockResolvedValue({ url: URL_OK });
+    test("enables with the listing id only, reads the listings again, then opens the session", async () => {
+      enableDistribution.mockResolvedValue({});
+      createConnectSession.mockResolvedValue({ iframeUrl: URL_OK });
       const hook = setup();
+      hook.rereadListings.mockResolvedValue([READY_LISTING]);
       startFlow(hook, NOT_ENABLED_LISTING);
 
       await act(async () => hook.result.current.continueFromChecklist());
 
       expect(enableDistribution).toHaveBeenCalledTimes(1);
       expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p1" });
-      expect(hook.applyListing).toHaveBeenCalledWith("p1", enabled);
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
       expect(createConnectSession).toHaveBeenCalledWith({ propertyId: "p1" });
       expect(hook.result.current.step).toBe(CONNECT_STEP.IFRAME);
     });
@@ -159,35 +157,38 @@ describe("useConnectFlow", () => {
       expect(createConnectSession).not.toHaveBeenCalled();
     });
 
-    test("stops at Setting up when the answer is not READY: applies it, opens no session", async () => {
-      const provisioning = listing({ distribution: { status: "PROVISIONING" } });
-      enableDistribution.mockResolvedValue({ listing: provisioning });
+    test("stops at Setting up when the fresh listing is not READY: opens no session", async () => {
+      enableDistribution.mockResolvedValue({});
       const hook = setup();
+      hook.rereadListings.mockResolvedValue([PROVISIONING_LISTING]);
       startFlow(hook, NOT_ENABLED_LISTING);
 
       await act(async () => hook.result.current.continueFromChecklist());
 
-      expect(hook.applyListing).toHaveBeenCalledWith("p1", provisioning);
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
       expect(createConnectSession).not.toHaveBeenCalled();
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
       expect(hook.result.current.errorMessage).toBe("");
     });
 
-    test("an answer without a listing is an error: nothing is applied, no session, no refresh", async () => {
+    test.each([
+      ["a read that failed", null],
+      ["a read without the listing", [listing({ propertyId: "p2" })]],
+    ])("%s is an error: no session, no refresh", async (_name, fresh) => {
       enableDistribution.mockResolvedValue({});
       const hook = setup();
+      hook.rereadListings.mockResolvedValue(fresh);
       startFlow(hook, NOT_ENABLED_LISTING);
 
       await act(async () => hook.result.current.continueFromChecklist());
 
-      expect(hook.applyListing).not.toHaveBeenCalled();
       expect(createConnectSession).not.toHaveBeenCalled();
       expect(hook.refresh).not.toHaveBeenCalled();
       expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
     });
 
-    test("an answer that arrives after unmount applies nothing and opens no session", async () => {
+    test("an answer that arrives after unmount reads nothing and opens no session", async () => {
       const pending = deferred();
       enableDistribution.mockReturnValue(pending.promise);
       const hook = setup();
@@ -197,9 +198,9 @@ describe("useConnectFlow", () => {
       });
 
       hook.unmount();
-      await act(async () => pending.resolve({ listing: READY_LISTING }));
+      await act(async () => pending.resolve({}));
 
-      expect(hook.applyListing).not.toHaveBeenCalled();
+      expect(hook.rereadListings).not.toHaveBeenCalled();
       expect(createConnectSession).not.toHaveBeenCalled();
     });
   });
@@ -212,14 +213,15 @@ describe("useConnectFlow", () => {
       await act(async () => hook.result.current.continueFromChecklist());
 
       expect(hook.result.current.step).toBe(CONNECT_STEP.TIMEZONE);
-      expect(hook.result.current.listing.timezone.options).toEqual(["Asia/Jakarta", "Asia/Makassar"]);
+      expect(hook.result.current.listing.distribution.timezone.options).toEqual(["Asia/Jakarta", "Asia/Makassar"]);
       expect(enableDistribution).not.toHaveBeenCalled();
     });
 
     test("enables with the picked zone, then opens the session", async () => {
-      enableDistribution.mockResolvedValue({ listing: READY_LISTING });
-      createConnectSession.mockResolvedValue({ url: URL_OK });
+      enableDistribution.mockResolvedValue({});
+      createConnectSession.mockResolvedValue({ iframeUrl: URL_OK });
       const hook = setup();
+      hook.rereadListings.mockResolvedValue([READY_LISTING]);
       startFlow(hook, TIMEZONE_LISTING);
       await act(async () => hook.result.current.continueFromChecklist());
 
@@ -258,7 +260,7 @@ describe("useConnectFlow", () => {
 
     test("a required timezone with no options is an error, not a modal that can never continue", async () => {
       const hook = setup();
-      startFlow(hook, listing({ distribution: { status: "NOT_ENABLED" }, timezone: { required: true, options: [] } }));
+      startFlow(hook, listing({ distribution: distribution("NOT_ENABLED", { required: true, options: [] }) }));
 
       await act(async () => hook.result.current.continueFromChecklist());
 
@@ -290,12 +292,11 @@ describe("useConnectFlow", () => {
 
       await act(async () => hook.result.current.continueFromChecklist());
 
-      expect(hook.refresh).toHaveBeenCalledTimes(1);
-      expect(hook.refresh).toHaveBeenCalledWith("p1");
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
+      expect(hook.refresh).not.toHaveBeenCalled();
       expect(hook.result.current.errorMessage).toBe(message);
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
       expect(createConnectSession).not.toHaveBeenCalled();
-      expect(hook.applyListing).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalled();
     });
 
@@ -307,7 +308,7 @@ describe("useConnectFlow", () => {
       await act(async () => hook.result.current.continueFromChecklist());
 
       expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
-      expect(hook.refresh).not.toHaveBeenCalled();
+      expect(hook.rereadListings).not.toHaveBeenCalled();
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
     });
 
@@ -337,6 +338,30 @@ describe("useConnectFlow", () => {
       expect(hook.result.current.errorMessage).toBe(CONNECT_ERROR_MESSAGE);
       expect(console.error).toHaveBeenCalled();
       expect(hook.refresh).not.toHaveBeenCalled();
+      expect(hook.rereadListings).not.toHaveBeenCalled();
+    });
+
+    test("a listing that is not turned on says so and reads the listings again once", async () => {
+      createConnectSession.mockRejectedValue(requestError(409, "DISTRIBUTION_NOT_TURNED_ON"));
+      const hook = setup();
+      startFlow(hook);
+
+      await act(async () => hook.result.current.continueFromChecklist());
+
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.errorMessage).toBe("This listing isn't turned on yet.");
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
+    });
+
+    test("a listing that is not the host's says so and does not read the listings again", async () => {
+      createConnectSession.mockRejectedValue(requestError(403, "DISTRIBUTION_LISTING_NOT_OWNED"));
+      const hook = setup();
+      startFlow(hook);
+
+      await act(async () => hook.result.current.continueFromChecklist());
+
+      expect(hook.result.current.errorMessage).toBe("You don't have access to this listing.");
+      expect(hook.rereadListings).not.toHaveBeenCalled();
     });
 
     test("an answer that arrives after unmount changes nothing and does not throw", async () => {
@@ -349,7 +374,7 @@ describe("useConnectFlow", () => {
       });
 
       hook.unmount();
-      await act(async () => pending.resolve({ url: URL_OK }));
+      await act(async () => pending.resolve({ iframeUrl: URL_OK }));
 
       expect(console.error).not.toHaveBeenCalled();
     });
@@ -369,18 +394,19 @@ describe("useConnectFlow", () => {
     expect(refresh).toHaveBeenCalledWith("p1");
   });
 
-  describe("retry of a setup that failed halfway", () => {
-    const FAILED_LISTING = listing({ distribution: { status: "PROVISIONING_FAILED" } });
+  describe("retry of a setup that did not finish", () => {
+    const FAILED_LISTING = PROVISIONING_LISTING;
 
-    test("enables again with no checklist, applies the answer, and opens no session", async () => {
-      enableDistribution.mockResolvedValue({ listing: READY_LISTING });
+    test("enables again with no checklist, reads the listings again, and opens no session", async () => {
+      enableDistribution.mockResolvedValue({});
       const hook = setup();
+      hook.rereadListings.mockResolvedValue([READY_LISTING]);
 
       await act(async () => hook.result.current.retry({ listing: FAILED_LISTING }));
 
       expect(enableDistribution).toHaveBeenCalledTimes(1);
       expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p1" });
-      expect(hook.applyListing).toHaveBeenCalledWith("p1", READY_LISTING);
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
       expect(createConnectSession).not.toHaveBeenCalled();
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
       expect(hook.result.current.errorMessage).toBe("");
@@ -401,11 +427,11 @@ describe("useConnectFlow", () => {
     });
 
     test("asks for the timezone first where the listing requires one, then enables with the zone", async () => {
-      enableDistribution.mockResolvedValue({ listing: READY_LISTING });
+      enableDistribution.mockResolvedValue({});
       const hook = setup();
+      hook.rereadListings.mockResolvedValue([READY_LISTING]);
       const needsZone = listing({
-        distribution: { status: "PROVISIONING_FAILED" },
-        timezone: { required: true, options: ["Asia/Jakarta"] },
+        distribution: distribution("PROVISIONING", { required: true, options: ["Asia/Jakarta"] }),
       });
 
       await act(async () => hook.result.current.retry({ listing: needsZone }));
@@ -426,7 +452,7 @@ describe("useConnectFlow", () => {
 
       await act(async () => hook.result.current.retry({ listing: FAILED_LISTING }));
 
-      expect(hook.refresh).toHaveBeenCalledWith("p1");
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
       expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
     });
 

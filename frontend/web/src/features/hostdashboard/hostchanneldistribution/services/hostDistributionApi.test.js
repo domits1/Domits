@@ -27,6 +27,23 @@ describe("hostDistributionApi (mock)", () => {
     expect(MOCK_HOST_DISTRIBUTION_ENABLED).toBe(false);
   });
 
+  test("a channel carries only an otaCode and a label, as in the contract", async () => {
+    const { listings } = await getHostListings();
+    const channels = listings.flatMap((listing) => listing.channels);
+
+    expect(channels.length).toBeGreaterThan(0);
+    channels.forEach((channel) => expect(Object.keys(channel).sort()).toEqual(["label", "otaCode"]));
+  });
+
+  test("a listing keeps its missing items and timezone under distribution, with no readiness object", async () => {
+    const { listings } = await getHostListings();
+
+    listings.forEach((listing) => {
+      expect(Object.keys(listing).sort()).toEqual(["channels", "distribution", "propertyId", "title"]);
+      expect(Object.keys(listing.distribution).sort()).toEqual(["missing", "status", "timezone"]);
+    });
+  });
+
   test("returns copies: changing a response does not change the mock", async () => {
     const first = await getHostListings();
     first.listings[0].title = "Changed by a caller";
@@ -39,14 +56,15 @@ describe("hostDistributionApi (mock)", () => {
   });
 
   test("refresh moves a syncing channel to live and leaves the other channels alone", async () => {
-    const { listing } = await refreshChannels({ propertyId: "mock-listing-live" });
+    const answer = await refreshChannels({ propertyId: "mock-listing-live" });
 
-    expect(listing.channels.map((c) => [c.otaCode, c.displayState])).toEqual([
+    expect(Object.keys(answer)).toEqual(["channels"]);
+    expect(answer.channels.map((c) => [c.otaCode, c.label])).toEqual([
       ["BookingCom", "LIVE"],
       ["Airbnb", "LIVE"],
     ]);
     const mixed = await refreshChannels({ propertyId: "mock-listing-mixed" });
-    expect(mixed.listing.channels.map((c) => c.displayState)).toEqual([
+    expect(mixed.channels.map((c) => c.label)).toEqual([
       "DISCONNECTING",
       "DISCONNECTED",
       "NEEDS_ATTENTION",
@@ -57,21 +75,22 @@ describe("hostDistributionApi (mock)", () => {
     await expect(refreshChannels({ propertyId: "nope" })).rejects.toMatchObject({
       status: 404,
       method: "POST",
-      responseBody: { errorCode: "LISTING_NOT_FOUND" },
+      responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
     });
   });
 
-  test("a connect session is a Channex address with an expiry in the future", async () => {
+  test("a connect session is a Channex address that is good for 900 seconds", async () => {
     const session = await createConnectSession({ propertyId: "mock-listing-live" });
 
-    expect(isChannexUrl(session.url)).toBe(true);
-    expect(session.expiresAt).toBeGreaterThan(Date.now());
+    expect(isChannexUrl(session.iframeUrl)).toBe(true);
+    expect(session.expiresInSeconds).toBe(900);
+    expect(Object.keys(session).sort()).toEqual(["expiresInSeconds", "iframeUrl"]);
   });
 
   test("a connect session for an unknown listing rejects with a 404", async () => {
     await expect(createConnectSession({ propertyId: "nope" })).rejects.toMatchObject({
       status: 404,
-      responseBody: { errorCode: "LISTING_NOT_FOUND" },
+      responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
     });
   });
 
@@ -79,7 +98,7 @@ describe("hostDistributionApi (mock)", () => {
     await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
       status: 409,
       method: "POST",
-      responseBody: { errorCode: "DISTRIBUTION_NOT_ENABLED" },
+      responseBody: { errorCode: "DISTRIBUTION_NOT_TURNED_ON" },
     });
   });
 
@@ -94,7 +113,7 @@ describe("hostDistributionApi (mock)", () => {
 
       expect(listing.distribution.status).toBe("READY");
       expect(await statusOf("mock-listing-not-turned-on")).toBe("READY");
-      await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty("url");
+      await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty("iframeUrl");
     });
 
     test("is idempotent: a listing that is already READY comes back unchanged", async () => {
@@ -118,7 +137,7 @@ describe("hostDistributionApi (mock)", () => {
       });
 
       expect(listing.distribution.status).toBe("READY");
-      expect(listing.timezone).toEqual({ required: false, options: [] });
+      expect(listing.distribution.timezone).toEqual({ required: false, options: [] });
     });
 
     test("a listing that is not ready rejects with a 422 and stays off", async () => {
@@ -130,35 +149,30 @@ describe("hostDistributionApi (mock)", () => {
       expect(await statusOf("mock-listing-not-ready")).toBe("NOT_ENABLED");
     });
 
-    test("a listing that is still provisioning rejects with a 409, and Refresh then finishes it", async () => {
+    test("a listing that is still provisioning rejects with a 409 and stays provisioning", async () => {
       await expect(enableDistribution({ propertyId: "mock-listing-provisioning" })).rejects.toMatchObject({
         status: 409,
         responseBody: { errorCode: "PROVISIONING_IN_PROGRESS" },
       });
 
-      const { listing } = await refreshChannels({ propertyId: "mock-listing-provisioning" });
-
-      expect(listing.distribution.status).toBe("READY");
+      expect(await statusOf("mock-listing-provisioning")).toBe("PROVISIONING");
     });
 
     test("an unknown listing rejects with a 404", async () => {
       await expect(enableDistribution({ propertyId: "nope" })).rejects.toMatchObject({
         status: 404,
-        responseBody: { errorCode: "LISTING_NOT_FOUND" },
+        responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
       });
     });
 
-    test.each([
-      ["in-progress", 409, "PROVISIONING_IN_PROGRESS", "PROVISIONING"],
-      ["failed", 500, "PROVISIONING_FAILED", "PROVISIONING_FAILED"],
-    ])("the %s outcome rejects with %i %s and leaves the listing %s", async (outcome, status, errorCode, stored) => {
-      setMockEnableOutcome(outcome);
+    test("the in-progress outcome rejects with a 409 and leaves the listing provisioning", async () => {
+      setMockEnableOutcome("in-progress");
 
       await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
-        status,
-        responseBody: { errorCode },
+        status: 409,
+        responseBody: { errorCode: "PROVISIONING_IN_PROGRESS" },
       });
-      expect(await statusOf("mock-listing-not-turned-on")).toBe(stored);
+      expect(await statusOf("mock-listing-not-turned-on")).toBe("PROVISIONING");
     });
 
     test("the not-ready outcome rejects with a 422 and the listing then reads as not ready", async () => {
@@ -170,7 +184,7 @@ describe("hostDistributionApi (mock)", () => {
 
       const { listings } = await getHostListings();
       const stored = listings.find((listing) => listing.propertyId === "mock-listing-not-turned-on");
-      expect(stored.readiness.ready).toBe(false);
+      expect(stored.distribution.missing).toEqual(["MISSING_PRICE"]);
     });
 
     test("the timezone-required outcome rejects with a 400 and the listing then asks for a timezone", async () => {
@@ -183,17 +197,11 @@ describe("hostDistributionApi (mock)", () => {
 
       const { listings } = await getHostListings();
       const stored = listings.find((listing) => listing.propertyId === "mock-listing-not-turned-on");
-      expect(stored.timezone.required).toBe(true);
-    });
-
-    test("a listing that failed halfway is tried again and then succeeds", async () => {
-      await expect(enableDistribution({ propertyId: "mock-listing-setup-failed" })).resolves.toMatchObject({
-        listing: { distribution: { status: "READY" } },
-      });
+      expect(stored.distribution.timezone.required).toBe(true);
     });
 
     test("resetting the mock also resets the outcome", async () => {
-      setMockEnableOutcome("failed");
+      setMockEnableOutcome("in-progress");
       resetMockHostDistribution();
 
       await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty("listing");
