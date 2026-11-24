@@ -2,8 +2,11 @@ import {
   APPROVED_VARIABLES,
   AUTOMATION_CHANNEL,
   AUTOMATION_TRIGGER,
+  AUTOMATION_TRIGGERS,
+  OFFSET_DIRECTIONS,
   OFFSET_UNITS,
   SAFE_PREVIEW_VALUES,
+  SEND_TIME_PATTERN,
 } from "../util/constants.js";
 import { badRequest, forbidden, notFound } from "../util/httpErrors.js";
 import { renderTemplate, validateTemplate } from "../renderer/templateRenderer.js";
@@ -21,6 +24,38 @@ const normalizeOffset = (amount, unit) => {
   }
   if (!OFFSET_UNITS.has(normalizedUnit)) throw badRequest("Unsupported offsetUnit.");
   return { offsetAmount: normalizedAmount, offsetUnit: normalizedAmount === 0 ? "MINUTES" : normalizedUnit };
+};
+
+const isEmpty = (value) => value === undefined || value === null || value === "";
+
+const normalizeSendTime = (value) => {
+  if (isEmpty(value)) return null;
+  const sendTime = String(value).trim();
+  if (!SEND_TIME_PATTERN.test(sendTime)) throw badRequest("sendTime must be a time of day as HH:MM.");
+  return sendTime;
+};
+
+const normalizeSchedule = ({ triggerType, offsetAmount, offsetUnit, offsetDirection, sendTime }) => {
+  const trigger = String(triggerType || AUTOMATION_TRIGGER).trim().toUpperCase();
+  if (!Object.hasOwn(AUTOMATION_TRIGGERS, trigger)) throw badRequest("Unsupported triggerType.");
+
+  const offset = normalizeOffset(offsetAmount, offsetUnit);
+  const direction = isEmpty(offsetDirection) ? null : String(offsetDirection).trim().toUpperCase();
+  const time = normalizeSendTime(sendTime);
+
+  if (trigger === AUTOMATION_TRIGGER) {
+    if (direction !== null && direction !== "AFTER") {
+      throw badRequest("A booking-paid automation can only be sent after the trigger.");
+    }
+    if (time !== null) throw badRequest("sendTime is only supported for check-in and check-out triggers.");
+    return { triggerType: trigger, ...offset, offsetDirection: null, sendTime: null };
+  }
+
+  if (!OFFSET_DIRECTIONS.has(direction)) throw badRequest("offsetDirection must be BEFORE or AFTER.");
+  if (time !== null && offset.offsetAmount > 0 && offset.offsetUnit !== "DAYS") {
+    throw badRequest("sendTime needs an offset in days or no offset.");
+  }
+  return { triggerType: trigger, ...offset, offsetDirection: direction, sendTime: time };
 };
 
 const formatDate = (value) => {
@@ -67,6 +102,8 @@ const toAutomationDto = (automation) =>
     triggerType: automation.triggerType,
     offsetAmount: automation.offsetAmount,
     offsetUnit: automation.offsetUnit,
+    offsetDirection: automation.offsetDirection ?? null,
+    sendTime: automation.sendTime ?? null,
     template: automation.template,
     channel: automation.channel,
     status: automation.status,
@@ -115,19 +152,16 @@ export default class AutomationService {
       patch.name = name;
     }
     if (!partial || input.template !== undefined) patch.template = validateTemplate(input.template).template;
-    if (!partial || input.offsetAmount !== undefined || input.offsetUnit !== undefined) {
-      Object.assign(patch, normalizeOffset(input.offsetAmount, input.offsetUnit));
-    }
+    const touchesSchedule = ["triggerType", "offsetAmount", "offsetUnit", "offsetDirection", "sendTime"].some(
+      (field) => input[field] !== undefined
+    );
+    if (!partial || touchesSchedule) Object.assign(patch, normalizeSchedule(input));
 
-    if (input.triggerType !== undefined && input.triggerType !== AUTOMATION_TRIGGER) {
-      throw badRequest("Only the BOOKING_PAID trigger is supported.");
-    }
     if (input.channel !== undefined && input.channel !== AUTOMATION_CHANNEL) {
       throw badRequest("Only DOMITS_DIRECT is supported.");
     }
 
     if (!partial || input.propertyId !== undefined) patch.propertyId = normalizeNullableId(input.propertyId);
-    patch.triggerType = AUTOMATION_TRIGGER;
     patch.channel = AUTOMATION_CHANNEL;
     return patch;
   }
