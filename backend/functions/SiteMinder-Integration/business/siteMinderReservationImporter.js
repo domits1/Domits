@@ -112,16 +112,19 @@ export class SiteMinderReservationImporter {
       currency: booking.totalPrice === null ? null : this.currency,
       guestCount: booking.guestCount,
     };
-    const newNights = nightsChange(booking.domitsPropertyId, booking.arrivalDateMs, booking.departureDateMs);
     const existing = await this.bookings.getBookingById(bookingId);
     if (existing) {
       await this.bookings.updateImportedBooking({
         bookingId,
         ...stay,
-        channexChanges: [nightsOfBooking(existing), newNights],
+        channexChanges: [
+          nightsOfBooking(existing),
+          nightsChange(existing.propertyId, booking.arrivalDateMs, booking.departureDateMs),
+        ],
       });
       return;
     }
+    const newNights = nightsChange(booking.domitsPropertyId, booking.arrivalDateMs, booking.departureDateMs);
     await this.bookings.createExternalBooking({
       bookingId,
       propertyId: booking.domitsPropertyId,

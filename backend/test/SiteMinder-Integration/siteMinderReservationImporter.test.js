@@ -133,6 +133,7 @@ describe("SiteMinderReservationImporter", () => {
       properties: {
         "property-a": { propertyId: "property-a", hostId: "host-1" },
         "property-b": { propertyId: "property-b", hostId: "host-1" },
+        "property-c": { propertyId: "property-c", hostId: "host-1" },
       },
     });
     links = fakeLinks();
@@ -373,4 +374,17 @@ describe("SiteMinderReservationImporter", () => {
 
     expect(bookings.calls.create[0]).toMatchObject({ totalPrice: null, currency: null });
   });
+
+  test("keeps the nights of a change on the booking's own property after its room type was linked to another one", async () => {
+    await importer.importReservation(reservation());
+    tables.rows.roomTypes.find((row) => row.externalRoomTypeId === "VILLA-A").status = "INACTIVE";
+    linkRoomType("VILLA-A", "property-c");
+
+    const later = room({ arrival: "2027-03-20", departure: "2027-03-22" });
+    await importer.importReservation(reservation({ status: "Modify", messageId: "msg-2", rooms: [later] }));
+
+    expect(bookings.calls.update).toHaveLength(1);
+    expect(bookings.calls.update[0].channexChanges.map((change) => change.domitsPropertyId)).toEqual(["property-a", "property-a"]);
+  });
+
 });
