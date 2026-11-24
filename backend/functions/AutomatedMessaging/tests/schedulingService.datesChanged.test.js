@@ -45,6 +45,18 @@ const setup = ({ booking = PAID_BOOKING, deliveries = [], automations = {}, even
   return { service, deliveryRepository, bookingContextRepository, outboxRepository, automationRepository };
 };
 
+const singleStaySetup = (arrival) =>
+  setup({
+    booking: arrival ? { ...PAID_BOOKING, arrivaldate: Date.parse(arrival) } : PAID_BOOKING,
+    deliveries: [stayDelivery("delivery-1", "automation-1")],
+    automations: { "automation-1": { id: "automation-1", ...CHECK_IN_RULE } },
+  });
+
+const expectUntouched = ({ cancelScheduled, rescheduleScheduled }) => {
+  expect(cancelScheduled).not.toHaveBeenCalled();
+  expect(rescheduleScheduled).not.toHaveBeenCalled();
+};
+
 const datesChanged = { id: "event-1", bookingId: "booking-1", eventType: "BOOKING_DATES_CHANGED", eventVersion: 1 };
 
 describe("AutomatedMessaging stay dates changed", () => {
@@ -80,23 +92,15 @@ describe("AutomatedMessaging stay dates changed", () => {
   });
 
   test("leaves a delivery alone when its time is unchanged", async () => {
-    const { service, deliveryRepository } = setup({
-      deliveries: [stayDelivery("delivery-1", "automation-1")],
-      automations: { "automation-1": { id: "automation-1", ...CHECK_IN_RULE } },
-    });
+    const { service, deliveryRepository } = singleStaySetup();
 
     await expect(service.processDatesChanged(datesChanged)).resolves.toBe(0);
 
-    expect(deliveryRepository.cancelScheduled).not.toHaveBeenCalled();
-    expect(deliveryRepository.rescheduleScheduled).not.toHaveBeenCalled();
+    expectUntouched(deliveryRepository);
   });
 
   test("reschedules a delivery when the stay moved and the new time is ahead", async () => {
-    const { service, deliveryRepository } = setup({
-      booking: { ...PAID_BOOKING, arrivaldate: Date.parse("2026-06-25T00:00:00Z") },
-      deliveries: [stayDelivery("delivery-1", "automation-1")],
-      automations: { "automation-1": { id: "automation-1", ...CHECK_IN_RULE } },
-    });
+    const { service, deliveryRepository } = singleStaySetup("2026-06-25T00:00:00Z");
 
     await expect(service.processDatesChanged(datesChanged)).resolves.toBe(1);
 
@@ -108,11 +112,7 @@ describe("AutomatedMessaging stay dates changed", () => {
   });
 
   test("reschedules a delivery earlier when the stay moved earlier and the new time is still ahead", async () => {
-    const { service, deliveryRepository } = setup({
-      booking: { ...PAID_BOOKING, arrivaldate: Date.parse("2026-06-10T00:00:00Z") },
-      deliveries: [stayDelivery("delivery-1", "automation-1")],
-      automations: { "automation-1": { id: "automation-1", ...CHECK_IN_RULE } },
-    });
+    const { service, deliveryRepository } = singleStaySetup("2026-06-10T00:00:00Z");
 
     await service.processDatesChanged(datesChanged);
 
@@ -123,11 +123,7 @@ describe("AutomatedMessaging stay dates changed", () => {
   });
 
   test("cancels a delivery when the stay moved so that the send time has passed", async () => {
-    const { service, deliveryRepository } = setup({
-      booking: { ...PAID_BOOKING, arrivaldate: Date.parse("2026-06-02T00:00:00Z") },
-      deliveries: [stayDelivery("delivery-1", "automation-1")],
-      automations: { "automation-1": { id: "automation-1", ...CHECK_IN_RULE } },
-    });
+    const { service, deliveryRepository } = singleStaySetup("2026-06-02T00:00:00Z");
 
     await expect(service.processDatesChanged(datesChanged)).resolves.toBe(1);
 
@@ -184,16 +180,11 @@ describe("AutomatedMessaging stay dates changed", () => {
 
     await expect(service.processDatesChanged(datesChanged)).resolves.toBe(0);
 
-    expect(deliveryRepository.cancelScheduled).not.toHaveBeenCalled();
-    expect(deliveryRepository.rescheduleScheduled).not.toHaveBeenCalled();
+    expectUntouched(deliveryRepository);
   });
 
   test("does not count a delivery that stopped being scheduled in the meantime", async () => {
-    const { service, deliveryRepository } = setup({
-      booking: { ...PAID_BOOKING, arrivaldate: Date.parse("2026-06-25T00:00:00Z") },
-      deliveries: [stayDelivery("delivery-1", "automation-1")],
-      automations: { "automation-1": { id: "automation-1", ...CHECK_IN_RULE } },
-    });
+    const { service, deliveryRepository } = singleStaySetup("2026-06-25T00:00:00Z");
     deliveryRepository.rescheduleScheduled.mockResolvedValue(false);
 
     await expect(service.processDatesChanged(datesChanged)).resolves.toBe(0);

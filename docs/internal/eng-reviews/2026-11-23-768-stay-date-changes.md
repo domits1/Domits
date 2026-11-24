@@ -159,3 +159,44 @@ schedulingService.datesChanged ─┘                            buildScheduling
 ### Verification
 
 No new behaviour, so no red step. `functions/AutomatedMessaging`: 15 suites, 181 tests passed, the same count as before the change.
+
+## Commit 4: remove the remaining duplicated setup in the dates-changed tests
+
+Reviewed: the staged diff (`schedulingService.datesChanged.test.js`, this record)
+
+### Decision
+
+```
+schedulingService.datesChanged.test.js
+   singleStaySetup(arrival?)  one paid booking, one CHECK_IN delivery, one CHECK_IN rule
+   expectUntouched(repo)      neither cancelScheduled nor rescheduleScheduled was called
+```
+
+- Sonar's duplication gate still failed (3.9%, limit 3%) after commit 3. The remaining duplicated lines were the same booking, delivery and rule setup, and the same pair of "not called" assertions, repeated across the cases of one file.
+- The setup moved into `singleStaySetup`, which takes the new arrival date or none, and the repeated assertions into `expectUntouched`. Every case and every assertion is kept: same tests, same count.
+- The helpers stay in the file, because only this suite uses them.
+
+### Findings
+
+| Finding | Confidence | Resolution |
+|---|---|---|
+| `[P3]` `singleStaySetup()` without an argument uses the unchanged booking, which is what the "time is unchanged" test used before. | 8/10 | Accepted. |
+| `[P3]` `expectUntouched` asserts inside a helper, so a failure points at the helper line. Jest still names the failing test. | 7/10 | Accepted. |
+
+### Not in scope
+
+- The S9382 findings (`await` inside sequential loops) and any production code.
+
+### What already exists
+
+- `stayScheduleFixtures.js` from commit 3, unchanged.
+
+### Failure modes
+
+| Path | Failure | Test | Handling | User sees |
+|---|---|---|---|---|
+| Helper hides a changed assertion | A case stops checking what it did | Same cases, same assertions, same count | The helper holds exactly the two assertions it replaced | Nothing |
+
+### Verification
+
+No new behaviour, so no red step. `functions/AutomatedMessaging`: 15 suites, 181 tests passed, the same count as before the change.
