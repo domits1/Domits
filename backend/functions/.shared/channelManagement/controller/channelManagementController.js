@@ -41,6 +41,18 @@ const summarizeErrorStack = (error) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
+const HOST_LISTING_PATH = /\/integrations\/channex\/host\/listings\/([^/]+)\//;
+// An id that cannot be decoded is no id: the listing check then answers 404 instead of a 500.
+const listingIdFromHostPath = (path) => {
+  const match = HOST_LISTING_PATH.exec(String(path || ""));
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return null;
+  }
+};
+
 export default class ChannelManagementController {
   constructor({
     channelManagementApiService = new ChannelManagementApiService(),
@@ -255,6 +267,23 @@ export default class ChannelManagementController {
     return this.channelManagementApiService.pollLatestChannexBookings(
       event?.detail || event || {}
     );
+  }
+
+  // The listing comes from the path; the user is the signed-in host the handler put in the query.
+  async turnOnDistribution(event) {
+    return this.channelManagementApiService.turnOnDistribution({
+      userId: event.queryStringParameters?.userId || null,
+      domitsPropertyId: listingIdFromHostPath(event.path),
+      chosenTimezone: safeJson(event.body)?.chosenTimezone || null,
+    });
+  }
+
+  // Nothing from the body: the Channex property is taken from the listing's own mapping (design note D1).
+  async createDistributionConnectSession(event) {
+    return this.channelManagementApiService.createDistributionConnectSession({
+      userId: event.queryStringParameters?.userId || null,
+      domitsPropertyId: listingIdFromHostPath(event.path),
+    });
   }
 
   async getChannexHealth() {
