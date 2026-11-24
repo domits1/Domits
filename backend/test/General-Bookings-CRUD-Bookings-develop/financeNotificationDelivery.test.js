@@ -30,7 +30,7 @@ const buildBooking = (overrides = {}) => ({
   guestid: "guest-1",
   hostid: "host-1",
   property_id: "property-1",
-  paymentid: "pi-1",
+  paymentid: "pi_1",
   status: "Awaiting Payment",
   cancellation_policy: "flexible",
   total_price: 100,
@@ -53,6 +53,7 @@ const buildController = (booking = buildBooking()) => {
       create: jest.fn().mockResolvedValue({
         id: "re-1",
         amount: 10000,
+        currency: "eur",
         status: "succeeded",
       }),
     },

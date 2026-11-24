@@ -3,7 +3,7 @@ import { Invoice } from "database/models/Invoice";
 import { Booking } from "database/models/Booking";
 import { DatabaseException } from "../util/exception/databaseException.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
-import { formatMinorUnits, getCurrencyFractionDigits, parseDecimalToMinorUnits } from "../../.shared/money/currencyAmount.js";
+import { formatMinorUnits, getCurrencyFractionDigits, parseDecimalToMinorUnits } from "database/money";
 
 const COMMISSION_RATE_NUMERATOR = 1n;
 const COMMISSION_RATE_DENOMINATOR = 10n;

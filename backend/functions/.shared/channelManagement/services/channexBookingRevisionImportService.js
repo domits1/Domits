@@ -12,7 +12,7 @@ import { buildChannexPullIssue } from "../utils/channexBookingRevisionUtils.js";
 import { bookingAvailabilityChange } from "../utils/channexBookingChange.js";
 import { CHANNEX_ARI_OUTBOX_SOURCE } from "../utils/channexAriOutboxConstants.js";
 import { isPermanentlyUnacknowledged } from "../utils/channexBookingWebhookClassification.js";
-import { parseDecimalToMinorUnits } from "../../money/currencyAmount.js";
+import { parseDecimalToMinorUnits } from "database/money";
 
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
 const CHANNEX_BOOKING_WEBHOOK_TRIGGER = "WEBHOOK";

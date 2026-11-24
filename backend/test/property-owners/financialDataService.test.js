@@ -246,8 +246,26 @@ describe("Service.getFinancialSourceData", () => {
     expect(result.pagination).toEqual({ limit: 2, offset: 4, returned: 2, hasMore: true, nextOffset: 6 });
     expect(result.dataQuality.missingCurrencyBookingIds).toEqual([]);
     expect(result.dataQuality.missingChannexCurrencyBookingIds).toEqual([]);
-    expect(result.dataQuality.missingMinorUnitAmountBookingIds).toEqual(["booking-3"]);
+    expect(result.dataQuality.missingMinorUnitAmountBookingIds).toEqual([]);
     expect(result.dataQuality.limitations.join(" ")).toMatch(/accounting-period attribution policy has not been selected/i);
+  });
+
+  test("reports legacy amounts without exact minor-unit snapshots on the returned page", async () => {
+    const assignments = [{ owner_id: OWNER_ID, property_id: "property-1" }];
+    const bookings = [{
+      id: "legacy-booking",
+      property_id: "property-1",
+      bookingtype: "direct",
+      total_price: 75,
+      total_price_minor: null,
+      currency: "EUR",
+      createdat: PERIOD_START,
+    }];
+    const { service } = createService({ assignments, bookings });
+
+    const result = await service.getFinancialSourceData("host-1", { ...QUERY, limit: "5" });
+
+    expect(result.dataQuality.missingMinorUnitAmountBookingIds).toEqual(["legacy-booking"]);
   });
 
   test("does not query bookings or invoices when the owner has no ownership periods in the window", async () => {

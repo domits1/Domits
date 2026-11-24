@@ -706,6 +706,7 @@ describe("IntegrationService Channex booking pull import", () => {
       arrivalDateMs: utcDateMs("2026-06-02"),
       departureDateMs: utcDateMs("2026-06-04"),
       totalPrice: 200,
+      totalPriceMinor: "20000",
       currency: "EUR",
       guestCount: 4,
       // The old nights (1-2 June) reopen and the new ones (2-3 June) close: one change per stay.

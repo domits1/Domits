@@ -3,7 +3,7 @@ import {
   formatMinorUnits,
   getCurrencyFractionDigits,
   parseDecimalToMinorUnits,
-} from "../../functions/.shared/money/currencyAmount.js";
+} from "../../ORM/money/currencyAmount.js";
 
 describe("currency minor-unit conversion", () => {
   test.each([

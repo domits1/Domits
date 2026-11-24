@@ -290,6 +290,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       );
 
       expectRefundRecord(bookingId, {
+        requestedAmount: 5000,
         refundedAmount: 5000,
         stripeRefundId: "re_test_123456",
         refundStatus: "refunded",
