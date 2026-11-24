@@ -45,4 +45,12 @@ The key protects nothing until block 8 shows `completed` and block 9 `indisvalid
 
 ## Status
 
-Not applied yet.
+Applied on `main` on 24 Nov 2026 by Enes, after #4013 was deployed (23 Nov, 15:16 UTC):
+
+- Block 1: one pair, `aa021180-…` × `2d6e737c-…` (the April duplicate). Block 2: no jobs.
+- Block 3: `DROP NOT NULL` succeeded; block 4: `is_nullable = YES`.
+- Block 5: `UPDATE 1` (`5f3fc6b0-…` archived). Block 6: no duplicates left.
+- Blocks 7–8: job `gk34kiwxardl7abtcydh3itn4q`, `completed` at 08:10:20 UTC.
+- Block 9: `indisunique = t`, `indisvalid = t`, predicate `status = ANY (ARRAY['PROVISIONING', 'ACTIVE', 'active'])`.
+- Block 10: the second claim failed with `duplicate key value violates unique constraint "channel_integration_property_in_use_unique"` (pass).
+- Block 11: an `ARCHIVED` and an `ACTIVE` row for one pair inserted side by side (pass). Both smoke tests rolled back; no smoke rows left.
