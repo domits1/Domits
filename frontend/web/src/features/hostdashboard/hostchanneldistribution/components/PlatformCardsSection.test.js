@@ -6,7 +6,7 @@ import { createConnectSession, getHostListings, refreshChannels } from "../servi
 
 jest.mock("../services/hostDistributionApi");
 
-const channel = (otaCode, displayState, extra = {}) => ({ channelId: `c-${otaCode}`, otaCode, displayState, ...extra });
+const channel = (otaCode, label) => ({ otaCode, label });
 const listing = (propertyId, title, overrides = {}) => ({
   propertyId,
   title,

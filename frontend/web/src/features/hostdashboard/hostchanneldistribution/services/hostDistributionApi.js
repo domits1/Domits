@@ -25,11 +25,8 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //     missing: ["NOT_PUBLISHED" | "MISSING_ADDRESS" | "MISSING_GUESTS" | "MISSING_PRICE"] },
 //   timezone: { required, options },                       // used by the timezone picker (PR B)
 //   channels: [{
-//     channelId, otaCode: "BookingCom" | "Airbnb" | "Vrbo",
-//     status: "ACTIVE" | "DISCONNECTING" | "DISCONNECTED" | "ERROR",   // the D7 row status
-//     displayState: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
-//     lastErrorCode, disconnectedOutsideDomits,
-//     upcomingBookingCount,                                // used by the disconnect dialog (PR C)
+//     otaCode: "BookingCom" | "Airbnb" | "Vrbo",
+//     label: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
 //   }],
 // }
 // getHostListings  -> { listings: [listing] }
@@ -40,16 +37,7 @@ const MOCK_REQUEST_DELAY_MS = 300;
 // errors           -> thrown like requestChannex() throws: Error with .status, .responseBody { error, errorCode }
 // ---------------------------------------------------------------------------------------------
 
-const channel = (otaCode, status, displayState, extra = {}) => ({
-  channelId: `mock-channel-${otaCode}`,
-  otaCode,
-  status,
-  displayState,
-  lastErrorCode: null,
-  disconnectedOutsideDomits: false,
-  upcomingBookingCount: 0,
-  ...extra,
-});
+const channel = (otaCode, label) => ({ otaCode, label });
 
 const NO_TIMEZONE_CHOICE = { required: false, options: [] };
 
@@ -59,7 +47,7 @@ const createFixtures = () => [
     title: "Canal House",
     distribution: { status: "READY", missing: [] },
     timezone: NO_TIMEZONE_CHOICE,
-    channels: [channel("BookingCom", "ACTIVE", "LIVE"), channel("Airbnb", "ACTIVE", "SYNCING")],
+    channels: [channel("BookingCom", "LIVE"), channel("Airbnb", "SYNCING")],
   },
   {
     propertyId: "mock-listing-not-turned-on",
@@ -74,9 +62,9 @@ const createFixtures = () => [
     distribution: { status: "READY", missing: [] },
     timezone: NO_TIMEZONE_CHOICE,
     channels: [
-      channel("BookingCom", "DISCONNECTING", "DISCONNECTING"),
-      channel("Airbnb", "DISCONNECTED", "DISCONNECTED"),
-      channel("Vrbo", "ERROR", "NEEDS_ATTENTION", { disconnectedOutsideDomits: true }),
+      channel("BookingCom", "DISCONNECTING"),
+      channel("Airbnb", "DISCONNECTED"),
+      channel("Vrbo", "NEEDS_ATTENTION"),
     ],
   },
   {
@@ -135,7 +123,7 @@ export const refreshChannels = async ({ propertyId } = {}) => {
   if (!found) throw listingNotFoundError(`/integrations/channex/host/listings/${propertyId}/channels/refresh`);
 
   found.channels = found.channels.map((candidate) =>
-    candidate.displayState === "SYNCING" ? { ...candidate, displayState: "LIVE" } : candidate
+    candidate.label === "SYNCING" ? { ...candidate, label: "LIVE" } : candidate
   );
   return { listing: copy(found) };
 };

@@ -25,6 +25,14 @@ describe("hostDistributionApi (mock)", () => {
     expect(MOCK_HOST_DISTRIBUTION_ENABLED).toBe(false);
   });
 
+  test("a channel carries only an otaCode and a label, as in the contract", async () => {
+    const { listings } = await getHostListings();
+    const channels = listings.flatMap((listing) => listing.channels);
+
+    expect(channels.length).toBeGreaterThan(0);
+    channels.forEach((channel) => expect(Object.keys(channel).sort()).toEqual(["label", "otaCode"]));
+  });
+
   test("returns copies: changing a response does not change the mock", async () => {
     const first = await getHostListings();
     first.listings[0].title = "Changed by a caller";
@@ -39,12 +47,12 @@ describe("hostDistributionApi (mock)", () => {
   test("refresh moves a syncing channel to live and leaves the other channels alone", async () => {
     const { listing } = await refreshChannels({ propertyId: "mock-listing-live" });
 
-    expect(listing.channels.map((c) => [c.otaCode, c.displayState])).toEqual([
+    expect(listing.channels.map((c) => [c.otaCode, c.label])).toEqual([
       ["BookingCom", "LIVE"],
       ["Airbnb", "LIVE"],
     ]);
     const mixed = await refreshChannels({ propertyId: "mock-listing-mixed" });
-    expect(mixed.listing.channels.map((c) => c.displayState)).toEqual([
+    expect(mixed.listing.channels.map((c) => c.label)).toEqual([
       "DISCONNECTING",
       "DISCONNECTED",
       "NEEDS_ATTENTION",

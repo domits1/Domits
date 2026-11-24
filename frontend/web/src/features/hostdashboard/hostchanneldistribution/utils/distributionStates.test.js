@@ -6,7 +6,7 @@ import {
   describeMissingItems,
 } from "./distributionStates";
 
-const channel = (otaCode, displayState, extra = {}) => ({ channelId: `c-${otaCode}`, otaCode, displayState, ...extra });
+const channel = (otaCode, label) => ({ otaCode, label });
 const listing = (overrides = {}) => ({
   propertyId: "p1",
   distribution: { status: "READY", missing: [] },
@@ -87,30 +87,16 @@ describe("describePlatformCard", () => {
     expect(describePlatformCard(input, "Vrbo").label).toBe("Not connected");
   });
 
-  test("an unknown display state is never shown as Live", () => {
+  test("an unknown label is never shown as Live", () => {
     const state = booking(listing({ channels: [channel("BookingCom", "SOMETHING_NEW")] }));
 
     expect(state).toMatchObject({ label: "Needs attention", tone: "error" });
   });
 
-  test("tells the host to close the dates themselves when the channel was disconnected outside Domits", () => {
-    const state = describePlatformCard(
-      listing({ channels: [channel("Vrbo", "NEEDS_ATTENTION", { disconnectedOutsideDomits: true })] }),
-      "Vrbo"
-    );
+  test("names the platform in the sentence for a channel that needs attention", () => {
+    const state = describePlatformCard(listing({ channels: [channel("Vrbo", "NEEDS_ATTENTION")] }), "Vrbo");
 
-    expect(state.note).toBe(
-      "Disconnected outside Domits. Close your dates on Vrbo yourself: Domits can no longer close them."
-    );
-  });
-
-  test("shows a plain sentence, never the raw error code, for other attention states", () => {
-    const state = booking(
-      listing({ channels: [channel("BookingCom", "NEEDS_ATTENTION", { lastErrorCode: "CHANNEX_DEACTIVATE_FAILED" })] })
-    );
-
-    expect(state.note).toBe("Something needs your attention on Booking.com.");
-    expect(state.note).not.toContain("CHANNEX_DEACTIVATE_FAILED");
+    expect(state.note).toBe("Something needs your attention on Vrbo.");
   });
 
   test("has no note in the states that need none", () => {
