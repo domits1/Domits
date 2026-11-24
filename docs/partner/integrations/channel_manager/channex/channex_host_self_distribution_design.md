@@ -102,6 +102,8 @@ Saving a mapping to a different Channex property while another is in use for the
 
 A second request at the same time fails on that key and gets "already in progress". On Aurora DSQL the loser can fail in two ways: the unique key (`23505`) or, because DSQL checks conflicts only at commit, a commit conflict (`40001`). Both mean "already in progress", and neither is retried (a retry would only find the winner's claim). A later request finds the existing rows and creates nothing. Only after the claim does the backend call Channex. If a step fails halfway, the next attempt continues from the first missing object (each created id is stored before the next call).
 
+A claim still being worked on is never taken over (#4031 review): a second request that finds a `PROVISIONING` claim answers "already in progress", unless the claim has not been touched for 60 seconds. The Lambda stops after 30 seconds, so such a claim belongs to an attempt that died. The takeover is a conditional update on the claim's `updatedAt`, so of two requests that find the same stale claim exactly one continues. Every create first lists what Channex already has and adopts exactly one unused match (look before create), so a lost Channex answer never leads to a second property.
+
 Cost: Channex bills a vacation rental at $0.50 per unit per month, only once the property has an active channel. Creating it ahead costs nothing.
 
 ### D3. Only live, complete listings can turn on distribution
@@ -188,6 +190,8 @@ Context: the existing code finds the Channex account per user (`findByUserIdAndC
 | One platform row, lookups changed to "the Domits account plus an owner check" | One row | Changes 5 or more lookups in live code; the meaning of #3365 changes |
 
 Extra build step from this decision: reconnect resets all account rows with the same `credentialsRef`.
+
+A host's own Channex account is never taken over (#4031 review): turning on reuses a row with Domits' key or with no key (after a disconnect the key is cleared), and creates one when there is none. A row with another key belongs to a host who connected their own Channex account; it is left alone and turning on answers 409 `DISTRIBUTION_OWN_CHANNEX_ACCOUNT`. A unique index on `("userId", channel) WHERE channel = 'CHANNEX'` keeps it to one row per host.
 
 ### D9. A listing that stops being live is disconnected everywhere
 

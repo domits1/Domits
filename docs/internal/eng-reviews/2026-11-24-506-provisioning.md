@@ -32,6 +32,19 @@ Each commit was reviewed on its staged diff before it was made. The design is D2
 | P3 (5/10) | `backend/package.json` | The country list package is in every Lambda bundle. | Accepted: a 249-country JSON list without dependencies. |
 | P3 (6/10) | `providerClient.js` | The create helper reuses `postChannexPushRequest`, whose timeout code says "push". | Accepted: translated to `CHANNEX_CREATE_TIMEOUT`. |
 
+## Findings from the PR review (24 Nov)
+
+| Point | Decision |
+|---|---|
+| `findListing` returned no title, property type or address, so Channex would refuse every property and look-before-create never matched (the payload tests used a hand-made listing) | Fixed: `findListing` loads title, `property_type.type` and the full location; a test builds the payloads from the stored row, and was red on the old code. |
+| A second request continued a `PROVISIONING` claim that was still running, so both could create a property | Fixed: a claim is only taken over after 60 s without changes (Lambda stops at 30 s), with a conditional update on `updatedAt`; otherwise 409. |
+| `ensureHostAccount` pointed a row with another Channex key at Domits' key | Fixed: such a row is left alone, 409 `DISTRIBUTION_OWN_CHANNEX_ACCOUNT`. A row without a key (after a disconnect) is reconnected, because turning on is the host's own action. |
+| A 429 answered "Channex refused the listing" | Fixed: 429 is retryable, 503 `DISTRIBUTION_TRY_AGAIN`. |
+| `activateClaim` did not check that a row was updated | Fixed: no update, no full sync, 409 `DISTRIBUTION_NEEDS_ATTENTION`. |
+| "Comments aren't allowed in the code" | Kept the why-comments: the repo's CLAUDE.md says "Comment why, not what". Comments that only repeated the code were removed. |
+| PR over 1,000 lines | Split: timezone, payloads and create calls in their own pull request; this one keeps the service and the migration. |
+| Adopting by title could take another host's leftover property with the same title | Accepted: Channex offers no field of our own to match on; leftovers are Domits' own, and two matches stop with "needs attention". |
+
 ## How provisioning answers
 
 | Situation | Answer |
