@@ -12,6 +12,13 @@ import {
   previewAutomation,
   updateAutomation,
 } from "../services/automationService";
+import {
+  SCHEDULE_OPTIONS,
+  buildSchedulePayload,
+  describeSchedule,
+  optionFromRule,
+  timeOfDayHint,
+} from "./scheduleOptions";
 
 const VARIABLES = [
   { name: "guestName", label: "Guest's name" },
@@ -29,9 +36,10 @@ const EMPTY_FORM = {
   id: null,
   name: "",
   propertyId: "",
-  triggerType: "BOOKING_PAID",
+  scheduleOption: "BOOKING_PAID",
   offsetAmount: 0,
   offsetUnit: "MINUTES",
+  sendTime: "",
   template: "Hi {{guestName}}, your booking at {{propertyName}} from {{checkInDate}} to {{checkOutDate}} is confirmed.",
   channel: "DOMITS_DIRECT",
   status: "DRAFT",
@@ -103,7 +111,13 @@ export const AutomationsContent = () => {
   }, [accessToken, form.id]);
 
   const selectAutomation = (automation) => {
-    setForm({ ...EMPTY_FORM, ...automation, propertyId: automation.propertyId || "" });
+    setForm({
+      ...EMPTY_FORM,
+      ...automation,
+      propertyId: automation.propertyId || "",
+      scheduleOption: optionFromRule(automation),
+      sendTime: automation.sendTime || "",
+    });
     setPreview(null);
     setError("");
   };
@@ -120,12 +134,23 @@ export const AutomationsContent = () => {
     setPreview(null);
   };
 
+  const changeScheduleOption = (scheduleOption) => {
+    setForm((current) => {
+      let offsetAmount = current.offsetAmount;
+      if (scheduleOption === "ON_CHECK_IN") offsetAmount = 0;
+      if (scheduleOption === "AFTER_CHECK_IN" && Number(offsetAmount || 0) === 0) offsetAmount = 1;
+      return { ...current, scheduleOption, offsetAmount };
+    });
+    setPreview(null);
+  };
+
+  const isStayRule = form.scheduleOption !== "BOOKING_PAID";
+  const timeHint = timeOfDayHint(form);
+
   const payload = () => ({
     name: form.name,
     propertyId: form.propertyId || null,
-    triggerType: "BOOKING_PAID",
-    offsetAmount: Number(form.offsetAmount || 0),
-    offsetUnit: Number(form.offsetAmount || 0) === 0 ? "MINUTES" : form.offsetUnit,
+    ...buildSchedulePayload(form),
     template: form.template,
     channel: "DOMITS_DIRECT",
   });
@@ -182,7 +207,7 @@ export const AutomationsContent = () => {
       <header className="automations-header">
         <div>
           <h1>Automated messages</h1>
-          <p>Booking Paid workflows delivered through Domits Direct.</p>
+          <p>Messages for new bookings, check-ins and check-outs, delivered through Domits Direct.</p>
         </div>
         <button type="button" className="icon-text-button" onClick={startNew}>
           <Plus size={17} /> New automation
@@ -240,11 +265,15 @@ export const AutomationsContent = () => {
 
           <section className="automation-section">
             <h2>Events &amp; Triggers</h2>
-            <div className="automation-fields two-columns">
+            <div className="automation-fields equal-three-columns">
               <label>
-                <span>Trigger</span>
-                <select aria-label="Trigger" value="BOOKING_PAID" disabled>
-                  <option value="BOOKING_PAID">Booking Paid</option>
+                <span>When to send</span>
+                <select
+                  aria-label="When to send"
+                  value={form.scheduleOption}
+                  onChange={(event) => changeScheduleOption(event.target.value)}
+                >
+                  {SCHEDULE_OPTIONS.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </label>
               <label>
@@ -252,6 +281,12 @@ export const AutomationsContent = () => {
                 <select value={form.propertyId} onChange={(event) => updateField("propertyId", event.target.value)}>
                   <option value="">All owned properties</option>
                   {properties.map((property) => <option key={property.id} value={property.id}>{property.title}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>Channel</span>
+                <select aria-label="Channel" value="DOMITS_DIRECT" disabled>
+                  <option value="DOMITS_DIRECT">Domits Direct</option>
                 </select>
               </label>
             </div>
@@ -286,6 +321,7 @@ export const AutomationsContent = () => {
                   min="0"
                   max="365"
                   value={form.offsetAmount}
+                  disabled={form.scheduleOption === "ON_CHECK_IN"}
                   onChange={(event) => updateField("offsetAmount", event.target.value)}
                 />
               </label>
@@ -297,18 +333,25 @@ export const AutomationsContent = () => {
                   disabled={Number(form.offsetAmount || 0) === 0}
                   onChange={(event) => updateField("offsetUnit", event.target.value)}
                 >
-                  <option value="MINUTES">Minutes after trigger</option>
-                  <option value="HOURS">Hours after trigger</option>
-                  <option value="DAYS">Days after trigger</option>
+                  <option value="MINUTES">Minutes</option>
+                  <option value="HOURS">Hours</option>
+                  <option value="DAYS">Days</option>
                 </select>
               </label>
               <label>
-                <span>Channel</span>
-                <select aria-label="Channel" value="DOMITS_DIRECT" disabled>
-                  <option value="DOMITS_DIRECT">Domits Direct</option>
-                </select>
+                <span>Time of day (optional)</span>
+                <input
+                  aria-label="Time of day"
+                  type="time"
+                  value={form.sendTime}
+                  disabled={timeHint !== ""}
+                  onChange={(event) => updateField("sendTime", event.target.value)}
+                />
               </label>
             </div>
+            {timeHint && <p className="automation-hint">{timeHint}</p>}
+            <p className="automation-schedule-sentence" data-testid="schedule-sentence">{describeSchedule(form)}</p>
+            {isStayRule && <p className="automation-hint">Applies to bookings paid after you activate it</p>}
           </section>
 
           <section className="automation-section">
