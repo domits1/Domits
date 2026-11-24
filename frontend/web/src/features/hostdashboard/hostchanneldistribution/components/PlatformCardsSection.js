@@ -85,7 +85,7 @@ function PlatformCardsSection() {
       )}
 
       {listingView === LISTING_VIEW.NOT_READY && (
-        <NotReadyNotice items={describeMissingItems(selected.readiness?.missing)} />
+        <NotReadyNotice items={describeMissingItems(selected.distribution?.missing)} />
       )}
 
       {listingView === LISTING_VIEW.SETUP_FAILED && <SetupFailedNotice />}

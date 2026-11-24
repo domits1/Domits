@@ -6,12 +6,10 @@ import {
   describeMissingItems,
 } from "./distributionStates";
 
-const READY = { ready: true, missing: [] };
 const channel = (otaCode, displayState, extra = {}) => ({ channelId: `c-${otaCode}`, otaCode, displayState, ...extra });
 const listing = (overrides = {}) => ({
   propertyId: "p1",
-  readiness: READY,
-  distribution: { status: "READY" },
+  distribution: { status: "READY", missing: [] },
   channels: [],
   ...overrides,
 });
@@ -21,7 +19,7 @@ describe("describeListingView", () => {
     ["a ready, provisioned listing", listing(), LISTING_VIEW.CARDS],
     [
       "a listing that is not ready",
-      listing({ readiness: { ready: false, missing: ["PRICE_MISSING"] } }),
+      listing({ distribution: { status: "NOT_ENABLED", missing: ["MISSING_PRICE"] } }),
       LISTING_VIEW.NOT_READY,
     ],
     [
@@ -35,10 +33,9 @@ describe("describeListingView", () => {
     expect(describeListingView(input)).toBe(expected);
   });
 
-  test("readiness wins over a failed setup: a listing that cannot be set up has nothing to retry", () => {
+  test("missing items win over a failed setup: a listing that cannot be set up has nothing to retry", () => {
     const input = listing({
-      readiness: { ready: false, missing: ["LOCATION_MISSING"] },
-      distribution: { status: "PROVISIONING_FAILED" },
+      distribution: { status: "PROVISIONING_FAILED", missing: ["MISSING_ADDRESS"] },
     });
 
     expect(describeListingView(input)).toBe(LISTING_VIEW.NOT_READY);
@@ -122,9 +119,9 @@ describe("describePlatformCard", () => {
 });
 
 describe("describeMissingItems", () => {
-  test("turns readiness codes into one sentence each, in the order the backend gave", () => {
+  test("turns missing-item codes into one sentence each, in the order the backend gave", () => {
     expect(
-      describeMissingItems(["STATUS_NOT_ACTIVE", "LOCATION_MISSING", "MAX_GUESTS_MISSING", "PRICE_MISSING"])
+      describeMissingItems(["NOT_PUBLISHED", "MISSING_ADDRESS", "MISSING_GUESTS", "MISSING_PRICE"])
     ).toEqual(["Publish your listing first", "Add the address", "Add the maximum number of guests", "Add a price"]);
   });
 
@@ -134,7 +131,7 @@ describe("describeMissingItems", () => {
   });
 
   test("drops unknown codes next to known ones", () => {
-    expect(describeMissingItems(["PRICE_MISSING", "SOMETHING_NEW"])).toEqual(["Add a price"]);
+    expect(describeMissingItems(["MISSING_PRICE", "SOMETHING_NEW"])).toEqual(["Add a price"]);
   });
 });
 

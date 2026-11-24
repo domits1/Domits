@@ -10,8 +10,7 @@ const channel = (otaCode, displayState, extra = {}) => ({ channelId: `c-${otaCod
 const listing = (propertyId, title, overrides = {}) => ({
   propertyId,
   title,
-  readiness: { ready: true, missing: [] },
-  distribution: { status: "READY" },
+  distribution: { status: "READY", missing: [] },
   channels: [],
   ...overrides,
 });
@@ -196,7 +195,10 @@ describe("PlatformCardsSection", () => {
     test("locks the property picker while connecting, so the flow cannot end up under another listing", async () => {
       const user = userEvent.setup();
       getHostListings.mockResolvedValue({
-        listings: [LIVE_LISTING, listing("p2", "Beach Apartment", { readiness: { ready: false, missing: [] } })],
+        listings: [
+          LIVE_LISTING,
+          listing("p2", "Beach Apartment", { distribution: { status: "NOT_ENABLED", missing: ["MISSING_PRICE"] } }),
+        ],
       });
       createConnectSession.mockReturnValue(deferred().promise);
       render(<PlatformCardsSection />);
@@ -249,7 +251,7 @@ describe("PlatformCardsSection", () => {
     getHostListings.mockResolvedValue({
       listings: [
         listing("p2", "Beach Apartment", {
-          readiness: { ready: false, missing: ["LOCATION_MISSING", "PRICE_MISSING"] },
+          distribution: { status: "NOT_ENABLED", missing: ["MISSING_ADDRESS", "MISSING_PRICE"] },
         }),
       ],
     });

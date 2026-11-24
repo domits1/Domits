@@ -22,10 +22,10 @@ const DISTRIBUTION_STATUS = {
 };
 
 const MISSING_ITEM_SENTENCES = {
-  STATUS_NOT_ACTIVE: "Publish your listing first",
-  LOCATION_MISSING: "Add the address",
-  MAX_GUESTS_MISSING: "Add the maximum number of guests",
-  PRICE_MISSING: "Add a price",
+  NOT_PUBLISHED: "Publish your listing first",
+  MISSING_ADDRESS: "Add the address",
+  MISSING_GUESTS: "Add the maximum number of guests",
+  MISSING_PRICE: "Add a price",
 };
 
 const GENERIC_MISSING_SENTENCE = "Complete your listing first";
@@ -50,7 +50,7 @@ const SETTING_UP = { label: "Setting up…", tone: "pending", switchOn: false, s
 
 // Readiness wins over a failed setup: a listing that cannot be set up has nothing to retry yet.
 export function describeListingView(listing) {
-  if (!listing.readiness?.ready) return LISTING_VIEW.NOT_READY;
+  if (listing.distribution?.missing?.length) return LISTING_VIEW.NOT_READY;
   if (listing.distribution?.status === DISTRIBUTION_STATUS.PROVISIONING_FAILED) return LISTING_VIEW.SETUP_FAILED;
   return LISTING_VIEW.CARDS;
 }
