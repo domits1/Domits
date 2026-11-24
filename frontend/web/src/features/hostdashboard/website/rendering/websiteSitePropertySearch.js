@@ -100,4 +100,4 @@ export const groupSitePropertySearchResults = (cards, answers, criteria) => {
 };
 
 export const buildSitePropertyStayQuery = (pageSearch, { checkIn, checkOut, guests }) =>
-  `${pageSearch ? `${pageSearch}&` : "?"}checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`;
+  `${pageSearch}${pageSearch ? "&" : "?"}checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`;
