@@ -20,7 +20,7 @@ Docs: https://developer.siteminder.com/pmsxchange-api
 | Saving reservations as Domits bookings | `util/reservationBookings.js`, `business/siteMinderReservationImporter.js` | SiteMinder -> Domits | shared booking import |
 | One reservations run: read, save, confirm or fail | `business/siteMinderReservationSync.js` | both | `OTA_ReadRQ`, `OTA_NotifReportRQ` |
 
-Not built yet: saving reservations as bookings, the Lambda handler and schedule, and the host screen.
+Not built yet: the Lambda handler and schedule, and the host screen.
 
 ## Receiving reservations
 
@@ -83,6 +83,8 @@ Every room of a reservation becomes one Domits booking, because one SiteMinder r
 | `Modify` | updates the rooms that exist, saves new rooms, and cancels rooms that are no longer in the reservation. A change for a reservation Domits never saved is saved as new |
 | `Cancel` | cancels every room in the reservation link. A room that is already cancelled is left alone |
 
+A change keeps a booking on the Domits property it was saved on, also when its room type was linked to another property since; the nights change on that same property. A room that an earlier change removed and a later change adds back is booked again.
+
 Every save, change and cancel also writes a `SITEMINDER_IMPORT` row to the Channex ARI outbox in the same transaction: the new nights close and the old nights open again on Channex. `SITEMINDER_IMPORT` is urgent like `CHANNEX_IMPORT`, so it skips the quiet period. A property without a Channex mapping is skipped by the worker (`NOT_MAPPED`).
 
 Everything is checked before anything is written. A reservation Domits can never save is reported to SiteMinder with a fixed text (no guest data), and nothing is saved:
@@ -96,6 +98,8 @@ Everything is checked before anything is written. A reservation Domits can never
 Type 3 is the OTA type "Biz rule", and the codes come from SiteMinder's [error codes](https://developer.siteminder.com/pmsxchange-api/additional-resources/reference-tables/error-codes). Check them in the certification.
 
 Any other error, for example the database, is not reported. The reservation stays unconfirmed and comes back on the next read. The run logs `SITEMINDER_RESERVATION_RETRY_LATER` with the message id, status and error code or name, and at the end `SITEMINDER_RESERVATIONS_RUN` with only counts: `read`, `skipped`, `saved`, `failed`, `retryLater`. It never logs the SiteMinder answer or guest data. When the confirmation itself does not reach SiteMinder, the run fails; the saved reservations come back and are saved again without a second booking.
+
+Once a message of a reservation has to wait, the later messages of the same reservation in that run wait too (logged with reason `EARLIER_MESSAGE_PENDING`). Otherwise a `Cancel` could be saved before its `Book`, and the `Book` would come back on the next read and book the nights again. A message that was refused to SiteMinder does not hold the later ones, because SiteMinder will not deliver it again.
 
 Not built yet:
 
