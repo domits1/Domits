@@ -83,11 +83,11 @@ describe("IntegrationPropertyRepository claim", () => {
       set: jest.fn(() => write),
       where: jest.fn(() => write),
       andWhere: jest.fn(() => write),
-      execute: jest.fn(async () => undefined),
+      execute: jest.fn(async () => ({ affected: 1 })),
     };
     const manager = { createQueryBuilder: () => write };
 
-    await new IntegrationPropertyRepository().activateClaim(manager, "claim-1");
+    await expect(new IntegrationPropertyRepository().activateClaim(manager, "claim-1")).resolves.toBe(true);
 
     expect(write.set).toHaveBeenCalledWith(expect.objectContaining({ status: "ACTIVE" }));
     expect(write.where).toHaveBeenCalledWith("id = :id", { id: "claim-1" });

@@ -16,7 +16,7 @@ const build = ({ transactionError = null } = {}) => {
       }),
     }),
   };
-  const props = { activateClaim: jest.fn().mockResolvedValue(undefined) };
+  const props = { activateClaim: jest.fn().mockResolvedValue(true) };
   const outbox = { enqueueChannexFullSync: jest.fn().mockResolvedValue(true) };
   const service = new ChannexProvisioningService({ props, outbox, database });
   return { service, manager, props, outbox };
@@ -45,6 +45,21 @@ describe("ChannexProvisioningService.finishProvisioning", () => {
     expect(props.activateClaim.mock.invocationCallOrder[0]).toBeLessThan(
       outbox.enqueueChannexFullSync.mock.invocationCallOrder[0]
     );
+  });
+
+  // #4031 review: a claim that is no longer PROVISIONING (archived or finished by someone else) must not
+  // be reported as provisioned, and gets no full sync from this request.
+  test("a claim that could not be activated answers needs attention and queues nothing", async () => {
+    const { service, props, outbox } = build();
+    props.activateClaim.mockResolvedValue(false);
+
+    const result = await service.finishProvisioning({ claim, listing, ...ids });
+
+    expect(result).toEqual({
+      statusCode: 409,
+      response: expect.objectContaining({ errorCode: "DISTRIBUTION_NEEDS_ATTENTION" }),
+    });
+    expect(outbox.enqueueChannexFullSync).not.toHaveBeenCalled();
   });
 
   // Nothing is half-saved: the claim stays PROVISIONING with its ids, and the next attempt adopts the

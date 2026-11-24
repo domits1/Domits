@@ -171,6 +171,13 @@ describe("ChannexProvisioningService.createChannexObjects: when Channex does not
     expect(channex.createRoomType).not.toHaveBeenCalled();
   });
 
+  test("a create Channex was too busy for answers try again, not refused", async () => {
+    const { service, channex } = build();
+    channex.createProperty.mockResolvedValue({ success: false, outcomeUnknown: false, retryable: true, errorCode: "CHANNEX_CREATE_429" });
+
+    expect((await run(service)).response.errorCode).toBe("DISTRIBUTION_TRY_AGAIN");
+  });
+
   test("a refused create answers 502 with Channex's field messages", async () => {
     const { service, channex } = build();
     const details = { occ_adults: ["must be greater than 0"] };

@@ -31,6 +31,13 @@ import {
 
 const bad = (statusCode, response) => ({ statusCode, response });
 const ok = (response) => ({ statusCode: 200, response });
+// The claim was no longer PROVISIONING when it was to be activated (archived or finished elsewhere).
+const CLAIM_NOT_ACTIVATED = Symbol("claim not activated");
+const needsAttention = () =>
+  bad(409, {
+    error: "This listing needs a check by support before it can be connected.",
+    errorCode: "DISTRIBUTION_NEEDS_ATTENTION",
+  });
 const tryAgain = () =>
   bad(503, { error: "Channex did not answer in time. Try again in a moment.", errorCode: "DISTRIBUTION_TRY_AGAIN" });
 
@@ -302,20 +309,14 @@ export default class ChannexProvisioningService {
       if (await isMatch(row)) matches.push(row);
     }
     if (matches.length > 1) {
-      return {
-        ok: false,
-        answer: bad(409, {
-          error: "Channex has more than one object that could belong to this listing.",
-          errorCode: "DISTRIBUTION_NEEDS_ATTENTION",
-        }),
-      };
+      return { ok: false, answer: needsAttention() };
     }
     if (matches.length === 1) return { ok: true, id: idOf(matches[0]) };
 
     const result = await create();
     if (result.success) return { ok: true, id: result.externalId };
     // The create may still have happened in Channex; the next attempt looks first and adopts it.
-    if (result.outcomeUnknown) return { ok: false, answer: tryAgain() };
+    if (result.outcomeUnknown || result.retryable) return { ok: false, answer: tryAgain() };
     return {
       ok: false,
       answer: bad(502, {
@@ -335,10 +336,11 @@ export default class ChannexProvisioningService {
       const client = await this.database.getInstance();
       const fullSyncQueued = await withDsqlRetry(() =>
         client.transaction(async (manager) => {
-          await this.props.activateClaim(manager, claim.id);
+          if (!(await this.props.activateClaim(manager, claim.id))) return CLAIM_NOT_ACTIVATED;
           return this.outbox.enqueueChannexFullSync(manager, { domitsPropertyId: listing.propertyId });
         })
       );
+      if (fullSyncQueued === CLAIM_NOT_ACTIVATED) return needsAttention();
       return ok({ status: "PROVISIONED", channexPropertyId: externalPropertyId, fullSyncQueued });
     } catch (error) {
       console.error(

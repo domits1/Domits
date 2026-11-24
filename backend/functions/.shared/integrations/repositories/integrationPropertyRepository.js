@@ -157,13 +157,14 @@ class IntegrationPropertyRepository {
 
   // Runs on the caller's transaction, together with the full sync (design note D2).
   async activateClaim(manager, claimId) {
-    await manager
+    const result = await manager
       .createQueryBuilder()
       .update(ChannelIntegrationProperty)
       .set({ status: "ACTIVE", updatedAt: Date.now() })
       .where("id = :id", { id: claimId })
       .andWhere("status = :s", { s: "PROVISIONING" })
       .execute();
+    return result?.affected === 1;
   }
 
   async listByAccountId(integrationAccountId) {
