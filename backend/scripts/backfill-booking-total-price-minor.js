@@ -2,7 +2,7 @@
 
 import Database from "database";
 import { Booking } from "database/models/Booking";
-import { parseDecimalToMinorUnits } from "../functions/.shared/money/currencyAmount.js";
+import { parseDecimalToMinorUnits } from "database/money";
 
 function parseArgs() {
   const args = process.argv.slice(2);
