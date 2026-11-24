@@ -1,5 +1,7 @@
 import Database from "database";
 import { Property } from "database/models/Property";
+import { Booking } from "database/models/Booking";
+import { Invoice } from "database/models/Invoice";
 import { Property_Owner } from "database/models/Property_Owner";
 import { Property_Owner_Property } from "database/models/Property_Owner_Property";
 import { In, IsNull, LessThan, LessThanOrEqual, MoreThan, MoreThanOrEqual } from "typeorm";
@@ -10,6 +12,37 @@ import { ARCHIVED_OWNER_STATUS } from "../util/ownerConstants.js";
 const DAY_MS = 86400000;
 const OWNER_ORDER = Object.freeze({ last_name: "ASC", first_name: "ASC" });
 const ASSIGNMENT_ORDER = Object.freeze({ effective_from: "ASC", created_at: "ASC" });
+const BOOKING_FINANCIAL_COLUMNS = Object.freeze([
+  "id",
+  "property_id",
+  "bookingtype",
+  "booking_source",
+  "status",
+  "createdat",
+  "arrivaldate",
+  "departuredate",
+  "checked_out_at",
+  "cancelled_at",
+  "total_price",
+  "currency",
+  "paymentid",
+  "refunded_amount",
+  "stripe_refund_id",
+  "refund_status",
+]);
+const INVOICE_FINANCIAL_COLUMNS = Object.freeze([
+  "id",
+  "invoice_number",
+  "booking_id",
+  "property_id",
+  "arrival_date",
+  "departure_date",
+  "gross_amount",
+  "commission_amount",
+  "net_amount",
+  "status",
+  "created_at",
+]);
 const PESSIMISTIC_WRITE = Object.freeze({ mode: "pessimistic_write" });
 const UNIQUE_VIOLATION_CODE = "23505";
 const READ_ONLY_OWNER_FIELDS = Object.freeze(["id", "host_id", "owner_user_id", "created_at"]);
@@ -184,6 +217,32 @@ export class Repository {
     });
   }
 
+  async findAssignmentsByOwnerAndHostForPeriod(ownerId, hostId, periodStartMs, periodEndMs) {
+    requireOwnerId(ownerId);
+    requireHostId(hostId);
+    if (
+      !Number.isSafeInteger(periodStartMs) ||
+      !Number.isSafeInteger(periodEndMs) ||
+      periodStartMs < 0 ||
+      periodEndMs <= periodStartMs
+    ) {
+      throw new Error("A valid financial reporting window is required.");
+    }
+    const dataSource = await Database.getInstance();
+    const periodScope = {
+      owner_id: ownerId,
+      host_id: hostId,
+      effective_from: LessThan(periodEndMs),
+    };
+    return await dataSource.getRepository(Property_Owner_Property).find({
+      where: [
+        { ...periodScope, effective_to: IsNull() },
+        { ...periodScope, effective_to: MoreThan(periodStartMs) },
+      ],
+      order: ASSIGNMENT_ORDER,
+    });
+  }
+
   async findPropertyTitlesByIds(propertyIds, hostId) {
     requireHostId(hostId);
     requirePropertyIds(propertyIds);
@@ -195,6 +254,62 @@ export class Repository {
     return await dataSource.getRepository(Property).find({
       select: { id: true, title: true },
       where: { id: In(ids), hostid: hostId },
+    });
+  }
+
+  async findBookingFinancialCandidates({ hostId, propertyIds, periodStartMs, periodEndMs, limit, offset }) {
+    requireHostId(hostId);
+    requirePropertyIds(propertyIds);
+    if (propertyIds.length === 0) {
+      throw new Error("property ids must contain at least one id to query booking financial data.");
+    }
+    if (
+      !Number.isSafeInteger(periodStartMs) ||
+      !Number.isSafeInteger(periodEndMs) ||
+      periodStartMs < 0 ||
+      periodEndMs <= periodStartMs
+    ) {
+      throw new Error("A valid financial reporting window is required.");
+    }
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) {
+      throw new Error("A valid financial data page size is required.");
+    }
+    if (!Number.isSafeInteger(offset) || offset < 0) {
+      throw new Error("A valid financial data page offset is required.");
+    }
+
+    const dataSource = await Database.getInstance();
+    return await dataSource
+      .getRepository(Booking)
+      .createQueryBuilder("booking")
+      .select(BOOKING_FINANCIAL_COLUMNS.map((column) => `booking.${column}`))
+      .where("booking.hostid = :hostId", { hostId })
+      .andWhere("booking.property_id IN (:...propertyIds)", { propertyIds })
+      .andWhere(
+        "((booking.arrivaldate < :periodEndMs AND booking.departuredate > :periodStartMs) OR (booking.createdat >= :periodStartMs AND booking.createdat < :periodEndMs))",
+        { periodStartMs, periodEndMs }
+      )
+      .orderBy("booking.createdat", "ASC")
+      .addOrderBy("booking.id", "ASC")
+      .skip(offset)
+      .take(limit + 1)
+      .getMany();
+  }
+
+  async findInvoiceFinancialSnapshots(bookingIds, hostId) {
+    requireHostId(hostId);
+    if (!Array.isArray(bookingIds) || !bookingIds.every(isNonEmptyString)) {
+      throw new Error("Booking ids must be an array of non-empty strings.");
+    }
+    const ids = [...new Set(bookingIds)];
+    if (ids.length === 0) {
+      return [];
+    }
+    const dataSource = await Database.getInstance();
+    return await dataSource.getRepository(Invoice).find({
+      select: INVOICE_FINANCIAL_COLUMNS.reduce((selection, column) => ({ ...selection, [column]: true }), {}),
+      where: { host_id: hostId, booking_id: In(ids) },
+      order: { created_at: "ASC" },
     });
   }
 

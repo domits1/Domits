@@ -19,9 +19,9 @@ const context = (patch = {}) => ({
   ...patch,
 });
 
-const buildService = (bookingContext = context()) =>
+const buildService = (bookingContext = context(), automationRepository = {}) =>
   new AutomationService({
-    automationRepository: {},
+    automationRepository,
     deliveryRepository: {},
     bookingContextRepository: {
       hostOwnsProperty: jest.fn(async () => true),
@@ -56,5 +56,99 @@ describe("AutomationService.preview with the new variables", () => {
 
     expect(result.renderedContent).toBe("[Missing: checkInTime] at [Missing: propertyAddress]");
     expect(result.missingVariables).toEqual(["checkInTime", "propertyAddress"]);
+  });
+});
+
+describe("AutomationService.preview schedule", () => {
+  const RULE = {
+    template: "Hi {{guestName}}",
+    triggerType: "CHECK_IN",
+    offsetDirection: "BEFORE",
+    offsetAmount: 3,
+    offsetUnit: "DAYS",
+    sendTime: "10:00",
+    bookingId: "booking-1",
+  };
+
+  let nowSpy;
+  beforeEach(() => {
+    nowSpy = jest.spyOn(Date, "now").mockReturnValue(Date.parse("2026-06-01T00:00:00Z"));
+  });
+  afterEach(() => nowSpy.mockRestore());
+
+  test("returns when a check-in automation would send for the booking", async () => {
+    const result = await buildService().preview("host-1", RULE);
+
+    expect(result.schedule).toEqual({
+      scheduledFor: Date.parse("2026-06-17T08:00:00Z"),
+      isPast: false,
+      timeZone: "Europe/Amsterdam",
+    });
+  });
+
+  test("uses the check-out time of the property for a check-out automation", async () => {
+    const result = await buildService().preview("host-1", {
+      ...RULE,
+      triggerType: "CHECK_OUT",
+      offsetDirection: "AFTER",
+      offsetAmount: 0,
+      sendTime: undefined,
+    });
+
+    expect(result.schedule.scheduledFor).toBe(Date.parse("2026-06-23T08:30:00Z"));
+  });
+
+  test("marks a send time that has already passed", async () => {
+    nowSpy.mockReturnValue(Date.parse("2026-06-18T00:00:00Z"));
+
+    const result = await buildService().preview("host-1", RULE);
+
+    expect(result.schedule.isPast).toBe(true);
+  });
+
+  test("returns no schedule without a booking", async () => {
+    const result = await buildService().preview("host-1", { ...RULE, bookingId: undefined });
+
+    expect(result.schedule).toBeNull();
+  });
+
+  test("returns no schedule for a booking-paid automation", async () => {
+    const result = await buildService().preview("host-1", {
+      template: RULE.template,
+      bookingId: "booking-1",
+      triggerType: "BOOKING_PAID",
+      offsetAmount: 2,
+      offsetUnit: "HOURS",
+    });
+
+    expect(result.schedule).toBeNull();
+  });
+
+  test("still renders a booking-paid preview whose schedule fields are not valid for the trigger", async () => {
+    const result = await buildService().preview("host-1", {
+      template: RULE.template,
+      bookingId: "booking-1",
+      triggerType: "BOOKING_PAID",
+      offsetDirection: "BEFORE",
+      sendTime: "10:00",
+    });
+
+    expect(result.renderedContent).toBe("Hi Taylor");
+    expect(result.schedule).toBeNull();
+  });
+
+  test("falls back to the stored rule of the automation for fields the request leaves out", async () => {
+    const stored = { id: "automation-1", propertyId: null, template: RULE.template, ...RULE, bookingId: undefined };
+    const service = buildService(context(), { getByIdForHost: jest.fn(async () => stored) });
+
+    const result = await service.preview("host-1", { bookingId: "booking-1" }, "automation-1");
+
+    expect(result.schedule.scheduledFor).toBe(Date.parse("2026-06-17T08:00:00Z"));
+  });
+
+  test("rejects a rule the scheduler could not calculate", async () => {
+    await expect(buildService().preview("host-1", { ...RULE, offsetUnit: "HOURS" })).rejects.toMatchObject({
+      statusCode: 400,
+    });
   });
 });

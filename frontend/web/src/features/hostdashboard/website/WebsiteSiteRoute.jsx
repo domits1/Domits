@@ -3,17 +3,25 @@ import { useParams } from "react-router-dom";
 import PageNotFound from "../../../utils/error/404NotFound";
 import WebsitePublicSitePage, { normalizeWebsiteDomain } from "./WebsitePublicSitePage";
 import { MAIN_SITE_PAGE_KEY, isSitePagePath, resolveSitePageFromPath } from "./rendering/websitePages";
+import {
+  isSitePropertyPath,
+  normalizeServedSiteProperties,
+  resolveSitePropertyRoute,
+} from "./rendering/websiteSiteProperties";
 import { fetchPublicWebsiteRenderModel } from "./services/websitePublicSiteService";
 
 const readRequestedSiteId = () =>
   String(new URLSearchParams(globalThis.location?.search || "").get("siteId") || "").trim();
 
-const readServedSitePages = async ({ siteId, domain }) => {
+const readServedSite = async ({ siteId, domain }) => {
   try {
     const renderPayload = await fetchPublicWebsiteRenderModel({ siteId, domain });
-    return renderPayload?.contentOverrides?.sitePages;
+    return {
+      sitePages: renderPayload?.contentOverrides?.sitePages,
+      siteProperties: normalizeServedSiteProperties(renderPayload?.siteProperties),
+    };
   } catch {
-    return undefined;
+    return { sitePages: undefined, siteProperties: [] };
   }
 };
 
@@ -28,16 +36,18 @@ export default function WebsiteSiteRoute() {
   const servedSite = servedSites.get(siteKey);
   const isLiveViewSubPath = routeDomain !== "" && sitePath !== "";
   const isLiveViewPagePath = isLiveViewSubPath && isSitePagePath(sitePath);
-  const needsPageCheck = isLiveViewPagePath && !servedSite;
+  const isLiveViewPropertyPath = isLiveViewSubPath && isSitePropertyPath(sitePath);
+  const isLiveViewCheckedPath = isLiveViewPagePath || isLiveViewPropertyPath;
+  const needsPageCheck = isLiveViewCheckedPath && !servedSite;
 
-  const rememberSitePages = useCallback(
-    (key, sitePages, isCheck = false) =>
-      setServedSites((current) => (isCheck && current.has(key) ? current : new Map(current).set(key, { sitePages }))),
+  const rememberServedSite = useCallback(
+    (key, served, isCheck = false) =>
+      setServedSites((current) => (isCheck && current.has(key) ? current : new Map(current).set(key, served))),
     []
   );
   const rememberCurrentSitePages = useCallback(
-    (sitePages) => rememberSitePages(siteKey, sitePages),
-    [rememberSitePages, siteKey]
+    (sitePages, siteProperties) => rememberServedSite(siteKey, { sitePages, siteProperties }),
+    [rememberServedSite, siteKey]
   );
 
   useEffect(() => {
@@ -53,22 +63,28 @@ export default function WebsiteSiteRoute() {
     }
 
     pendingSiteKeysRef.current.add(siteKey);
-    void readServedSitePages({ siteId, domain }).then((sitePages) => {
+    void readServedSite({ siteId, domain }).then((served) => {
       pendingSiteKeysRef.current.delete(siteKey);
       if (isMountedRef.current) {
-        rememberSitePages(siteKey, sitePages, true);
+        rememberServedSite(siteKey, served, true);
       }
     });
-  }, [domain, needsPageCheck, rememberSitePages, siteId, siteKey]);
+  }, [domain, needsPageCheck, rememberServedSite, siteId, siteKey]);
 
   const isPageOn =
     isLiveViewPagePath &&
     Boolean(servedSite) &&
     resolveSitePageFromPath(sitePath, servedSite.sitePages) !== MAIN_SITE_PAGE_KEY;
+  const isPropertyOn =
+    isLiveViewPropertyPath &&
+    Boolean(servedSite) &&
+    resolveSitePropertyRoute(sitePath, servedSite.siteProperties)?.isFound === true;
 
-  if (isLiveViewSubPath && !isPageOn) {
+  if (isLiveViewSubPath && !isPageOn && !isPropertyOn) {
     return <PageNotFound />;
   }
 
-  return <WebsitePublicSitePage onSitePagesLoaded={rememberCurrentSitePages} requiresActivePage={isLiveViewPagePath} />;
+  return (
+    <WebsitePublicSitePage onSitePagesLoaded={rememberCurrentSitePages} requiresActivePage={isLiveViewCheckedPath} />
+  );
 }

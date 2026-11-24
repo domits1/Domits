@@ -1,4 +1,5 @@
 import { getAccessToken } from "../../../../services/getAccessToken";
+import { getHouseNumberError } from "../../../../utils/houseNumber";
 import {
   MAX_PROPERTY_IMAGES,
   POLICY_RULE_CONFIG,
@@ -296,6 +297,13 @@ export const savePropertyChanges = async ({
 
   if (!normalizedTitle || !normalizedDescription) {
     throw new Error("Title and description cannot be empty.");
+  }
+
+  // Every save sends the location, so a house number that cannot be stored stops the save from any tab.
+  // Without this the location would be left out of the request and the rest would save as if all was well.
+  const houseNumberError = getHouseNumberError(address.houseNumber);
+  if (houseNumberError) {
+    throw new Error(houseNumberError);
   }
 
   const normalizedPricingForm = normalizePricingForm(pricingForm);

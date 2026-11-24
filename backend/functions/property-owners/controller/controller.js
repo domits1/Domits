@@ -56,6 +56,15 @@ export class Controller {
     }
   }
 
+  async getFinancialSourceData(event) {
+    try {
+      const hostId = await this.authorize(event);
+      return respond(200, await this.service.getFinancialSourceData(hostId, event.queryStringParameters ?? {}));
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   async createOwner(event) {
     try {
       const hostId = await this.authorize(event);

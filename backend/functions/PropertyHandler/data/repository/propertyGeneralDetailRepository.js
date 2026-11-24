@@ -20,8 +20,8 @@ export class PropertyGeneralDetailRepository {
         return result ? result : null;
     }
 
-    async getPropertyGeneralDetailById(id) {
-        const client = await Database.getInstance();
+    async getPropertyGeneralDetailById(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_General_Detail)
             .createQueryBuilder("property_generaldetail")
@@ -30,8 +30,8 @@ export class PropertyGeneralDetailRepository {
         return result ? result : null
     }
 
-    async create(detail) {
-        const client = await Database.getInstance();
+    async create(detail, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -43,7 +43,7 @@ export class PropertyGeneralDetailRepository {
                 value: detail.value
             })
             .execute();
-        const result = await this.getPropertyGeneralDetailById(detail.id);
+        const result = await this.getPropertyGeneralDetailById(detail.id, transactionManager);
         return result ? result : null
     }
 

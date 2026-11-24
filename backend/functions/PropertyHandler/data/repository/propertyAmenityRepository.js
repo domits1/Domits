@@ -43,8 +43,8 @@ export class PropertyAmenityRepository {
         return result ? result : null;
     }
 
-    async getPropertyAmenityById(id) {
-        const client = await Database.getInstance();
+    async getPropertyAmenityById(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_Amenity)
             .createQueryBuilder("property_amenity")
@@ -53,8 +53,8 @@ export class PropertyAmenityRepository {
         return result ? result : null;
     }
 
-    async create(amenity) {
-        const client = await Database.getInstance();
+    async create(amenity, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -65,7 +65,7 @@ export class PropertyAmenityRepository {
                 property_id: amenity.property_id
             })
             .execute();
-        const result = await this.getPropertyAmenityById(amenity.id);
+        const result = await this.getPropertyAmenityById(amenity.id, transactionManager);
         return result ? result : null;
     }
 

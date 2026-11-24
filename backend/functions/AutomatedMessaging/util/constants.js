@@ -1,9 +1,21 @@
 export const AUTOMATION_TRIGGER = "BOOKING_PAID";
+export const AUTOMATION_TRIGGERS = Object.freeze({
+  BOOKING_PAID: "BOOKING_PAID",
+  CHECK_IN: "CHECK_IN",
+  CHECK_OUT: "CHECK_OUT",
+});
+export const OFFSET_DIRECTIONS = new Set(["BEFORE", "AFTER"]);
+export const SEND_TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const STAY_SEND_GRACE_MS = 6 * 60 * 60 * 1000;
+export const STAY_TIME_ZONE = "Europe/Amsterdam";
+export const DEFAULT_CHECK_IN_TIME = "15:00";
+export const DEFAULT_CHECK_OUT_TIME = "11:00";
 export const AUTOMATION_CHANNEL = "DOMITS_DIRECT";
 export const AUTOMATION_STATUSES = new Set(["DRAFT", "ACTIVE", "PAUSED"]);
 export const OFFSET_UNITS = new Set(["MINUTES", "HOURS", "DAYS"]);
 export const DELIVERY_STATUSES = new Set(["SCHEDULED", "PROCESSING", "SENT", "FAILED", "CANCELLED"]);
 export const OUTBOX_EVENT_VERSION = 1;
+export const BOOKING_DATES_CHANGED_EVENT = "BOOKING_DATES_CHANGED";
 export const APPROVED_VARIABLES = Object.freeze([
   "guestName",
   "propertyName",

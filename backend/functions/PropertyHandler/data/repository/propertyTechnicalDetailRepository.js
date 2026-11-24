@@ -8,8 +8,8 @@ export class PropertyTechnicalDetailRepository {
         this.systemManager = systemManager
     }
 
-    async getTechnicalDetailsByPropertyId(id) {
-        const client = await Database.getInstance();
+    async getTechnicalDetailsByPropertyId(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property_Technical_Details)
             .createQueryBuilder("property_technicaldetails")
@@ -18,8 +18,8 @@ export class PropertyTechnicalDetailRepository {
         return result ? TechnicalDetailsMapping.mapDatabaseEntryToTechnicalDetails(result) : null;
     }
 
-    async create(details) {
-        const client = await Database.getInstance();
+    async create(details, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -36,7 +36,7 @@ export class PropertyTechnicalDetailRepository {
                 fourwheeldrive: details.fourWheelDrive
             })
             .execute();
-        const result = await this.getTechnicalDetailsByPropertyId(details.property_id);
+        const result = await this.getTechnicalDetailsByPropertyId(details.property_id, transactionManager);
         return result ? result : null;
     }
 

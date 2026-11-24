@@ -1,11 +1,15 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ReviewApprovalPage from "../views/ReviewApprovalPage";
-import { approveReview, publishApprovedReview, getAdminReviews } from "../services/reviewAPI";
+import { approveReview, publishApprovedReview, flagReview, getAdminReviews, getReviewFlags, resolveReviewFlag } from "../services/reviewAPI";
 
 jest.mock("../services/reviewAPI", () => ({
   approveReview: jest.fn(),
   publishApprovedReview: jest.fn(),
+  getPendingApprovalReviews: jest.fn(),
+  flagReview: jest.fn(),
+  getReviewFlags: jest.fn(),
+  resolveReviewFlag: jest.fn(),
   getAdminReviews: jest.fn(),
 }));
 
@@ -50,6 +54,51 @@ describe("ReviewApprovalPage", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     getAdminReviews.mockResolvedValue([pendingReview(), secondReview]);
+  });
+
+  test("flags a review, resolves it from the moderation queue and views resolved flags", async () => {
+    HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+    HTMLDialogElement.prototype.close = function () { this.open = false; };
+    const flag = { ...pendingReview(), id: "f1", reason: "SPAM" };
+    const queue = (flags) => ({ flags, next_offset: null });
+    flagReview.mockResolvedValue(flag);
+    resolveReviewFlag.mockResolvedValue(flag);
+    getReviewFlags.mockResolvedValueOnce(queue([flag])).mockResolvedValueOnce(queue([])).mockResolvedValueOnce(queue([flag]));
+    render(<ReviewApprovalPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Flag for review" }));
+    const dialog = within(screen.getByRole("dialog"));
+    fireEvent.change(dialog.getByLabelText("Reason"), { target: { value: "SPAM" } });
+    fireEvent.click(dialog.getByRole("button", { name: "Flag review" }));
+    expect(flagReview).toHaveBeenCalledWith("r1", "SPAM", "");
+    fireEvent.click(await screen.findByRole("button", { name: "Mark resolved" }));
+    expect(resolveReviewFlag).toHaveBeenCalledWith("f1");
+    await screen.findByText("No pending review flags.");
+    fireEvent.change(screen.getByLabelText("Flag status"), { target: { value: "RESOLVED" } });
+    expect(await screen.findByText("Spam")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mark resolved" })).toBeNull();
+    expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 0, limit: 8 });
+  });
+
+  test("filters moderation before pagination, resets its page and retains resolved status", async () => {
+    getReviewFlags.mockResolvedValue({ flags: [{ id: "flag", title: "Matching stay", reason: "SPAM", overall_rating: 4.5 }], next_offset: 8 });
+    render(<ReviewApprovalPage />);
+    await screen.findByRole("tab", { name: "Pending approval (2)" });
+    fireEvent.click(screen.getByRole("tab", { name: "Moderation queue" }));
+    fireEvent.change(await screen.findByLabelText("Flag status"), { target: { value: "RESOLVED" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Next page" }));
+    await waitFor(() => expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 8, limit: 8 }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search reviews" }), { target: { value: "Riverside" } });
+    await waitFor(() => expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 0, limit: 8, search: "Riverside" }));
+    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
+    fireEvent.change(screen.getByLabelText("Rating"), { target: { value: "4" } });
+    await waitFor(() => expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 0, limit: 8, search: "Riverside", rating: "4" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Next page" }));
+    await waitFor(() => expect(getReviewFlags).toHaveBeenLastCalledWith({ status: "RESOLVED", offset: 8, limit: 8, search: "Riverside", rating: "4" }));
+    getReviewFlags.mockResolvedValue({ flags: [], next_offset: null });
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Nobody" } });
+    expect(await screen.findByText("No resolved review flags.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next page" })).not.toBeInTheDocument();
   });
 
   test("lists pending reviews with property, guest, booking, rating and status", async () => {

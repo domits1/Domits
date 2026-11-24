@@ -13,6 +13,7 @@ import {
   createInitialPolicyRules,
   createInitialPricingForm,
 } from "../constants";
+import { parseHouseNumber } from "../../../../utils/houseNumber";
 
 const POLICY_ADVANCE_NOTICE_RESTRICTION_KEYS = [
   "MinimumAdvanceReservation",
@@ -275,32 +276,8 @@ export const normalizeCapacityValue = (value) => {
   return Math.max(0, Math.min(MAX_CAPACITY_VALUE, Math.trunc(numeric)));
 };
 
-const parseHouseNumber = (houseNumberInput) => {
-  const value = String(houseNumberInput || "").trim();
-  if (!value) {
-    return null;
-  }
-
-  let digitEndIndex = 0;
-  while (digitEndIndex < value.length && value[digitEndIndex] >= "0" && value[digitEndIndex] <= "9") {
-    digitEndIndex += 1;
-  }
-
-  if (digitEndIndex === 0) {
-    return null;
-  }
-
-  const parsedHouseNumber = Number(value.slice(0, digitEndIndex));
-  if (!Number.isFinite(parsedHouseNumber)) {
-    return null;
-  }
-
-  return {
-    houseNumber: Math.trunc(parsedHouseNumber),
-    houseNumberExtension: value.slice(digitEndIndex).trim(),
-  };
-};
-
+// Returns undefined, so no location is sent, only when part of the address is empty. A house number
+// that was typed but cannot be saved is refused before this is called (see savePropertyChanges).
 export const getLocationPayload = (address) => {
   const street = address.street.trim();
   const houseNumber = address.houseNumber.trim();

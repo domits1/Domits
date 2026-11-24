@@ -88,8 +88,8 @@ export class ReviewRepository {
     return this.#hostReviews.softDeleteResponse(changes);
   }
 
-  async getPublicReviewPage(propertyId, offset) {
-    return this.#publicReviews.getPublicReviewPage(propertyId, offset);
+  async getPublicReviewPage(propertyId, offset, filters) {
+    return this.#publicReviews.getPublicReviewPage(propertyId, offset, filters);
   }
 
   async findReviews(where) {
@@ -273,7 +273,7 @@ export class ReviewRepository {
     if (!reviews.length) return reviews;
 
     const propertyIds = [...new Set(reviews.map((review) => review.property_id))];
-    const [properties, locations, imageKeys, bookings] = await Promise.all([
+    const [properties, locations, imageKeys, bookings, pendingFlags] = await Promise.all([
       database.getRepository(Property).find({ where: { id: In(propertyIds) }, select: ["id", "title"] }),
       database.getRepository(Property_Location).find({
         where: { property_id: In(propertyIds) }, select: ["property_id", "city", "country"] }),
@@ -281,7 +281,12 @@ export class ReviewRepository {
       database.getRepository(Booking).find({
         where: { id: In([...new Set(reviews.map((review) => review.booking_id))]) },
         select: ["id", "guestid", "guestname"] }),
+      database.getRepository(Review_Flag).find({
+        where: { review_id: In(reviews.map((review) => review.id)), status: "PENDING" },
+        select: ["review_id"],
+      }),
     ]);
+    const flaggedIds = new Set(pendingFlags.map((flag) => flag.review_id));
     const titles = new Map(properties.map((property) => [property.id, property.title]));
     const locationsById = new Map(locations.map((location) => [location.property_id, location]));
     const bookingsById = new Map(bookings.map((booking) => [booking.id, booking]));
@@ -291,7 +296,7 @@ export class ReviewRepository {
       const booking = bookingsById.get(review.booking_id);
       const bookedByReviewer = Boolean(booking) && booking.guestid === review.reviewer_user_id;
       const guestName = bookedByReviewer ? booking.guestname?.trim() || null : null;
-      return { ...review, property_title: titles.get(review.property_id) ?? null,
+      return { ...review, has_pending_flag: flaggedIds.has(review.id), property_title: titles.get(review.property_id) ?? null,
         property_city: location?.city ?? null, property_country: location?.country ?? null,
         property_image_key: imageKeys.get(review.property_id) ?? null, guest_name: guestName };
     });
@@ -509,15 +514,32 @@ export class ReviewRepository {
     }
   }
 
-  async findReviewFlags({ status, limit, offset }) {
+  async findReviewFlags({ status, limit, offset, search, rating }) {
     const database = await Database.getInstance();
-    const rows = await database.getRepository(Review_Flag).createQueryBuilder("flag")
+    const query = database.getRepository(Review_Flag).createQueryBuilder("flag")
       .innerJoin(Review, "review", "review.id = flag.review_id")
-      .select("flag.*").addSelect("review.title", "title").addSelect("review.public_review", "public_review")
-      .addSelect("review.overall_rating", "overall_rating").where("flag.status = :status", { status })
-      .orderBy("flag.created_at", "ASC").addOrderBy("flag.id", "ASC").limit(limit).offset(offset).getRawMany();
-    return rows.map((row) => ({ ...row, overall_rating: Number(row.overall_rating),
-      created_at: Number(row.created_at), updated_at: Number(row.updated_at) }));
+      .select("flag.*").addSelect(REVIEW_FIELDS.filter((field) => field !== "host_id").map((field) => `review.${field} AS review_${field}`)).addSelect("review.title", "title").addSelect("review.public_review", "public_review")
+      .addSelect("review.overall_rating", "overall_rating").where("flag.status = :status", { status });
+    // Filter before pagination; all joins target primary keys to keep one row per flag.
+    if (search) {
+      query.leftJoin(Property, "searchProperty", "searchProperty.id = review.property_id")
+        .leftJoin(Property_Location, "searchLocation", "searchLocation.property_id = review.property_id")
+        .leftJoin(Booking, "searchBooking", "searchBooking.id = review.booking_id AND searchBooking.guestid = review.reviewer_user_id")
+        .andWhere(`(${["searchBooking.guestname", "searchProperty.title", "review.booking_id", "review.title",
+          "searchLocation.city", "searchLocation.country"].map((field) =>
+          `POSITION(:search IN LOWER(COALESCE(${field}, ''))) > 0`).join(" OR ")})`, { search: search.toLowerCase() });
+    }
+    if (rating !== undefined) query.andWhere("FLOOR(review.overall_rating) = :rating", { rating });
+    const rows = await query.orderBy("flag.created_at", "ASC").addOrderBy("flag.id", "ASC").limit(limit).offset(offset).getRawMany();
+    const reviews = await this.addModerationDetails(database, rows.map((row) =>
+      Object.fromEntries(REVIEW_FIELDS.filter((field) => field !== "host_id").map((field) => [field, row[`review_${field}`]]))));
+    return rows.map((row, index) => {
+      const flag = Object.fromEntries(Object.entries(row).filter(([key]) => !key.startsWith("review_") || key === "review_id"));
+      const review = reviews[index];
+      return { ...flag, review: review ? { ...review,
+        created_at: Number(review.created_at), updated_at: Number(review.updated_at) } : undefined,
+        overall_rating: Number(row.overall_rating), created_at: Number(row.created_at), updated_at: Number(row.updated_at) };
+    });
   }
 
   async resolveReviewFlag(id, userId, now) {

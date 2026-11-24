@@ -56,22 +56,22 @@ describe("Pages2 owners navigation", () => {
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
   });
 
-  test("shows the Owners link to a host", async () => {
+  test("shows the Owner Management link to a host", async () => {
     useEffectiveHostId.mockReturnValue({ isPurelyPOM: false });
 
     renderPages();
 
-    const ownersLink = await screen.findByRole("link", { name: "Owners" });
+    const ownersLink = await screen.findByRole("link", { name: "Owner Management" });
     expect(ownersLink.getAttribute("href")).toBe("/hostdashboard/owners");
   });
 
-  test("hides the Owners link from a team member who acts for another host", async () => {
+  test("hides the Owner Management link from a team member who acts for another host", async () => {
     useEffectiveHostId.mockReturnValue({ isPurelyPOM: true });
 
     renderPages();
 
     await screen.findByText("Listings");
-    expect(screen.queryByRole("link", { name: "Owners" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Owner Management" })).toBeNull();
   });
 });
 
@@ -84,15 +84,15 @@ describe("Pages2 menu order", () => {
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "any-user" } });
   });
 
-  test("puts Reviews directly before Owners and Marketplace directly before Settings for a host", async () => {
+  test("puts Reviews directly before Owner Management and Marketplace directly before Settings for a host", async () => {
     getChannexAdminAccess.mockResolvedValue({ allowed: false });
 
     renderPages();
 
     await waitFor(() => expect(getChannexAdminAccess).toHaveBeenCalled());
-    await screen.findByRole("link", { name: "Owners" });
+    await screen.findByRole("link", { name: "Owner Management" });
     const labels = visibleLabels();
-    expect(labels.indexOf("Owners")).toBe(labels.indexOf("Reviews") + 1);
+    expect(labels.indexOf("Owner Management")).toBe(labels.indexOf("Reviews") + 1);
     expect(labels.indexOf("Settings")).toBe(labels.indexOf("Marketplace") + 1);
   });
 
