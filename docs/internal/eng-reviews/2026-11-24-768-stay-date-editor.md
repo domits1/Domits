@@ -56,3 +56,54 @@ create / update / activate ─▶ normalizeDefinition ─▶ normalizeSchedule(t
 ### Verification
 
 New tests were red first (16 failing). A mutation check (dropping the unit rule, the BEFORE rule and the send-time rule) made 4 tests fail and the file was restored. `functions/AutomatedMessaging`: 16 suites, 212 tests passed. Full backend run: 477 suites and 6898 tests passed; the same three suites fail locally for reasons unrelated to messaging: two need AWS credentials and one needs a live database.
+
+## Commit 2: preview when a stay-date message would be sent
+
+Reviewed: the staged diff (`automationService.js`, `automationService.preview.test.js`, this record)
+
+### Decision
+
+```
+preview(input, automationId?) ─ bookingId given? ─ no ─▶ schedule: null
+                                   │ yes
+                                   ▼
+        rule = stored automation fields, overridden by the request fields
+        stay trigger? ─ no ─▶ schedule: null     (booking-paid is not validated, as before)
+                         yes ▶ normalizeSchedule(rule) ▶ calculateStayScheduledFor(booking, property check-in times)
+                                  ▶ { scheduledFor, isPast, timeZone: "Europe/Amsterdam" }
+```
+
+- The preview uses the booking context it already loads, so it adds no query.
+- The same normalisation and calculator as saving and scheduling are used, so the preview cannot show a time the scheduler would not use.
+- A rule the scheduler cannot calculate fails the preview with a 400 and a reason, the same as saving it.
+- Options weighed: calculate the time in the editor (rejected, a second copy of the DST rules), return it from the preview (chosen).
+
+### Findings
+
+| Finding | Confidence | Resolution |
+|---|---|---|
+| `[P3]` `buildPreviewSchedule` reads `Date.now()` directly, so tests spy on it. | 8/10 | Accepted. |
+| `[P3]` `isStayTrigger` repeats the helper in `schedulingService.js`. They live in different modules. | 7/10 | Accepted. |
+| `[P3]` A stay rule that cannot be calculated now returns 400 from the preview when a booking is given. | 8/10 | Accepted. Same as save. |
+
+### Not in scope
+
+- Showing the schedule in the editor (next commit).
+- A preview without a booking, which has no dates to calculate from.
+
+### What already exists
+
+- `getBookingContext`, `calculateStayScheduledFor` and `normalizeSchedule`, reused.
+
+### Failure modes
+
+| Path | Failure | Test | Handling | User sees |
+|---|---|---|---|---|
+| Preview of a rule the scheduler rejects | A time that would never be used | Yes | 400 with a reason | Error message |
+| Booking-paid preview with leftover stay fields | A preview that used to work fails | Yes | Not validated, schedule null | Preview as before |
+| Property without check-in times | No time to anchor to | Covered by the calculator tests | Fallback 15:00 and 11:00 | A time at the fallback |
+| Send time already passed | A time that cannot be sent | Yes | `isPast: true` | The editor can say so |
+
+### Verification
+
+New tests were red first (7 failing, then one more for the booking-paid case). `functions/AutomatedMessaging`: 16 suites, 220 tests passed. Full backend run: 477 suites and 6906 tests passed; the same three suites fail locally for reasons unrelated to messaging.

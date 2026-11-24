@@ -7,9 +7,11 @@ import {
   OFFSET_UNITS,
   SAFE_PREVIEW_VALUES,
   SEND_TIME_PATTERN,
+  STAY_TIME_ZONE,
 } from "../util/constants.js";
 import { badRequest, forbidden, notFound } from "../util/httpErrors.js";
 import { renderTemplate, validateTemplate } from "../renderer/templateRenderer.js";
+import { calculateStayScheduledFor } from "./scheduleCalculator.js";
 
 const normalizeNullableId = (value) => {
   if (value === null || value === "") return null;
@@ -56,6 +58,21 @@ const normalizeSchedule = ({ triggerType, offsetAmount, offsetUnit, offsetDirect
     throw badRequest("sendTime needs an offset in days or no offset.");
   }
   return { triggerType: trigger, ...offset, offsetDirection: direction, sendTime: time };
+};
+
+const SCHEDULE_FIELDS = ["triggerType", "offsetAmount", "offsetUnit", "offsetDirection", "sendTime"];
+
+const pickSchedule = (source) =>
+  Object.fromEntries(SCHEDULE_FIELDS.filter((field) => source?.[field] !== undefined).map((field) => [field, source[field]]));
+
+const isStayTrigger = (triggerType) =>
+  [AUTOMATION_TRIGGERS.CHECK_IN, AUTOMATION_TRIGGERS.CHECK_OUT].includes(String(triggerType).trim().toUpperCase());
+
+const buildPreviewSchedule = (rule, { booking, checkIn }) => {
+  if (!isStayTrigger(rule.triggerType)) return null;
+  const definition = normalizeSchedule(rule);
+  const { scheduledFor, isPast } = calculateStayScheduledFor({ ...definition, booking, checkIn, now: Date.now() });
+  return { scheduledFor, isPast, timeZone: STAY_TIME_ZONE };
 };
 
 const formatDate = (value) => {
@@ -152,9 +169,7 @@ export default class AutomationService {
       patch.name = name;
     }
     if (!partial || input.template !== undefined) patch.template = validateTemplate(input.template).template;
-    const touchesSchedule = ["triggerType", "offsetAmount", "offsetUnit", "offsetDirection", "sendTime"].some(
-      (field) => input[field] !== undefined
-    );
+    const touchesSchedule = SCHEDULE_FIELDS.some((field) => input[field] !== undefined);
     if (!partial || touchesSchedule) Object.assign(patch, normalizeSchedule(input));
 
     if (input.channel !== undefined && input.channel !== AUTOMATION_CHANNEL) {
@@ -208,6 +223,7 @@ export default class AutomationService {
     await this.assertPropertyOwnership(hostId, propertyScope);
 
     let values = SAFE_PREVIEW_VALUES;
+    let schedule = null;
     if (input.bookingId) {
       const context = await this.bookings.getBookingContext(input.bookingId);
       if (!context) throw notFound("Booking not found.");
@@ -216,9 +232,14 @@ export default class AutomationService {
         throw forbidden("Booking is outside this automation's property scope.");
       }
       values = buildBookingVariables(context);
+      schedule = buildPreviewSchedule({ ...pickSchedule(existing), ...pickSchedule(input) }, context);
     }
 
-    return { ...renderTemplate(template, values, { missingPolicy: "marker" }), approvedVariables: APPROVED_VARIABLES };
+    return {
+      ...renderTemplate(template, values, { missingPolicy: "marker" }),
+      approvedVariables: APPROVED_VARIABLES,
+      schedule,
+    };
   }
 
   async listDeliveries(hostId, automationId) {
