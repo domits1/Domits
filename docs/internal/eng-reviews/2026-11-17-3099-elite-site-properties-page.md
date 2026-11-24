@@ -1,5 +1,4 @@
 # #3099 Show one property of an Elite website
-
 Pull request: `elite-site-properties-page`, after `elite-site-properties-home`, built on `elite-site-properties-routing` with `elite-page-gallery-contact` (#3929 to #3931) merged in. Issue: #3099. Reviewed before every commit, then each guard broken on purpose, then two rounds of a second review.
 
 On a Panorama site with a served list of properties, `/properties/<slug>` shows the restyled Elite Accommodation sections of that property, a menu of "Our properties" and the site's Contact page, and a booking panel when the site's quote panel is on.
@@ -8,7 +7,6 @@ On a Panorama site with a served list of properties, `/properties/<slug>` shows 
 query ─▶ readSitePropertyStayQuery ─▶ panel keyed by property and stay ─▶ POST quote (propertyId only for another property)
 answer for another property ─▶ property_not_found; price ─▶ "Request to book" with the answer's stay; any change ─▶ no link
 ```
-
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
 | P2 (7/10) | `websitePublicQuoteService.js` | A server without the new field quotes the site's own property, so another property would show the main property's price. | Fixed: such an answer is `property_not_found`. |
