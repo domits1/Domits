@@ -126,7 +126,13 @@ export default class ChannexProvisioningService {
     }
 
     const account = await this.ensureHostAccount(userId);
-    const inUse = await this.props.findInUseByAccountAndListing(account.id, listing.propertyId);
+    if (!account) {
+      return bad(409, {
+        error: "This account is connected to its own Channex account. Contact support to use Domits' distribution.",
+        errorCode: "DISTRIBUTION_OWN_CHANNEX_ACCOUNT",
+      });
+    }
+    const inUse =await this.props.findInUseByAccountAndListing(account.id, listing.propertyId);
 
     if (inUse && inUse.status !== PROVISIONING) {
       return ok({ status: "ALREADY_CONNECTED", channexPropertyId: inUse.externalPropertyId });
@@ -163,6 +169,9 @@ export default class ChannexProvisioningService {
     const now = this.now();
     const account = await this.accounts.findByUserIdAndChannel(userId, CHANNEL);
     if (!account) return this.createHostAccount(userId, now);
+    // A row with another Channex key belongs to a host who connected their own Channex account; pointing it
+    // at Domits' key would push their mappings to the wrong account (#4031 review). Returns null for it.
+    if (account.credentialsRef && account.credentialsRef !== this.credentialsRef) return null;
     if (account.status === CONNECTED && account.credentialsRef === this.credentialsRef) return account;
     return this.accounts.update(account.id, { status: CONNECTED, credentialsRef: this.credentialsRef, updatedAt: now });
   }

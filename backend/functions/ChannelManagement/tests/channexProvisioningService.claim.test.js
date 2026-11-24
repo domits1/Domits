@@ -78,6 +78,26 @@ describe("ChannexProvisioningService.claimListing: the host's account row (D8)",
     expect(props.findInUseByAccountAndListing).toHaveBeenCalledWith("account-winner", "listing-1");
   });
 
+  // #4031 review: a host who connected their own Channex account keeps it. Pointing that row at
+  // Domits' key would push their existing mappings to the wrong account, so nothing is changed.
+  test.each([["CONNECTED"], ["DISCONNECTED"]])(
+    "a %s account row with its own Channex key is left alone and answers 409",
+    async (status) => {
+      const ownAccount = { id: "account-1", status, credentialsRef: "host-own-channex-secret" };
+      const { service, accounts, props, createChannexObjects } = build({ account: ownAccount });
+
+      const result = await service.claimListing({ userId: "host-1", listing, place });
+
+      expect(result).toEqual({
+        statusCode: 409,
+        response: expect.objectContaining({ errorCode: "DISTRIBUTION_OWN_CHANNEX_ACCOUNT" }),
+      });
+      expect(accounts.update).not.toHaveBeenCalled();
+      expect(props.insertClaim).not.toHaveBeenCalled();
+      expect(createChannexObjects).not.toHaveBeenCalled();
+    }
+  );
+
   // A disconnect resets the shared key on the row (#3365); turning a listing on connects it again.
   test("reconnects a disconnected account row to Domits' key", async () => {
     const account = { id: "account-1", status: "DISCONNECTED", credentialsRef: null };
