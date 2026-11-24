@@ -228,7 +228,7 @@ describe("useConnectFlow", () => {
       await act(async () => hook.result.current.continueFromTimezone("Asia/Makassar"));
 
       expect(enableDistribution).toHaveBeenCalledTimes(1);
-      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p1", timezone: "Asia/Makassar" });
+      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p1", chosenTimezone: "Asia/Makassar" });
       expect(hook.result.current.step).toBe(CONNECT_STEP.IFRAME);
     });
 
@@ -441,7 +441,7 @@ describe("useConnectFlow", () => {
 
       await act(async () => hook.result.current.continueFromTimezone("Asia/Jakarta"));
 
-      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p1", timezone: "Asia/Jakarta" });
+      expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p1", chosenTimezone: "Asia/Jakarta" });
       expect(createConnectSession).not.toHaveBeenCalled();
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
     });

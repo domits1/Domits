@@ -192,7 +192,7 @@ describe("PlatformCardsSection", () => {
         await user.click(screen.getByRole("button", { name: "Continue" }));
 
         await screen.findByTitle("Connect Vrbo through Channex");
-        expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p3", timezone: "Asia/Makassar" });
+        expect(enableDistribution).toHaveBeenCalledWith({ propertyId: "p3", chosenTimezone: "Asia/Makassar" });
       });
 
       test("cancelling the timezone modal sends nothing and changes nothing", async () => {

@@ -109,7 +109,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
       let enabled;
       try {
         // The timezone is sent only where the listing asked for one (D4).
-        await enableDistribution({ propertyId, ...(timezone ? { timezone } : {}) });
+        await enableDistribution({ propertyId, ...(timezone ? { chosenTimezone: timezone } : {}) });
         if (!mountedRef.current) return;
         // The answer says nothing about the listing, so the listings are read again to see its state.
         const fresh = await rereadListings();

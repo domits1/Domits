@@ -14,8 +14,9 @@
 export const MOCK_HOST_DISTRIBUTION_ENABLED = false;
 
 // What enableDistribution answers, to preview each error without a backend:
-// "success" | "in-progress" | "timezone-required" | "not-ready". Each error outcome also
-// stores the state a real backend would leave behind, so Refresh then shows it.
+// "success" | "in-progress" | "timezone-required" | "not-ready" | "try-again". Each error outcome
+// also stores the state a real backend would leave behind, so reading the listings again shows it.
+// "try-again" answers once, then the next turn-on resumes and succeeds, as in the contract.
 export const MOCK_ENABLE_OUTCOME = "success";
 
 const MOCK_REQUEST_DELAY_MS = 300;
@@ -39,12 +40,17 @@ const MOCK_REQUEST_DELAY_MS = 300;
 // }
 // getHostListings  -> { listings: [listing] }
 // refreshChannels  -> { channels }                         // the channels as listed above, merged into the listing
-// enableDistribution -> { listing }                      // idempotent (D2): a listing that is already READY comes
-//                                                          // back unchanged. The body carries timezone only where
-//                                                          // the listing requires it. Errors: 400 TIMEZONE_REQUIRED,
-//                                                          // 404 DISTRIBUTION_LISTING_NOT_FOUND, 409 PROVISIONING_IN_PROGRESS,
-//                                                          // 422 LISTING_NOT_READY, 500 PROVISIONING_FAILED (the next
-//                                                          // attempt resumes, D2). The error codes are proposed.
+// enableDistribution({ propertyId, chosenTimezone }) -> { status: "PROVISIONED" | "ALREADY_CONNECTED" }
+//                                                          // chosenTimezone only where distribution.timezone.required;
+//                                                          // the host then reads the listings again. A listing that is
+//                                                          // PROVISIONING is resumed. Errors, decided by errorCode:
+//                                                          // 404 DISTRIBUTION_LISTING_NOT_FOUND, 403 ..._NOT_OWNED,
+//                                                          // 422 DISTRIBUTION_LISTING_NOT_READY (+ missing),
+//                                                          // 422 DISTRIBUTION_TIMEZONE_CHOICE_NEEDED, ..._INVALID_CHOICE
+//                                                          // (+ options), ..._UNKNOWN_COUNTRY,
+//                                                          // 409 DISTRIBUTION_ALREADY_IN_PROGRESS, ..._NEEDS_ATTENTION,
+//                                                          // 503 DISTRIBUTION_TRY_AGAIN, ..._NOT_CONFIGURED,
+//                                                          // 502 DISTRIBUTION_CHANNEX_REFUSED (+ validationDetails)
 // createConnectSession -> { iframeUrl, expiresInSeconds }  // a one-time Channex screen address for this listing;
 //                                                          // errors: 404 DISTRIBUTION_LISTING_NOT_FOUND,
 //                                                          // 409 DISTRIBUTION_NOT_TURNED_ON
@@ -125,12 +131,12 @@ const copy = (value) => JSON.parse(JSON.stringify(value));
 
 // Shaped like the Error requestChannex() throws on a non-2xx response, so a real network error and a
 // mock error are handled the same way by callers.
-const buildMockRequestError = ({ endpoint, status, error, errorCode }) => {
+const buildMockRequestError = ({ endpoint, status, error, errorCode, ...extra }) => {
   const requestError = new Error(`POST ${endpoint} failed with status ${status}: ${error}`);
   requestError.status = status;
   requestError.endpoint = endpoint;
   requestError.method = "POST";
-  requestError.responseBody = { error, errorCode };
+  requestError.responseBody = { error, errorCode, ...extra };
   return requestError;
 };
 
@@ -164,20 +170,22 @@ export const refreshChannels = async ({ propertyId } = {}) => {
 // Leaves behind what a real backend would, for the outcomes that change the listing, so the
 // Refresh that follows an error shows it.
 const storeForcedEnableOutcome = (found) => {
-  if (mockEnableOutcome === "in-progress") found.distribution.status = "PROVISIONING";
+  if (mockEnableOutcome === "in-progress" || mockEnableOutcome === "try-again") {
+    found.distribution.status = "PROVISIONING";
+  }
   if (mockEnableOutcome === "not-ready") found.distribution.missing = ["MISSING_PRICE"];
   if (mockEnableOutcome === "timezone-required") found.distribution.timezone = INDONESIA_TIMEZONE_CHOICE;
 };
 
 // Turns distribution on for a listing (D2, D3, D4). Idempotent like the real route: a listing that
-// is already READY comes back unchanged, and one that failed halfway is simply tried again.
-export const enableDistribution = async ({ propertyId, timezone } = {}) => {
+// is already READY answers ALREADY_CONNECTED, and one that is still PROVISIONING is resumed.
+export const enableDistribution = async ({ propertyId, chosenTimezone } = {}) => {
   await mockDelay();
 
   const endpoint = `/integrations/channex/host/listings/${propertyId}/distribution`;
   const found = mockListings.find((listing) => listing.propertyId === propertyId);
   if (!found) throw listingNotFoundError(endpoint);
-  if (found.distribution.status === "READY") return { listing: copy(found) };
+  if (found.distribution.status === "READY") return { status: "ALREADY_CONNECTED" };
 
   storeForcedEnableOutcome(found);
 
@@ -186,27 +194,48 @@ export const enableDistribution = async ({ propertyId, timezone } = {}) => {
       endpoint,
       status: 422,
       error: "The listing is not ready for distribution.",
-      errorCode: "LISTING_NOT_READY",
+      errorCode: "DISTRIBUTION_LISTING_NOT_READY",
+      missing: found.distribution.missing,
     });
   }
-  if (found.distribution.status === "PROVISIONING") {
+  const { required, options } = found.distribution.timezone;
+  if (required && !chosenTimezone) {
+    throw buildMockRequestError({
+      endpoint,
+      status: 422,
+      error: "Choose a timezone for this listing.",
+      errorCode: "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED",
+      options,
+    });
+  }
+  if (required && !options.includes(chosenTimezone)) {
+    throw buildMockRequestError({
+      endpoint,
+      status: 422,
+      error: "That timezone is not available for this listing.",
+      errorCode: "DISTRIBUTION_TIMEZONE_INVALID_CHOICE",
+      options,
+    });
+  }
+  if (mockEnableOutcome === "in-progress") {
     throw buildMockRequestError({
       endpoint,
       status: 409,
       error: "Distribution is already being set up for this listing.",
-      errorCode: "PROVISIONING_IN_PROGRESS",
+      errorCode: "DISTRIBUTION_ALREADY_IN_PROGRESS",
     });
   }
-  if (found.distribution.timezone.required && !found.distribution.timezone.options.includes(timezone)) {
+  if (mockEnableOutcome === "try-again") {
+    mockEnableOutcome = "success";
     throw buildMockRequestError({
       endpoint,
-      status: 400,
-      error: "Choose a timezone for this listing.",
-      errorCode: "TIMEZONE_REQUIRED",
+      status: 503,
+      error: "Setting up did not finish. Turn it on again to continue.",
+      errorCode: "DISTRIBUTION_TRY_AGAIN",
     });
   }
   found.distribution = { ...found.distribution, status: "READY", timezone: NO_TIMEZONE_CHOICE };
-  return { listing: copy(found) };
+  return { status: "PROVISIONED" };
 };
 
 const MOCK_CONNECT_SESSION_URL = "https://staging.channex.io/mock-connect?token=mock";
