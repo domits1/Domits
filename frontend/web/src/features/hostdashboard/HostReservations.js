@@ -17,6 +17,7 @@ import {
   isChannexBooking,
   resolveChannexBookingTotal,
 } from "./utils/reservationCalculations.js";
+import { bookingCurrencyPrefix } from "./utils/bookingCurrency.js";
 
 const normalizeStatus = (status) => {
   if (!status) return "";
@@ -620,7 +621,10 @@ const HostReservations = () => {
                                 {labelMap[booking.status]}
                               </span>
                             </td>
-                            <td data-label="Total">€{total}</td>
+                            <td data-label="Total">
+                              {bookingCurrencyPrefix(booking)}
+                              {total}
+                            </td>
                             <td data-label="Commission">{commission}</td>
                             <td data-label="Policy">{renderPolicyDisplay(booking.cancellationType)}</td>
                             <td data-label="Reservation">{booking.id}</td>

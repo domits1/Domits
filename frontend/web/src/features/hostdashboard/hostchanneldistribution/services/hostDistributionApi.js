@@ -4,18 +4,19 @@
 //
 // Routes (all under /integrations/channex, Cognito-authenticated):
 //   getHostListings()          GET  /host/listings
-//   enableDistribution({ propertyId, timezone })  POST /host/listings/{propertyId}/distribution
+//   enableDistribution({ propertyId, chosenTimezone })  POST /host/listings/{propertyId}/distribution
 //   createConnectSession({ propertyId })  POST /host/listings/{propertyId}/connect-session
 //   refreshChannels({ propertyId })  POST /host/listings/{propertyId}/channels/refresh
-//   disconnectChannel({ channelId })  POST /host/channels/{channelId}/disconnect
+//   disconnectChannel({ channelId })  POST /host/channels/{channelId}/disconnect   (NOT IN THE CONTRACT YET)
 
 // While false, the Distribution tab shows none of this, so a real host never sees invented data.
 // Flip to true only for local preview. Remove the flag when the real routes are wired.
 export const MOCK_HOST_DISTRIBUTION_ENABLED = false;
 
 // What enableDistribution answers, to preview each error without a backend:
-// "success" | "in-progress" | "timezone-required" | "not-ready" | "failed". Each error outcome also
-// stores the state a real backend would leave behind, so Refresh then shows it.
+// "success" | "in-progress" | "timezone-required" | "not-ready" | "try-again". Each error outcome
+// also stores the state a real backend would leave behind, so reading the listings again shows it.
+// "try-again" answers once, then the next turn-on resumes and succeeds, as in the contract.
 export const MOCK_ENABLE_OUTCOME = "success";
 
 // What disconnectChannel answers, the same way: "success" | "in-progress" | "not-found" | "failed".
@@ -26,59 +27,82 @@ export const MOCK_DISCONNECT_OUTCOME = "success";
 const MOCK_REQUEST_DELAY_MS = 300;
 
 // ---------------------------------------------------------------------------------------------
-// RESPONSE SHAPES -- PROPOSED, TO CONFIRM WITH ENES. The design note defines the routes but no
-// request or response bodies. Everything the frontend reads is in the fixtures below, so a change
-// of shape is a change in this one block (plus utils/distributionStates.js).
+// RESPONSE SHAPES -- Enes's contract for the host distribution routes. Everything the frontend
+// reads is in the fixtures below, so a change of shape is a change in this one block (plus
+// utils/distributionStates.js).
 //
 // listing = {
 //   propertyId, title,
-//   readiness: { ready, missing: ["STATUS_NOT_ACTIVE" | "LOCATION_MISSING" | "MAX_GUESTS_MISSING" | "PRICE_MISSING"] },
-//   distribution: { status: "NOT_ENABLED" | "PROVISIONING" | "PROVISIONING_FAILED" | "READY" },
-//   timezone: { required, options },                       // options are IANA ids, e.g. "Asia/Jakarta"; the
-//                                                          // host picks one only where required (D4)
+//   distribution: {
+//     status: "NOT_ENABLED" | "PROVISIONING" | "READY",
+//     missing: ["NOT_PUBLISHED" | "MISSING_ADDRESS" | "MISSING_GUESTS" | "MISSING_PRICE"],
+//     timezone: { required, options },                     // IANA ids, for the timezone picker (PR B)
+//   },
 //   channels: [{
-//     channelId, otaCode: "BookingCom" | "Airbnb" | "Vrbo",
-//     status: "ACTIVE" | "DISCONNECTING" | "DISCONNECTED" | "ERROR",   // the D7 row status
-//     displayState: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
-//     lastErrorCode, disconnectedOutsideDomits,
-//     upcomingBookingCount,                                // PROPOSED: upcoming bookings from this OTA, for the
-//                                                          // disconnect dialog (D5)
+//     otaCode: "BookingCom" | "Airbnb" | "Vrbo",
+//     label: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
+//     // NOT IN THE CONTRACT YET: disconnect has no route, so its mock keeps these on every channel (see
+//     // MOCK_ONLY_CHANNEL_FIELDS). They go when the real disconnect route is wired.
+//     channelId, status: "ACTIVE" | "DISCONNECTING" | "DISCONNECTED" | "ERROR", lastErrorCode,
+//     disconnectedOutsideDomits, upcomingBookingCount,
 //   }],
 // }
 // getHostListings  -> { listings: [listing] }
-// refreshChannels  -> { listing }                          // the updated listing, so the UI replaces one object
-// enableDistribution -> { listing }                      // idempotent (D2): a listing that is already READY comes
-//                                                          // back unchanged. The body carries timezone only where
-//                                                          // the listing requires it. Errors: 400 TIMEZONE_REQUIRED,
-//                                                          // 404 LISTING_NOT_FOUND, 409 PROVISIONING_IN_PROGRESS,
-//                                                          // 422 LISTING_NOT_READY, 500 PROVISIONING_FAILED (the next
-//                                                          // attempt resumes, D2). The error codes are proposed.
-// disconnectChannel -> { listing }                       // answers at once (D5): the channel is DISCONNECTING and a
-//                                                          // worker finishes it about a minute later, so Refresh
-//                                                          // later shows DISCONNECTED. Idempotent: a channel that is
-//                                                          // already DISCONNECTED comes back unchanged. Errors:
-//                                                          // 404 CHANNEL_NOT_FOUND, 409 DISCONNECT_IN_PROGRESS,
+// refreshChannels  -> { channels }                         // the channels as listed above, merged into the listing
+// enableDistribution({ propertyId, chosenTimezone }) -> { status: "PROVISIONED" | "ALREADY_CONNECTED" }
+//                                                          // chosenTimezone only where distribution.timezone.required;
+//                                                          // the host then reads the listings again. A listing that is
+//                                                          // PROVISIONING is resumed. Errors, decided by errorCode:
+//                                                          // 404 DISTRIBUTION_LISTING_NOT_FOUND, 403 ..._NOT_OWNED,
+//                                                          // 422 DISTRIBUTION_LISTING_NOT_READY (+ missing),
+//                                                          // 422 DISTRIBUTION_TIMEZONE_CHOICE_NEEDED, ..._INVALID_CHOICE
+//                                                          // (+ options), ..._UNKNOWN_COUNTRY,
+//                                                          // 409 DISTRIBUTION_ALREADY_IN_PROGRESS, ..._NEEDS_ATTENTION,
+//                                                          // 503 DISTRIBUTION_TRY_AGAIN, ..._NOT_CONFIGURED,
+//                                                          // 502 DISTRIBUTION_CHANNEX_REFUSED (+ validationDetails)
+// disconnectChannel -> { listing }                       // NOT IN THE CONTRACT YET. Answers at once (D5): the channel
+//                                                          // is DISCONNECTING and a worker finishes it about a minute
+//                                                          // later, so Refresh later shows DISCONNECTED. Idempotent: a
+//                                                          // channel that is already DISCONNECTED comes back unchanged.
+//                                                          // Errors: 404 CHANNEL_NOT_FOUND, 409 DISCONNECT_IN_PROGRESS,
 //                                                          // 500 DISCONNECT_FAILED. The error codes are proposed.
-// createConnectSession -> { url, expiresAt }               // a one-time Channex screen address for this listing's
-//                                                          // property; errors: 404 LISTING_NOT_FOUND,
-//                                                          // 409 DISTRIBUTION_NOT_ENABLED
+// createConnectSession -> { iframeUrl, expiresInSeconds }  // a one-time Channex screen address for this listing;
+//                                                          // errors: 404 DISTRIBUTION_LISTING_NOT_FOUND,
+//                                                          // 409 DISTRIBUTION_NOT_TURNED_ON
 // errors           -> thrown like requestChannex() throws: Error with .status, .responseBody { error, errorCode }
 // ---------------------------------------------------------------------------------------------
 
+// NOT IN THE CONTRACT YET. The contract sends a channel as { otaCode, label }. Disconnect has no route and
+// no channel id, so its mock needs these on every channel. They go when the real route is wired.
+export const MOCK_ONLY_CHANNEL_FIELDS = [
+  "channelId",
+  "status",
+  "lastErrorCode",
+  "disconnectedOutsideDomits",
+  "upcomingBookingCount",
+];
+
+const MOCK_STATUS_BY_LABEL = {
+  SYNCING: "ACTIVE",
+  LIVE: "ACTIVE",
+  DISCONNECTING: "DISCONNECTING",
+  DISCONNECTED: "DISCONNECTED",
+  NEEDS_ATTENTION: "ERROR",
+};
+
 // The id is the same for an OTA in every listing unless a fixture gives its own, so a fixture that
 // shares an OTA with another one passes channelId.
-const channel = (otaCode, status, displayState, extra = {}) => ({
-  channelId: `mock-channel-${otaCode}`,
+const channel = (otaCode, label, mockOnly = {}) => ({
   otaCode,
-  status,
-  displayState,
+  label,
+  channelId: `mock-channel-${otaCode}`,
+  status: MOCK_STATUS_BY_LABEL[label],
   lastErrorCode: null,
   disconnectedOutsideDomits: false,
   upcomingBookingCount: 0,
-  ...extra,
+  ...mockOnly,
 });
 
-const READY = { ready: true, missing: [] };
 const NO_TIMEZONE_CHOICE = { required: false, options: [] };
 // Indonesia has several timezones, so it is one of the countries where the host picks (D4).
 const INDONESIA_TIMEZONE_CHOICE = { required: true, options: ["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura"] };
@@ -87,32 +111,26 @@ const createFixtures = () => [
   {
     propertyId: "mock-listing-live",
     title: "Canal House",
-    readiness: READY,
-    distribution: { status: "READY" },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: { status: "READY", missing: [], timezone: NO_TIMEZONE_CHOICE },
     channels: [
-      channel("BookingCom", "ACTIVE", "LIVE", { upcomingBookingCount: 2 }),
-      channel("Airbnb", "ACTIVE", "SYNCING", { upcomingBookingCount: 1 }),
+      channel("BookingCom", "LIVE", { upcomingBookingCount: 2 }),
+      channel("Airbnb", "SYNCING", { upcomingBookingCount: 1 }),
     ],
   },
   {
     propertyId: "mock-listing-not-turned-on",
     title: "City Loft",
-    readiness: READY,
-    distribution: { status: "NOT_ENABLED" },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: { status: "NOT_ENABLED", missing: [], timezone: NO_TIMEZONE_CHOICE },
     channels: [],
   },
   {
     propertyId: "mock-listing-mixed",
     title: "Harbour Studio",
-    readiness: READY,
-    distribution: { status: "READY" },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: { status: "READY", missing: [], timezone: NO_TIMEZONE_CHOICE },
     channels: [
-      channel("BookingCom", "DISCONNECTING", "DISCONNECTING", { channelId: "mock-channel-mixed-BookingCom" }),
-      channel("Airbnb", "DISCONNECTED", "DISCONNECTED", { channelId: "mock-channel-mixed-Airbnb" }),
-      channel("Vrbo", "ERROR", "NEEDS_ATTENTION", {
+      channel("BookingCom", "DISCONNECTING", { channelId: "mock-channel-mixed-BookingCom" }),
+      channel("Airbnb", "DISCONNECTED", { channelId: "mock-channel-mixed-Airbnb" }),
+      channel("Vrbo", "NEEDS_ATTENTION", {
         channelId: "mock-channel-mixed-Vrbo",
         disconnectedOutsideDomits: true,
         upcomingBookingCount: 3,
@@ -122,33 +140,23 @@ const createFixtures = () => [
   {
     propertyId: "mock-listing-not-ready",
     title: "Beach Apartment",
-    readiness: { ready: false, missing: ["LOCATION_MISSING", "PRICE_MISSING"] },
-    distribution: { status: "NOT_ENABLED" },
-    timezone: NO_TIMEZONE_CHOICE,
-    channels: [],
-  },
-  {
-    propertyId: "mock-listing-setup-failed",
-    title: "Windmill Cottage",
-    readiness: READY,
-    distribution: { status: "PROVISIONING_FAILED" },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: {
+      status: "NOT_ENABLED",
+      missing: ["MISSING_ADDRESS", "MISSING_PRICE"],
+      timezone: NO_TIMEZONE_CHOICE,
+    },
     channels: [],
   },
   {
     propertyId: "mock-listing-needs-timezone",
     title: "Ubud Retreat",
-    readiness: READY,
-    distribution: { status: "NOT_ENABLED" },
-    timezone: INDONESIA_TIMEZONE_CHOICE,
+    distribution: { status: "NOT_ENABLED", missing: [], timezone: INDONESIA_TIMEZONE_CHOICE },
     channels: [],
   },
   {
     propertyId: "mock-listing-provisioning",
     title: "Lighthouse Cabin",
-    readiness: READY,
-    distribution: { status: "PROVISIONING" },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: { status: "PROVISIONING", missing: [], timezone: NO_TIMEZONE_CHOICE },
     channels: [],
   },
 ];
@@ -181,17 +189,22 @@ const copy = (value) => JSON.parse(JSON.stringify(value));
 
 // Shaped like the Error requestChannex() throws on a non-2xx response, so a real network error and a
 // mock error are handled the same way by callers.
-const buildMockRequestError = ({ endpoint, status, error, errorCode }) => {
+const buildMockRequestError = ({ endpoint, status, error, errorCode, ...extra }) => {
   const requestError = new Error(`POST ${endpoint} failed with status ${status}: ${error}`);
   requestError.status = status;
   requestError.endpoint = endpoint;
   requestError.method = "POST";
-  requestError.responseBody = { error, errorCode };
+  requestError.responseBody = { error, errorCode, ...extra };
   return requestError;
 };
 
 const listingNotFoundError = (endpoint) =>
-  buildMockRequestError({ endpoint, status: 404, error: "Listing not found.", errorCode: "LISTING_NOT_FOUND" });
+  buildMockRequestError({
+    endpoint,
+    status: 404,
+    error: "Listing not found.",
+    errorCode: "DISTRIBUTION_LISTING_NOT_FOUND",
+  });
 
 export const getHostListings = async () => {
   await mockDelay();
@@ -199,14 +212,11 @@ export const getHostListings = async () => {
 };
 
 // The mock stands in for "read the channels from Channex": a syncing channel has caught up by the
-// time the host refreshes, a listing that was still provisioning has finished, and a channel that was
-// being disconnected is done (the worker needs about a minute, D5), so Refresh visibly does
-// something in a preview.
+// time the host refreshes, and a channel that was being disconnected is done (the worker needs about a
+// minute, D5), so Refresh visibly does something in a preview.
 const finishPendingChannel = (candidate) => {
-  if (candidate.displayState === "SYNCING") return { ...candidate, displayState: "LIVE" };
-  if (candidate.displayState === "DISCONNECTING") {
-    return { ...candidate, status: "DISCONNECTED", displayState: "DISCONNECTED" };
-  }
+  if (candidate.label === "SYNCING") return { ...candidate, label: "LIVE" };
+  if (candidate.label === "DISCONNECTING") return { ...candidate, status: "DISCONNECTED", label: "DISCONNECTED" };
   return candidate;
 };
 
@@ -216,68 +226,79 @@ export const refreshChannels = async ({ propertyId } = {}) => {
   const found = mockListings.find((listing) => listing.propertyId === propertyId);
   if (!found) throw listingNotFoundError(`/integrations/channex/host/listings/${propertyId}/channels/refresh`);
 
-  if (found.distribution.status === "PROVISIONING") found.distribution = { status: "READY" };
   found.channels = found.channels.map(finishPendingChannel);
-  return { listing: copy(found) };
+  return { channels: copy(found.channels) };
 };
 
 // Leaves behind what a real backend would, for the outcomes that change the listing, so the
 // Refresh that follows an error shows it.
 const storeForcedEnableOutcome = (found) => {
-  if (mockEnableOutcome === "in-progress") found.distribution = { status: "PROVISIONING" };
-  if (mockEnableOutcome === "not-ready") found.readiness = { ready: false, missing: ["PRICE_MISSING"] };
-  if (mockEnableOutcome === "timezone-required") found.timezone = INDONESIA_TIMEZONE_CHOICE;
+  if (mockEnableOutcome === "in-progress" || mockEnableOutcome === "try-again") {
+    found.distribution.status = "PROVISIONING";
+  }
+  if (mockEnableOutcome === "not-ready") found.distribution.missing = ["MISSING_PRICE"];
+  if (mockEnableOutcome === "timezone-required") found.distribution.timezone = INDONESIA_TIMEZONE_CHOICE;
 };
 
 // Turns distribution on for a listing (D2, D3, D4). Idempotent like the real route: a listing that
-// is already READY comes back unchanged, and one that failed halfway is simply tried again.
-export const enableDistribution = async ({ propertyId, timezone } = {}) => {
+// is already READY answers ALREADY_CONNECTED, and one that is still PROVISIONING is resumed.
+export const enableDistribution = async ({ propertyId, chosenTimezone } = {}) => {
   await mockDelay();
 
   const endpoint = `/integrations/channex/host/listings/${propertyId}/distribution`;
   const found = mockListings.find((listing) => listing.propertyId === propertyId);
   if (!found) throw listingNotFoundError(endpoint);
-  if (found.distribution.status === "READY") return { listing: copy(found) };
+  if (found.distribution.status === "READY") return { status: "ALREADY_CONNECTED" };
 
   storeForcedEnableOutcome(found);
 
-  if (!found.readiness.ready) {
+  if (found.distribution.missing.length > 0) {
     throw buildMockRequestError({
       endpoint,
       status: 422,
       error: "The listing is not ready for distribution.",
-      errorCode: "LISTING_NOT_READY",
+      errorCode: "DISTRIBUTION_LISTING_NOT_READY",
+      missing: found.distribution.missing,
     });
   }
-  if (found.distribution.status === "PROVISIONING") {
+  const { required, options } = found.distribution.timezone;
+  if (required && !chosenTimezone) {
+    throw buildMockRequestError({
+      endpoint,
+      status: 422,
+      error: "Choose a timezone for this listing.",
+      errorCode: "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED",
+      options,
+    });
+  }
+  if (required && !options.includes(chosenTimezone)) {
+    throw buildMockRequestError({
+      endpoint,
+      status: 422,
+      error: "That timezone is not available for this listing.",
+      errorCode: "DISTRIBUTION_TIMEZONE_INVALID_CHOICE",
+      options,
+    });
+  }
+  if (mockEnableOutcome === "in-progress") {
     throw buildMockRequestError({
       endpoint,
       status: 409,
       error: "Distribution is already being set up for this listing.",
-      errorCode: "PROVISIONING_IN_PROGRESS",
+      errorCode: "DISTRIBUTION_ALREADY_IN_PROGRESS",
     });
   }
-  if (found.timezone.required && !found.timezone.options.includes(timezone)) {
+  if (mockEnableOutcome === "try-again") {
+    mockEnableOutcome = "success";
     throw buildMockRequestError({
       endpoint,
-      status: 400,
-      error: "Choose a timezone for this listing.",
-      errorCode: "TIMEZONE_REQUIRED",
+      status: 503,
+      error: "Setting up did not finish. Turn it on again to continue.",
+      errorCode: "DISTRIBUTION_TRY_AGAIN",
     });
   }
-  if (mockEnableOutcome === "failed") {
-    found.distribution = { status: "PROVISIONING_FAILED" };
-    throw buildMockRequestError({
-      endpoint,
-      status: 500,
-      error: "Setting up distribution failed.",
-      errorCode: "PROVISIONING_FAILED",
-    });
-  }
-
-  found.distribution = { status: "READY" };
-  found.timezone = NO_TIMEZONE_CHOICE;
-  return { listing: copy(found) };
+  found.distribution = { ...found.distribution, status: "READY", timezone: NO_TIMEZONE_CHOICE };
+  return { status: "PROVISIONED" };
 };
 
 const channelNotFoundError = (endpoint) =>
@@ -294,10 +315,10 @@ const findChannel = (channelId) => {
 // Leaves behind what a real backend would, so the Refresh that follows an error shows it.
 const storeForcedDisconnectOutcome = ({ listing, channel: forced }) => {
   if (mockDisconnectOutcome === "in-progress") {
-    Object.assign(forced, { status: "DISCONNECTING", displayState: "DISCONNECTING" });
+    Object.assign(forced, { status: "DISCONNECTING", label: "DISCONNECTING" });
   }
   if (mockDisconnectOutcome === "failed") {
-    Object.assign(forced, { status: "ERROR", displayState: "NEEDS_ATTENTION", lastErrorCode: "DISCONNECT_FAILED" });
+    Object.assign(forced, { status: "ERROR", label: "NEEDS_ATTENTION", lastErrorCode: "DISCONNECT_FAILED" });
   }
   if (mockDisconnectOutcome === "not-found") {
     listing.channels = listing.channels.filter((candidate) => candidate !== forced);
@@ -335,12 +356,12 @@ export const disconnectChannel = async ({ channelId } = {}) => {
     });
   }
 
-  Object.assign(match.channel, { status: "DISCONNECTING", displayState: "DISCONNECTING" });
+  Object.assign(match.channel, { status: "DISCONNECTING", label: "DISCONNECTING" });
   return { listing: copy(match.listing) };
 };
 
 const MOCK_CONNECT_SESSION_URL = "https://staging.channex.io/mock-connect?token=mock";
-const MOCK_CONNECT_SESSION_LIFETIME_MS = 15 * 60 * 1000;
+const MOCK_CONNECT_SESSION_LIFETIME_SECONDS = 900;
 
 // The real route requests a one-time token for the listing's own Channex property after the owner
 // check, and never takes a property id from the browser. The mock only answers for a listing that
@@ -356,9 +377,9 @@ export const createConnectSession = async ({ propertyId } = {}) => {
       endpoint,
       status: 409,
       error: "Distribution is not turned on for this listing.",
-      errorCode: "DISTRIBUTION_NOT_ENABLED",
+      errorCode: "DISTRIBUTION_NOT_TURNED_ON",
     });
   }
 
-  return { url: MOCK_CONNECT_SESSION_URL, expiresAt: Date.now() + MOCK_CONNECT_SESSION_LIFETIME_MS };
+  return { iframeUrl: MOCK_CONNECT_SESSION_URL, expiresInSeconds: MOCK_CONNECT_SESSION_LIFETIME_SECONDS };
 };

@@ -109,7 +109,7 @@ The current website foundation routes inside `PropertyHandler` are:
 - `POST /property/website/site/unpublish`
 - `GET /property/website/public/resolve`
 - `GET /property/website/public/render`
-- `GET /property/website/preview`
+- `GET /property/website/preview` (the logged-in host who owns the draft; answers the listing through the public site view, like the live render)
 - `GET /property/website/kpis`
 
 ## What is not implemented yet
@@ -208,7 +208,8 @@ Panorama Landing currently has the deepest implementation coverage. That is the 
 
 The internal preview route currently:
 
-- loads a saved draft by `draftId`
+- opens only for the logged-in host who owns the draft; anyone else gets a login message or not found
+- loads a saved draft by `draftId`, with the listing through the public site view and the host block of the live site
 - enriches property details before rendering
 - uses the shared template rendering layer
 - subscribes to preview refresh events so an already-open preview can update after editor changes
@@ -231,7 +232,8 @@ The published public runtime currently:
 The public website currently includes a WhatsApp-based host contact widget when the host has a usable WhatsApp integration. That widget:
 
 - is driven by shared host contact enrichment
-- can be shown or hidden through visibility controls
+- can be shown or hidden through visibility controls (`visibility.chatWidget`, on unless the host turns it off)
+- when the host turns it off, the public render sends an empty `host.whatsapp` block (no number) and the quote panel shows no WhatsApp link
 - is best-effort presentation only and not a public chat platform
 
 ### Availability surface
@@ -452,6 +454,7 @@ Important rules:
 - `Update live site` pushes the current draft into published live state
 - `Publish` creates or updates the published standalone site lifecycle
 - `Unpublish` affects live availability, not the host's working draft
+- a publish the server refuses (any 4xx, or a login that cannot be refreshed) is shown as failed with the API message; only after a 5xx, a dropped connection or an answer that cannot be read does `publishWebsiteSite(propertyId, { draftSavedAt })` read the site again, and it counts the publish as done only when the site's `publishedAt` is at or after the `updatedAt` of the draft saved for that publish (both server times)
 - `main.standalone_site_event` owns the KPI and event layer for builder, preview, live-site, and research metrics
 
 Do not collapse draft state and published state back into one model.
@@ -461,6 +464,7 @@ Do not collapse draft state and published state back into one model.
 Elite websites can have more than one page. The page settings live in the content overrides under one key, `sitePages`, in the draft (`contentOverrides`, `publishedContentOverrides`) and in the published site (`publishedContentOverrides`). No migration is needed.
 
 - Saving a draft accepts the key like any other override and never reads the plan. A host whose Elite has ended can still save, and his settings stay in the draft.
+- `siteProperties` (the properties of an Elite website, `business/service/websiteSiteProperties.js`): saving cleans the whole list (at most 12, main property included, one-segment lowercase slugs, no id or slug twice, else 400) and checks existence and owner only of the properties that the host's stored draft does not hold yet in `contentOverrides` or `publishedContentOverrides` (400 "siteProperties lists a property that does not exist.", 403). A stored property is kept without that check, so a host whose listing was deleted or moved, or whose Elite has ended, can still save. Publishing checks every listed property.
 - `GET /property/website/public/render` and `GET /property/website/preview` serve the key only when the site's own host has the `website.unlimited_pages` entitlement. For every other host the key is removed from the response and everything else is unchanged.
 - The check runs only when the key is present. Overrides without `sitePages` are returned as they are and no plan is read, so existing sites answer exactly as before.
 - The host comes from the site or draft row, never from the request.
@@ -472,7 +476,17 @@ Elite websites can have more than one page. The page settings live in the conten
 
 Code: `business/service/websiteElitePageSettings.js` and `getCurrentEntitlements`. The static page worker does not apply the check yet; its renderer ignores `sitePages`.
 
+Property paths (web): when the render answer has `siteProperties`, `/properties/<slug>`, `/properties/<slug>/photos` and `/properties/<slug>/request` open that property on the host's domain and in the live view (`rendering/websiteSiteProperties.js`, pages per kind in `SITE_PROPERTY_PAGES`, `rendering/WebsiteSitePropertyPage.jsx`). An unknown slug shows the not found page. The list in the content overrides is never read. Without the list nothing changes, except one background render request in the live view on a property path.
+
+Home page of an Elite website (web): with a served `siteProperties` list, `/` shows all properties (`rendering/templates/elite/EliteSitePropertiesHome.jsx`), one card per property from its snapshot (photo, title, city and country, guests, bedrooms, no price), a location filter for more than one city, and, when the site's quote panel is on, a date search that sends one `POST /property/website/public/quote` with `propertyIds` of all served ids (`requestPublicWebsiteQuotes`). Answers are read by `propertyId`: free with the total and a link to `/properties/<slug>?checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD&guests=N` (after the live view's `?siteId=`), not free with a reason, or a price that could not be loaded with Try again; `property_not_found` is left out, and only the latest search is shown. Without the list the home page is unchanged.
+
 `backend/test/PropertyHandler/__fixtures__/existingSitePublicRender.json` is the public render response of the existing site in `backend/prerender/__fixtures__/renderPayload.json`, captured from the code before page settings existed. `publicWebsiteRender.elitePageSettings.test.js` compares the response with it byte for byte. When the public render response changes on purpose, regenerate that file in the same commit.
+
+`POST /property/website/public/quote` takes an optional `propertyId`. Without it, or with the site's own property, the quote is exactly as before and reads no plan. Another property is quoted only when it is in the site's published `siteProperties`, the site's host has `website.multi_property`, and the render would still serve it (`listServedOtherPropertyIds` in `websiteSitePropertySnapshots.js`: its snapshot of the current publish, `ACTIVE`, the site's host). A failed or slow plan or snapshot read refuses it. Every refusal is the same 404 `property_not_found`, "No property was found for this website."; a `propertyId` that is not a non-empty string is a 400 `invalid_request`. Availability and prices are read live for that property, the same way as for the main property, and the quote token binds the site and that property. The quote events keep the site's own property in `property_id` and add the quoted `propertyId` to the payload.
+
+The same route quotes several properties of one site at once with `propertyIds` (1 to 12 different ids, never together with `propertyId`, otherwise 400): the answer is 200 `{ siteId, quotes: [{ propertyId, quote } | { propertyId, error: { code, message } }] }` in the order asked, each entry exactly what a single quote of that property answers, events included. The site, the plan and the served list are read once, at most 4 properties are quoted at the same time, and a property without an answer after 12 seconds gets `pricing_service_unavailable`. Site errors stay errors of the whole request. The home date search uses this; the booking keeps the single `propertyId`.
+
+`POST /public/sites/{siteId}/bookings` (General-Bookings) accepts the quote token of any property the quote route serves for the site. For a property other than the site's own, the live price check sends the token's `propertyId` to the quote route, so the published list, `website.multi_property`, the snapshot, `ACTIVE` and the site's host are checked again before anything is stored. The answer must name the same property (otherwise 503 `booking_service_unavailable`); a refusal is 404 `property_not_found`, "This property can no longer be booked on this website.". The row (`property_id`), the property name, the cancellation policy, the conflict checks and the emails use the token's property; `SITE_BOOKING_REQUESTED` keeps the site's own property in `property_id` and adds `propertyId` to the payload. An idempotency key replays only for the same site, property, dates and guests. The body takes an optional `guest.phone` (6 to 15 digits, at most 32 characters, only digits, spaces, brackets, dots, dashes and a leading `+`, else 400 `invalid_guest_phone`) and an optional `message` (text, at most 2000 characters after line breaks become `\n` and control characters are removed, else 400 `invalid_guest_message`). Both go only into the host's request email, as a `- Phone:` line and the message with each line quoted with `> `, and are not stored in the booking, the event or a log line. API Gateway data trace on this route logs request bodies; it must be off before a client sends them. The guest and host emails are sent one by one, so a failed guest email no longer stops the host email. A token of the site's own property and a body without phone and message give the same request, row, event, emails and answer as before.
 
 ## Environment and runtime assumptions
 

@@ -4,7 +4,6 @@ describe("isChannexUrl", () => {
   test.each([
     ["the production host", "https://app.channex.io/connect?token=abc"],
     ["the staging host", "https://staging.channex.io/mock-connect?token=mock"],
-    ["the bare domain", "https://channex.io/connect"],
     ["a host written in capitals", "https://APP.CHANNEX.IO/connect"],
   ])("accepts %s", (_name, url) => {
     expect(isChannexUrl(url)).toBe(true);
@@ -16,6 +15,8 @@ describe("isChannexUrl", () => {
     ["a data: URL", "data:text/html,<script>alert(1)</script>"],
     ["a protocol-relative URL", "//app.channex.io/connect"],
     ["a relative path", "/connect?token=abc"],
+    ["the bare domain", "https://channex.io/connect"],
+    ["another channex.io subdomain", "https://api.channex.io/connect"],
     ["a lookalike domain", "https://evilchannex.io/connect"],
     ["Channex as a subdomain of another domain", "https://channex.io.evil.com/connect"],
     ["Channex before an @ that hides the real host", "https://channex.io@evil.com/connect"],

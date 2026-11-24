@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { HOST_DISTRIBUTION_STATE, useHostDistribution } from "../hooks/useHostDistribution";
 import {
   DISTRIBUTION_STATUS,
@@ -13,7 +13,7 @@ import { DISCONNECT_STEP, useDisconnectFlow } from "../hooks/useDisconnectFlow";
 import PlatformCard from "./PlatformCard";
 import ConnectFlowLayer from "./ConnectFlowLayer";
 import DisconnectFlowLayer from "./DisconnectFlowLayer";
-import { NotReadyNotice, SetupFailedNotice } from "./DistributionNotices";
+import { NotReadyNotice, SettingUpNotice } from "./DistributionNotices";
 
 const LOADING_MESSAGE = "Loading your listings…";
 const NO_LISTINGS_MESSAGE = "You have no listings yet.";
@@ -26,11 +26,26 @@ const STARTABLE_STATUSES = [DISTRIBUTION_STATUS.READY, DISTRIBUTION_STATUS.NOT_E
 // The three OTA cards of the picked listing (design note #3954, D7), or the notice that explains why
 // there are none. Orchestration only: what each card says lives in utils/distributionStates.js.
 function PlatformCardsSection() {
-  const { listings, loadState, reload, refresh, applyListing, refreshingPropertyId, refreshFailedPropertyId } =
-    useHostDistribution();
+  const {
+    listings,
+    loadState,
+    reload,
+    rereadListings,
+    refresh,
+    applyListing,
+    refreshingPropertyId,
+    refreshFailedPropertyId,
+  } = useHostDistribution();
   const [pickedPropertyId, setPickedPropertyId] = useState("");
-  const connectFlow = useConnectFlow({ refresh, applyListing });
+  const connectFlow = useConnectFlow({ refresh, rereadListings });
   const disconnectFlow = useDisconnectFlow({ refresh, applyListing });
+  const { isActive: flowActive, propertyId: flowPropertyId, reset: resetFlow } = connectFlow;
+  const flowListingGone = flowActive && !listings.some((listing) => listing.propertyId === flowPropertyId);
+
+  // A reload or a vanished listing unmounts the flow's modals, so the flow ends with them.
+  useEffect(() => {
+    if (loadState !== HOST_DISTRIBUTION_STATE.LOADED || flowListingGone) resetFlow();
+  }, [loadState, flowListingGone, resetFlow]);
 
   if (loadState === HOST_DISTRIBUTION_STATE.LOADING) {
     return <output className="host-chdist__empty-text">{LOADING_MESSAGE}</output>;
@@ -99,11 +114,11 @@ function PlatformCardsSection() {
       )}
 
       {listingView === LISTING_VIEW.NOT_READY && (
-        <NotReadyNotice items={describeMissingItems(selected.readiness?.missing)} />
+        <NotReadyNotice items={describeMissingItems(selected.distribution?.missing)} />
       )}
 
-      {listingView === LISTING_VIEW.SETUP_FAILED && (
-        <SetupFailedNotice onRetry={() => connectFlow.retry({ listing: selected })} busy={connectFlow.isActive} />
+      {listingView === LISTING_VIEW.SETTING_UP && (
+        <SettingUpNotice onRetry={() => connectFlow.retry({ listing: selected })} busy={connectFlow.isActive} />
       )}
 
       {listingView === LISTING_VIEW.CARDS && (
@@ -135,10 +150,10 @@ function PlatformCardsSection() {
         </>
       )}
 
-      {/* Outside the cards view, so a Retry from the setup-failed notice can show its dialogs too. The
-          setup-failed notice already says the setup went wrong, so the flow's own message is left out there. */}
+      {/* Outside the cards view, so a Retry from the "Setting up" notice can show its dialogs too. The
+          notice already says it is setting up, so the flow's own sentence is left out there. */}
       <DisconnectFlowLayer disconnectFlow={disconnectFlow} />
-      <ConnectFlowLayer connectFlow={connectFlow} showError={listingView !== LISTING_VIEW.SETUP_FAILED} />
+      <ConnectFlowLayer connectFlow={connectFlow} showEnabling={listingView !== LISTING_VIEW.SETTING_UP} />
     </div>
   );
 }

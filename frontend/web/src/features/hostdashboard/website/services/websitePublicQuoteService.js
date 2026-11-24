@@ -68,7 +68,10 @@ const normalizePublicWebsiteQuote = (payload) => {
   };
 };
 
-export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, guests, sessionId, signal }) => {
+const postPublicWebsiteQuote = async (
+  { propertyIds, siteId, checkIn, checkOut, guests, sessionId, signal },
+  readAnswer
+) => {
   let response;
   try {
     response = await fetch(PUBLIC_WEBSITE_QUOTE_URL, {
@@ -78,6 +81,7 @@ export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, gue
       signal,
       body: JSON.stringify({
         siteId,
+        propertyIds,
         checkIn,
         checkOut,
         guests,
@@ -121,8 +125,8 @@ export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, gue
     });
   }
 
-  const quote = normalizePublicWebsiteQuote(payload);
-  if (!quote) {
+  const answer = readAnswer(payload);
+  if (!answer) {
     throw new WebsitePublicQuoteError({
       code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
       message: "The quote service returned an unexpected response.",
@@ -130,5 +134,38 @@ export const requestPublicWebsiteQuote = async ({ siteId, checkIn, checkOut, gue
     });
   }
 
-  return quote;
+  return answer;
 };
+
+export const requestPublicWebsiteQuote = (request) => postPublicWebsiteQuote(request, normalizePublicWebsiteQuote);
+
+const readText = (value) => (typeof value === "string" ? value : "");
+
+const readQuoteAnswer = (entry, propertyId) => {
+  const quote = normalizePublicWebsiteQuote(entry.quote);
+  const isQuoteOfProperty = quote?.propertyId === propertyId && quote.priceBreakdown.currency === QUOTE_CURRENCY;
+  if (isQuoteOfProperty && Number.isInteger(entry.quote.priceBreakdown.total)) {
+    return { quote };
+  }
+
+  const code = readText(entry.error?.code) || WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE;
+  return { error: { code, message: readText(entry.error?.message) } };
+};
+
+const readQuoteAnswers = (payload, siteId) => {
+  if (payload?.siteId !== siteId || !Array.isArray(payload.quotes)) {
+    return null;
+  }
+
+  const answers = new Map();
+  payload.quotes.forEach((entry) => {
+    const propertyId = readText(entry?.propertyId);
+    if (propertyId && !answers.has(propertyId)) {
+      answers.set(propertyId, readQuoteAnswer(entry, propertyId));
+    }
+  });
+  return answers;
+};
+
+export const requestPublicWebsiteQuotes = (request) =>
+  postPublicWebsiteQuote(request, (payload) => readQuoteAnswers(payload, request.siteId));

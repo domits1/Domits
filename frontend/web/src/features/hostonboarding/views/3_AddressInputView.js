@@ -5,6 +5,7 @@ import { useBuilder } from "../../../context/propertyBuilderContext";
 import AddressFormFields from "../components/AddressFormFields";
 import OnboardingProgress from "../components/OnboardingProgress";
 import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
+import { getHouseNumberError, parseHouseNumber } from "../../../utils/houseNumber";
 function AddressInputView() {
   const builder = useBuilder();
   const { prevPath, nextPath } = useOnboardingFlow();
@@ -12,11 +13,13 @@ function AddressInputView() {
   const { options, details: location, handleChange } = useAddressInput(accommodationType);
   const postalCodeValue = location.postalCode || location.zipCode || "";
   const hasAddressValue = (value) => String(value || "").trim().length > 0;
+  const houseNumberError = getHouseNumberError(location.houseNumber);
   const isAddressComplete =
     hasAddressValue(location.country) &&
     hasAddressValue(location.city) &&
     hasAddressValue(location.street) &&
     hasAddressValue(location.houseNumber) &&
+    !houseNumberError &&
     hasAddressValue(postalCodeValue);
   return (
     <div className="onboarding-host-div">
@@ -35,6 +38,7 @@ function AddressInputView() {
             <AddressFormFields
               location={location}
               setLocation={handleChange}
+              houseNumberError={houseNumberError}
               countryOptions={options.map((country) => ({
                 value: country,
                 label: country,
@@ -49,24 +53,20 @@ function AddressInputView() {
           />
           <OnboardingButton
             onClick={() => {
-              const houseNumberAndExtension = location?.houseNumber
-                                              ? location.houseNumber.trim().split(/\s+/)
-                                              : [];
-
-              const houseNumber = houseNumberAndExtension[0] || "";
-              const houseNumberExtension = houseNumberAndExtension.length > 1
-                ? houseNumberAndExtension.slice(1).join(" ")
-                : "";
+              // Proceed is disabled for a house number that cannot be saved; this only guards the click.
+              const parsedHouseNumber = parseHouseNumber(location.houseNumber);
+              if (houseNumberError || !parsedHouseNumber) {
+                return false;
+              }
 
               builder.addLocation({
                 country: location.country,
                 city: location.city,
                 street: location.street,
-                houseNumber: Number.isFinite(Number(houseNumber)) ? Number(houseNumber) : 0,
-                houseNumberExtension: houseNumberExtension,
+                houseNumber: parsedHouseNumber.houseNumber,
+                houseNumberExtension: parsedHouseNumber.houseNumberExtension,
                 postalCode: postalCodeValue,
-              })
-              console.log(builder);
+              });
             }}
             routePath={nextPath || `/hostonboarding/${accommodationType}/capacity`}
             btnText="Proceed"

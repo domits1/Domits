@@ -1,8 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-const SETUP_FAILED_MESSAGE = "Something went wrong while setting up. Try again.";
-
 // Shown instead of the OTA cards when the listing cannot turn on distribution yet (D3).
 export function NotReadyNotice({ items }) {
   return (
@@ -22,12 +20,15 @@ NotReadyNotice.propTypes = {
   items: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
-// Shown instead of the OTA cards when provisioning stopped halfway (D2). Retry asks the caller to
-// turn distribution on again, and is disabled while that request runs.
-export function SetupFailedNotice({ onRetry, busy = false }) {
+// Also what the connect flow says while it turns a listing on, so the two never read differently.
+export const SETTING_UP_MESSAGE = "Setting up your listing…";
+
+// Shown instead of the OTA cards while a listing is being set up (D2). A setup that did not finish stays
+// in this state, and Retry turns distribution on again, which resumes it. Disabled while that runs.
+export function SettingUpNotice({ onRetry, busy = false }) {
   return (
-    <div className="host-chdist__error" role="alert">
-      <p className="host-chdist__error-text">{SETUP_FAILED_MESSAGE}</p>
+    <div className="host-chdist__empty">
+      <output className="host-chdist__empty-text">{SETTING_UP_MESSAGE}</output>
       <button type="button" className="chdist-btn chdist-btn--primary" disabled={busy} onClick={onRetry}>
         Retry
       </button>
@@ -35,7 +36,7 @@ export function SetupFailedNotice({ onRetry, busy = false }) {
   );
 }
 
-SetupFailedNotice.propTypes = {
+SettingUpNotice.propTypes = {
   onRetry: PropTypes.func.isRequired,
   busy: PropTypes.bool,
 };

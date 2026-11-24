@@ -1,5 +1,6 @@
 import {
   MOCK_HOST_DISTRIBUTION_ENABLED,
+  MOCK_ONLY_CHANNEL_FIELDS,
   createConnectSession,
   disconnectChannel,
   enableDistribution,
@@ -29,6 +30,24 @@ describe("hostDistributionApi (mock)", () => {
     expect(MOCK_HOST_DISTRIBUTION_ENABLED).toBe(false);
   });
 
+  test("a channel carries the contract's otaCode and label, and only the disconnect mock's marked extras", async () => {
+    const { listings } = await getHostListings();
+    const channels = listings.flatMap((listing) => listing.channels);
+    const expectedKeys = ["label", "otaCode", ...MOCK_ONLY_CHANNEL_FIELDS].sort();
+
+    expect(channels.length).toBeGreaterThan(0);
+    channels.forEach((channel) => expect(Object.keys(channel).sort()).toEqual(expectedKeys));
+  });
+
+  test("a listing keeps its missing items and timezone under distribution, with no readiness object", async () => {
+    const { listings } = await getHostListings();
+
+    listings.forEach((listing) => {
+      expect(Object.keys(listing).sort()).toEqual(["channels", "distribution", "propertyId", "title"]);
+      expect(Object.keys(listing.distribution).sort()).toEqual(["missing", "status", "timezone"]);
+    });
+  });
+
   test("returns copies: changing a response does not change the mock", async () => {
     const first = await getHostListings();
     first.listings[0].title = "Changed by a caller";
@@ -41,14 +60,15 @@ describe("hostDistributionApi (mock)", () => {
   });
 
   test("refresh moves a syncing channel to live and a disconnecting one to disconnected, and leaves the others alone", async () => {
-    const { listing } = await refreshChannels({ propertyId: "mock-listing-live" });
+    const answer = await refreshChannels({ propertyId: "mock-listing-live" });
 
-    expect(listing.channels.map((c) => [c.otaCode, c.displayState])).toEqual([
+    expect(Object.keys(answer)).toEqual(["channels"]);
+    expect(answer.channels.map((c) => [c.otaCode, c.label])).toEqual([
       ["BookingCom", "LIVE"],
       ["Airbnb", "LIVE"],
     ]);
     const mixed = await refreshChannels({ propertyId: "mock-listing-mixed" });
-    expect(mixed.listing.channels.map((c) => [c.status, c.displayState])).toEqual([
+    expect(mixed.channels.map((c) => [c.status, c.label])).toEqual([
       ["DISCONNECTED", "DISCONNECTED"],
       ["DISCONNECTED", "DISCONNECTED"],
       ["ERROR", "NEEDS_ATTENTION"],
@@ -59,21 +79,22 @@ describe("hostDistributionApi (mock)", () => {
     await expect(refreshChannels({ propertyId: "nope" })).rejects.toMatchObject({
       status: 404,
       method: "POST",
-      responseBody: { errorCode: "LISTING_NOT_FOUND" },
+      responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
     });
   });
 
-  test("a connect session is a Channex address with an expiry in the future", async () => {
+  test("a connect session is a Channex address that is good for 900 seconds", async () => {
     const session = await createConnectSession({ propertyId: "mock-listing-live" });
 
-    expect(isChannexUrl(session.url)).toBe(true);
-    expect(session.expiresAt).toBeGreaterThan(Date.now());
+    expect(isChannexUrl(session.iframeUrl)).toBe(true);
+    expect(session.expiresInSeconds).toBe(900);
+    expect(Object.keys(session).sort()).toEqual(["expiresInSeconds", "iframeUrl"]);
   });
 
   test("a connect session for an unknown listing rejects with a 404", async () => {
     await expect(createConnectSession({ propertyId: "nope" })).rejects.toMatchObject({
       status: 404,
-      responseBody: { errorCode: "LISTING_NOT_FOUND" },
+      responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
     });
   });
 
@@ -81,7 +102,7 @@ describe("hostDistributionApi (mock)", () => {
     await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
       status: 409,
       method: "POST",
-      responseBody: { errorCode: "DISTRIBUTION_NOT_ENABLED" },
+      responseBody: { errorCode: "DISTRIBUTION_NOT_TURNED_ON" },
     });
   });
 
@@ -91,76 +112,97 @@ describe("hostDistributionApi (mock)", () => {
       return listings.find((listing) => listing.propertyId === propertyId).distribution.status;
     };
 
-    test("turns a listing on: the answer and the next read both say READY, and a connect session works", async () => {
-      const { listing } = await enableDistribution({ propertyId: "mock-listing-not-turned-on" });
+    test("turns a listing on: the answer is only a status, the next read says READY, and a connect session works", async () => {
+      const answer = await enableDistribution({ propertyId: "mock-listing-not-turned-on" });
 
-      expect(listing.distribution.status).toBe("READY");
+      expect(answer).toEqual({ status: "PROVISIONED" });
       expect(await statusOf("mock-listing-not-turned-on")).toBe("READY");
-      await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty("url");
+      await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty("iframeUrl");
     });
 
-    test("is idempotent: a listing that is already READY comes back unchanged", async () => {
+    test("is idempotent: a listing that is already READY answers ALREADY_CONNECTED and stays as it was", async () => {
       const before = (await getHostListings()).listings.find((listing) => listing.propertyId === "mock-listing-live");
 
-      const { listing } = await enableDistribution({ propertyId: "mock-listing-live" });
+      const answer = await enableDistribution({ propertyId: "mock-listing-live" });
 
-      expect(listing).toEqual(before);
+      expect(answer).toEqual({ status: "ALREADY_CONNECTED" });
+      const after = (await getHostListings()).listings.find((listing) => listing.propertyId === "mock-listing-live");
+      expect(after).toEqual(before);
     });
 
     test("a listing in a multi-timezone country needs one of its options, and then no longer asks", async () => {
-      const rejection = { status: 400, responseBody: { errorCode: "TIMEZONE_REQUIRED" } };
-      await expect(enableDistribution({ propertyId: "mock-listing-needs-timezone" })).rejects.toMatchObject(rejection);
+      const options = ["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura"];
+      await expect(enableDistribution({ propertyId: "mock-listing-needs-timezone" })).rejects.toMatchObject({
+        status: 422,
+        responseBody: { errorCode: "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED", options },
+      });
       await expect(
-        enableDistribution({ propertyId: "mock-listing-needs-timezone", timezone: "Europe/Paris" })
-      ).rejects.toMatchObject(rejection);
-
-      const { listing } = await enableDistribution({
-        propertyId: "mock-listing-needs-timezone",
-        timezone: "Asia/Makassar",
+        enableDistribution({ propertyId: "mock-listing-needs-timezone", chosenTimezone: "Europe/Paris" })
+      ).rejects.toMatchObject({
+        status: 422,
+        responseBody: { errorCode: "DISTRIBUTION_TIMEZONE_INVALID_CHOICE", options },
       });
 
-      expect(listing.distribution.status).toBe("READY");
-      expect(listing.timezone).toEqual({ required: false, options: [] });
+      const answer = await enableDistribution({
+        propertyId: "mock-listing-needs-timezone",
+        chosenTimezone: "Asia/Makassar",
+      });
+
+      expect(answer).toEqual({ status: "PROVISIONED" });
+      const { listings } = await getHostListings();
+      const stored = listings.find((listing) => listing.propertyId === "mock-listing-needs-timezone");
+      expect(stored.distribution).toMatchObject({ status: "READY", timezone: { required: false, options: [] } });
     });
 
     test("a listing that is not ready rejects with a 422 and stays off", async () => {
       await expect(enableDistribution({ propertyId: "mock-listing-not-ready" })).rejects.toMatchObject({
         status: 422,
         method: "POST",
-        responseBody: { errorCode: "LISTING_NOT_READY" },
+        responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_READY", missing: ["MISSING_ADDRESS", "MISSING_PRICE"] },
       });
       expect(await statusOf("mock-listing-not-ready")).toBe("NOT_ENABLED");
     });
 
-    test("a listing that is still provisioning rejects with a 409, and Refresh then finishes it", async () => {
-      await expect(enableDistribution({ propertyId: "mock-listing-provisioning" })).rejects.toMatchObject({
-        status: 409,
-        responseBody: { errorCode: "PROVISIONING_IN_PROGRESS" },
+    test("a listing that is still provisioning is resumed by turning it on again", async () => {
+      expect(await statusOf("mock-listing-provisioning")).toBe("PROVISIONING");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-provisioning" })).resolves.toEqual({
+        status: "PROVISIONED",
       });
 
-      const { listing } = await refreshChannels({ propertyId: "mock-listing-provisioning" });
-
-      expect(listing.distribution.status).toBe("READY");
+      expect(await statusOf("mock-listing-provisioning")).toBe("READY");
     });
 
     test("an unknown listing rejects with a 404", async () => {
       await expect(enableDistribution({ propertyId: "nope" })).rejects.toMatchObject({
         status: 404,
-        responseBody: { errorCode: "LISTING_NOT_FOUND" },
+        responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
       });
     });
 
-    test.each([
-      ["in-progress", 409, "PROVISIONING_IN_PROGRESS", "PROVISIONING"],
-      ["failed", 500, "PROVISIONING_FAILED", "PROVISIONING_FAILED"],
-    ])("the %s outcome rejects with %i %s and leaves the listing %s", async (outcome, status, errorCode, stored) => {
-      setMockEnableOutcome(outcome);
+    test("the in-progress outcome rejects with a 409 and leaves the listing provisioning", async () => {
+      setMockEnableOutcome("in-progress");
 
       await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
-        status,
-        responseBody: { errorCode },
+        status: 409,
+        responseBody: { errorCode: "DISTRIBUTION_ALREADY_IN_PROGRESS" },
       });
-      expect(await statusOf("mock-listing-not-turned-on")).toBe(stored);
+      expect(await statusOf("mock-listing-not-turned-on")).toBe("PROVISIONING");
+    });
+
+    test("the try-again outcome answers a 503 once and leaves the listing provisioning, then turning on resumes", async () => {
+      setMockEnableOutcome("try-again");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
+        status: 503,
+        responseBody: { errorCode: "DISTRIBUTION_TRY_AGAIN" },
+      });
+      expect(await statusOf("mock-listing-not-turned-on")).toBe("PROVISIONING");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).resolves.toEqual({
+        status: "PROVISIONED",
+      });
+      expect(await statusOf("mock-listing-not-turned-on")).toBe("READY");
     });
 
     test("the not-ready outcome rejects with a 422 and the listing then reads as not ready", async () => {
@@ -168,37 +210,34 @@ describe("hostDistributionApi (mock)", () => {
 
       await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
         status: 422,
+        responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_READY" },
       });
 
       const { listings } = await getHostListings();
       const stored = listings.find((listing) => listing.propertyId === "mock-listing-not-turned-on");
-      expect(stored.readiness.ready).toBe(false);
+      expect(stored.distribution.missing).toEqual(["MISSING_PRICE"]);
     });
 
-    test("the timezone-required outcome rejects with a 400 and the listing then asks for a timezone", async () => {
+    test("the timezone-required outcome rejects with a 422 and the listing then asks for a timezone", async () => {
       setMockEnableOutcome("timezone-required");
 
       await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
-        status: 400,
-        responseBody: { errorCode: "TIMEZONE_REQUIRED" },
+        status: 422,
+        responseBody: { errorCode: "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED" },
       });
 
       const { listings } = await getHostListings();
       const stored = listings.find((listing) => listing.propertyId === "mock-listing-not-turned-on");
-      expect(stored.timezone.required).toBe(true);
-    });
-
-    test("a listing that failed halfway is tried again and then succeeds", async () => {
-      await expect(enableDistribution({ propertyId: "mock-listing-setup-failed" })).resolves.toMatchObject({
-        listing: { distribution: { status: "READY" } },
-      });
+      expect(stored.distribution.timezone.required).toBe(true);
     });
 
     test("resetting the mock also resets the outcome", async () => {
-      setMockEnableOutcome("failed");
+      setMockEnableOutcome("in-progress");
       resetMockHostDistribution();
 
-      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty("listing");
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).resolves.toEqual({
+        status: "PROVISIONED",
+      });
     });
   });
 
@@ -215,22 +254,22 @@ describe("hostDistributionApi (mock)", () => {
       const { listing } = await disconnectChannel({ channelId: LIVE_CHANNEL });
 
       const answered = listing.channels.find((c) => c.channelId === LIVE_CHANNEL);
-      expect([answered.status, answered.displayState]).toEqual(["DISCONNECTING", "DISCONNECTING"]);
-      expect((await channelOf("mock-listing-live", LIVE_CHANNEL)).displayState).toBe("DISCONNECTING");
+      expect([answered.status, answered.label]).toEqual(["DISCONNECTING", "DISCONNECTING"]);
+      expect((await channelOf("mock-listing-live", LIVE_CHANNEL)).label).toBe("DISCONNECTING");
     });
 
     test("leaves the listing's other channels alone", async () => {
       const { listing } = await disconnectChannel({ channelId: LIVE_CHANNEL });
 
-      expect(listing.channels.find((c) => c.otaCode === "Airbnb").displayState).toBe("SYNCING");
+      expect(listing.channels.find((c) => c.otaCode === "Airbnb").label).toBe("SYNCING");
     });
 
     test("a Refresh afterwards shows it DISCONNECTED", async () => {
       await disconnectChannel({ channelId: LIVE_CHANNEL });
 
-      const { listing } = await refreshChannels({ propertyId: "mock-listing-live" });
+      const { channels } = await refreshChannels({ propertyId: "mock-listing-live" });
 
-      expect(listing.channels.find((c) => c.channelId === LIVE_CHANNEL).displayState).toBe("DISCONNECTED");
+      expect(channels.find((c) => c.channelId === LIVE_CHANNEL).label).toBe("DISCONNECTED");
     });
 
     test("is idempotent: a channel that is already off comes back unchanged", async () => {
@@ -273,7 +312,7 @@ describe("hostDistributionApi (mock)", () => {
         status,
         responseBody: { errorCode },
       });
-      expect((await channelOf("mock-listing-live", LIVE_CHANNEL)).displayState).toBe(stored);
+      expect((await channelOf("mock-listing-live", LIVE_CHANNEL)).label).toBe(stored);
     });
 
     test("the not-found outcome rejects with a 404 and the channel is gone on the next read", async () => {

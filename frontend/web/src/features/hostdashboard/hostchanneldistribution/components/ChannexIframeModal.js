@@ -3,9 +3,8 @@ import PropTypes from "prop-types";
 import ChannexModalShell from "./ChannexModalShell";
 import { isChannexUrl } from "../utils/channexUrl";
 
-// TO CONFIRM WITH ENES: which permissions the Channex connect screen needs. The popup permissions are
-// there because an OTA login may open its own window. Top navigation is deliberately absent, so the
-// embedded page cannot send this page somewhere else.
+// The popup permissions are there because an OTA login may open its own window. Top navigation is
+// deliberately absent, so the embedded page cannot send this page somewhere else.
 const IFRAME_SANDBOX = "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox";
 
 const OPEN_ERROR_MESSAGE = "We couldn't open the Channex screen.";

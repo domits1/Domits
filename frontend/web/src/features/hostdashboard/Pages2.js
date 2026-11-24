@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Auth } from "aws-amplify";
 import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
 import CalendarIcon from "@mui/icons-material/CalendarToday";
 import EventIcon from "@mui/icons-material/Event";
@@ -18,23 +17,21 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import HubIcon from "@mui/icons-material/Hub";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import useEffectiveHostId from "../../hooks/useEffectiveHostId";
-import {
-  CHANNEX_CERTIFICATION_ADMIN_ROUTE,
-  checkChannexCertificationAccess,
-} from "./channexadmin/channexCertificationAccess";
+import { CHANNEX_CERTIFICATION_ADMIN_ROUTE, loadChannexAccess } from "./channexadmin/channexCertificationAccess";
 import {
   PROPERTY_REVIEW_ACCESS,
   PROPERTY_REVIEW_ADMIN_ROUTE,
   checkPropertyReviewAccess,
 } from "./propertyreview/propertyReviewAccess";
+import { REVIEW_APPROVAL_ADMIN_ROUTE } from "../review/navigation/reviewApprovalRoute";
 
 const NO_ADMIN_ACCESS = { channex: false, propertyReview: false };
 
-const loadChannexAccess = async () => {
-  const user = await Auth.currentAuthenticatedUser();
-  return checkChannexCertificationAccess(user?.attributes?.sub);
-};
+// Absolute targets: this menu renders inside the "/hostdashboard/*" splat route, where React Router 7 resolves
+// relative links against the full current URL (e.g. "messages" from /hostdashboard/reservations).
+const hostDashboardPath = (to) => (to.startsWith("/") ? to : to === "." ? "/hostdashboard" : `/hostdashboard/${to}`);
 
 const NAV = [
   { key: "ListProperty", label: "List your property", icon: <AddIcon />, to: "/hostonboarding" },
@@ -49,7 +46,7 @@ const NAV = [
   { key: "Finance", label: "Finance", icon: <CreditCardIcon />, to: "finance" },
   { key: "Listings", label: "Listings", icon: <HomeIcon />, to: "listings" },
   { key: "Reviews", label: "Reviews", icon: <StarBorderIcon />, to: "reviews" },
-  { key: "Owners", label: "Owners", icon: <SupervisorAccountIcon />, to: "owners", hiddenForPurelyPOM: true },
+  { key: "Owners", label: "Owner Management", icon: <SupervisorAccountIcon />, to: "owners", hiddenForPurelyPOM: true },
   { key: "Website", label: "Website", icon: <LanguageIcon />, to: "website" },
   // { key: "WebsiteKpis", label: "Website KPIs", icon: <InsightsOutlinedIcon />, to: "website-kpis" },
   {
@@ -64,6 +61,14 @@ const NAV = [
     label: "Property review",
     icon: <FactCheckOutlinedIcon />,
     to: PROPERTY_REVIEW_ADMIN_ROUTE,
+    internalOnly: "propertyReview",
+  },
+  // Shown to internal admins; the page itself enforces the ReviewSystem approver role.
+  {
+    key: "ReviewApproval",
+    label: "Review approval",
+    icon: <RateReviewOutlinedIcon />,
+    to: REVIEW_APPROVAL_ADMIN_ROUTE,
     internalOnly: "propertyReview",
   },
   {
@@ -161,7 +166,7 @@ function Pages({ onNavigate }) {
             {visibleNav.map((item) => (
               <li key={item.key}>
                 <NavLink
-                  to={item.to}
+                  to={hostDashboardPath(item.to)}
                   end={item.to === "."}
                   onClick={() => onNavigate?.(item.key)}
                   className={({ isActive }) => `menu-item ${isActive ? "active" : ""}`}>

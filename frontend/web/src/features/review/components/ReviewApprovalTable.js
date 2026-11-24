@@ -6,6 +6,7 @@ import styles from "../styles/ReviewApproval.module.css";
 
 function ReviewApprovalRow({ review, selected, approving, onApprove, onPublish, onView, onClose }) {
   const pending = review.status === "PENDING_APPROVAL";
+  const flagged = review.has_pending_flag === true;
   const submitted = formatSubmittedAt(review.created_at);
   const rating = getReviewRating(review.overall_rating);
   const rowClassName = `${styles.reviewRow} ${selected ? styles.selectedRow : ""}`;
@@ -66,12 +67,12 @@ function ReviewApprovalRow({ review, selected, approving, onApprove, onPublish, 
       </td>
       <td>
         <span className={`${styles.pill} ${pending ? styles.pillPending : styles.pillNeutral}`}>
-          {pending ? "Pending" : getReviewStatusLabel(review.status)}
+          {flagged ? "Flagged" : pending ? "Pending" : getReviewStatusLabel(review.status)}
         </span>
       </td>
       <td>
         <div className={styles.rowActions}>
-          {pending && (
+          {pending && !flagged && (
             <button type="button" className={styles.approveButton} disabled={approving} onClick={() => onApprove(review)}>
               {approving ? "Approving…" : "Approve"}
             </button>
