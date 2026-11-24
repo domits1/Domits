@@ -831,6 +831,43 @@ export default class ChannexProviderClient {
     return createChannexObject({ credentials, endpointPath: "/api/v1/rate_plans", requestBody: body, requestTimeoutMs });
   }
 
+  // A single-use token (15 minutes) that opens Channex's channel screen for exactly one property
+  // (design note D1). Always requested by the backend for the host's own property, never for a browser id.
+  async createOneTimeToken(credentials, { propertyId, username } = {}, { requestTimeoutMs = CREATE_REQUEST_TIMEOUT_MS } = {}) {
+    const apiKey = requireStr(credentials?.apiKey);
+    if (!apiKey) return { success: false, errorCode: "MISSING_API_KEY", errorMessage: "Channex credentials must include apiKey." };
+    const property = requireStr(propertyId);
+    if (!property) return { success: false, errorCode: "MISSING_PROPERTY_ID", errorMessage: "A Channex property id is required." };
+
+    try {
+      const { response, parsed } = await postChannexPushRequest({
+        apiKey,
+        endpointPath: "/api/v1/auth/one_time_token",
+        requestBody: { one_time_token: { property_id: property, username: requireStr(username) } },
+        requestTimeoutMs,
+      });
+      if (!response.ok) {
+        return {
+          success: false,
+          errorCode: parsed?.errors?.code || `CHANNEX_ONE_TIME_TOKEN_${response.status}`,
+          errorMessage: parsed?.errors?.title || `Channex one-time token failed with status ${response.status}.`,
+        };
+      }
+      const token = requireStr(parsed?.data?.token);
+      if (!token) {
+        return { success: false, errorCode: "CHANNEX_ONE_TIME_TOKEN_INVALID_RESPONSE", errorMessage: "Channex returned no token." };
+      }
+      return { success: true, token };
+    } catch (error) {
+      const timedOut = error?.code === "CHANNEX_PUSH_REQUEST_TIMEOUT";
+      return {
+        success: false,
+        errorCode: timedOut ? "CHANNEX_ONE_TIME_TOKEN_TIMEOUT" : error?.code || "CHANNEX_ONE_TIME_TOKEN_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex one-time token request failed.",
+      };
+    }
+  }
+
   async pushAvailability(credentials, groupedAvailabilityPayloads, options = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const groups = Array.isArray(groupedAvailabilityPayloads) ? groupedAvailabilityPayloads : [];
