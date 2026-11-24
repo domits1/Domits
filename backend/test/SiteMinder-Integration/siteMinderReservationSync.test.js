@@ -128,4 +128,35 @@ describe("SiteMinderReservationSync", () => {
 
     await expect(sync.run()).rejects.toThrow("SiteMinder timeout");
   });
+
+  test("holds the later messages of a reservation whose earlier message has to wait, so a cancel never overtakes its book", async () => {
+    const book = reservation("msg-1");
+    const cancel = reservation("msg-2", { status: "Cancel", siteMinderId: "SM-msg-1" });
+    const other = reservation("msg-3", { siteMinderId: "SM-other" });
+    const { reader, importer, logger, sync } = setup({
+      reservations: [book, cancel, other],
+      outcomes: { "msg-1": Object.assign(new Error("connection reset"), { code: "ECONNRESET" }) },
+    });
+
+    const summary = await sync.run();
+
+    expect(importer.importReservation.mock.calls.map(([r]) => r.messageId)).toEqual(["msg-1", "msg-3"]);
+    expect(reader.confirm.mock.calls[0][0].map((c) => c.messageId)).toEqual(["msg-3"]);
+    expect(summary).toMatchObject({ read: 3, saved: 1, failed: 0, retryLater: 2 });
+    expect(logger.warn).toHaveBeenCalledWith(
+      JSON.stringify({ event: "SITEMINDER_RESERVATION_RETRY_LATER", messageId: "msg-2", status: "Cancel", reason: "EARLIER_MESSAGE_PENDING" })
+    );
+  });
+
+  test("still handles a later message of a reservation whose earlier message was refused to SiteMinder", async () => {
+    const { reader, sync } = setup({
+      reservations: [reservation("msg-1"), reservation("msg-2", { status: "Modify", siteMinderId: "SM-msg-1" })],
+      outcomes: { "msg-1": { failure: RESERVATION_ERROR.ROOM_TYPE_NOT_LINKED } },
+    });
+
+    const summary = await sync.run();
+
+    expect(reader.confirm.mock.calls[0][0].map((c) => c.messageId)).toEqual(["msg-2"]);
+    expect(summary).toMatchObject({ saved: 1, failed: 1, retryLater: 0 });
+  });
 });

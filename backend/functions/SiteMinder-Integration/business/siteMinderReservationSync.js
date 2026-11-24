@@ -1,4 +1,5 @@
 const reasonOf = (error) => error?.code || error?.name || "Error";
+const EARLIER_MESSAGE_PENDING = Object.freeze({ code: "EARLIER_MESSAGE_PENDING" });
 
 export class SiteMinderReservationSync {
   constructor({ reader, importer, logger = console, now = Date.now }) {
@@ -13,14 +14,21 @@ export class SiteMinderReservationSync {
     const { reservations, skipped } = await this.reader.readUndelivered({ now });
     const summary = { read: reservations.length, skipped, saved: 0, failed: 0, retryLater: 0 };
     const confirmations = [];
+    const waiting = new Set();
 
     for (const reservation of reservations) {
+      if (waiting.has(reservation.siteMinderId)) {
+        summary.retryLater += 1;
+        this.#logRetry(reservation, EARLIER_MESSAGE_PENDING);
+        continue;
+      }
       const outcome = await this.#handle(reservation, now);
       if (outcome.confirmation) {
         confirmations.push(outcome.confirmation);
       } else if (outcome.reported) {
         summary.failed += 1;
       } else {
+        waiting.add(reservation.siteMinderId);
         summary.retryLater += 1;
         this.#logRetry(reservation, outcome.error);
       }
