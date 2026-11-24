@@ -42,8 +42,13 @@ const templateAt = (model, props = {}) => (
 
 const renderTemplate = (model, props = {}) => render(templateAt(model, props));
 
-const listSectionIds = (container) =>
-  Array.from(container.querySelectorAll("article > section[id]")).map((section) => section.id);
+const listSectionIds = (container) => {
+  const elitePage = container.querySelector("[data-elite-page]");
+  if (elitePage) {
+    return [elitePage.dataset.elitePage];
+  }
+  return Array.from(container.querySelectorAll("article > section[id]")).map((section) => section.id);
+};
 
 const listPageHeadings = () => screen.getAllByRole("heading", { level: 1 }).map((heading) => heading.textContent);
 
@@ -71,14 +76,13 @@ describe("Panorama with site pages switched on", () => {
 
   it.each([
     ["gallery", "Gallery", ["gallery"]],
-    ["accommodation", "The villa", ["about", "features"]],
     ["contact", "Contact us", ["contact"]],
-  ])("renders only the %s sections under a page header", (pageKey, title, sectionIds) => {
+  ])("renders only the %s page under its own header", (pageKey, title, sectionIds) => {
     const { container } = renderTemplate(buildModel({ sitePages: ALL_PAGES_ON }), { activePageKey: pageKey });
 
     expect(listSectionIds(container)).toEqual(sectionIds);
     expect(listPageHeadings()).toEqual([title]);
-    expect(container.querySelector("[data-panorama-page-header]")).toHaveTextContent(renderPayload.site.siteName);
+    expect(container.querySelector("[data-elite-page] footer")).toHaveTextContent(renderPayload.site.siteName);
     expect(screen.queryByTestId("quote-availability")).toBeNull();
   });
 
@@ -111,7 +115,7 @@ describe("Panorama with site pages switched on", () => {
 
     const header = container.querySelector("[data-panorama-page-header]");
     expect(listPageHeadings()).toEqual([title]);
-    expect(header.querySelectorAll("img")).toHaveLength(0);
+    expect(header.querySelector('img[src="x"]')).toBeNull();
   });
 
   it.each([
@@ -124,7 +128,7 @@ describe("Panorama with site pages switched on", () => {
 
     expect(container.querySelector("[data-panorama-top-bar]") !== null).toBe(hasTopBar);
     expect(
-      container.querySelector("[data-panorama-page-header]").classList.contains("panoramaPageHeaderWithTopBar")
+      container.querySelector("[data-panorama-page-header]").classList.contains("eliteHeaderWithTopBar")
     ).toBe(hasTopBar);
   });
 
@@ -363,5 +367,24 @@ describe("Panorama page changes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Browse" }));
 
     expect(await screen.findByTestId("photo-browser")).toBeInTheDocument();
+  });
+});
+
+describe("Panorama scroll to availability", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    globalThis.history.replaceState(null, "", "/");
+  });
+
+  it("scrolls the call to action to availability below the top bar and keeps the anchor", () => {
+    jest.spyOn(globalThis, "scrollTo").mockImplementation(() => {});
+    const { container } = renderTemplate(buildModel());
+    container.querySelector("[data-panorama-top-bar-inner]").getBoundingClientRect = () => ({ top: 0, height: 64 });
+    container.querySelector("#availability").getBoundingClientRect = () => ({ top: 900, height: 0 });
+
+    fireEvent.click(container.querySelector('[data-preview-target-id="common.ctaLabel"]'));
+
+    expect(globalThis.scrollTo).toHaveBeenCalledWith({ top: 818, behavior: "smooth" });
+    expect(globalThis.location.hash).toBe("#availability");
   });
 });

@@ -3,10 +3,13 @@ export const PUBLIC_BOOKING_REQUEST_ERROR_CODES = Object.freeze({
   MISSING_IDEMPOTENCY_KEY: "missing_idempotency_key",
   INVALID_IDEMPOTENCY_KEY: "invalid_idempotency_key",
   INVALID_GUEST_CONTACT: "invalid_guest_contact",
+  INVALID_GUEST_PHONE: "invalid_guest_phone",
+  INVALID_GUEST_MESSAGE: "invalid_guest_message",
   INVALID_GUEST_COUNT: "invalid_guest_count",
   INVALID_DATE_RANGE: "invalid_date_range",
   QUOTE_TOKEN_INVALID: "quote_token_invalid",
   SITE_NOT_FOUND: "site_not_found",
+  PROPERTY_NOT_FOUND: "property_not_found",
   SITE_NOT_PUBLISHED: "site_not_published",
   UNAVAILABLE_DATES: "unavailable_dates",
   STAY_RESTRICTION_VIOLATION: "stay_restriction_violation",
@@ -24,10 +27,13 @@ const STATUS_CODE_BY_ERROR_CODE = Object.freeze({
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.MISSING_IDEMPOTENCY_KEY]: 400,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.INVALID_IDEMPOTENCY_KEY]: 400,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.INVALID_GUEST_CONTACT]: 400,
+  [PUBLIC_BOOKING_REQUEST_ERROR_CODES.INVALID_GUEST_PHONE]: 400,
+  [PUBLIC_BOOKING_REQUEST_ERROR_CODES.INVALID_GUEST_MESSAGE]: 400,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.INVALID_GUEST_COUNT]: 400,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.INVALID_DATE_RANGE]: 400,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.QUOTE_TOKEN_INVALID]: 401,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.SITE_NOT_FOUND]: 404,
+  [PUBLIC_BOOKING_REQUEST_ERROR_CODES.PROPERTY_NOT_FOUND]: 404,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.SITE_NOT_PUBLISHED]: 409,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.UNAVAILABLE_DATES]: 409,
   [PUBLIC_BOOKING_REQUEST_ERROR_CODES.STAY_RESTRICTION_VIOLATION]: 409,
@@ -67,6 +73,9 @@ export class PublicBookingRequestError extends Error {
 
 export const publicBookingRequestErrorFromQuoteError = (quoteError) => {
   const code = String(quoteError?.code || "");
+  if (code === PUBLIC_BOOKING_REQUEST_ERROR_CODES.PROPERTY_NOT_FOUND) {
+    return new PublicBookingRequestError(code, "This property can no longer be booked on this website.");
+  }
   if (QUOTE_ENDPOINT_PASSTHROUGH_CODES.has(code)) {
     return new PublicBookingRequestError(code, String(quoteError?.message || "The quote could not be confirmed."));
   }

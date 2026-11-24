@@ -40,6 +40,7 @@ const normalizeStatus = (status) => String(status || "").trim().toLowerCase();
 const isActiveBookingStatus = (status) =>
   normalizeStatus(status) === normalizeStatus(BOOKING_STATUS_AWAITING_PAYMENT) ||
   normalizeStatus(status) === normalizeStatus(BOOKING_STATUS_PAID);
+const isPaidBookingStatus = (status) => normalizeStatus(status) === normalizeStatus(BOOKING_STATUS_PAID);
 const isCancelledBookingStatus = (status) =>
   normalizeStatus(status) === "cancelled" || normalizeStatus(status) === "canceled";
 
@@ -420,7 +421,9 @@ class BookingService {
           bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, { arrivalMs: arrivalDateMs, departureMs: departureDateMs }),
         ]
       : [];
-    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs, channexChanges);
+    await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs, channexChanges, {
+      notifyAutomations: isPaidBookingStatus(bookingBefore.status),
+    });
 
     const updatedBookingResult = await this.reservationRepository.getBookingById(normalizedBookingId);
     const bookingAfter = updatedBookingResult?.response || {

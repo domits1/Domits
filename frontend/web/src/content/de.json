@@ -2173,6 +2173,22 @@
     }
   },
   "hostIntegrations": {
+    "title": "Integrations-Marktplatz",
+    "subtitle": "Verbinde die Tools, die du schon nutzt, mit Domits und sieh, was als Nächstes kommt.",
+    "listLabel": "Integrationen",
+    "setUpWhatsApp": "WhatsApp einrichten",
+    "filtersLabel": "Integration finden",
+    "searchLabel": "Integrationen suchen",
+    "searchPlaceholder": "Nach Namen suchen",
+    "categoryLabel": "Kategorie",
+    "statusLabel": "Status",
+    "allCategories": "Alle Kategorien",
+    "allStatuses": "Alle Status",
+    "resultCountOne": "{count} Integration",
+    "resultCountOther": "{count} Integrationen",
+    "emptyTitle": "Keine Integrationen gefunden",
+    "emptyText": "Versuche einen anderen Namen oder setze die Filter zurück, um alle Integrationen zu sehen.",
+    "clearFilters": "Filter zurücksetzen",
     "talkToSales": "Vertrieb kontaktieren",
     "statuses": {
       "available": "Verfügbar",
@@ -2194,5 +2210,17 @@
       "remotelock": "Vereinfache den Zugang zu deiner Unterkunft mit vernetzten smarten Schlössern und automatischer Zugangsverwaltung.",
       "whatsapp": "Kommuniziere mit Gästen über WhatsApp als Teil der Verwaltung deiner Unterkunft."
     }
+  },
+  "ownerManagementNavigation": {
+    "label": "Eigentümerverwaltung",
+    "owners": "Eigentümer",
+    "statements": "Abrechnungen"
+  },
+  "hostOwnerStatements": {
+    "title": "Eigentümerabrechnungen",
+    "description": "Dieser Bereich wird vorbereitet. Die Erstellung von Eigentümerabrechnungen ist noch nicht verfügbar.",
+    "emptyTitle": "Noch keine Abrechnungen erstellt",
+    "emptyDescription": "Sobald die Erstellung von Abrechnungen verfügbar ist, werden hier je Eigentümer der Berichtszeitraum, Einnahmen, Abzüge, Nettoerlöse und offene Beträge angezeigt.",
+    "payoutNote": "Eine Abrechnung zeigt, welchen Betrag ein Eigentümer erhalten soll. Sie löst keine Banküberweisung aus und ersetzt keine erfassten Auszahlungen."
   }
 }

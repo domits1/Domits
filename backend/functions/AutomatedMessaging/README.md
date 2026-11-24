@@ -1,6 +1,6 @@
 # Automated Messaging v1
 
-`AutomatedMessaging` owns host automation definitions, booking-paid event processing, scheduling, rendering, and delivery state. It supports only `BOOKING_PAID` and `DOMITS_DIRECT`.
+`AutomatedMessaging` owns host automation definitions, booking-paid event processing, scheduling, rendering, and delivery state. It supports the `BOOKING_PAID`, `CHECK_IN` and `CHECK_OUT` triggers and the `DOMITS_DIRECT` channel. A check-in or check-out automation has a direction (`BEFORE` or `AFTER`) and an optional send time (`HH:MM`, Europe/Amsterdam) that needs an offset in days or no offset.
 
 ## Deployment status
 
@@ -55,6 +55,8 @@ The following migrations have been applied successfully:
 2. `migrations/001_create_automated_messaging_v1.sql`
 
 The required tables, columns, and all 11 required indexes are present. The Lambda never creates or alters database objects at runtime.
+
+Stay-date triggers add `migrations/002_add_stay_date_triggers.sql`, with `migrations/002_add_stay_date_triggers_rollback.sql`. Apply it before the code that maps its columns is merged, following `docs/internal/tools/dsql_automated_messaging_stay_date_triggers_runbook.md`. Until it is applied, `GET /automations/health` answers `503 SCHEMA_NOT_READY`.
 
 ## Remaining enablement gates
 

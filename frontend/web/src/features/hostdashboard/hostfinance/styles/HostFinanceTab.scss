@@ -507,6 +507,10 @@ $color-muted: #6b7280;
   background: #fff;
 }
 
+.invoices-state--neutral {
+  color: $color-muted;
+}
+
 .invoices-state--error {
   border-color: #f0caca;
   border-left: 4px solid $color-danger;

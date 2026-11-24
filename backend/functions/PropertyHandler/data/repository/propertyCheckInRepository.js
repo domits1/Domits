@@ -7,8 +7,8 @@ export class PropertyCheckInRepository {
     this.systemManager = systemManager;
   }
 
-  async getPropertyCheckInTimeslotsByPropertyId(id) {
-    const client = await Database.getInstance();
+  async getPropertyCheckInTimeslotsByPropertyId(id, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
     const result = await client
       .getRepository(Property_Check_In)
       .createQueryBuilder("property_checkin")
@@ -17,8 +17,8 @@ export class PropertyCheckInRepository {
     return result ? CheckInMapping.mapDatabaseEntryToCheckIn(result) : null;
   }
 
-  async create(timeslots) {
-    const client = await Database.getInstance();
+  async create(timeslots, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
     await client
       .createQueryBuilder()
       .insert()
@@ -31,7 +31,7 @@ export class PropertyCheckInRepository {
         checkOutTill: timeslots.checkOut.till,
       })
       .execute();
-    const result = await this.getPropertyCheckInTimeslotsByPropertyId(timeslots.property_id);
+    const result = await this.getPropertyCheckInTimeslotsByPropertyId(timeslots.property_id, transactionManager);
     return result ? result : null;
   }
 

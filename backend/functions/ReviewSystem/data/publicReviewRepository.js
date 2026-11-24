@@ -34,7 +34,7 @@ const toPublicReview = (review) => ({
 });
 
 export class PublicReviewRepository {
-  async getPublicReviewPage(propertyId, offset) {
+  async getPublicReviewPage(propertyId, offset, filters = {}) {
     const database = await Database.getInstance();
     const property = await database.getRepository(Property).findOne({
       where: { id: propertyId, status: "ACTIVE" }, select: ["id"],
@@ -43,12 +43,34 @@ export class PublicReviewRepository {
     const eligible = () => eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
         { propertyStatus: "ACTIVE" });
-    const summary = await eligible().select("AVG(review.overall_rating)", "score")
-      .addSelect("COUNT(*)", "count").getRawOne();
-    const reviews = await eligible()
-      .select(["review.id", "review.overall_rating", "review.public_review", "review.created_at", "review.verification_status"])
-      .orderBy("review.created_at", "DESC").addOrderBy("review.id", "DESC")
-      .offset(offset).limit(10).getMany();
+    const matchingReviews = () => {
+      const query = eligible().andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {
+        filterMinimum: filters.minRating ?? 1, filterMaximum: filters.maxRating ?? 5,
+      });
+      if (filters.start !== undefined) query.andWhere("review.created_at >= :filterStart", { filterStart: filters.start });
+      if (filters.endExclusive !== undefined) query.andWhere("review.created_at < :filterEnd", { filterEnd: filters.endExclusive });
+      return query;
+    };
+    const summary = await eligible().select("AVG(review.overall_rating)", "score").addSelect("COUNT(*)", "count").getRawOne();
+    const matching = await matchingReviews().select("COUNT(*)", "count").getRawOne();
+    const page = matchingReviews()
+      .select(["review.id", "review.overall_rating", "review.public_review", "review.created_at", "review.verification_status"]);
+    const recent = !filters.sort || filters.sort === "recent";
+    if (filters.sort === "highest" || filters.sort === "lowest") {
+      page.orderBy("review.overall_rating", filters.sort === "highest" ? "DESC" : "ASC")
+        .addOrderBy("review.created_at", "DESC");
+    } else {
+      page.orderBy("review.created_at", "DESC");
+      if (filters.cursor) page.andWhere(
+        "(review.created_at < :cursorDate OR (review.created_at = :cursorDate AND review.id < :cursorId))",
+        { cursorDate: filters.cursor.date, cursorId: filters.cursor.id });
+    }
+    // Fetch one extra row to detect another page without applying the cursor to the matching count.
+    const rows = await page.addOrderBy("review.id", "DESC").offset(offset).limit(recent ? 11 : 10).getMany();
+    const reviews = rows.slice(0, 10), last = reviews[reviews.length - 1];
+    const nextCursor = recent && rows.length > 10 ? Buffer.from(JSON.stringify({
+      propertyId, date: Number(last.created_at), id: last.id,
+    })).toString("base64url") : null;
     const ids = reviews.map((review) => review.id);
     const ratings = ids.length ? await database.getRepository(Review_Rating).createQueryBuilder("rating")
       .innerJoin(Review_Category, "category", "category.key = rating.category AND category.isActive = :active AND category.reviewType = :reviewType",
@@ -58,13 +80,14 @@ export class PublicReviewRepository {
       .where("rating.reviewId IN (:...ids)", { ids })
       .andWhere("rating.rating BETWEEN 1 AND 5")
       .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)").getRawMany() : [];
-    const count = Number(summary.count);
+    const count = Number(matching.count);
     const responses = ids.length ? await database.getRepository(Review_Response).find({
       where: { reviewId: In(ids), status: "published", deletedAt: IsNull() },
       select: ["reviewId", "message", "publishedAt"],
     }) : [];
-    return { property_id: propertyId, overall_score: count ? Number(summary.score) : null,
-      review_count: count, next_offset: offset + 10 < count ? offset + 10 : null,
+    return { property_id: propertyId, overall_score: summary.score == null ? null : Number(summary.score),
+      review_count: Number(summary.count), matching_count: count, next_offset: !recent && offset + 10 < count ? offset + 10 : null,
+      next_cursor: nextCursor,
       reviews: reviews.map((review) => ({ id: review.id, rating: review.overall_rating,
         text: review.public_review, date: Number(review.created_at), verified: review.verification_status === "VERIFIED_STAY",
         response: responses.filter((response) => response.reviewId === review.id)

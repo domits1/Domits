@@ -137,8 +137,8 @@ export class PropertyRuleRepository {
     return new Map(rows.filter(Boolean).map((row) => [String(row.rule), row]));
   }
 
-  async getRuleById(id) {
-    const client = await Database.getInstance();
+  async getRuleById(id, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
 
     if (typeof client.createQueryBuilder === "function") {
       try {
@@ -211,8 +211,8 @@ export class PropertyRuleRepository {
     return rows.map((row) => this.mapPropertyRuleRow(row, ruleDefinitionMap));
   }
 
-  async getRuleByPropertyIdAndRule(id, rule) {
-    const client = await Database.getInstance();
+  async getRuleByPropertyIdAndRule(id, rule, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
     const supportsValueNew = await this.detectValueNewSupport(client);
 
     const query = client
@@ -237,9 +237,9 @@ export class PropertyRuleRepository {
     return this.mapPropertyRuleRow(row, ruleDefinitionMap);
   }
 
-  async create(rule) {
-    const client = await Database.getInstance();
-    const ruleDefinition = await this.getRuleById(rule.rule);
+  async create(rule, transactionManager = null) {
+    const client = transactionManager || (await Database.getInstance());
+    const ruleDefinition = await this.getRuleById(rule.rule, transactionManager);
     if (!ruleDefinition) {
       throw new Error(`Unknown policy rule: ${rule.rule}`);
     }
@@ -256,7 +256,7 @@ export class PropertyRuleRepository {
     }
 
     await client.createQueryBuilder().insert().into(Property_Rule).values(valuesToInsert).execute();
-    return await this.getRuleByPropertyIdAndRule(rule.property_id, rule.rule);
+    return await this.getRuleByPropertyIdAndRule(rule.property_id, rule.rule, transactionManager);
   }
 
   async upsertRuleByPropertyId(propertyId, ruleName, rawValue, transactionManager = null) {
