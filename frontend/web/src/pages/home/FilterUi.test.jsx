@@ -91,6 +91,30 @@ describe('FilterUi price range', () => {
         );
     });
 
+    test('sends the other filters and the active search with the request when Apply filter is pressed', async () => {
+        render(
+            <MemoryRouter initialEntries={['/home?country=Thailand&guests=2']}>
+                <LanguageContext.Provider value={{ language: 'en' }}>
+                    <FilterUi onFilterApplied={jest.fn()} />
+                </LanguageContext.Provider>
+            </MemoryRouter>
+        );
+
+        fireEvent.click(screen.getByLabelText('Wi-Fi'));
+        fireEvent.click(screen.getByRole('button', { name: 'Increase Bedrooms' }));
+        fireEvent.click(screen.getByLabelText('Book Instantly'));
+        fireEvent.click(screen.getByRole('button', { name: 'Apply filter' }));
+
+        await waitFor(() => expect(filterRequests()).toHaveLength(1));
+        const request = new URL(filterRequests()[0]).searchParams;
+        expect(request.get('country')).toBe('Thailand');
+        expect(request.get('guests')).toBe('2');
+        expect(request.get('bedrooms')).toBe('1');
+        expect(request.get('bookingType')).toBe('direct');
+        expect(request.get('amenities')).toBeTruthy();
+        expect(request.has('beds')).toBe(false);
+    });
+
     test('still waits for Apply filter before applying the other filters', async () => {
         const { onFilterApplied } = await renderFilter();
 
