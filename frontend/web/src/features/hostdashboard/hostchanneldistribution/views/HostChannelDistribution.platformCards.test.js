@@ -39,6 +39,7 @@ describe("HostChannelDistribution with MOCK_HOST_DISTRIBUTION_ENABLED", () => {
     render(<HostChannelDistribution />);
 
     expect(await screen.findByText("No channel connected yet")).toBeInTheDocument();
+    expect(getChannexStatus).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
     expect(getHostListings).not.toHaveBeenCalled();
   });
@@ -54,23 +55,15 @@ describe("HostChannelDistribution with MOCK_HOST_DISTRIBUTION_ENABLED", () => {
     expect(screen.queryByText("No channel connected yet")).not.toBeInTheDocument();
   });
 
-  test("with the flag on, the account-level load error is not shown", async () => {
-    hostApi.MOCK_HOST_DISTRIBUTION_ENABLED = true;
-    getChannexStatus.mockRejectedValue(Object.assign(new Error("server exploded"), { status: 500 }));
-
-    render(<HostChannelDistribution />);
-
-    expect(await screen.findByText("Booking.com")).toBeInTheDocument();
-    expect(screen.queryByText("Something went wrong loading your Channex connection.")).not.toBeInTheDocument();
-  });
-
-  test("with the flag on, the account-level status card of a connected account is hidden", async () => {
+  test("with the flag on, the legacy status is never requested and nothing account-level shows", async () => {
     hostApi.MOCK_HOST_DISTRIBUTION_ENABLED = true;
     getChannexStatus.mockResolvedValue({ status: "CONNECTED", displayName: "Channex" });
 
     render(<HostChannelDistribution />);
 
     expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+    expect(getChannexStatus).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByText("Your Channex account is connected.")).not.toBeInTheDocument();
   });
 });
