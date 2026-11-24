@@ -132,7 +132,7 @@ describe("the home page of an Elite website with its properties", () => {
 
     expect(screen.queryByRole("group", { name: "Filter by location" })).toBeNull();
     expect(screen.queryByRole("form", { name: "Search by dates" })).toBeNull();
-    expect(screen.queryByRole("img", { name: "Villa B" })).toBeNull();
+    expect(Array.from(document.querySelectorAll("main img"), (img) => img.alt)).toEqual(["", ""]);
   });
 
   it.each([

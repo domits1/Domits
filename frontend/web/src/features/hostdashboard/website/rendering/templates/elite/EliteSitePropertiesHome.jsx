@@ -67,7 +67,7 @@ SearchForm.propTypes = { isSearching: PropTypes.bool.isRequired, onSearch: PropT
 
 const renderPropertyCard = (card, href, price = "") => (
   <PanoramaPageLink key={card.propertyId} href={href} className={styles.eliteHomeCard}>
-    {card.imageUrl ? <img src={card.imageUrl} alt={card.title} loading="lazy" /> : null}
+    {card.imageUrl ? <img src={card.imageUrl} alt="" loading="lazy" /> : null}
     <span className={styles.eliteHomeCardTitle}>{card.title}</span>
     <span className={styles.eliteHomeMuted}>{describeSitePropertyCard(card)}</span>
     {price ? <strong className={styles.eliteHomePrice}>{price}</strong> : null}
