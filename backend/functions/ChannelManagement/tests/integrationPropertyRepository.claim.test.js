@@ -117,6 +117,23 @@ describe("IntegrationPropertyRepository claim", () => {
     expect(write.andWhere).toHaveBeenCalledWith('"updatedAt" = :expected', { expected: 5 });
   });
 
+  test("releasing a claim makes it stale at once, only while it is still PROVISIONING", async () => {
+    const write = {
+      update: jest.fn(() => write),
+      set: jest.fn(() => write),
+      where: jest.fn(() => write),
+      andWhere: jest.fn(() => write),
+      execute: jest.fn(async () => ({ affected: 1 })),
+    };
+    Database.getInstance.mockResolvedValue({ createQueryBuilder: () => write });
+
+    await new IntegrationPropertyRepository().releaseClaim("claim-1");
+
+    expect(write.set).toHaveBeenCalledWith({ updatedAt: 0 });
+    expect(write.where).toHaveBeenCalledWith("id = :id", { id: "claim-1" });
+    expect(write.andWhere).toHaveBeenCalledWith("status = :s", { s: "PROVISIONING" });
+  });
+
   // The partial unique key decides the race; the insert does not look first.
   test("inserts a PROVISIONING row without a Channex property yet", async () => {
     const { repository, write } = setup();

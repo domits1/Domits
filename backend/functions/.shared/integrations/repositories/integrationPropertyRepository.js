@@ -154,6 +154,19 @@ class IntegrationPropertyRepository {
     return result?.affected === 1;
   }
 
+  // An attempt that ended without success makes its claim stale at once, so the next click can take it
+  // over instead of waiting out the lease (#4031 review).
+  async releaseClaim(claimId) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationProperty)
+      .set({ updatedAt: 0 })
+      .where("id = :id", { id: claimId })
+      .andWhere("status = :s", { s: "PROVISIONING" })
+      .execute();
+  }
+
   // Runs on the caller's transaction, together with the full sync (design note D2).
   async activateClaim(manager, claimId) {
     const result = await manager

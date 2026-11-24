@@ -139,7 +139,7 @@ export default class ChannexProvisioningService {
         errorCode: "DISTRIBUTION_OWN_CHANNEX_ACCOUNT",
       });
     }
-    const inUse =await this.props.findInUseByAccountAndListing(account.id, listing.propertyId);
+    const inUse = await this.props.findInUseByAccountAndListing(account.id, listing.propertyId);
 
     if (inUse && inUse.status !== PROVISIONING) {
       return ok({ status: "ALREADY_CONNECTED", channexPropertyId: inUse.externalPropertyId });
@@ -153,7 +153,22 @@ export default class ChannexProvisioningService {
       });
     }
 
-    return this.createChannexObjects({ account, claim, listing, place });
+    let answer;
+    try {
+      answer = await this.createChannexObjects({ account, claim, listing, place });
+      return answer;
+    } finally {
+      if (answer?.statusCode !== 200) await this.releaseClaimQuietly(claim.id);
+    }
+  }
+
+  // A failed release only means the next click waits out the lease; the attempt's own answer matters more.
+  async releaseClaimQuietly(claimId) {
+    try {
+      await this.props.releaseClaim(claimId);
+    } catch (error) {
+      console.error(JSON.stringify({ event: "CHANNEX_PROVISIONING_RELEASE_FAILED", claimId, error: error?.message }));
+    }
   }
 
   // A running attempt updates its claim with every saved id and ends within the 29 s route limit, so a

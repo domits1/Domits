@@ -20,6 +20,7 @@ const build = ({ account = null, inUse = null, insertClaim = jest.fn().mockResol
     findInUseByAccountAndListing: jest.fn().mockResolvedValue(inUse),
     insertClaim,
     takeOverClaim: jest.fn().mockResolvedValue(true),
+    releaseClaim: jest.fn().mockResolvedValue(undefined),
   };
   const service = new ChannexProvisioningService({
     accounts,
@@ -230,5 +231,50 @@ describe("ChannexProvisioningService.claimListing: the claim (D2)", () => {
     const { service } = build({ account, insertClaim });
 
     await expect(service.claimListing({ userId: "host-1", listing, place })).rejects.toThrow("connection lost");
+  });
+});
+
+// #4031 review (Rakib and a second reviewer): an attempt that ends without success releases its own claim,
+// so a host who clicks again after "try again" continues straight away instead of waiting out the lease.
+describe("ChannexProvisioningService.claimListing: releasing the claim", () => {
+  const account = { id: "account-1", status: "CONNECTED", credentialsRef: "domits-channex-secret" };
+
+  test("an attempt that ends without success releases its claim and keeps its answer", async () => {
+    const { service, props, createChannexObjects } = build({ account });
+    const tryAgain = { statusCode: 503, response: { errorCode: "DISTRIBUTION_TRY_AGAIN" } };
+    createChannexObjects.mockResolvedValue(tryAgain);
+
+    const result = await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(props.releaseClaim).toHaveBeenCalledWith("new-id");
+    expect(result).toEqual(tryAgain);
+  });
+
+  test("a successful attempt keeps its claim, now the live mapping", async () => {
+    const { service, props } = build({ account });
+
+    await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(props.releaseClaim).not.toHaveBeenCalled();
+  });
+
+  test("an attempt that throws releases its claim and still throws", async () => {
+    const { service, props, createChannexObjects } = build({ account });
+    createChannexObjects.mockRejectedValue(new Error("connection lost"));
+
+    await expect(service.claimListing({ userId: "host-1", listing, place })).rejects.toThrow("connection lost");
+    expect(props.releaseClaim).toHaveBeenCalledWith("new-id");
+  });
+
+  test("a release that fails does not hide the attempt's own answer", async () => {
+    const { service, props, createChannexObjects } = build({ account });
+    createChannexObjects.mockResolvedValue({ statusCode: 503, response: { errorCode: "DISTRIBUTION_TRY_AGAIN" } });
+    props.releaseClaim.mockRejectedValue(new Error("release failed"));
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(result.response.errorCode).toBe("DISTRIBUTION_TRY_AGAIN");
+    log.mockRestore();
   });
 });
