@@ -112,6 +112,7 @@
 
 .automation-fields { display: grid; gap: 14px; }
 .automation-fields.two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.automation-fields.equal-three-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .automation-fields.three-columns { grid-template-columns: 140px minmax(180px, 1fr) minmax(180px, 1fr); }
 
 .automation-editor input,
@@ -166,6 +167,8 @@
 
 .automation-error { margin-bottom: 16px; padding: 11px 13px; color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
 .missing-variables { color: #9a6700; }
+.automation-hint { margin: 10px 0 0; color: #667085; font-size: 13px; }
+.automation-schedule-sentence { margin: 14px 0 0; padding: 10px 12px; color: #14532d; font-weight: 600; background: #f2faf5; border-left: 3px solid #15803d; }
 .delivery-table-wrap { overflow-x: auto; }
 .delivery-table-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .delivery-table-wrap th,
@@ -174,6 +177,7 @@
 @media (max-width: 900px) {
   .automations-layout { grid-template-columns: 1fr; }
   .automation-fields.two-columns,
+  .automation-fields.equal-three-columns,
   .automation-fields.three-columns { grid-template-columns: 1fr; }
   .automation-editor-toolbar,
   .automations-header { align-items: flex-start; flex-direction: column; }

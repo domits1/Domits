@@ -107,3 +107,60 @@ preview(input, automationId?) ─ bookingId given? ─ no ─▶ schedule: null
 ### Verification
 
 New tests were red first (7 failing, then one more for the booking-paid case). `functions/AutomatedMessaging`: 16 suites, 220 tests passed. Full backend run: 477 suites and 6906 tests passed; the same three suites fail locally for reasons unrelated to messaging.
+
+## Commit 3: choose when to send in the editor
+
+Reviewed: the staged diff (`AutomationsPage.jsx`, `scheduleOptions.js`, `automations.scss`, their tests, this record)
+
+### Decision
+
+```
+When to send (6 options)          stored rule
+  Booking paid               ─▶  BOOKING_PAID, no direction
+  Before check-in            ─▶  CHECK_IN,  BEFORE
+  On check-in day            ─▶  CHECK_IN,  AFTER, amount 0 (amount fixed)
+  After check-in             ─▶  CHECK_IN,  AFTER, amount > 0
+  Before check-out           ─▶  CHECK_OUT, BEFORE
+  After check-out            ─▶  CHECK_OUT, AFTER
++ amount, unit, optional time of day (days, or on the day itself)
++ one sentence: "3 days before check-in, at 10:00 (Amsterdam time)"
++ note for stay rules: "Applies to bookings paid after you activate it"
+```
+
+- `scheduleOptions.js` is pure: it maps a stored rule to an option and back, builds the payload, and writes the sentence. The page only holds state.
+- Every rule the API allows maps to an option and back to the same trigger and direction (tested over all combinations). An old automation without the new fields loads as Booking paid and saves as Booking paid, with a null direction and a null time.
+- The time of day is disabled, with the reason shown, when the unit is hours or minutes, and it is not sent in that case. The API enforces the same rule.
+- The Channel select moved next to the property select so the scheduling row holds amount, unit and time of day. The Trigger select is replaced by the picker.
+- Options weighed for "After check-in": a seventh special case in the page (rejected), a sixth option next to the others so no stored rule is unrepresentable (chosen, at the host's request).
+- Consequence accepted: the sentence logic repeats the time-of-day rule of the API.
+
+### Findings
+
+| Finding | Confidence | Resolution |
+|---|---|---|
+| `[P3]` `scheduleOptions.js` (`canPickTimeOfDay`) is the third copy of "a time of day needs days or amount 0". | 8/10 | Accepted. The API stays the authority and answers 400. |
+| `[P3]` The preview schedule from the API is not shown: the page has no booking picker, so it never sends a booking. | 8/10 | Accepted. |
+| `[P3]` `changeScheduleOption`: leaving "On check-in day" keeps amount 0, except "After check-in", which starts at 1. Before and After check-out with 0 are valid and read "On the day of ...". | 7/10 | Accepted. |
+| `[P3]` One snapshot test in the website feature (`panoramaElitePagesPin`) fails in the full web run. It does not import anything in this diff; not run on a clean branch. | 9/10 | Reported, not fixed here. |
+
+### Not in scope
+
+- A booking picker in the editor, which would show the planned time from the preview.
+- Applying a new automation to bookings that were paid earlier.
+
+### What already exists
+
+- The page's sections, fields and styles, and the API validation of commit 1, reused.
+
+### Failure modes
+
+| Path | Failure | Test | Handling | User sees |
+|---|---|---|---|---|
+| Time of day with hours | API refuses the rule | Yes | Field disabled with a reason, not sent | Hint text |
+| Old automation without the fields | Loads as the wrong option | Yes | Reads as Booking paid | Same as before |
+| Stored rule with no matching option | Rule changed silently on save | Yes (all combinations) | Six options cover every allowed rule | The right option |
+| Backend not yet deployed | Saving a stay rule fails | No (deploy order) | API answers 400 | Error message |
+
+### Verification
+
+New tests were red first (the helper module did not exist, and 8 page tests failed). `scheduleOptions.test.js`: 30 tests. The hostmessages suites: 12 suites, 181 tests passed. Full web run: 299 suites passed; the one failing suite is the unrelated snapshot above.

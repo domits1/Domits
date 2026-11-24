@@ -72,13 +72,13 @@ describe("host automated messages v1", () => {
     });
   });
 
-  test("shows the host automation list, fixed trigger/channel, and delivery status", async () => {
+  test("shows the host automation list, the stored schedule, the fixed channel, and delivery status", async () => {
     render(<AutomationsContent />);
     expect(await screen.findByText("Paid booking welcome")).toBeInTheDocument();
     await screen.findByRole("option", { name: "Canal Loft" });
     fireEvent.click(screen.getByText("Paid booking welcome"));
 
-    expect(screen.getByLabelText("Trigger")).toHaveValue("BOOKING_PAID");
+    expect(screen.getByLabelText("When to send")).toHaveValue("BOOKING_PAID");
     expect(screen.getByLabelText("Channel")).toHaveValue("DOMITS_DIRECT");
     expect(await screen.findByText("FAILED")).toBeInTheDocument();
     expect(await screen.findByText("Domits Direct delivery failed.")).toBeInTheDocument();
@@ -143,6 +143,148 @@ describe("host automated messages v1", () => {
       "automation-2",
       expect.objectContaining({ name: "Edited welcome" })
     ));
+  });
+
+  describe("when to send", () => {
+    const openEditor = async () => {
+      render(<AutomationsContent />);
+      await screen.findByText("Paid booking welcome");
+      await screen.findByRole("option", { name: "Canal Loft" });
+    };
+
+    const choose = (option) => fireEvent.change(screen.getByLabelText("When to send"), { target: { value: option } });
+
+    beforeEach(() => {
+      createAutomation.mockImplementation(async (payload) => ({ ...automation, ...payload, id: "automation-2" }));
+      updateAutomation.mockImplementation(async (id, payload) => ({ ...automation, ...payload, id }));
+    });
+
+    test("offers the six options", async () => {
+      await openEditor();
+
+      expect(within(screen.getByLabelText("When to send")).getAllByRole("option").map((option) => option.textContent)).toEqual([
+        "Booking paid",
+        "Before check-in",
+        "On check-in day",
+        "After check-in",
+        "Before check-out",
+        "After check-out",
+      ]);
+    });
+
+    test("loads an automation saved before the new fields as booking paid and saves it as booking paid", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("Paid booking welcome"));
+
+      expect(screen.getByLabelText("When to send")).toHaveValue("BOOKING_PAID");
+      expect(screen.getByLabelText("Time of day")).toBeDisabled();
+      expect(screen.queryByText("Applies to bookings paid after you activate it")).not.toBeInTheDocument();
+      expect(screen.getByTestId("schedule-sentence")).toHaveTextContent("2 hours after the booking is paid");
+
+      fireEvent.click(screen.getByText("Save"));
+
+      await waitFor(() =>
+        expect(updateAutomation).toHaveBeenCalledWith(
+          "automation-1",
+          expect.objectContaining({
+            triggerType: "BOOKING_PAID",
+            offsetDirection: null,
+            offsetAmount: 2,
+            offsetUnit: "HOURS",
+            sendTime: null,
+          })
+        )
+      );
+    });
+
+    test("describes a check-in rule in one sentence, with the note, and saves it", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("New automation"));
+      fireEvent.change(screen.getByLabelText("Automation name"), { target: { value: "Pre-arrival" } });
+      choose("BEFORE_CHECK_IN");
+      fireEvent.change(screen.getByLabelText("Offset amount"), { target: { value: "3" } });
+      fireEvent.change(screen.getByLabelText("Offset unit"), { target: { value: "DAYS" } });
+      fireEvent.change(screen.getByLabelText("Time of day"), { target: { value: "10:00" } });
+
+      expect(screen.getByTestId("schedule-sentence")).toHaveTextContent("3 days before check-in, at 10:00 (Amsterdam time)");
+      expect(screen.getByText("Applies to bookings paid after you activate it")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("Save"));
+
+      await waitFor(() =>
+        expect(createAutomation).toHaveBeenCalledWith(
+          expect.objectContaining({
+            triggerType: "CHECK_IN",
+            offsetDirection: "BEFORE",
+            offsetAmount: 3,
+            offsetUnit: "DAYS",
+            sendTime: "10:00",
+          })
+        )
+      );
+    });
+
+    test("on the check-in day the amount is fixed at zero", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("New automation"));
+      fireEvent.change(screen.getByLabelText("Offset amount"), { target: { value: "4" } });
+
+      choose("ON_CHECK_IN");
+
+      expect(screen.getByLabelText("Offset amount")).toBeDisabled();
+      expect(screen.getByLabelText("Offset amount")).toHaveValue(0);
+      expect(screen.getByTestId("schedule-sentence")).toHaveTextContent(
+        "On the day of check-in, at the property's check-in time (Amsterdam time)"
+      );
+    });
+
+    test("a time of day is unavailable with hours and is not sent", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("New automation"));
+      choose("AFTER_CHECK_OUT");
+      fireEvent.change(screen.getByLabelText("Offset amount"), { target: { value: "2" } });
+      fireEvent.change(screen.getByLabelText("Offset unit"), { target: { value: "DAYS" } });
+      fireEvent.change(screen.getByLabelText("Time of day"), { target: { value: "09:00" } });
+      fireEvent.change(screen.getByLabelText("Offset unit"), { target: { value: "HOURS" } });
+
+      expect(screen.getByLabelText("Time of day")).toBeDisabled();
+      expect(screen.getByText("A time of day works with days, or on the day of check-in or check-out.")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("Save"));
+      await waitFor(() => expect(createAutomation).toHaveBeenCalledWith(expect.objectContaining({ sendTime: null })));
+    });
+
+    test("loads a stored check-out rule into the picker and its fields", async () => {
+      listAutomations.mockResolvedValueOnce([
+        {
+          ...automation,
+          id: "automation-3",
+          name: "Thanks",
+          triggerType: "CHECK_OUT",
+          offsetDirection: "AFTER",
+          offsetAmount: 1,
+          offsetUnit: "DAYS",
+          sendTime: "09:00",
+        },
+      ]);
+      render(<AutomationsContent />);
+      fireEvent.click(await screen.findByText("Thanks"));
+
+      expect(screen.getByLabelText("When to send")).toHaveValue("AFTER_CHECK_OUT");
+      expect(screen.getByLabelText("Offset amount")).toHaveValue(1);
+      expect(screen.getByLabelText("Offset unit")).toHaveValue("DAYS");
+      expect(screen.getByLabelText("Time of day")).toHaveValue("09:00");
+    });
+
+    test("choosing After check-in after the check-in day starts at one so the rule stays after check-in", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("New automation"));
+      choose("ON_CHECK_IN");
+
+      choose("AFTER_CHECK_IN");
+
+      expect(screen.getByLabelText("Offset amount")).toHaveValue(1);
+    });
   });
 
   test("activates and pauses an automation", async () => {
