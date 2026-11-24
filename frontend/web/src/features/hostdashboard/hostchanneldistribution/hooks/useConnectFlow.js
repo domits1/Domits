@@ -64,9 +64,9 @@ export function useConnectFlow({ refresh }) {
 
     moveTo({ step: CONNECT_STEP.CONNECTING, platform, propertyId, url: null });
     try {
-      const { url } = await createConnectSession({ propertyId });
+      const { iframeUrl } = await createConnectSession({ propertyId });
       if (!mountedRef.current) return;
-      moveTo({ step: CONNECT_STEP.IFRAME, platform, propertyId, url });
+      moveTo({ step: CONNECT_STEP.IFRAME, platform, propertyId, url: iframeUrl });
     } catch (err) {
       console.error("Failed to create a Channex connect session:", err);
       if (!mountedRef.current) return;

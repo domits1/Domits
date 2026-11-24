@@ -73,21 +73,22 @@ describe("hostDistributionApi (mock)", () => {
     await expect(refreshChannels({ propertyId: "nope" })).rejects.toMatchObject({
       status: 404,
       method: "POST",
-      responseBody: { errorCode: "LISTING_NOT_FOUND" },
+      responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
     });
   });
 
-  test("a connect session is a Channex address with an expiry in the future", async () => {
+  test("a connect session is a Channex address that is good for 900 seconds", async () => {
     const session = await createConnectSession({ propertyId: "mock-listing-live" });
 
-    expect(isChannexUrl(session.url)).toBe(true);
-    expect(session.expiresAt).toBeGreaterThan(Date.now());
+    expect(isChannexUrl(session.iframeUrl)).toBe(true);
+    expect(session.expiresInSeconds).toBe(900);
+    expect(Object.keys(session).sort()).toEqual(["expiresInSeconds", "iframeUrl"]);
   });
 
   test("a connect session for an unknown listing rejects with a 404", async () => {
     await expect(createConnectSession({ propertyId: "nope" })).rejects.toMatchObject({
       status: 404,
-      responseBody: { errorCode: "LISTING_NOT_FOUND" },
+      responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
     });
   });
 
@@ -95,7 +96,7 @@ describe("hostDistributionApi (mock)", () => {
     await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
       status: 409,
       method: "POST",
-      responseBody: { errorCode: "DISTRIBUTION_NOT_ENABLED" },
+      responseBody: { errorCode: "DISTRIBUTION_NOT_TURNED_ON" },
     });
   });
 });

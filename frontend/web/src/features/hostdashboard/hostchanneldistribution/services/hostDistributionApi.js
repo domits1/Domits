@@ -15,9 +15,9 @@ export const MOCK_HOST_DISTRIBUTION_ENABLED = false;
 const MOCK_REQUEST_DELAY_MS = 300;
 
 // ---------------------------------------------------------------------------------------------
-// RESPONSE SHAPES -- PROPOSED, TO CONFIRM WITH ENES. The design note defines the routes but no
-// request or response bodies. Everything the frontend reads is in the fixtures below, so a change
-// of shape is a change in this one block (plus utils/distributionStates.js).
+// RESPONSE SHAPES -- Enes's contract for the host distribution routes. Everything the frontend
+// reads is in the fixtures below, so a change of shape is a change in this one block (plus
+// utils/distributionStates.js).
 //
 // listing = {
 //   propertyId, title,
@@ -33,9 +33,9 @@ const MOCK_REQUEST_DELAY_MS = 300;
 // }
 // getHostListings  -> { listings: [listing] }
 // refreshChannels  -> { channels }                         // the channels as listed above, merged into the listing
-// createConnectSession -> { url, expiresAt }               // a one-time Channex screen address for this listing's
-//                                                          // property; errors: 404 LISTING_NOT_FOUND,
-//                                                          // 409 DISTRIBUTION_NOT_ENABLED
+// createConnectSession -> { iframeUrl, expiresInSeconds }  // a one-time Channex screen address for this listing;
+//                                                          // errors: 404 DISTRIBUTION_LISTING_NOT_FOUND,
+//                                                          // 409 DISTRIBUTION_NOT_TURNED_ON
 // errors           -> thrown like requestChannex() throws: Error with .status, .responseBody { error, errorCode }
 // ---------------------------------------------------------------------------------------------
 
@@ -102,7 +102,7 @@ const buildMockRequestError = ({ endpoint, status, error, errorCode }) => {
 };
 
 const listingNotFoundError = (endpoint) =>
-  buildMockRequestError({ endpoint, status: 404, error: "Listing not found.", errorCode: "LISTING_NOT_FOUND" });
+  buildMockRequestError({ endpoint, status: 404, error: "Listing not found.", errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" });
 
 export const getHostListings = async () => {
   await mockDelay();
@@ -124,7 +124,7 @@ export const refreshChannels = async ({ propertyId } = {}) => {
 };
 
 const MOCK_CONNECT_SESSION_URL = "https://staging.channex.io/mock-connect?token=mock";
-const MOCK_CONNECT_SESSION_LIFETIME_MS = 15 * 60 * 1000;
+const MOCK_CONNECT_SESSION_LIFETIME_SECONDS = 900;
 
 // The real route requests a one-time token for the listing's own Channex property after the owner
 // check, and never takes a property id from the browser. The mock only answers for a listing that
@@ -140,9 +140,9 @@ export const createConnectSession = async ({ propertyId } = {}) => {
       endpoint,
       status: 409,
       error: "Distribution is not turned on for this listing.",
-      errorCode: "DISTRIBUTION_NOT_ENABLED",
+      errorCode: "DISTRIBUTION_NOT_TURNED_ON",
     });
   }
 
-  return { url: MOCK_CONNECT_SESSION_URL, expiresAt: Date.now() + MOCK_CONNECT_SESSION_LIFETIME_MS };
+  return { iframeUrl: MOCK_CONNECT_SESSION_URL, expiresInSeconds: MOCK_CONNECT_SESSION_LIFETIME_SECONDS };
 };

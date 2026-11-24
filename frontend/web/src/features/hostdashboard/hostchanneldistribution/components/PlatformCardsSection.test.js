@@ -76,7 +76,7 @@ describe("PlatformCardsSection", () => {
       for (const box of screen.getAllByRole("checkbox")) await user.click(box);
     };
     const openIframe = async (user) => {
-      createConnectSession.mockResolvedValue({ url: URL_OK });
+      createConnectSession.mockResolvedValue({ iframeUrl: URL_OK });
       refreshChannels.mockResolvedValue({ channels: LIVE_LISTING.channels });
       await openChecklist(user);
       await tickAll(user);
@@ -127,7 +127,7 @@ describe("PlatformCardsSection", () => {
 
     test("Continue asks for a session with the listing id only and opens the Channex screen", async () => {
       const user = userEvent.setup();
-      createConnectSession.mockResolvedValue({ url: URL_OK });
+      createConnectSession.mockResolvedValue({ iframeUrl: URL_OK });
       await openChecklist(user);
       await tickAll(user);
 

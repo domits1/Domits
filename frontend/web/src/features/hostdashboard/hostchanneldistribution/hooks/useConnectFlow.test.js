@@ -26,7 +26,7 @@ const setup = () => {
 // Walks to the iframe step and returns the hook.
 const openIframe = async () => {
   const hook = setup();
-  createConnectSession.mockResolvedValue({ url: URL_OK });
+  createConnectSession.mockResolvedValue({ iframeUrl: URL_OK });
   act(() => hook.result.current.start({ platform: PLATFORM, propertyId: "p1" }));
   await act(async () => hook.result.current.continueFromChecklist());
   return hook;
@@ -81,7 +81,7 @@ describe("useConnectFlow", () => {
     expect(createConnectSession).toHaveBeenCalledTimes(1);
     expect(createConnectSession).toHaveBeenCalledWith({ propertyId: "p1" });
 
-    await act(async () => pending.resolve({ url: URL_OK }));
+    await act(async () => pending.resolve({ iframeUrl: URL_OK }));
 
     expect(result.current.step).toBe(CONNECT_STEP.IFRAME);
     expect(result.current.url).toBe(URL_OK);
@@ -159,7 +159,7 @@ describe("useConnectFlow", () => {
     });
 
     unmount();
-    await act(async () => pending.resolve({ url: URL_OK }));
+    await act(async () => pending.resolve({ iframeUrl: URL_OK }));
 
     expect(console.error).not.toHaveBeenCalled();
   });
