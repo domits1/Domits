@@ -300,15 +300,15 @@ describe("host automated messages v1", () => {
 
   describe("variable buttons", () => {
     const EXPECTED = [
-      ["guestName", "Guest's name"],
-      ["propertyName", "Name of the property"],
-      ["checkInDate", "Arrival date"],
-      ["checkOutDate", "Departure date"],
-      ["checkInTime", "Earliest check-in time"],
-      ["checkOutTime", "Latest check-out time"],
-      ["propertyAddress", "Street, number and postal code"],
-      ["propertyCity", "City of the property"],
-      ["numberOfGuests", "Number of guests on the booking"],
+      ["guestName", "Guest name", "Guest's name", "Insert guest name"],
+      ["propertyName", "Property name", "Name of the property", "Insert property name"],
+      ["checkInDate", "Check-in date", "Arrival date", "Insert check-in date"],
+      ["checkOutDate", "Check-out date", "Departure date", "Insert check-out date"],
+      ["checkInTime", "Check-in time", "Earliest check-in time", "Insert check-in time"],
+      ["checkOutTime", "Check-out time", "Latest check-out time", "Insert check-out time"],
+      ["propertyAddress", "Address", "Street, number and postal code", "Insert address"],
+      ["propertyCity", "City", "City of the property", "Insert city"],
+      ["numberOfGuests", "Number of guests", "Number of guests on the booking", "Insert number of guests"],
     ];
 
     const renderEditor = async () => {
@@ -318,25 +318,40 @@ describe("host automated messages v1", () => {
       return within(screen.getByLabelText("Supported variables"));
     };
 
-    test("offers every supported variable, the new ones after the four existing ones", async () => {
+    test("offers every supported variable as a readable label, in the same order", async () => {
       const variables = await renderEditor();
 
       expect(variables.getAllByRole("button").map((button) => button.textContent)).toEqual(
-        EXPECTED.map(([name]) => `{{${name}}}`)
+        EXPECTED.map(([, shortLabel]) => shortLabel)
       );
     });
 
-    test.each(EXPECTED)("explains {{%s}} with a short tooltip", async (name, label) => {
+    test("shows no raw tag on a chip", async () => {
       const variables = await renderEditor();
 
-      expect(variables.getByRole("button", { name: `{{${name}}}` })).toHaveAttribute("title", label);
+      variables.getAllByRole("button").forEach((button) => expect(button.textContent).not.toContain("{{"));
     });
 
-    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when clicked", async (name) => {
+    test.each(EXPECTED)("explains {{%s}} in the tooltip with the description and the tag", async (name, shortLabel, description) => {
+      const variables = await renderEditor();
+
+      expect(variables.getByRole("button", { name: `Insert ${shortLabel.toLowerCase()}` })).toHaveAttribute(
+        "title",
+        `${description} · {{${name}}}`
+      );
+    });
+
+    test.each(EXPECTED)("gives the {{%s}} chip a screen reader label", async (_name, _short, _description, ariaLabel) => {
+      const variables = await renderEditor();
+
+      expect(variables.getByRole("button", { name: ariaLabel })).toHaveAttribute("aria-label", ariaLabel);
+    });
+
+    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when clicked", async (name, _short, _description, ariaLabel) => {
       const variables = await renderEditor();
       fireEvent.change(screen.getByLabelText("Message template"), { target: { value: "Welcome. " } });
 
-      fireEvent.click(variables.getByRole("button", { name: `{{${name}}}` }));
+      fireEvent.click(variables.getByRole("button", { name: ariaLabel }));
 
       expect(screen.getByLabelText("Message template")).toHaveValue(`Welcome. {{${name}}}`);
     });
@@ -344,7 +359,7 @@ describe("host automated messages v1", () => {
     test("sends a template with a new variable to the backend preview", async () => {
       const variables = await renderEditor();
       fireEvent.change(screen.getByLabelText("Message template"), { target: { value: "Check-in from " } });
-      fireEvent.click(variables.getByRole("button", { name: "{{checkInTime}}" }));
+      fireEvent.click(variables.getByRole("button", { name: "Insert check-in time" }));
 
       fireEvent.click(screen.getByText("Render preview"));
 

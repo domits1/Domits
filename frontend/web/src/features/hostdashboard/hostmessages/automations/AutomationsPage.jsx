@@ -21,15 +21,15 @@ import {
 } from "./scheduleOptions";
 
 const VARIABLES = [
-  { name: "guestName", label: "Guest's name" },
-  { name: "propertyName", label: "Name of the property" },
-  { name: "checkInDate", label: "Arrival date" },
-  { name: "checkOutDate", label: "Departure date" },
-  { name: "checkInTime", label: "Earliest check-in time" },
-  { name: "checkOutTime", label: "Latest check-out time" },
-  { name: "propertyAddress", label: "Street, number and postal code" },
-  { name: "propertyCity", label: "City of the property" },
-  { name: "numberOfGuests", label: "Number of guests on the booking" },
+  { name: "guestName", shortLabel: "Guest name", label: "Guest's name" },
+  { name: "propertyName", shortLabel: "Property name", label: "Name of the property" },
+  { name: "checkInDate", shortLabel: "Check-in date", label: "Arrival date" },
+  { name: "checkOutDate", shortLabel: "Check-out date", label: "Departure date" },
+  { name: "checkInTime", shortLabel: "Check-in time", label: "Earliest check-in time" },
+  { name: "checkOutTime", shortLabel: "Check-out time", label: "Latest check-out time" },
+  { name: "propertyAddress", shortLabel: "Address", label: "Street, number and postal code" },
+  { name: "propertyCity", shortLabel: "City", label: "City of the property" },
+  { name: "numberOfGuests", shortLabel: "Number of guests", label: "Number of guests on the booking" },
 ];
 const asArray = (value) => (Array.isArray(value) ? value : []);
 const EMPTY_FORM = {
@@ -304,8 +304,16 @@ export const AutomationsContent = () => {
               />
             </label>
             <div className="variable-buttons" aria-label="Supported variables">
-              {VARIABLES.map(({ name, label }) => (
-                <button type="button" key={name} title={label} onClick={() => insertVariable(name)}>{`{{${name}}}`}</button>
+              {VARIABLES.map(({ name, shortLabel, label }) => (
+                <button
+                  type="button"
+                  key={name}
+                  title={`${label} · {{${name}}}`}
+                  aria-label={`Insert ${shortLabel.toLowerCase()}`}
+                  onClick={() => insertVariable(name)}
+                >
+                  {shortLabel}
+                </button>
               ))}
             </div>
           </section>
