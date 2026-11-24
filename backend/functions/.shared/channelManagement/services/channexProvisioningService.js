@@ -40,6 +40,7 @@ const RATE_PLAN_TITLE = "Standard Rate";
 // Three creates in a row stay below API Gateway's 29 s limit; the Lambda itself has 30 s.
 const CREATE_TIMEOUT_MS = 7000;
 const CONNECTED = "CONNECTED";
+const CLAIM_LEASE_MS = 60_000;
 const PROVISIONING = "PROVISIONING";
 
 const TIMEZONE_ERROR_CODES = Object.freeze({
@@ -131,8 +132,7 @@ export default class ChannexProvisioningService {
       return ok({ status: "ALREADY_CONNECTED", channexPropertyId: inUse.externalPropertyId });
     }
 
-    // An earlier attempt that stopped halfway is continued from its own claim.
-    const claim = inUse ?? (await this.insertClaim(account, listing));
+    const claim = inUse ? await this.takeOverStaleClaim(inUse) : await this.insertClaim(account, listing);
     if (!claim) {
       return bad(409, {
         error: "This listing is already being connected.",
@@ -141,6 +141,21 @@ export default class ChannexProvisioningService {
     }
 
     return this.createChannexObjects({ account, claim, listing, place });
+  }
+
+  // A running attempt updates its claim with every saved id and ends within the 29 s route limit, so a
+  // claim untouched for CLAIM_LEASE_MS belongs to an attempt that died. Only that one is continued, and
+  // only by the request whose conditional update wins (#4031 review). Returns null otherwise.
+  async takeOverStaleClaim(claim) {
+    const now = this.now();
+    if (now - Number(claim.updatedAt) < CLAIM_LEASE_MS) return null;
+    try {
+      const won = await this.props.takeOverClaim({ claimId: claim.id, expectedUpdatedAt: claim.updatedAt, now });
+      return won ? { ...claim, updatedAt: now } : null;
+    } catch (error) {
+      if (isLostClaim(error)) return null;
+      throw error;
+    }
   }
 
   // One account row per host, pointing to Domits' single Channex key (D8).

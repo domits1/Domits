@@ -140,6 +140,21 @@ class IntegrationPropertyRepository {
       .execute();
   }
 
+  // Takes over a stale claim only if nobody touched it since it was read, so of two requests that find
+  // the same stale claim exactly one wins (design note D2, #4031 review).
+  async takeOverClaim({ claimId, expectedUpdatedAt, now }) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationProperty)
+      .set({ updatedAt: now })
+      .where("id = :id", { id: claimId })
+      .andWhere("status = :s", { s: "PROVISIONING" })
+      .andWhere('"updatedAt" = :expected', { expected: expectedUpdatedAt })
+      .execute();
+    return result?.affected === 1;
+  }
+
   // Runs on the caller's transaction, together with the full sync (design note D2).
   async activateClaim(manager, claimId) {
     await manager

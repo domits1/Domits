@@ -94,6 +94,29 @@ describe("IntegrationPropertyRepository claim", () => {
     expect(write.andWhere).toHaveBeenCalledWith("status = :s", { s: "PROVISIONING" });
   });
 
+  // #4031 review: only one of two requests that find the same stale claim may take it over.
+  test.each([
+    [1, true],
+    [0, false],
+  ])("taking over a claim that updated %p rows answers %p", async (affected, expected) => {
+    const write = {
+      update: jest.fn(() => write),
+      set: jest.fn(() => write),
+      where: jest.fn(() => write),
+      andWhere: jest.fn(() => write),
+      execute: jest.fn(async () => ({ affected })),
+    };
+    Database.getInstance.mockResolvedValue({ createQueryBuilder: () => write });
+
+    const won = await new IntegrationPropertyRepository().takeOverClaim({ claimId: "claim-1", expectedUpdatedAt: 5, now: 9 });
+
+    expect(won).toBe(expected);
+    expect(write.set).toHaveBeenCalledWith({ updatedAt: 9 });
+    expect(write.where).toHaveBeenCalledWith("id = :id", { id: "claim-1" });
+    expect(write.andWhere).toHaveBeenCalledWith("status = :s", { s: "PROVISIONING" });
+    expect(write.andWhere).toHaveBeenCalledWith('"updatedAt" = :expected', { expected: 5 });
+  });
+
   // The partial unique key decides the race; the insert does not look first.
   test("inserts a PROVISIONING row without a Channex property yet", async () => {
     const { repository, write } = setup();

@@ -19,6 +19,7 @@ const build = ({ account = null, inUse = null, insertClaim = jest.fn().mockResol
   const props = {
     findInUseByAccountAndListing: jest.fn().mockResolvedValue(inUse),
     insertClaim,
+    takeOverClaim: jest.fn().mockResolvedValue(true),
   };
   const service = new ChannexProvisioningService({
     accounts,
@@ -128,14 +129,49 @@ describe("ChannexProvisioningService.claimListing: the claim (D2)", () => {
   });
 
   // A claim left by an attempt that stopped halfway is continued, not claimed again.
-  test("continues an earlier PROVISIONING claim", async () => {
-    const earlier = { id: "claim-1", status: "PROVISIONING", externalPropertyId: "channex-property-1" };
-    const { service, props, createChannexObjects } = build({ account, inUse: earlier });
+  // #4031 review: a claim is only taken over when its attempt has stopped. A request that is still
+  // running keeps updating the claim (each saved id), and the route ends within 29 s, so a claim
+  // untouched for a minute belongs to an attempt that died.
+  test("takes over a PROVISIONING claim untouched for a minute, with a conditional update", async () => {
+    const stale = { id: "claim-1", status: "PROVISIONING", externalPropertyId: "channex-property-1", updatedAt: NOW - 61_000 };
+    const { service, props, createChannexObjects } = build({ account, inUse: stale });
 
     await service.claimListing({ userId: "host-1", listing, place });
 
     expect(props.insertClaim).not.toHaveBeenCalled();
-    expect(createChannexObjects).toHaveBeenCalledWith(expect.objectContaining({ claim: earlier }));
+    expect(props.takeOverClaim).toHaveBeenCalledWith({ claimId: "claim-1", expectedUpdatedAt: NOW - 61_000, now: NOW });
+    expect(createChannexObjects).toHaveBeenCalledWith(
+      expect.objectContaining({ claim: expect.objectContaining({ id: "claim-1", externalPropertyId: "channex-property-1" }) })
+    );
+  });
+
+  test("a claim another request is still working on answers 409, without calling Channex", async () => {
+    const running = { id: "claim-1", status: "PROVISIONING", externalPropertyId: null, updatedAt: NOW - 5_000 };
+    const { service, props, createChannexObjects } = build({ account, inUse: running });
+
+    const result = await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(result).toEqual({
+      statusCode: 409,
+      response: expect.objectContaining({ errorCode: "DISTRIBUTION_ALREADY_IN_PROGRESS" }),
+    });
+    expect(props.takeOverClaim).not.toHaveBeenCalled();
+    expect(createChannexObjects).not.toHaveBeenCalled();
+  });
+
+  // Two requests that both find the same stale claim: the conditional update lets one win.
+  test.each([
+    ["no row updated", (props) => props.takeOverClaim.mockResolvedValue(false)],
+    ["a commit conflict", (props) => props.takeOverClaim.mockRejectedValue(commitConflict())],
+  ])("losing the takeover (%s) answers 409", async (_label, lose) => {
+    const stale = { id: "claim-1", status: "PROVISIONING", externalPropertyId: null, updatedAt: NOW - 61_000 };
+    const { service, props, createChannexObjects } = build({ account, inUse: stale });
+    lose(props);
+
+    const result = await service.claimListing({ userId: "host-1", listing, place });
+
+    expect(result.response.errorCode).toBe("DISTRIBUTION_ALREADY_IN_PROGRESS");
+    expect(createChannexObjects).not.toHaveBeenCalled();
   });
 
   test("a listing that is already connected answers so, without calling Channex", async () => {
