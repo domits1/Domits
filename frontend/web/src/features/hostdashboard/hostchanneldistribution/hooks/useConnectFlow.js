@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createConnectSession } from "../services/hostDistributionApi";
+import { classifyConnectSessionError } from "../utils/connectErrors";
 
 export const CONNECT_STEP = {
   IDLE: "idle",
@@ -8,8 +9,6 @@ export const CONNECT_STEP = {
   IFRAME: "iframe",
 };
 
-export const CONNECT_ERROR_MESSAGE = "We couldn't start the connection. Try again.";
-
 const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, propertyId: null, url: null };
 
 // The connect flow for a listing whose distribution is already set up:
@@ -17,10 +16,12 @@ const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, propertyId: null, u
 //   idle ──start──▶ checklist ──continue──▶ connecting ──session──▶ iframe ──close──▶ idle
 //     ▲                │                         │                                     │
 //     └────cancel──────┘                         └──session fails (error)──▶ idle      └▶ refresh(propertyId)
+//                                                  (404 or 409 also rereadListings)
 //
 // The checklist comes first and nothing is requested before the host has confirmed it.
-// `refresh` is useHostDistribution's, so closing the iframe reads the channels again once.
-export function useConnectFlow({ refresh }) {
+// `refresh` and `rereadListings` are useHostDistribution's: closing the iframe reads the channels again
+// once, and an answer that says the listing changed reads the listings again.
+export function useConnectFlow({ refresh, rereadListings }) {
   const [flow, setFlow] = useState(IDLE_FLOW);
   const [errorMessage, setErrorMessage] = useState("");
   // The step as the latest event handler sees it. State alone lags a double click by one render,
@@ -70,10 +71,12 @@ export function useConnectFlow({ refresh }) {
     } catch (err) {
       console.error("Failed to create a Channex connect session:", err);
       if (!mountedRef.current) return;
-      setErrorMessage(CONNECT_ERROR_MESSAGE);
+      const { reread, message } = classifyConnectSessionError(err);
+      setErrorMessage(message);
       moveTo(IDLE_FLOW);
+      if (reread) rereadListings();
     }
-  }, [flow, moveTo]);
+  }, [flow, moveTo, rereadListings]);
 
   // Every way out of the iframe lands here, whether or not the host finished in Channex.
   const closeIframe = useCallback(() => {

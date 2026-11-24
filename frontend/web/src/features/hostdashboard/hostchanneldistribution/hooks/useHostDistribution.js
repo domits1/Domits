@@ -57,6 +57,19 @@ export function useHostDistribution() {
     }));
   }, []);
 
+  // Reads the listings again without the loading state, for an answer that says the listing may have
+  // changed. A failed read keeps what the host sees and only reaches the console.
+  const rereadListings = useCallback(async () => {
+    try {
+      const { listings } = await getHostListings();
+      if (!Array.isArray(listings)) throw new Error("The listings answer did not contain a list.");
+      if (!mountedRef.current) return;
+      setResult({ listings, loadState: HOST_DISTRIBUTION_STATE.LOADED });
+    } catch (err) {
+      console.error("Failed to read the host listings again:", err);
+    }
+  }, []);
+
   const refresh = useCallback(async (propertyId) => {
     setRefreshingPropertyId(propertyId);
     setRefreshFailedPropertyId(null);
@@ -78,6 +91,7 @@ export function useHostDistribution() {
     listings: result.listings,
     loadState: result.loadState,
     reload,
+    rereadListings,
     refresh,
     refreshingPropertyId,
     refreshFailedPropertyId,

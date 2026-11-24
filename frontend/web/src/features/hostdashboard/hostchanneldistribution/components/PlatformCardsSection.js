@@ -24,9 +24,10 @@ const DISTRIBUTION_READY = "READY";
 // The three OTA cards of the picked listing (design note #3954, D7), or the notice that explains why
 // there are none. Orchestration only: what each card says lives in utils/distributionStates.js.
 function PlatformCardsSection() {
-  const { listings, loadState, reload, refresh, refreshingPropertyId, refreshFailedPropertyId } = useHostDistribution();
+  const { listings, loadState, reload, rereadListings, refresh, refreshingPropertyId, refreshFailedPropertyId } =
+    useHostDistribution();
   const [pickedPropertyId, setPickedPropertyId] = useState("");
-  const connectFlow = useConnectFlow({ refresh });
+  const connectFlow = useConnectFlow({ refresh, rereadListings });
 
   if (loadState === HOST_DISTRIBUTION_STATE.LOADING) {
     return <output className="host-chdist__empty-text">{LOADING_MESSAGE}</output>;

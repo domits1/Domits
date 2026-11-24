@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
-import { CONNECT_ERROR_MESSAGE, CONNECT_STEP, useConnectFlow } from "./useConnectFlow";
+import { CONNECT_STEP, useConnectFlow } from "./useConnectFlow";
+import { CONNECT_ERROR_MESSAGE } from "../utils/connectErrors";
 import { createConnectSession } from "../services/hostDistributionApi";
 
 jest.mock("../services/hostDistributionApi");
@@ -19,8 +20,9 @@ const deferred = () => {
 
 const setup = () => {
   const refresh = jest.fn();
-  const hook = renderHook(() => useConnectFlow({ refresh }));
-  return { ...hook, refresh };
+  const rereadListings = jest.fn();
+  const hook = renderHook(() => useConnectFlow({ refresh, rereadListings }));
+  return { ...hook, refresh, rereadListings };
 };
 
 // Walks to the iframe step and returns the hook.
@@ -89,7 +91,7 @@ describe("useConnectFlow", () => {
 
   test("a session failure returns to idle with a message and never reaches the iframe", async () => {
     createConnectSession.mockRejectedValue(new Error("boom"));
-    const { result, refresh } = setup();
+    const { result, refresh, rereadListings } = setup();
     act(() => result.current.start({ platform: PLATFORM, propertyId: "p1" }));
 
     await act(async () => result.current.continueFromChecklist());
@@ -99,6 +101,38 @@ describe("useConnectFlow", () => {
     expect(result.current.errorMessage).toBe(CONNECT_ERROR_MESSAGE);
     expect(console.error).toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
+    expect(rereadListings).not.toHaveBeenCalled();
+  });
+
+  test("a listing that is not turned on says so and reads the listings again once", async () => {
+    const notTurnedOn = Object.assign(new Error("conflict"), {
+      status: 409,
+      responseBody: { errorCode: "DISTRIBUTION_NOT_TURNED_ON" },
+    });
+    createConnectSession.mockRejectedValue(notTurnedOn);
+    const { result, rereadListings } = setup();
+    act(() => result.current.start({ platform: PLATFORM, propertyId: "p1" }));
+
+    await act(async () => result.current.continueFromChecklist());
+
+    expect(result.current.step).toBe(CONNECT_STEP.IDLE);
+    expect(result.current.errorMessage).toBe("This listing isn't turned on yet.");
+    expect(rereadListings).toHaveBeenCalledTimes(1);
+  });
+
+  test("a listing that is not the host's says so and does not read the listings again", async () => {
+    const notOwned = Object.assign(new Error("forbidden"), {
+      status: 403,
+      responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_OWNED" },
+    });
+    createConnectSession.mockRejectedValue(notOwned);
+    const { result, rereadListings } = setup();
+    act(() => result.current.start({ platform: PLATFORM, propertyId: "p1" }));
+
+    await act(async () => result.current.continueFromChecklist());
+
+    expect(result.current.errorMessage).toBe("You don't have access to this listing.");
+    expect(rereadListings).not.toHaveBeenCalled();
   });
 
   test("starting again clears the earlier failure message", async () => {

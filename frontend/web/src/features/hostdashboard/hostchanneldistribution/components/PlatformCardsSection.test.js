@@ -151,6 +151,31 @@ describe("PlatformCardsSection", () => {
       expect(screen.queryByTitle("Connect Vrbo through Channex")).not.toBeInTheDocument();
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(refreshChannels).not.toHaveBeenCalled();
+      expect(getHostListings).toHaveBeenCalledTimes(1);
+    });
+
+    test("a listing that is not turned on says so and the listings are read again without a loading flash", async () => {
+      const user = userEvent.setup();
+      const notTurnedOn = Object.assign(new Error("conflict"), {
+        status: 409,
+        responseBody: { errorCode: "DISTRIBUTION_NOT_TURNED_ON" },
+      });
+      createConnectSession.mockRejectedValue(notTurnedOn);
+      await openChecklist(user);
+      const secondRead = deferred();
+      getHostListings.mockReturnValue(secondRead.promise);
+      await tickAll(user);
+
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("This listing isn't turned on yet.");
+      await waitFor(() => expect(getHostListings).toHaveBeenCalledTimes(2));
+      expect(screen.queryByText("Loading your listings…")).not.toBeInTheDocument();
+      expect(within(cardFor("Booking.com")).getByText("Live")).toBeInTheDocument();
+
+      const notEnabled = { ...LIVE_LISTING, distribution: { status: "NOT_ENABLED", missing: [] }, channels: [] };
+      secondRead.resolve({ listings: [notEnabled] });
+      await waitFor(() => expect(within(cardFor("Booking.com")).getByText("Not connected")).toBeInTheDocument());
     });
 
     test.each([
