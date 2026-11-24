@@ -20,6 +20,13 @@ import { WebsiteTemplateSurface } from "./rendering/WebsiteTemplatePreview";
 import { applyWebsiteDraftContentOverrides } from "./rendering/websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides, resolveWebsiteBackgroundColor } from "./rendering/websiteDraftThemeOverrides";
 import { MAIN_SITE_PAGE_KEY, resolveSitePageFromPath, resolveSitePageTitle } from "./rendering/websitePages";
+import {
+  buildSitePropertyModel,
+  normalizeServedSiteProperties,
+  resolveSitePropertyPageTitle,
+  resolveSitePropertyRoute,
+} from "./rendering/websiteSiteProperties";
+import { SITE_PROPERTY_PAGES } from "./rendering/WebsiteSitePropertyPage";
 import PageNotFound from "../../../utils/error/404NotFound";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
 import {
@@ -203,15 +210,39 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
       renderPayload?.site?.templateKey || resolution?.templateKey || ""
     );
   }, [renderPayload, resolution?.templateKey]);
+  const servedSiteProperties = useMemo(
+    () => normalizeServedSiteProperties(renderPayload?.siteProperties),
+    [renderPayload?.siteProperties]
+  );
 
+  const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const isCurrentRequestSettled = settledRequestKeyRef.current === requestKey;
   const activePageKey = resolveSitePageFromPath(routeSitePath, isCurrentRequestSettled ? publicModel?.sitePages : null);
+  const sitePropertyRoute = resolveSitePropertyRoute(routeSitePath, isCurrentRequestSettled ? servedSiteProperties : []);
+  const activeSiteProperty = sitePropertyRoute?.property || null;
+  const sitePropertyModel = useMemo(
+    () =>
+      activeSiteProperty && publicModel
+        ? buildSitePropertyModel({
+            siteModel: publicModel,
+            property: activeSiteProperty,
+            contentOverrides: renderPayload?.contentOverrides,
+            themeOverrides: renderPayload?.themeOverrides,
+            templateKey: templateId,
+          })
+        : null,
+    [activeSiteProperty, publicModel, renderPayload?.contentOverrides, renderPayload?.themeOverrides, templateId]
+  );
+  const isActivePageFound = sitePropertyRoute ? sitePropertyRoute.isFound : activePageKey !== MAIN_SITE_PAGE_KEY;
+  const isMissingSiteProperty = sitePropertyRoute?.isFound === false;
   const isMissingRequiredPage =
-    requiresActivePage && (!isCurrentRequestSettled || (!isLoading && activePageKey === MAIN_SITE_PAGE_KEY));
-  const activePageTitle = resolveSitePageTitle(publicModel?.sitePages, activePageKey);
+    isMissingSiteProperty || (requiresActivePage && (!isCurrentRequestSettled || (!isLoading && !isActivePageFound)));
+  const pageModel = sitePropertyModel || publicModel;
+  const activePageTitle = sitePropertyModel
+    ? resolveSitePropertyPageTitle(sitePropertyModel)
+    : resolveSitePageTitle(publicModel?.sitePages, activePageKey);
   const pageBasePath = routeDomain ? `/website-live/${encodeURIComponent(requestedDomain)}` : "";
   const pageSearch = requestedSiteId ? `?siteId=${encodeURIComponent(requestedSiteId)}` : "";
-  const templateId = renderPayload?.site?.templateKey || resolution?.templateKey || "";
   const TemplateComponent = getWebsiteTemplateRenderer(templateId);
   const canRenderPublishedSite = !loadError && publicModel && TemplateComponent;
   const isPanoramaTemplate = templateId === "panorama-landing";
@@ -249,7 +280,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
     const loadedDomain = normalizeWebsiteDomain(renderPayload?.domain?.domain || "");
     return !loadedDomain || loadedDomain === requestedDomain;
   }, [renderPayload, requestedDomain, requestedSiteId]);
-  const headTagsModel = isRequestedSiteLoaded ? publicModel : null;
+  const headTagsModel = isRequestedSiteLoaded ? pageModel : null;
   const websiteHeadTags = useMemo(() => {
     if (!isDirectBookingWebsiteHost) {
       return buildWebsiteHeadTags({ model: headTagsModel, isDirectBookingHost: false, pageTitle: activePageTitle });
@@ -261,7 +292,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
 
     if (canRenderPublishedSite) {
       return buildWebsiteHeadTags({
-        model: publicModel,
+        model: pageModel,
         fallbackTitle: unavailableWebsiteTitle,
         pageTitle: activePageTitle,
       });
@@ -284,7 +315,7 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
     isLoading,
     isMissingPublishedWebsite,
     isRequestedSiteLoaded,
-    publicModel,
+    pageModel,
     unavailableWebsiteTitle,
   ]);
 
@@ -295,9 +326,9 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
 
   useEffect(() => {
     if (onSitePagesLoaded && !isLoading && isCurrentRequestSettled) {
-      onSitePagesLoaded(publicModel?.sitePages);
+      onSitePagesLoaded(publicModel?.sitePages, servedSiteProperties);
     }
-  }, [isCurrentRequestSettled, isLoading, onSitePagesLoaded, publicModel]);
+  }, [isCurrentRequestSettled, isLoading, onSitePagesLoaded, publicModel, servedSiteProperties]);
 
   const clearRefreshRetryWindow = useCallback(() => {
     if (refreshRetryIntervalRef.current) {
@@ -435,21 +466,35 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
     const publicPreviewCanvasClassName = `${styles.publicPreviewCanvas} ${
       isPanoramaTemplate ? styles.publicPreviewCanvasWide : ""
     } ${isPanoramaTemplate ? styles.publicPreviewCanvasFlush : ""}`.trim();
+    const quoteContext = renderPayload?.site?.id ? { siteId: String(renderPayload.site.id) } : null;
+    const SitePropertyPage = sitePropertyModel ? SITE_PROPERTY_PAGES[sitePropertyRoute.pageKind] : null;
 
     return (
       <main className={publicPreviewPageClassName} style={publishedSitePageStyle}>
         <div className={publicPreviewCanvasClassName}>
-          <WebsiteTemplateSurface
-            templateId={templateId}
-            model={publicModel}
-            showContactWidget={publicModel.visibility?.chatWidget ?? true}
-            showBrowserChrome={false}
-            enableScrollReveal={isPanoramaTemplate}
-            quoteContext={renderPayload?.site?.id ? { siteId: String(renderPayload.site.id) } : null}
-            activePageKey={activePageKey}
-            pageBasePath={pageBasePath}
-            pageSearch={pageSearch}
-          />
+          {SitePropertyPage ? (
+            <SitePropertyPage
+              pageKind={sitePropertyRoute.pageKind}
+              templateId={templateId}
+              model={sitePropertyModel}
+              property={activeSiteProperty}
+              quoteContext={quoteContext}
+              pageBasePath={pageBasePath}
+              pageSearch={pageSearch}
+            />
+          ) : (
+            <WebsiteTemplateSurface
+              templateId={templateId}
+              model={publicModel}
+              showContactWidget={publicModel.visibility?.chatWidget ?? true}
+              showBrowserChrome={false}
+              enableScrollReveal={isPanoramaTemplate}
+              quoteContext={quoteContext}
+              activePageKey={activePageKey}
+              pageBasePath={pageBasePath}
+              pageSearch={pageSearch}
+            />
+          )}
         </div>
       </main>
     );

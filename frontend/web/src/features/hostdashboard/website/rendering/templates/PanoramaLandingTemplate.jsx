@@ -382,14 +382,17 @@ const buildPanoramaPageState = (sitePages, activePageKey) => {
   };
 };
 
-const buildPanoramaPageNavItems = (pageState, pageBasePath, pageSearch, viewState) => {
+const buildPanoramaPageNavItems = (pageState, pageBasePath, pageSearch, viewState, currentPageHref) => {
   const isMainPage = pageState.currentPage.key === MAIN_SITE_PAGE_KEY;
   const mainPageHref = buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY, pageSearch);
   const bookHref = isMainPage ? PANORAMA_AVAILABILITY_ANCHOR : `${mainPageHref}${PANORAMA_AVAILABILITY_ANCHOR}`;
 
   return [
     ...pageState.menuItems.map((item) => ({
-      href: buildSitePageHref(pageBasePath, item.key, pageSearch),
+      href:
+        item.key === pageState.currentPage.key && currentPageHref
+          ? currentPageHref
+          : buildSitePageHref(pageBasePath, item.key, pageSearch),
       label: item.navLabel,
       isPageLink: true,
       isCurrentPage: item.key === pageState.currentPage.key,
@@ -1264,6 +1267,7 @@ export default function PanoramaLandingTemplate({
   activePageKey = MAIN_SITE_PAGE_KEY,
   pageBasePath = "",
   pageSearch = "",
+  currentPageHref = "",
 }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const pageState = useMemo(
@@ -1286,7 +1290,7 @@ export default function PanoramaLandingTemplate({
   const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar, currentPageKey);
   const navItems = pageState
-    ? buildPanoramaPageNavItems(pageState, pageBasePath, pageSearch, viewState)
+    ? buildPanoramaPageNavItems(pageState, pageBasePath, pageSearch, viewState, currentPageHref)
     : buildPanoramaNavItems(model, viewState);
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
     if (!canOpenGalleryBrowser) {
@@ -1557,4 +1561,5 @@ PanoramaLandingTemplate.propTypes = {
   activePageKey: PropTypes.string,
   pageBasePath: PropTypes.string,
   pageSearch: PropTypes.string,
+  currentPageHref: PropTypes.string,
 };
