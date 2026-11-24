@@ -7,6 +7,7 @@ import ListingDistributionRepository from "../repositories/listingDistributionRe
 import { channelDisplayLabel } from "../utils/channelDisplayLabel.js";
 import { refuseUnlessHostListing } from "../utils/hostListingAccess.js";
 import { listingDistributionReadiness } from "../utils/listingDistributionReadiness.js";
+import { TIMEZONE_PROBLEM, resolveListingTimezone } from "../utils/listingTimezone.js";
 
 // The listings of the Distribution tab, in the shape the frontend cards read (design note D7, section 6).
 // Channex is the source of truth for the OTAs; Domits keeps no channel table until disconnect (D5) needs one.
@@ -17,6 +18,14 @@ const CHANNEL = "CHANNEX";
 const ACTIVE = "ACTIVE";
 const PROVISIONING = "PROVISIONING";
 const DISTRIBUTION_STATUS = Object.freeze({ NOT_ENABLED: "NOT_ENABLED", PROVISIONING: "PROVISIONING", READY: "READY" });
+
+// The tab asks for a timezone before turning on only where the country has zones with different times (D4).
+const timezoneQuestionOf = (listing) => {
+  const resolved = resolveListingTimezone({ country: listing.location?.country });
+  return resolved.problem === TIMEZONE_PROBLEM.CHOICE_NEEDED
+    ? { required: true, options: resolved.options }
+    : { required: false, options: [] };
+};
 
 const distributionStatusOf = (mapping) => {
   if (mapping?.status === ACTIVE && mapping.externalPropertyId) return DISTRIBUTION_STATUS.READY;
@@ -34,6 +43,15 @@ export default class ChannexDistributionListingsService {
     credentialStore = new ChannexCredentialStore(),
   } = {}) {
     Object.assign(this, { listings, accounts, props, outbox, channex, credentialStore });
+  }
+
+  async listHostListings({ userId }) {
+    const [hostListings, account] = await Promise.all([
+      this.listings.findListingsByHost(userId),
+      this.accounts.findByUserIdAndChannel(userId, CHANNEL),
+    ]);
+    const listings = await Promise.all(hostListings.map((listing) => this.describeListing(listing, account)));
+    return ok({ listings });
   }
 
   async refreshListing({ userId, domitsPropertyId }) {
@@ -54,6 +72,7 @@ export default class ChannexDistributionListingsService {
       title: listing.title,
       readiness: { ready: readiness.ready, missing: readiness.missing ?? [] },
       distribution: { status },
+      timezone: timezoneQuestionOf(listing),
       channels: [],
     };
     if (status !== DISTRIBUTION_STATUS.READY) return described;

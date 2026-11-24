@@ -110,3 +110,36 @@ describe("ListingDistributionRepository.findListing", () => {
     expect(sql).toContain('LEFT JOIN "test"."property_pricing"');
   });
 });
+
+// Section 6 (#506): GET /host/listings shows every listing of the signed-in host, except archived ones.
+describe("ListingDistributionRepository.findListingsByHost", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test("returns every listing of the host in the same shape as findListing", async () => {
+    const { repository } = setup([listingRow(), listingRow({ id: "property-2", title: "Beach House" })]);
+
+    const listings = await repository.findListingsByHost("host-1");
+
+    expect(listings.map((listing) => listing.propertyId)).toEqual(["property-1", "property-2"]);
+    expect(listings[0]).toEqual(await repository.findListing("property-1"));
+  });
+
+  test("reads only the host's own listings, leaves out archived ones, sorted by title", async () => {
+    const { repository, client } = setup([]);
+
+    await repository.findListingsByHost("host-1");
+
+    const [sql, params] = client.query.mock.calls[0];
+    expect(sql).toMatch(/WHERE p\.hostid = \$1/);
+    expect(sql).toMatch(/p\.status <> 'ARCHIVED'/);
+    expect(sql).toMatch(/ORDER BY p\.title/);
+    expect(params).toEqual(["host-1"]);
+  });
+
+  test("a host without listings gets an empty list", async () => {
+    const { repository } = setup([]);
+
+    await expect(repository.findListingsByHost("host-1")).resolves.toEqual([]);
+  });
+});
+
