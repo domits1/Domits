@@ -43,6 +43,7 @@ function fakeBookings({ properties }) {
     rows,
     calls,
     failNextCreate: null,
+    failCreateOf: null,
     getDomitsPropertyContext: async (propertyId) => properties[propertyId] ?? null,
     getBookingById: async (id) => rows.get(id) ?? null,
     async createExternalBooking(input) {
@@ -50,6 +51,9 @@ function fakeBookings({ properties }) {
         const error = this.failNextCreate;
         this.failNextCreate = null;
         throw error;
+      }
+      if (this.failCreateOf === input.bookingId) {
+        throw new Error("connection reset");
       }
       calls.create.push(input);
       rows.set(input.bookingId, {
@@ -387,4 +391,35 @@ describe("SiteMinderReservationImporter", () => {
     expect(bookings.calls.update[0].channexChanges.map((change) => change.domitsPropertyId)).toEqual(["property-a", "property-a"]);
   });
 
+  test("recovers a reservation for two villas whose second room failed, without a second booking for the first", async () => {
+    const twoVillas = reservation({ rooms: [room(), room({ roomTypeCode: "VILLA-B" })] });
+    bookings.failCreateOf = bookingIdOf("SM-1:VILLA-B:1");
+
+    await expect(importer.importReservation(twoVillas)).rejects.toThrow("connection reset");
+    expect(links.rows).toHaveLength(0);
+
+    bookings.failCreateOf = null;
+    const result = await importer.importReservation(twoVillas);
+
+    expect(bookings.calls.create.map((call) => call.bookingId)).toEqual([
+      bookingIdOf("SM-1:VILLA-A:1"),
+      bookingIdOf("SM-1:VILLA-B:1"),
+    ]);
+    expect(bookings.calls.update.map((call) => call.bookingId)).toEqual([bookingIdOf("SM-1:VILLA-A:1")]);
+    expect(bookings.rows.size).toBe(2);
+    expect(roomKeysOf(links.rows[0])).toEqual(["SM-1:VILLA-A:1", "SM-1:VILLA-B:1"]);
+    expect(result.confirmation.bookingId).toBe(bookingIdOf("SM-1:VILLA-A:1"));
+  });
+
+  test("books a room again when a later change adds it back after an earlier change removed it", async () => {
+    const villaB = room({ roomTypeCode: "VILLA-B" });
+    await importer.importReservation(reservation({ rooms: [room(), villaB] }));
+    await importer.importReservation(reservation({ status: "Modify", messageId: "msg-2", rooms: [room()] }));
+    await importer.importReservation(reservation({ status: "Modify", messageId: "msg-3", rooms: [room(), villaB] }));
+
+    expect(bookings.calls.cancel.map((call) => call.bookingId)).toEqual([bookingIdOf("SM-1:VILLA-B:1")]);
+    expect(bookings.calls.update.map((call) => call.bookingId)).toContain(bookingIdOf("SM-1:VILLA-B:1"));
+    expect(bookings.rows.get(bookingIdOf("SM-1:VILLA-B:1")).status).toBe("Paid");
+    expect(roomKeysOf(links.rows[0])).toEqual(["SM-1:VILLA-A:1", "SM-1:VILLA-B:1"]);
+  });
 });
