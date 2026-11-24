@@ -1,9 +1,7 @@
 // The connect screen runs inside our page, so the address the backend sends is checked before it
-// becomes an iframe source: https only, a Channex host, no credentials in the address.
-//
-// TO CONFIRM WITH ENES: the hosts. The repo uses app.channex.io and staging.channex.io; any other
-// subdomain of channex.io is accepted too until Enes confirms the exact list.
-const CHANNEX_DOMAIN = "channex.io";
+// becomes an iframe source: https only, one of the two hosts Channex serves it from, and no
+// credentials in the address.
+const CHANNEX_CONNECT_HOSTS = new Set(["app.channex.io", "staging.channex.io"]);
 
 export function isChannexUrl(value) {
   if (typeof value !== "string") return false;
@@ -19,6 +17,5 @@ export function isChannexUrl(value) {
   if (url.protocol !== "https:") return false;
   if (url.username || url.password) return false;
 
-  const host = url.hostname.toLowerCase();
-  return host === CHANNEX_DOMAIN || host.endsWith(`.${CHANNEX_DOMAIN}`);
+  return CHANNEX_CONNECT_HOSTS.has(url.hostname);
 }
