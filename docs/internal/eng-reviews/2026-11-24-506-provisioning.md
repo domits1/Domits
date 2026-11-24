@@ -1,6 +1,6 @@
 # feat(channex): provision a host's listing in Channex (#506)
 
-Pull request: not opened yet
+Pull request: #4031
 Issue: #506
 Reviewed commits: 93cf9c7d0 (3a timezone), e4e306761 (3b payloads), 54bb0a863 (3c create calls), 9f134ffb3 (3d-1 guards), 137fec972 (3d-2 account row and claim), aab09f2eb (3d-3 look before create), fafa5ac57 (3d-4 finish)
 Result: 1 blocking finding (P1), fixed before its commit; the rest accepted
