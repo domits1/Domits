@@ -13,6 +13,7 @@ export const AUTOMATION_STATUSES = new Set(["DRAFT", "ACTIVE", "PAUSED"]);
 export const OFFSET_UNITS = new Set(["MINUTES", "HOURS", "DAYS"]);
 export const DELIVERY_STATUSES = new Set(["SCHEDULED", "PROCESSING", "SENT", "FAILED", "CANCELLED"]);
 export const OUTBOX_EVENT_VERSION = 1;
+export const BOOKING_DATES_CHANGED_EVENT = "BOOKING_DATES_CHANGED";
 export const APPROVED_VARIABLES = Object.freeze([
   "guestName",
   "propertyName",
