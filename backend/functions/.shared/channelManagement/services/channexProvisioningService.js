@@ -1,11 +1,15 @@
 import { randomUUID } from "node:crypto";
 
+import { withDsqlRetry } from "../../dsqlRetry.js";
+import Database from "../../integrations/ORM/index.js";
+
 import IntegrationAccountRepository from "../../integrations/repositories/integrationAccountRepository.js";
 import IntegrationPropertyRepository from "../../integrations/repositories/integrationPropertyRepository.js";
 import IntegrationRatePlanRepository from "../../integrations/repositories/integrationRatePlanRepository.js";
 import IntegrationRoomTypeRepository from "../../integrations/repositories/integrationRoomTypeRepository.js";
 import ChannexCredentialStore from "../providers/channex/credentialStore.js";
 import ChannexProviderClient from "../providers/channex/providerClient.js";
+import ChannexAriOutboxWriter from "./channexAriOutboxWriter.js";
 import ListingDistributionRepository from "../repositories/listingDistributionRepository.js";
 import { listingDistributionReadiness } from "../utils/listingDistributionReadiness.js";
 import { TIMEZONE_PROBLEM, resolveListingTimezone } from "../utils/listingTimezone.js";
@@ -20,7 +24,8 @@ import {
 //   provisionListing
 //     ├─ guards: listing exists ▶ host owns it ▶ ready (D3) ▶ timezone known (D4)
 //     └─ claimListing: account row (D8) ▶ claim (PROVISIONING row) ▶ createChannexObjects
-//                                                                      look-before-create ×3 ▶ mapping ACTIVE + full sync
+//                                                                      look-before-create ×3 ▶ finishProvisioning:
+//                                                                      mapping ACTIVE + full sync, one transaction
 //
 // Each guard answers before anything is claimed or sent to Channex, and names what the host must fix.
 
@@ -57,11 +62,26 @@ export default class ChannexProvisioningService {
     ratePlans = new IntegrationRatePlanRepository(),
     channex = new ChannexProviderClient(),
     credentialStore = new ChannexCredentialStore(),
+    outbox = new ChannexAriOutboxWriter(),
+    database = Database,
     credentialsRef = process.env.CHANNEX_PROVISIONING_CREDENTIALS_REF,
     now = () => Date.now(),
     newId = () => randomUUID(),
   } = {}) {
-    Object.assign(this, { listings, accounts, props, roomTypes, ratePlans, channex, credentialStore, credentialsRef, now, newId });
+    Object.assign(this, {
+      listings,
+      accounts,
+      props,
+      roomTypes,
+      ratePlans,
+      channex,
+      credentialStore,
+      outbox,
+      database,
+      credentialsRef,
+      now,
+      newId,
+    });
   }
 
   async provisionListing({ userId, domitsPropertyId, chosenTimezone }) {
@@ -282,8 +302,30 @@ export default class ChannexProvisioningService {
     };
   }
 
-  // Step 3d-4: mapping ACTIVE and the full sync, in one transaction.
-  async finishProvisioning() {
-    throw new Error("finishProvisioning is built in the next step of #506.");
+  // The claim becomes the live mapping and the full sync is queued in one transaction, so a listing is
+  // never live without its calendar and prices on the way. Activate first: the outbox writer only queues
+  // for an ACTIVE mapping. On failure nothing is half-saved; the next attempt adopts the Channex objects
+  // (look before create) and finishes.
+  async finishProvisioning({ claim, listing, externalPropertyId }) {
+    try {
+      const client = await this.database.getInstance();
+      const fullSyncQueued = await withDsqlRetry(() =>
+        client.transaction(async (manager) => {
+          await this.props.activateClaim(manager, claim.id);
+          return this.outbox.enqueueChannexFullSync(manager, { domitsPropertyId: listing.propertyId });
+        })
+      );
+      return ok({ status: "PROVISIONED", channexPropertyId: externalPropertyId, fullSyncQueued });
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: "CHANNEX_PROVISIONING_FINISH_FAILED",
+          domitsPropertyId: listing.propertyId,
+          claimId: claim.id,
+          error: error?.message ?? String(error),
+        })
+      );
+      return tryAgain();
+    }
   }
 }

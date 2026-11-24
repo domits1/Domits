@@ -76,6 +76,24 @@ describe("IntegrationPropertyRepository claim", () => {
     expect(write.andWhere).toHaveBeenCalledWith("status = :s", { s: "PROVISIONING" });
   });
 
+  // Runs inside the caller's transaction, together with the full sync (design note D2, step 3d-4).
+  test("activates a claim that is still PROVISIONING, on the caller's transaction", async () => {
+    const write = {
+      update: jest.fn(() => write),
+      set: jest.fn(() => write),
+      where: jest.fn(() => write),
+      andWhere: jest.fn(() => write),
+      execute: jest.fn(async () => undefined),
+    };
+    const manager = { createQueryBuilder: () => write };
+
+    await new IntegrationPropertyRepository().activateClaim(manager, "claim-1");
+
+    expect(write.set).toHaveBeenCalledWith(expect.objectContaining({ status: "ACTIVE" }));
+    expect(write.where).toHaveBeenCalledWith("id = :id", { id: "claim-1" });
+    expect(write.andWhere).toHaveBeenCalledWith("status = :s", { s: "PROVISIONING" });
+  });
+
   // The partial unique key decides the race; the insert does not look first.
   test("inserts a PROVISIONING row without a Channex property yet", async () => {
     const { repository, write } = setup();
