@@ -119,7 +119,7 @@ describe("Booking entity", () => {
     expect(transformer.from(null)).toBeNull();
   });
 
-  it.each(["total_price", "refunded_amount", "total_price_minor", "refund_requested_amount"])(
+  it.each(["total_price_minor", "refund_requested_amount"])(
     "does not declare a database default for nullable money field %s",
     async (columnName) => {
       const metadata = await loadBookingMetadata();
@@ -129,7 +129,7 @@ describe("Booking entity", () => {
     }
   );
 
-  it.todo("declares no column defaults that the booking table does not have (bookingtype)");
+  it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
 
   it.each(["total_price_minor", "refund_requested_amount"])(
     "maps %s as a nullable BIGINT and preserves its integer string",

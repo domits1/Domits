@@ -74,6 +74,7 @@ export const Booking = new EntitySchema({
       type: "double precision",
       name: "total_price",
       nullable: true,
+      default: 0,
     },
     total_price_minor: {
       type: "bigint",
@@ -98,6 +99,7 @@ export const Booking = new EntitySchema({
       type: "bigint",
       name: "refunded_amount",
       nullable: true,
+      default: 0,
     },
     refund_requested_amount: {
       type: "bigint",
