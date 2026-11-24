@@ -174,6 +174,60 @@ describe("useConnectFlow", () => {
     expect(createConnectSession).toHaveBeenCalledTimes(1);
   });
 
+  describe("reset", () => {
+    test("returns an open flow to idle, so it no longer counts as active", () => {
+      const { result } = setup();
+      act(() => result.current.start({ platform: PLATFORM, propertyId: "p1" }));
+      expect(result.current.isActive).toBe(true);
+
+      act(() => result.current.reset());
+
+      expect(result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(result.current.isActive).toBe(false);
+    });
+
+    test("drops a session answer that arrives afterwards, so no Channex screen opens", async () => {
+      const pending = deferred();
+      createConnectSession.mockReturnValue(pending.promise);
+      const { result } = setup();
+      act(() => result.current.start({ platform: PLATFORM, propertyId: "p1" }));
+      act(() => {
+        result.current.continueFromChecklist();
+      });
+      expect(result.current.step).toBe(CONNECT_STEP.CONNECTING);
+
+      act(() => result.current.reset());
+      await act(async () => pending.resolve({ iframeUrl: URL_OK }));
+
+      expect(result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(result.current.url).toBeNull();
+    });
+
+    test("drops a session failure that arrives afterwards, so no message appears", async () => {
+      const pending = deferred();
+      createConnectSession.mockReturnValue(pending.promise);
+      const { result, rereadListings } = setup();
+      act(() => result.current.start({ platform: PLATFORM, propertyId: "p1" }));
+      act(() => {
+        result.current.continueFromChecklist();
+      });
+
+      act(() => result.current.reset());
+      await act(async () => pending.reject(new Error("boom")));
+
+      expect(result.current.errorMessage).toBe("");
+      expect(rereadListings).not.toHaveBeenCalled();
+    });
+
+    test("does nothing while idle", () => {
+      const { result } = setup();
+
+      act(() => result.current.reset());
+
+      expect(result.current.step).toBe(CONNECT_STEP.IDLE);
+    });
+  });
+
   test("start is ignored while a flow is open", () => {
     const { result } = setup();
     act(() => result.current.start({ platform: PLATFORM, propertyId: "p1" }));

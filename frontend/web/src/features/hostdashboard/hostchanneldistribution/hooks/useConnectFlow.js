@@ -66,17 +66,25 @@ export function useConnectFlow({ refresh, rereadListings }) {
     moveTo({ step: CONNECT_STEP.CONNECTING, platform, propertyId, url: null });
     try {
       const { iframeUrl } = await createConnectSession({ propertyId });
-      if (!mountedRef.current) return;
+      // A reset while the session was being created ended this attempt: its answer must not open a screen.
+      if (!mountedRef.current || stepRef.current !== CONNECT_STEP.CONNECTING) return;
       moveTo({ step: CONNECT_STEP.IFRAME, platform, propertyId, url: iframeUrl });
     } catch (err) {
       console.error("Failed to create a Channex connect session:", err);
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || stepRef.current !== CONNECT_STEP.CONNECTING) return;
       const { reread, message } = classifyConnectSessionError(err);
       setErrorMessage(message);
       moveTo(IDLE_FLOW);
       if (reread) rereadListings();
     }
   }, [flow, moveTo, rereadListings]);
+
+  // For a section that reloaded or lost the flow's listing: its modals are gone, so the step goes with
+  // them. Otherwise the step would stay, and keep every switch locked with nothing on screen.
+  const reset = useCallback(() => {
+    if (stepRef.current === CONNECT_STEP.IDLE) return;
+    moveTo(IDLE_FLOW);
+  }, [moveTo]);
 
   // Every way out of the iframe lands here, whether or not the host finished in Channex.
   const closeIframe = useCallback(() => {
@@ -89,11 +97,13 @@ export function useConnectFlow({ refresh, rereadListings }) {
   return {
     step: flow.step,
     platform: flow.platform,
+    propertyId: flow.propertyId,
     url: flow.url,
     errorMessage,
     isActive: flow.step !== CONNECT_STEP.IDLE,
     start,
     cancel,
+    reset,
     continueFromChecklist,
     closeIframe,
   };

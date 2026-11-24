@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { HOST_DISTRIBUTION_STATE, useHostDistribution } from "../hooks/useHostDistribution";
 import {
   LISTING_VIEW,
@@ -28,6 +28,13 @@ function PlatformCardsSection() {
     useHostDistribution();
   const [pickedPropertyId, setPickedPropertyId] = useState("");
   const connectFlow = useConnectFlow({ refresh, rereadListings });
+  const { isActive: flowActive, propertyId: flowPropertyId, reset: resetFlow } = connectFlow;
+  const flowListingGone = flowActive && !listings.some((listing) => listing.propertyId === flowPropertyId);
+
+  // A reload or a vanished listing unmounts the flow's modals, so the flow ends with them.
+  useEffect(() => {
+    if (loadState !== HOST_DISTRIBUTION_STATE.LOADED || flowListingGone) resetFlow();
+  }, [loadState, flowListingGone, resetFlow]);
 
   if (loadState === HOST_DISTRIBUTION_STATE.LOADING) {
     return <output className="host-chdist__empty-text">{LOADING_MESSAGE}</output>;
