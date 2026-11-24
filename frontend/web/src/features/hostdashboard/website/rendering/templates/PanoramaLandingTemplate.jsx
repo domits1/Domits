@@ -18,7 +18,8 @@ import {
 import PanoramaPageLink from "./PanoramaPageLink";
 import { buildPanoramaContactContent } from "./panoramaContactContent";
 import PanoramaEliteSitePage from "./elite/PanoramaEliteSitePage";
-import { isEliteRestyledPage, resolveEliteHeaderTone } from "./elite/eliteSitePageContent";
+import EliteFooter from "./elite/EliteFooter";
+import { isEliteRestyledPage, resolveEliteHeaderTone, resolveEliteLocation } from "./elite/eliteSitePageContent";
 import {
   amenityPropType,
   amenitiesSectionPropType,
@@ -1276,7 +1277,7 @@ export default function PanoramaLandingTemplate({
   );
   const currentPageKey = pageState?.currentPage.key;
   const elitePageKey = isEliteRestyledPage(currentPageKey) ? currentPageKey : "";
-  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media, elitePageKey) : "";
+  const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media, elitePageKey) : "photo";
   const showsPageSection = (section) => !elitePageKey && (!pageState || pageState.sections.includes(section));
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [isGalleryBrowserOpen, setIsGalleryBrowserOpen] = useState(false);
@@ -1392,7 +1393,10 @@ export default function PanoramaLandingTemplate({
 
   return (
     <>
-      <article className={`${styles.templateSite} ${styles.templateSitePanorama}`.trim()}>
+      <article
+        className={`${styles.templateSite} ${styles.templateSitePanorama} ${
+          elitePageKey ? "" : styles.panoramaEliteHome
+        }`.trim()}>
         {viewState.showTopBar
           ? renderPanoramaTopBar({
               model,
@@ -1482,6 +1486,7 @@ export default function PanoramaLandingTemplate({
               shouldDeferContent: shouldDeferBelowFoldSections,
             })
           : null}
+        {elitePageKey ? null : <EliteFooter title={model.site.title} location={resolveEliteLocation(model)} />}
       </article>
       {canScrollAfterPageChange ? <PanoramaAvailabilityScrollAfterPageChange pageKey={currentPageKey} /> : null}
 
