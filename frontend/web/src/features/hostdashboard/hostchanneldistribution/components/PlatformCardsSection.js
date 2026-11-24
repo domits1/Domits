@@ -85,6 +85,7 @@ function PlatformCardsSection() {
   // flow's modals and leave the step stuck.
   const flowBusy = connectFlow.isActive || disconnectFlow.isActive;
   const canToggle = STARTABLE_STATUSES.includes(selected.distribution?.status) && !flowBusy;
+  const channelOf = (otaCode) => selected.channels?.find((candidate) => candidate.otaCode === otaCode);
   const handleToggle = ({ otaCode, turnOn }) => {
     const platform = PLATFORMS.find((candidate) => candidate.otaCode === otaCode);
     if (turnOn) {
@@ -92,7 +93,7 @@ function PlatformCardsSection() {
       connectFlow.start({ platform, listing: selected });
       return;
     }
-    const channel = selected.channels?.find((candidate) => candidate.otaCode === otaCode);
+    const channel = channelOf(otaCode);
     if (!channel) return;
     connectFlow.clearError();
     disconnectFlow.start({ platform, propertyId: selected.propertyId, channel });
@@ -135,7 +136,7 @@ function PlatformCardsSection() {
               platform={platform}
               state={describePlatformCard(selected, platform.otaCode, { turningOff: isTurningOff(platform.otaCode) })}
               onToggle={canToggle ? handleToggle : undefined}
-              turnOffEnabled
+              turnOffEnabled={Boolean(channelOf(platform.otaCode)?.channelId)}
             />
           ))}
           <div className="chdist-card__row">

@@ -547,6 +547,18 @@ describe("PlatformCardsSection", () => {
     };
     const confirmTurnOff = (user) => user.click(screen.getByRole("button", { name: "Turn off" }));
 
+    test("a switch that is on stays disabled for a channel without an id, so no turn-off can be requested", async () => {
+      const user = userEvent.setup();
+      const noId = { otaCode: "BookingCom", label: "LIVE" };
+      await renderListings([listing("p1", "Canal House", { channels: [noId, channel("Airbnb", "SYNCING")] })]);
+
+      expect(switchOf("Booking.com")).toBeDisabled();
+      await user.click(switchOf("Booking.com"));
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(disconnectChannel).not.toHaveBeenCalled();
+    });
+
     test("turning a switch that is on off opens the confirm for that platform, and requests nothing", async () => {
       const user = userEvent.setup();
 

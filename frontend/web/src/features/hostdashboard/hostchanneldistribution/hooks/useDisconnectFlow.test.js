@@ -58,6 +58,20 @@ describe("useDisconnectFlow", () => {
     expect(disconnectChannel).not.toHaveBeenCalled();
   });
 
+  test.each([
+    ["a channel without an id", { otaCode: "Airbnb" }],
+    ["no channel at all", null],
+  ])("start is ignored for %s, so no request can go to an undefined id", async (_name, channel) => {
+    const hook = setup();
+
+    startFlow(hook, channel);
+    await confirmFlow(hook);
+
+    expect(hook.result.current.step).toBe(DISCONNECT_STEP.IDLE);
+    expect(hook.result.current.isActive).toBe(false);
+    expect(disconnectChannel).not.toHaveBeenCalled();
+  });
+
   test("start is ignored while a flow is open", () => {
     const hook = setup();
     startFlow(hook);

@@ -44,6 +44,8 @@ export function useDisconnectFlow({ refresh, applyListing }) {
   const start = useCallback(
     ({ platform, propertyId, channel }) => {
       if (stepRef.current !== DISCONNECT_STEP.IDLE) return;
+      // The contract sends no channel id yet, and a request without one would go to /host/channels/undefined.
+      if (!channel?.channelId) return;
       setErrorMessage("");
       moveTo({ step: DISCONNECT_STEP.CONFIRM, platform, channel, propertyId });
     },
