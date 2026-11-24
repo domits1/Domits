@@ -22,23 +22,10 @@ describe("describeListingView", () => {
       listing({ distribution: { status: "NOT_ENABLED", missing: ["MISSING_PRICE"] } }),
       LISTING_VIEW.NOT_READY,
     ],
-    [
-      "a listing whose setup failed",
-      listing({ distribution: { status: "PROVISIONING_FAILED" } }),
-      LISTING_VIEW.SETUP_FAILED,
-    ],
     ["a listing that is being set up", listing({ distribution: { status: "PROVISIONING" } }), LISTING_VIEW.CARDS],
     ["a listing not turned on yet", listing({ distribution: { status: "NOT_ENABLED" } }), LISTING_VIEW.CARDS],
   ])("%s", (_name, input, expected) => {
     expect(describeListingView(input)).toBe(expected);
-  });
-
-  test("missing items win over a failed setup: a listing that cannot be set up has nothing to retry", () => {
-    const input = listing({
-      distribution: { status: "PROVISIONING_FAILED", missing: ["MISSING_ADDRESS"] },
-    });
-
-    expect(describeListingView(input)).toBe(LISTING_VIEW.NOT_READY);
   });
 });
 

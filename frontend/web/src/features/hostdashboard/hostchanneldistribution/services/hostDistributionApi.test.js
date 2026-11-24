@@ -33,6 +33,15 @@ describe("hostDistributionApi (mock)", () => {
     channels.forEach((channel) => expect(Object.keys(channel).sort()).toEqual(["label", "otaCode"]));
   });
 
+  test("a listing keeps its missing items and timezone under distribution, with no readiness object", async () => {
+    const { listings } = await getHostListings();
+
+    listings.forEach((listing) => {
+      expect(Object.keys(listing).sort()).toEqual(["channels", "distribution", "propertyId", "title"]);
+      expect(Object.keys(listing.distribution).sort()).toEqual(["missing", "status", "timezone"]);
+    });
+  });
+
   test("returns copies: changing a response does not change the mock", async () => {
     const first = await getHostListings();
     first.listings[0].title = "Changed by a caller";

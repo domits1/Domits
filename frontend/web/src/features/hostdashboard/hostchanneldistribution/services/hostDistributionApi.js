@@ -21,9 +21,11 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //
 // listing = {
 //   propertyId, title,
-//   distribution: { status: "NOT_ENABLED" | "PROVISIONING" | "PROVISIONING_FAILED" | "READY",
-//     missing: ["NOT_PUBLISHED" | "MISSING_ADDRESS" | "MISSING_GUESTS" | "MISSING_PRICE"] },
-//   timezone: { required, options },                       // used by the timezone picker (PR B)
+//   distribution: {
+//     status: "NOT_ENABLED" | "PROVISIONING" | "READY",
+//     missing: ["NOT_PUBLISHED" | "MISSING_ADDRESS" | "MISSING_GUESTS" | "MISSING_PRICE"],
+//     timezone: { required, options },                     // IANA ids, for the timezone picker (PR B)
+//   },
 //   channels: [{
 //     otaCode: "BookingCom" | "Airbnb" | "Vrbo",
 //     label: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
@@ -45,22 +47,19 @@ const createFixtures = () => [
   {
     propertyId: "mock-listing-live",
     title: "Canal House",
-    distribution: { status: "READY", missing: [] },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: { status: "READY", missing: [], timezone: NO_TIMEZONE_CHOICE },
     channels: [channel("BookingCom", "LIVE"), channel("Airbnb", "SYNCING")],
   },
   {
     propertyId: "mock-listing-not-turned-on",
     title: "City Loft",
-    distribution: { status: "NOT_ENABLED", missing: [] },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: { status: "NOT_ENABLED", missing: [], timezone: NO_TIMEZONE_CHOICE },
     channels: [],
   },
   {
     propertyId: "mock-listing-mixed",
     title: "Harbour Studio",
-    distribution: { status: "READY", missing: [] },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: { status: "READY", missing: [], timezone: NO_TIMEZONE_CHOICE },
     channels: [
       channel("BookingCom", "DISCONNECTING"),
       channel("Airbnb", "DISCONNECTED"),
@@ -70,15 +69,11 @@ const createFixtures = () => [
   {
     propertyId: "mock-listing-not-ready",
     title: "Beach Apartment",
-    distribution: { status: "NOT_ENABLED", missing: ["MISSING_ADDRESS", "MISSING_PRICE"] },
-    timezone: NO_TIMEZONE_CHOICE,
-    channels: [],
-  },
-  {
-    propertyId: "mock-listing-setup-failed",
-    title: "Windmill Cottage",
-    distribution: { status: "PROVISIONING_FAILED", missing: [] },
-    timezone: NO_TIMEZONE_CHOICE,
+    distribution: {
+      status: "NOT_ENABLED",
+      missing: ["MISSING_ADDRESS", "MISSING_PRICE"],
+      timezone: NO_TIMEZONE_CHOICE,
+    },
     channels: [],
   },
 ];

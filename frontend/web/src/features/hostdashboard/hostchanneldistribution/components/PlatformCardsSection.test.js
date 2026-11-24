@@ -264,17 +264,6 @@ describe("PlatformCardsSection", () => {
     expect(screen.queryByRole("button", { name: "Refresh" })).not.toBeInTheDocument();
   });
 
-  test("shows only the setup-failed alert for a listing whose setup failed halfway", async () => {
-    getHostListings.mockResolvedValue({
-      listings: [listing("p3", "Windmill Cottage", { distribution: { status: "PROVISIONING_FAILED" } })],
-    });
-
-    render(<PlatformCardsSection />);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong while setting up. Try again.");
-    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
-  });
-
   test("offers a picker only for several listings, and shows the picked listing's cards", async () => {
     const user = userEvent.setup();
     getHostListings.mockResolvedValue({

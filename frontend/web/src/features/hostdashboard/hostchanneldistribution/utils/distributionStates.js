@@ -12,13 +12,11 @@ export const PLATFORMS = [
 
 export const LISTING_VIEW = {
   NOT_READY: "NOT_READY",
-  SETUP_FAILED: "SETUP_FAILED",
   CARDS: "CARDS",
 };
 
 const DISTRIBUTION_STATUS = {
   PROVISIONING: "PROVISIONING",
-  PROVISIONING_FAILED: "PROVISIONING_FAILED",
 };
 
 const MISSING_ITEM_SENTENCES = {
@@ -48,10 +46,9 @@ const UNKNOWN_CHANNEL_STATE = CHANNEL_STATES.NEEDS_ATTENTION;
 
 const SETTING_UP = { label: "Setting up…", tone: "pending", switchOn: false, switchDisabled: true };
 
-// Readiness wins over a failed setup: a listing that cannot be set up has nothing to retry yet.
+// A listing with missing items shows what is missing instead of the cards.
 export function describeListingView(listing) {
   if (listing.distribution?.missing?.length) return LISTING_VIEW.NOT_READY;
-  if (listing.distribution?.status === DISTRIBUTION_STATUS.PROVISIONING_FAILED) return LISTING_VIEW.SETUP_FAILED;
   return LISTING_VIEW.CARDS;
 }
 

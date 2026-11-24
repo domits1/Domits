@@ -11,7 +11,7 @@ import { CONNECT_STEP, useConnectFlow } from "../hooks/useConnectFlow";
 import PlatformCard from "./PlatformCard";
 import ConnectChecklistModal from "./ConnectChecklistModal";
 import ChannexIframeModal from "./ChannexIframeModal";
-import { NotReadyNotice, SetupFailedNotice } from "./DistributionNotices";
+import { NotReadyNotice } from "./DistributionNotices";
 
 const LOADING_MESSAGE = "Loading your listings…";
 const NO_LISTINGS_MESSAGE = "You have no listings yet.";
@@ -87,8 +87,6 @@ function PlatformCardsSection() {
       {listingView === LISTING_VIEW.NOT_READY && (
         <NotReadyNotice items={describeMissingItems(selected.distribution?.missing)} />
       )}
-
-      {listingView === LISTING_VIEW.SETUP_FAILED && <SetupFailedNotice />}
 
       {listingView === LISTING_VIEW.CARDS && (
         <>
