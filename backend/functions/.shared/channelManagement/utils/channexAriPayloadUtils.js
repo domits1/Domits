@@ -27,7 +27,7 @@ const resolveDatabaseSchemaName = (client) => {
 
   return schema.toLowerCase() === "public" ? "main" : schema.trim().toLowerCase();
 };
-const qualifyTableName = (client, tableName) =>
+export const qualifyTableName = (client, tableName) =>
   `${quoteIdentifier(resolveDatabaseSchemaName(client))}.${quoteIdentifier(tableName)}`;
 const toIntegerOrNull = (value) => {
   if (value === null || value === undefined || value === "") return null;

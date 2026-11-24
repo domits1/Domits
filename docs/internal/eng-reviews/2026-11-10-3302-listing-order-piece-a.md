@@ -16,7 +16,7 @@ Result: no blocking findings
 
 ### Appendix (confidence 3-4)
 
-- (4/10) propertyRepository.js:345: the `property_type` join is not schema-qualified (generated SQL: `INNER JOIN "property_type" "pt"`). It is unchanged by this diff and the query works today. Noted because the 2026-11-04 review found unqualified SQL resolving to `public`.
+- (4/10) propertyRepository.js:345: the `property_type` join is not schema-qualified (generated SQL: `INNER JOIN "property_type" "pt"`). It is unchanged by this diff and the query works today. Noted because the 2026-11-04 review found unqualified SQL resolving to `public`. **Correction (2026-11-12):** see `2026-11-12-3302-listing-order-piece-b.md`. The unqualified SQL printed above was most likely an artifact of an incomplete entity list in the scratch data source used to check it; with the full entity list the real query is schema-qualified (`"test"."property_type"` on the test schema). The 2026-11-04 finding is not affected.
 - (4/10) Approval time is the latest APPROVED event. A listing that was archived or rejected and approved again gets a new, later time and sinks to the bottom again. This follows the stated rule, but Stefan should confirm it is the intent.
 
 ## Loophole check: can an ACTIVE property exist without an APPROVED event?

@@ -786,6 +786,7 @@ describe("property paths of an Elite website on its own domain", () => {
       ["Villa B", currentPageHref],
     ]);
     expect(screen.queryByTestId("quote-availability")).toBeNull();
+    expect(document.querySelector('.publicPreviewCanvas a[href*="#availability"]')).toBeNull();
     expect(document.title).toBe("Villa B | Wellness Villa Bisous");
     expect(document.head.querySelector('meta[name="description"]').content).toBe("A quiet garden villa with a pond.");
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(1);

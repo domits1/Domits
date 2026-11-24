@@ -1,8 +1,8 @@
 # fix(property-owners): refresh the sign-in before each owners request
 
-Pull request: (to be opened)
+Pull request: #3855
 Issue: #3239
-Reviewed commit: uncommitted changes on top of 9a036ec39
+Reviewed commit: 50021053e
 Result: no blocking findings
 
 The problem: after about an hour the owners pages got `401` from the property owners API and showed "Your session has ended. Please sign in again." with a Retry button. `getAccessToken()` in `src/services/getAccessToken.js` reads the stored access token from `localStorage` and never refreshes it, so once that token expired every request failed. Retry sent the same expired token again. Only a hard refresh helped, because Amplify refreshes the tokens when the app starts.

@@ -394,10 +394,45 @@ describe("BookingService Channex booking availability hooks", () => {
       [
         expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-01", dateTo: "2026-06-02" }),
         expect.objectContaining({ domitsPropertyId: "domits-property-1", dateFrom: "2026-06-04", dateTo: "2026-06-05" }),
-      ]
+      ],
+      { notifyAutomations: true }
     );
     expect(result.bookingBefore).toEqual(bookingBefore);
     expect(result.bookingAfter).toEqual(bookingAfter);
+  });
+
+  test.each([
+    ["Paid", true],
+    ["paid", true],
+    [" PAID ", true],
+    ["Awaiting Payment", false],
+    ["Inquiry", false],
+    ["Cancelled", false],
+  ])("modify-booking-dates asks for an automation event only for a paid booking (%s)", async (status, expected) => {
+    const bookingBefore = {
+      id: "booking-1",
+      property_id: "domits-property-1",
+      hostid: "host-1",
+      arrivaldate: Date.parse("2026-06-01T00:00:00.000Z"),
+      departuredate: Date.parse("2026-06-03T00:00:00.000Z"),
+      status,
+    };
+    const { service, dependencies } = buildService({
+      reservationRepository: {
+        getBookingById: jest.fn().mockResolvedValue({ response: bookingBefore }),
+      },
+    });
+    dependencies.authManager.authenticateUser.mockResolvedValue({ sub: "host-1" });
+
+    await service.modifyBookingDates("booking-1", "2026-06-04", "2026-06-06", "Bearer host-token");
+
+    expect(dependencies.reservationRepository.updateBookingDates).toHaveBeenCalledWith(
+      "booking-1",
+      Date.parse("2026-06-04T00:00:00.000Z"),
+      Date.parse("2026-06-06T00:00:00.000Z"),
+      expect.any(Array),
+      { notifyAutomations: expected }
+    );
   });
 
   test("modify-booking-dates is exposed as a non-cancel PATCH action", async () => {

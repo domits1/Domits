@@ -80,7 +80,7 @@ const renderSearchResults = ({ cards, search, pageBasePath, pageSearch }) => {
   const answered = formatCount(free.length + notFree.length + failed.length, "property", "properties");
   const nights = formatCount(countSearchNights(criteria.checkIn, criteria.checkOut), "night");
   const stayHrefSearch = buildSitePropertyStayQuery(pageSearch, criteria);
-  const heading = free.length ? `${free.length} of ${answered} ${free.length === 1 ? "is" : "are"} free` : "";
+  const heading = free.length > 0 && `${free.length} of ${answered} ${free.length === 1 ? "is" : "are"} free`;
   const emptyHeading = failed.length ? "Not all prices could be loaded" : "No property is free for this stay";
 
   return (
