@@ -16,22 +16,23 @@
 }
 
 .panel {
-  --website-quote-ink: #1e3150;
-  --website-quote-muted: #60708a;
-  --website-quote-line: rgba(30, 49, 80, 0.12);
-  --website-quote-accent: #1e3150;
+  --website-quote-ink: var(--website-quote-theme-ink, #1e3150);
+  --website-quote-muted: var(--website-quote-theme-muted, #60708a);
+  --website-quote-line: var(--website-quote-theme-line, rgba(30, 49, 80, 0.12));
+  --website-quote-accent: var(--website-quote-theme-accent, #1e3150);
   display: grid;
   gap: clamp(12px, 1.6vw, 18px);
   padding: clamp(18px, 2.4vw, 26px);
-  border-radius: 22px;
+  border-radius: var(--website-quote-theme-radius, 22px);
   border: 1px solid var(--website-quote-line);
   background: #ffffff;
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--website-quote-theme-shadow, 0 14px 28px rgba(15, 23, 42, 0.06));
   color: var(--website-quote-ink);
 }
 
 .panelTitle {
   margin: 0;
+  font-family: var(--website-quote-theme-title-font, inherit);
   font-size: clamp(1.15rem, 0.9rem + 0.9vw, 1.45rem);
   line-height: 1.2;
   text-wrap: balance;
