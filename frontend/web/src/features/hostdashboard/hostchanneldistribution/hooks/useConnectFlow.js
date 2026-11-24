@@ -93,10 +93,10 @@ export function useConnectFlow({ refresh, rereadListings }) {
     (err) => {
       console.error("Failed to turn on distribution for a listing:", err);
       if (!mountedRef.current) return;
-      const { refresh: shouldReread, message } = classifyEnableError(err);
+      const { reread, message } = classifyEnableError(err);
       setErrorMessage(message);
       moveTo(IDLE_FLOW);
-      if (shouldReread) rereadListings();
+      if (reread) rereadListings();
     },
     [moveTo, rereadListings]
   );

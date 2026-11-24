@@ -242,7 +242,7 @@ describe("PlatformCardsSection", () => {
 
       test("a 409 reads the listings again and the card says Setting up", async () => {
         const user = userEvent.setup();
-        enableDistribution.mockRejectedValue(requestError(409, "PROVISIONING_IN_PROGRESS"));
+        enableDistribution.mockRejectedValue(requestError(409, "DISTRIBUTION_ALREADY_IN_PROGRESS"));
 
         await turnOnWithFresh(user, listing("p2", "City Loft", { distribution: { status: "PROVISIONING", missing: [] } }));
 
@@ -255,7 +255,7 @@ describe("PlatformCardsSection", () => {
 
       test("a 422 reads the listings again and shows what is missing instead of the cards", async () => {
         const user = userEvent.setup();
-        enableDistribution.mockRejectedValue(requestError(422, "LISTING_NOT_READY"));
+        enableDistribution.mockRejectedValue(requestError(422, "DISTRIBUTION_LISTING_NOT_READY"));
 
         await turnOnWithFresh(
           user,
@@ -270,7 +270,7 @@ describe("PlatformCardsSection", () => {
 
       test("a 400 timezone required says so, and the next try asks for the timezone", async () => {
         const user = userEvent.setup();
-        enableDistribution.mockRejectedValue(requestError(400, "TIMEZONE_REQUIRED"));
+        enableDistribution.mockRejectedValue(requestError(422, "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED"));
 
         await turnOnWithFresh(
           user,
@@ -293,14 +293,15 @@ describe("PlatformCardsSection", () => {
         expect(screen.getByRole("dialog", { name: "Choose a timezone" })).toBeInTheDocument();
       });
 
-      test("a 500 says so on the cards and reads the listings again, so the host is never left without a message", async () => {
+      test("a 503 try again says so on the cards and reads the listings again, so the host is never left without a message", async () => {
         const user = userEvent.setup();
-        enableDistribution.mockRejectedValue(requestError(500, "PROVISIONING_FAILED"));
+        enableDistribution.mockRejectedValue(requestError(503, "DISTRIBUTION_TRY_AGAIN"));
 
         await turnOn(user);
 
-        expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't set up this listing. Try again.");
+        expect(await screen.findByRole("alert")).toHaveTextContent("Setting up didn't finish. Try again.");
         await waitFor(() => expect(switchOf("Vrbo")).toBeEnabled());
+        expect(getHostListings).toHaveBeenCalledTimes(2);
       });
 
       test("a network error alerts and leaves the cards as they were, with no re-read", async () => {

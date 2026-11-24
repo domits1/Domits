@@ -281,10 +281,11 @@ describe("useConnectFlow", () => {
 
   describe("when enabling fails", () => {
     test.each([
-      ["a 409 already in progress", requestError(409, "PROVISIONING_IN_PROGRESS"), ""],
-      ["a 422 listing not ready", requestError(422, "LISTING_NOT_READY"), ""],
-      ["a 400 timezone required", requestError(400, "TIMEZONE_REQUIRED"), TIMEZONE_REQUIRED_MESSAGE],
-      ["a 500 setup failure", requestError(500, "PROVISIONING_FAILED"), ENABLE_ERROR_MESSAGE],
+      ["a 409 already in progress", requestError(409, "DISTRIBUTION_ALREADY_IN_PROGRESS"), ""],
+      ["a 422 listing not ready", requestError(422, "DISTRIBUTION_LISTING_NOT_READY"), ""],
+      ["a 422 timezone needed", requestError(422, "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED"), TIMEZONE_REQUIRED_MESSAGE],
+      ["a 503 try again", requestError(503, "DISTRIBUTION_TRY_AGAIN"), "Setting up didn't finish. Try again."],
+      ["a 500 with no code", requestError(500, undefined), ENABLE_ERROR_MESSAGE],
     ])("%s reads the listing again once, shows its message, and opens no session", async (_name, error, message) => {
       enableDistribution.mockRejectedValue(error);
       const hook = setup();
@@ -447,7 +448,7 @@ describe("useConnectFlow", () => {
     });
 
     test("a failure reads the listing again like any enable failure", async () => {
-      enableDistribution.mockRejectedValue(requestError(500, "PROVISIONING_FAILED"));
+      enableDistribution.mockRejectedValue(requestError(500, undefined));
       const hook = setup();
 
       await act(async () => hook.result.current.retry({ listing: FAILED_LISTING }));
