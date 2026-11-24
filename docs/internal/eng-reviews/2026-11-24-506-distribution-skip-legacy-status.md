@@ -2,7 +2,7 @@
 
 Issue: #506
 Review feedback: PuoK24 on #3978, "Even when MOCK_HOST_DISTRIBUTION_ENABLED is enabled, the component still executes the existing Channex status hook."
-Reviewed commits: `6369acca8` (hook), `56c640632` (view)
+Reviewed commits: `6369acca8` (hook), `56c640632` (view), the mock cleanup after them
 Result: no blocking findings
 
 ## Findings
@@ -11,7 +11,7 @@ Result: no blocking findings
 |---|---|---|---|
 | P3 (5/10) | `useChannexDistribution.js`, `if (!enabled) return undefined;` | If `enabled` flips off while a request is in flight, the cleanup cancels it and the internal `loading` stays `true`. The disabled return hides it, and re-enabling sets it again. Production never flips the flag at runtime. | Accepted, no test. |
 | P3 (5/10) | `useChannexDistribution.js` | After disable then re-enable, the previous `status` shows until the new answer arrives. `reload()` already behaves this way. | Accepted. |
-| P3 (6/10) | `HostChannelDistribution.platformCards.test.js`, first flag-on test | Its `getChannexStatus` mock is now dead, because the status is never requested with the flag on. | Accepted, to keep the diff small. |
+| P3 (6/10) | `HostChannelDistribution.platformCards.test.js`, first flag-on test | Its `getChannexStatus` mock is now dead, because the status is never requested with the flag on. | Fixed in the follow-up commit: the mock was removed. |
 | P3 (6/10) | `HostChannelDistribution.platformCards.test.js`, removed tests | They were the only tests that reached the view's `showAccountLevel` guard on its own. With no request that guard cannot be reached from a test. | Accepted. The guard stays as a second line of defence. |
 
 ## Architecture and data flow
@@ -42,7 +42,6 @@ Requests with the flag on:
 ## Not in scope
 
 - Removing the `showAccountLevel` guard in the view.
-- Cleaning the dead mock in the first flag-on test.
 - Gating `useFetchUser` or the route guard's access check.
 
 ## What already exists

@@ -46,7 +46,6 @@ describe("HostChannelDistribution with MOCK_HOST_DISTRIBUTION_ENABLED", () => {
 
   test("with the flag on, shows the platform cards to a host who has no Channex account yet", async () => {
     hostApi.MOCK_HOST_DISTRIBUTION_ENABLED = true;
-    getChannexStatus.mockRejectedValue(Object.assign(new Error("forbidden"), { status: 403 }));
 
     render(<HostChannelDistribution />);
 
