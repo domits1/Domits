@@ -1020,13 +1020,23 @@ describe("the booking panel on the property page of an Elite website", () => {
   });
 
   it("quotes and links no more guests than the property takes", async () => {
-    globalThis.fetch = jest.fn().mockResolvedValue(quoteResponse("property-b"));
+    const quote = JSON.parse(await quoteResponse("property-b").text());
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ ...quote, guestCount: 4 }),
+    });
     renderAppAt("/properties/villa-b?checkIn=2099-01-10&checkOut=2099-01-14&guests=9");
 
-    await screen.findByRole("link", { name: "Request to book" });
+    expect(await screen.findByRole("link", { name: "Request to book" })).toHaveAttribute(
+      "href",
+      "/properties/villa-b/request?checkIn=2099-01-10&checkOut=2099-01-14&guests=4"
+    );
     expect(readQuoteBody().guests).toBe(4);
     expect(document.querySelector(".stepperValue").textContent).toBe("4");
-    expect(lastTemplateProps().sitePropertyPage.stay.guests).toBe(4);
+    expect(lastTemplateProps().sitePropertyPage.booking.key).toBe(
+      "property-b?checkIn=2099-01-10&checkOut=2099-01-14&guests=4"
+    );
   });
 
   it("quotes the next property afresh when the guest moves to it", async () => {
