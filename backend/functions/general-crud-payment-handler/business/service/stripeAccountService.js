@@ -98,7 +98,12 @@ export default class StripeAccountService {
       unixNow()
     );
 
-    const onboardingUrl = await this.createOnboardingLink(account.id);
+    let onboardingUrl;
+    try {
+      onboardingUrl = await this.createOnboardingLink(account.id);
+    } catch (error) {
+      throw createStripeRequestError(error, "onboarding_link");
+    }
 
     return {
       statusCode: 202,
