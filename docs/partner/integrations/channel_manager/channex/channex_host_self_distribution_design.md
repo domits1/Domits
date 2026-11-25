@@ -228,10 +228,42 @@ All under `/integrations/channex/host/...`, Cognito-authenticated. Every route c
 | GET | `/host/listings` | The host's listings with distribution status, D3 readiness and channels (D7) |
 | POST | `/host/listings/{propertyId}/distribution` | Turn on: D3 check, provisioning (D2), account row (D8). Idempotent. Body carries the timezone only where D4 needs it |
 | POST | `/host/listings/{propertyId}/connect-session` | A one-time token and iframe URL for this listing's Channex property. The frontend calls `refresh` whenever the modal closes, whether or not Channex sends a message when the host finishes |
-| POST | `/host/listings/{propertyId}/channels/refresh` | After the iframe closes, and on Refresh: read the property's channels from Channex (`GET /channels?filter[property_id]=…`) and store or update the rows |
+| POST | `/host/listings/{propertyId}/channels/refresh` | After the iframe closes, and on Refresh: read the property's channels from Channex (`GET /channels?filter[property_id]=…`) and return the listing again. No channel rows are stored until disconnect (D5) needs them (D7) |
 | POST | `/host/channels/{channelId}/disconnect` | Toggle off (D5) |
 
 Responses never contain API keys or other hosts' data.
+
+### Contract (built: the first four routes)
+
+Base: `/integrations/channex/host`. The user is always the signed-in host from the Cognito token; a `userId` sent by the browser is replaced. Every error body is `{ error, errorCode }`. The frontend picks the text it shows by `errorCode`, so each screen can tell the host what to do next; `error` is a readable fallback. Disconnect (D5) is not built yet.
+
+**The listing object** (list and refresh return the same shape):
+
+```json
+{
+  "propertyId": "uuid",
+  "title": "Villa Malee",
+  "readiness": { "ready": false, "missing": ["MISSING_ADDRESS"] },
+  "distribution": { "status": "NOT_ENABLED" },
+  "timezone": { "required": true, "options": ["Europe/Madrid", "Atlantic/Canary"] },
+  "channels": [{ "channexChannelId": "uuid", "otaCode": "BookingCom", "label": "LIVE" }]
+}
+```
+
+- `readiness.missing`: `NOT_PUBLISHED`, `MISSING_ADDRESS`, `MISSING_GUESTS`, `MISSING_PRICE` (D3).
+- `distribution.status`: `NOT_ENABLED`, `PROVISIONING` (being set up), `READY` (turned on).
+- `timezone.required`: only true where the country has zones with different clock times (D4); send one of `options` as `chosenTimezone` when turning on.
+- `channels`: only for `READY`, read live from Channex. `otaCode`: `BookingCom`, `Airbnb`, `Vrbo`. `label`: `LIVE`, `SYNCING` (changes still on the way), `DISCONNECTED`, `UNKNOWN` (Channex gave no clear state).
+- `channelsUnavailable`: present (and true) only when Channex could not be read; `channels` is then empty. Show the channels as unknown, never as live.
+
+| Route | Body | Success | Errors |
+|---|---|---|---|
+| `GET /listings` | none | 200 `{ listings: [listing, …] }`, archived listings left out, sorted by title | 401 |
+| `POST /listings/{propertyId}/distribution` | `{ chosenTimezone? }` | 200 `{ status: "PROVISIONED", channexPropertyId, fullSyncQueued }` or `{ status: "ALREADY_CONNECTED", channexPropertyId }` | 404 `DISTRIBUTION_LISTING_NOT_FOUND`, 403 `DISTRIBUTION_LISTING_NOT_OWNED`, 422 `DISTRIBUTION_LISTING_NOT_READY` (+ `missing`), 422 `DISTRIBUTION_TIMEZONE_CHOICE_NEEDED` / `_INVALID_CHOICE` (+ `options`) / `_UNKNOWN_COUNTRY`, 409 `DISTRIBUTION_ALREADY_IN_PROGRESS`, 409 `DISTRIBUTION_OWN_CHANNEX_ACCOUNT`, 409 `DISTRIBUTION_NEEDS_ATTENTION`, 502 `DISTRIBUTION_CHANNEX_REFUSED` (+ `validationDetails`), 503 `DISTRIBUTION_TRY_AGAIN`, 503 `DISTRIBUTION_NOT_CONFIGURED` |
+| `POST /listings/{propertyId}/connect-session` | none | 200 `{ iframeUrl, expiresInSeconds: 900 }`; open the URL in the modal right away, it works once | 404, 403, 409 `DISTRIBUTION_NOT_TURNED_ON`, 502 `DISTRIBUTION_CONNECT_SESSION_FAILED`, 503 `DISTRIBUTION_NOT_CONFIGURED` |
+| `POST /listings/{propertyId}/channels/refresh` | none | 200 `{ listing }` | 404, 403 |
+
+Flow: open the tab (`GET /listings`) → switch on (`POST …/distribution`, again with `chosenTimezone` after a 422 with `options`) → open the Channex screen (`POST …/connect-session`) → the modal closes → `POST …/channels/refresh` and replace that card. `DISTRIBUTION_TRY_AGAIN` is safe to retry at once: the next attempt continues where the last one stopped. `DISTRIBUTION_ALREADY_IN_PROGRESS` means another attempt is still running; refresh the listing after a short wait instead of switching again (a stopped attempt is taken over after 60 seconds).
 
 ### Screens and states (for frontend and design)
 
