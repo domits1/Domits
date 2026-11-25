@@ -5,9 +5,13 @@ import {
   calendarIntToIsoDate,
   isoDateToCalendarInt,
   isoDateToUtcStartMs,
-  normalizeValueToCalendarInt,
   parseIsoDateParam,
 } from "./channexAriDateUtils.js";
+import {
+  buildBookingAwareAvailability,
+  getEffectiveAvailability,
+  normalizeAvailabilityWindows,
+} from "./domitsNightAvailability.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const bad = (statusCode, response) => ({ statusCode, response });
@@ -632,19 +636,6 @@ const getEffectiveNightlyPrice = ({ override, pricing, isoDate }) => {
   }
   return null;
 };
-const getEffectiveAvailability = ({ override, isAvailableFromWindows }) => {
-  if (override?.isAvailable === null || override?.isAvailable === undefined) {
-    return isAvailableFromWindows;
-  }
-  return override.isAvailable;
-};
-const normalizeAvailabilityWindows = (availabilityWindows) =>
-  (Array.isArray(availabilityWindows) ? availabilityWindows : [])
-    .map((entry) => ({
-      availableStartDate: normalizeValueToCalendarInt(entry?.availableStartDate),
-      availableEndDate: normalizeValueToCalendarInt(entry?.availableEndDate),
-    }))
-    .filter((entry) => entry.availableStartDate && entry.availableEndDate);
 const buildCalendarOverrideMap = (calendarOverrides) =>
   new Map(
     (Array.isArray(calendarOverrides) ? calendarOverrides : [])
@@ -684,20 +675,6 @@ const buildEmptyAvailabilityOccupancyContext = () => ({
 const normalizeActiveBookingCount = (activeCountsByNight, isoDate) => {
   const count = Number(activeCountsByNight?.[isoDate]);
   return Number.isFinite(count) && count > 0 ? Math.trunc(count) : 0;
-};
-const buildBookingAwareAvailability = ({ baseAvailability, activeBookingCount }) => {
-  const sellableUnitCount = CHANNEX_FULL_SYNC_DEFAULTS.DEFAULT_SELLABLE_UNIT_COUNT;
-  const availableUnitCount = baseAvailability
-    ? Math.max(0, sellableUnitCount - Math.max(0, activeBookingCount))
-    : 0;
-
-  return {
-    baseAvailability,
-    activeBookingCount,
-    sellableUnitCount,
-    availableUnitCount,
-    availability: availableUnitCount > 0,
-  };
 };
 const buildAvailabilityOccupancyContext = async ({ bookingAvailabilityRepository, domitsPropertyId, dates }) => {
   const normalizedDomitsPropertyId = requireStr(domitsPropertyId);
@@ -766,6 +743,7 @@ const buildAriPreviewCollections = ({
     const availabilityState = buildBookingAwareAvailability({
       baseAvailability,
       activeBookingCount: normalizeActiveBookingCount(activeCountsByNight, isoDate),
+      sellableUnitCount: CHANNEX_FULL_SYNC_DEFAULTS.DEFAULT_SELLABLE_UNIT_COUNT,
     });
     const effectiveNightlyPrice = getEffectiveNightlyPrice({ override, pricing, isoDate });
 
@@ -858,6 +836,7 @@ const buildAvailabilityPayloadItemsFromReadiness = ({
     const availabilityState = buildBookingAwareAvailability({
       baseAvailability,
       activeBookingCount: normalizeActiveBookingCount(activeCountsByNight, isoDate),
+      sellableUnitCount: CHANNEX_FULL_SYNC_DEFAULTS.DEFAULT_SELLABLE_UNIT_COUNT,
     });
 
     for (const roomTypeMapping of Array.isArray(readiness.roomTypeMappings) ? readiness.roomTypeMappings : []) {
