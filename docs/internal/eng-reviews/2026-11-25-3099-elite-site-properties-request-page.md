@@ -24,4 +24,4 @@ query stay ─▶ usable? ─no──────────────▶ boo
 
 Not closed: what the guest typed is lost when they choose other dates, because the page reloads for the new stay; the "request sent" page and a resend after a success, which `elite-site-properties-request-sent` handles.
 
-Guards broken on purpose: 13 of 14 caught one at a time; the disabled button and the send in flight cover each other and are caught together. Second review: the reload test kept the module's key in memory, so it would pass if the stored key were not read; a reload test of the key store now reads it from a fresh module.
+Guards broken on purpose: 11 of 13 caught one at a time; the two that survived, the disabled button and the send in flight, cover each other and are caught together. Second review: the reload test kept the module's key in memory, so it would pass if the stored key were not read; a reload test of the key store now reads it from a fresh module.
