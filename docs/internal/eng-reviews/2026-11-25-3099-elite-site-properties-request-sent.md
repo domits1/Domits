@@ -22,3 +22,5 @@ request page ── send ok ──▶ navigate(/properties/<slug>/sent, replace,
 Not closed: a guest who goes back to the property page and sends the same stay again on purpose makes a second request, because the key per stay is cleared after a success.
 
 Guards broken on purpose: 6 of 6 caught. Second review: the empty page said nothing was sent, which is false for a guest who opens the address again in a new tab (fixed); the live view test now sends from the request page, and the reload test restores the state through the browser history as a reload does.
+
+The dates are written with the year: "15 to 22 January 2027", "28 January to 3 February 2027", "30 December 2026 to 2 January 2027". A state whose dates are not `YYYY-MM-DD` counts as no request.
