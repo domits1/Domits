@@ -1,7 +1,18 @@
 import { describe, expect, it } from "@jest/globals";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { DataSource } from "typeorm";
+import {
+  columnLines,
+  describeOrmConsistency,
+  inserts,
+  itCountsOnlySmokeRowsInFinalCheck,
+  itEndsEveryTransactionInRollback,
+  loadMetadata,
+  parseInsert,
+  readOrmFile,
+  recordQueries,
+  smokeBlocks,
+  statements,
+} from "./support/ormConsistencyTestHelpers.js";
 import { Property_Owner } from "database/models/Property_Owner";
 import { Property_Owner_Property } from "database/models/Property_Owner_Property";
 import { Tables } from "../../ORM/util/database/Tables.js";
@@ -62,17 +73,6 @@ const TABLES = [
   },
 ];
 
-const SQL_TYPES = { uuid: "uuid", varchar: "varchar", text: "text", bigint: "bigint", integer: "int" };
-
-const readOrmFile = (...parts) =>
-  readFileSync(path.join(process.cwd(), "ORM", ...parts), "utf8").replaceAll("\r\n", "\n");
-
-const recordQueries = async (run) => {
-  const queries = [];
-  await run({ query: async (sql) => queries.push(sql) });
-  return queries.join("\n");
-};
-
 const SOURCES = [
   ["20261016_property_owner.sql", async () => readOrmFile("migrations", "20261016_property_owner.sql")],
   ["schema.psql", async () => readOrmFile("schema.psql")],
@@ -84,143 +84,12 @@ const DROP_SOURCES = [
   ["20261016_property_owner.js down()", () => recordQueries((runner) => new PropertyOwner20261016().down(runner))],
 ];
 
-const loadMetadata = async (entity) => {
-  const dataSource = new DataSource({ type: "postgres", entities: [entity] });
-  await dataSource.buildMetadatas();
-  return dataSource.getMetadata(entity);
-};
-
-const createTableBlock = (sql, qualifiedTable) => {
-  const match = new RegExp(
-    String.raw`CREATE TABLE IF NOT EXISTS ${qualifiedTable.replace(".", String.raw`\.`)} \(([\s\S]*?)\n\s*\);`
-  ).exec(sql);
-  if (!match) throw new Error(`No CREATE TABLE block found for ${qualifiedTable}`);
-  return match[1];
-};
-
-const isConstraintLine = (line) => /^CONSTRAINT\b/i.test(line);
-
-const blockLines = (sql, qualifiedTable) =>
-  createTableBlock(sql, qualifiedTable)
-    .split("\n")
-    .map((line) => line.trim().replace(/,$/, ""))
-    .filter(Boolean);
-
-const columnLines = (sql, qualifiedTable) => blockLines(sql, qualifiedTable).filter((line) => !isConstraintLine(line));
-
-const columnDefinitions = (sql, qualifiedTable) =>
-  Object.fromEntries(
-    columnLines(sql, qualifiedTable).map((line) => {
-      const [name, typeToken] = line.split(/\s+/);
-      const [, typeName, length] = /^(\w+)(?:\((\d+)\))?$/.exec(typeToken);
-      const nullable = !/\bNOT NULL\b|\bPRIMARY KEY\b/i.test(line);
-      return [name, [SQL_TYPES[typeName.toLowerCase()], nullable, length ? Number(length) : null]];
-    })
-  );
-
-const checkConstraints = (sql, qualifiedTable) =>
-  blockLines(sql, qualifiedTable)
-    .filter(isConstraintLine)
-    .map((line) => {
-      const match = /^CONSTRAINT (\w+) CHECK \((.+)\)$/i.exec(line);
-      if (!match) throw new Error(`Unexpected constraint in ${qualifiedTable}: ${line}`);
-      return [match[1], match[2]];
-    })
-    .sort();
-
-const expectedChecks = (checks, suffix) => checks.map(([name, expression]) => [`${name}${suffix}`, expression]).sort();
-
-const normalizePredicate = (predicate = "") => predicate.replaceAll(/\s+/g, " ").trim();
-
-const indexesOn = (sql, qualifiedTable) =>
-  [
-    ...sql.matchAll(
-      /CREATE (UNIQUE )?INDEX ASYNC (?:IF NOT EXISTS )?(\w+)\s+ON (\w+\.\w+) \(([^)]+)\)(?:\s+WHERE ([^;]+?))?\s*;/g
-    ),
-  ]
-    .filter((match) => match[3] === qualifiedTable)
-    .map(([, unique = "", name, , keyColumns, predicate]) => [unique, name, keyColumns, normalizePredicate(predicate)])
-    .sort();
-
-const expectedIndexes = (indexes, suffix) =>
-  indexes.map(([unique, name, keyColumns, predicate]) => [unique, `${name}${suffix}`, keyColumns, predicate]).sort();
-
-const dropStatements = (sql) => [...sql.matchAll(/DROP (INDEX|TABLE) IF EXISTS (\w+\.\w+);/g)].map((match) => match[2]);
-
-describe.each(TABLES)("$table entity", ({ table, entity, columns }) => {
-  it("maps the columns, types, nullability and lengths of the table", async () => {
-    const metadata = await loadMetadata(entity);
-    const mapped = Object.fromEntries(
-      metadata.columns.map((c) => [c.databaseName, [c.type, c.isNullable, c.length ? Number(c.length) : null]])
-    );
-    expect(metadata.tableName).toBe(table);
-    expect(mapped).toEqual(columns);
-  });
-
-  it("uses a database generated uuid id as the only primary column", async () => {
-    const metadata = await loadMetadata(entity);
-    expect(metadata.primaryColumns.map((c) => c.databaseName)).toEqual(["id"]);
-    expect(metadata.findColumnWithDatabaseName("id").generationStrategy).toBe("uuid");
-  });
-});
+describeOrmConsistency({ tables: TABLES, schemas: SCHEMAS, sources: SOURCES, dropSources: DROP_SOURCES });
 
 describe.each(SOURCES)("%s", (_label, loadSql) => {
-  describe.each(TABLES)("$table", ({ table, columns, indexes, checks }) => {
-    it.each(SCHEMAS)("declares the entity columns for $schema", async ({ schema }) => {
-      expect(columnDefinitions(await loadSql(), `${schema}.${table}`)).toEqual(columns);
-    });
-
-    it.each(SCHEMAS)("declares exactly the expected indexes with CREATE INDEX ASYNC for $schema", async ({ schema, suffix }) => {
-      expect(indexesOn(await loadSql(), `${schema}.${table}`)).toEqual(expectedIndexes(indexes, suffix));
-    });
-
-    it.each(SCHEMAS)("generates the id in the database for $schema", async ({ schema }) => {
-      expect(columnLines(await loadSql(), `${schema}.${table}`)).toContain("id UUID DEFAULT gen_random_uuid() PRIMARY KEY");
-    });
-
-    it.each(SCHEMAS)("declares no foreign key for $schema", async ({ schema }) => {
-      expect(createTableBlock(await loadSql(), `${schema}.${table}`)).not.toMatch(/FOREIGN KEY|REFERENCES/i);
-    });
-
-    it.each(SCHEMAS)("declares exactly the expected named CHECK constraints for $schema", async ({ schema, suffix }) => {
-      const sql = await loadSql();
-      const block = createTableBlock(sql, `${schema}.${table}`);
-      expect(checkConstraints(sql, `${schema}.${table}`)).toEqual(expectedChecks(checks, suffix));
-      expect(block.match(/CHECK\s*\(/gi) ?? []).toHaveLength(checks.length);
-    });
-
-    it.each(SCHEMAS)("adds no constraint after the CREATE TABLE for $schema", async ({ schema }) => {
-      expect(await loadSql()).not.toMatch(new RegExp(String.raw`ALTER TABLE (IF EXISTS )?${schema}\.${table}\s`, "i"));
-    });
-  });
-
   it.each(SCHEMAS)("defaults property_owner.status to active for $schema", async ({ schema }) => {
     expect(columnLines(await loadSql(), `${schema}.property_owner`)).toContain(
       "status VARCHAR(20) NOT NULL DEFAULT 'active'"
-    );
-  });
-});
-
-describe.each(DROP_SOURCES)("%s", (_label, loadSql) => {
-  const expectedDrops = SCHEMAS.flatMap(({ schema, suffix }) =>
-    TABLES.flatMap(({ table, indexes }) => [
-      ...indexes.map(([, name]) => `${schema}.${name}${suffix}`),
-      `${schema}.${table}`,
-    ])
-  );
-
-  it("drops every index and table the migration creates, in both schemas", async () => {
-    expect(dropStatements(await loadSql()).sort()).toEqual([...expectedDrops].sort());
-  });
-
-  it("drops each index before the table it belongs to", async () => {
-    const drops = dropStatements(await loadSql());
-    SCHEMAS.forEach(({ schema, suffix }) =>
-      TABLES.forEach(({ table, indexes }) =>
-        indexes.forEach(([, name]) =>
-          expect(drops.indexOf(`${schema}.${name}${suffix}`)).toBeLessThan(drops.indexOf(`${schema}.${table}`))
-        )
-      )
     );
   });
 });
@@ -234,25 +103,6 @@ describe("property_owner entity defaults", () => {
 
 describe("migration SQL smoke tests", () => {
   const migrationSql = () => readOrmFile("migrations", "20261016_property_owner.sql");
-
-  const smokeBlocks = (sql) => [...sql.matchAll(/BEGIN;([\s\S]*?)ROLLBACK;/g)].map((match) => match[1]);
-
-  const statements = (block) =>
-    block
-      .split(";")
-      .map((statement) => statement.replaceAll(/\s+/g, " ").trim())
-      .filter(Boolean);
-
-  const parseInsert = (statement) => {
-    const match = /^INSERT INTO (\w+\.\w+) \(([^)]*)\) VALUES \((.*?)\)( ON CONFLICT DO NOTHING)?$/.exec(statement);
-    if (!match) return null;
-    const [, table, columnList, valueList, onConflict] = match;
-    const values = valueList.split(/,\s*/).map((value) => (value === "NULL" ? null : value.replaceAll(/^'|'$/g, "")));
-    const row = Object.fromEntries(columnList.split(/,\s*/).map((column, index) => [column, values[index]]));
-    return { table, row, onConflictDoNothing: Boolean(onConflict) };
-  };
-
-  const inserts = (block) => statements(block).map(parseInsert).filter(Boolean);
 
   const assignmentsById = (block, schema) =>
     Object.fromEntries(
@@ -357,25 +207,9 @@ describe("migration SQL smoke tests", () => {
     expect(Number(emptyPeriod[0].ownership_basis_points)).toBeLessThanOrEqual(10000);
   });
 
-  it("ends every transaction in ROLLBACK and never commits", () => {
-    const sql = migrationSql();
-    expect(sql).not.toMatch(/\bCOMMIT\b/i);
-    expect(sql.match(/^BEGIN;$/gm)).toHaveLength(sql.match(/^ROLLBACK;$/gm).length);
-    expect(smokeBlocks(sql).every((block) => !/\bBEGIN;/.test(block))).toBe(true);
-  });
+  itEndsEveryTransactionInRollback(migrationSql);
 
-  it("counts only the smoke rows in the final check, and lists every id the smoke tests insert", () => {
-    const sql = migrationSql();
-    const finalCheck = sql.slice(sql.lastIndexOf("ROLLBACK;"));
-    const insertedIds = smokeBlocks(sql).flatMap((block) =>
-      [...block.matchAll(/INSERT INTO \w+\.\w+ \([^)]*\)\s*VALUES \('([^']+)'/g)].map((match) => match[1])
-    );
-
-    expect(finalCheck.match(/count\(\*\)/g)).toHaveLength(4);
-    expect(finalCheck.match(/WHERE id IN \(SELECT id FROM smoke_ids\)/g)).toHaveLength(4);
-    expect(insertedIds.length).toBeGreaterThan(0);
-    new Set(insertedIds).forEach((id) => expect(finalCheck).toContain(`('${id}'::uuid)`));
-  });
+  itCountsOnlySmokeRowsInFinalCheck(migrationSql, SCHEMAS.length * TABLES.length);
 });
 
 describe("Tables registration", () => {
