@@ -21,9 +21,8 @@ describe("HostChannelDistribution with MOCK_HOST_DISTRIBUTION_ENABLED", () => {
         {
           propertyId: "p1",
           title: "Canal House",
-          readiness: { ready: true, missing: [] },
-          distribution: { status: "READY" },
-          channels: [{ channelId: "c1", otaCode: "BookingCom", displayState: "LIVE" }],
+          distribution: { status: "READY", missing: [] },
+          channels: [{ otaCode: "BookingCom", label: "LIVE" }],
         },
       ],
     });

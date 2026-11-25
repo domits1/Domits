@@ -7,8 +7,17 @@ const FOCUSABLE_SELECTOR =
 // Shared accessible dialog shell for the Distribution tab's connect/reconnect/disconnect
 // modals. Focuses the dialog (or initialFocusRef) on open, restores focus to whatever triggered
 // it on close, traps Tab within the dialog, and closes on Escape or a backdrop click -- unless
-// closeDisabled is set, so a host can't dismiss it mid-request.
-function ChannexModalShell({ titleId, title, onClose, closeDisabled = false, initialFocusRef = null, children }) {
+// closeDisabled is set, so a host can't dismiss it mid-request. `wide` is for content that needs
+// more room than a form, such as the embedded Channex screen.
+function ChannexModalShell({
+  titleId,
+  title,
+  onClose,
+  closeDisabled = false,
+  wide = false,
+  initialFocusRef = null,
+  children,
+}) {
   const dialogRef = useRef(null);
 
   useEffect(() => {
@@ -83,7 +92,7 @@ function ChannexModalShell({ titleId, title, onClose, closeDisabled = false, ini
         once the jsdom version this project's jest environment resolves supports it.
       */}
       <div
-        className="chdist-modal"
+        className={wide ? "chdist-modal chdist-modal--wide" : "chdist-modal"}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -115,6 +124,7 @@ ChannexModalShell.propTypes = {
   title: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired,
   closeDisabled: PropTypes.bool,
+  wide: PropTypes.bool,
   initialFocusRef: PropTypes.shape({ current: PropTypes.any }),
   children: PropTypes.node.isRequired,
 };
