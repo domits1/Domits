@@ -49,8 +49,6 @@ const divideRounded = (numerator, denominator, roundingMode) => {
         break;
       case "down":
         break;
-      default:
-        assertRoundingMode(roundingMode);
     }
   }
 
@@ -71,20 +69,23 @@ const parseIntegerMinorUnits = (value) => {
   throw new TypeError("The amount must be an integer number of minor currency units.");
 };
 
+const toDecimalText = (amount) => {
+  if (typeof amount === "number" && Number.isFinite(amount)) {
+    return String(amount);
+  }
+  if (typeof amount === "string") {
+    return amount.trim();
+  }
+  return "";
+};
+
 export const parseDecimalToMinorUnits = (amount, { fractionDigits, roundingMode } = {}) => {
   if (!Number.isSafeInteger(fractionDigits) || fractionDigits < 0 || fractionDigits > 6) {
     throw new TypeError("fractionDigits must be an integer between 0 and 6.");
   }
   assertRoundingMode(roundingMode);
 
-  const decimalText =
-    typeof amount === "number"
-      ? Number.isFinite(amount)
-        ? String(amount)
-        : ""
-      : typeof amount === "string"
-        ? amount.trim()
-        : "";
+  const decimalText = toDecimalText(amount);
   const match = /^([+-]?)(\d+)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/.exec(decimalText);
 
   if (!match) {
@@ -199,6 +200,6 @@ export const allocateByBasisPoints = (
   return allocations.map(({ ownerId, ownershipBasisPoints, amountMinorUnits }) => ({
     ownerId,
     ownershipBasisPoints,
-    amountMinorUnits: (amountMinorUnits * sign).toString(),
+    amountMinorUnits: amountMinorUnits * sign,
   }));
 };
