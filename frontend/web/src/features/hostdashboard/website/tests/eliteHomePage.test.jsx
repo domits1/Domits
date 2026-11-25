@@ -6,6 +6,7 @@ import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateMode
 import { applyWebsiteDraftContentOverrides } from "../rendering/websiteDraftContentOverrides";
 import { WebsiteTemplateSurface } from "../rendering/WebsiteTemplatePreview";
 import WebsitePublicSitePage from "../WebsitePublicSitePage";
+import EliteFooter from "../rendering/templates/elite/EliteFooter";
 
 jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
   __esModule: true,
@@ -114,6 +115,20 @@ describe("the Elite style of the home page of a site with one property", () => {
     expect(document.querySelector(".panoramaEliteHome")).toBeNull();
     expect(document.querySelector(".panoramaTopBarShellElite")).toBeNull();
     expect(document.querySelector(".eliteFooter")).toBeNull();
+  });
+});
+
+describe("the Elite footer", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("shows only the site name when there is no location", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    render(<EliteFooter title="Villa B" />);
+
+    expect(document.querySelector("footer.eliteFooter")).toHaveTextContent(/^Villa B$/);
+    expect(consoleError).not.toHaveBeenCalled();
   });
 });
 
