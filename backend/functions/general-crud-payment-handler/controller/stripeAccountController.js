@@ -3,6 +3,14 @@ import StripeAccountService from "../business/service/stripeAccountService.js";
 import AuthManager from "../auth/authManager.js";
 
 const responseHeaderJSON = responsejson;
+const STRIPE_ACCOUNT_ERROR_CODES = new Set([
+  "STRIPE_ACCOUNT_NOT_FOUND",
+  "STRIPE_ACCOUNT_LOOKUP_FAILED",
+  "STRIPE_ONBOARDING_LINK_FAILED",
+]);
+
+const getStripeAccountErrorCode = (error) =>
+  STRIPE_ACCOUNT_ERROR_CODES.has(error?.code) ? error.code : null;
 
 export default class StripeAccountController {
   constructor() {
@@ -26,19 +34,20 @@ export default class StripeAccountController {
         },
       };
     } catch (error) {
+      const code = getStripeAccountErrorCode(error);
       return {
         statusCode: error.statusCode || 500,
         headers: responseHeaderJSON,
         response: {
           message: error.message || "Something went wrong, please contact support.",
-          ...(error.code ? { code: error.code } : {}),
+          ...(code ? { code } : {}),
         }
       };
     }
   }
 
   // -----------
-  // GET 
+  // GET
   // -----------
   async read(event) {
     try {
@@ -53,12 +62,13 @@ export default class StripeAccountController {
         },
       };
     } catch (error) {
+      const code = getStripeAccountErrorCode(error);
       return {
         statusCode: error.statusCode || 500,
         headers: responseHeaderJSON,
         response: {
           message: error.message || "Something went wrong, please contact support.",
-          ...(error.code ? { code: error.code } : {}),
+          ...(code ? { code } : {}),
         },
       };
     }
