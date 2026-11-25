@@ -331,6 +331,7 @@ export function RefreshFunctions() {
       setTimeout(() => window.location.assign(urlToOpen), 200);
     } catch (error) {
       console.error("Error during Stripe action:", error);
+      showToast(error.message || "Unable to connect to Stripe. Please try again.", "error");
       setProcessingStep(null);
       setIsProcessing(false);
     }
