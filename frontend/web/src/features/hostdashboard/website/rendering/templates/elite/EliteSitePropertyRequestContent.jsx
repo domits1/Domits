@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import styles from "./eliteSitePage.module.scss";
 import requestStyles from "./eliteSitePropertyRequest.module.scss";
 import quoteStyles from "../../booking/QuoteAvailabilitySection.module.scss";
 import PanoramaPageLink from "../PanoramaPageLink";
 import BookingRequestForm from "../../booking/BookingRequestForm";
-import BookingRequestSuccess from "../../booking/BookingRequestSuccess";
 import EliteSitePropertyBookingPanel from "./EliteSitePropertyBookingPanel";
 import { QuoteBreakdown, QuotePanelAlert, deriveQuoteView } from "../../booking/QuotePanel";
 import { QUOTE_STALE_REASONS, QUOTE_STATUS, useWebsiteQuote } from "../../booking/useWebsiteQuote";
@@ -38,8 +38,10 @@ export default function EliteSitePropertyRequestContent({
   stay,
   propertyHref,
   overviewHref,
+  sentHref,
   buildRequestHref,
 }) {
+  const navigate = useNavigate();
   const sessionId = useMemo(() => getOrCreateVisitorId(), []);
   const [selection] = useState(() => ({
     checkIn: stay.checkIn,
@@ -83,6 +85,11 @@ export default function EliteSitePropertyRequestContent({
       idempotencyScope: readIdempotencyScope(booking, quote),
     });
     isSendingRef.current = false;
+    if (outcome?.ok) {
+      const { publicBookingRef, checkIn, checkOut } = outcome.result;
+      navigate(sentHref, { replace: true, state: { sentRequest: { reference: publicBookingRef, checkIn, checkOut } } });
+      return;
+    }
     const presentation = outcome?.error ? resolveBookingRequestErrorPresentation(outcome.error) : null;
     if (presentation?.scope === SCOPES.DATES) {
       setDatesProblem(presentation.message);
@@ -94,7 +101,7 @@ export default function EliteSitePropertyRequestContent({
   };
 
   if (bookingState.status === BOOKING_REQUEST_STATUS.SUCCESS) {
-    return <BookingRequestSuccess result={bookingState.result} />;
+    return null;
   }
 
   const contactHref = resolveHostContactHref(model);
@@ -215,5 +222,6 @@ EliteSitePropertyRequestContent.propTypes = {
   stay: PropTypes.shape({ checkIn: PropTypes.string, checkOut: PropTypes.string, guests: PropTypes.number }).isRequired,
   propertyHref: PropTypes.string.isRequired,
   overviewHref: PropTypes.string.isRequired,
+  sentHref: PropTypes.string.isRequired,
   buildRequestHref: PropTypes.func.isRequired,
 };

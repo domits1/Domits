@@ -84,6 +84,7 @@ describe("parseSitePropertyPath", () => {
     ["properties/villa-b/", "villa-b", "property"],
     ["properties/villa-b/photos", "villa-b", "photos"],
     ["properties/villa-b/request/", "villa-b", "request"],
+    ["properties/villa-b/sent", "villa-b", "sent"],
     ["Properties/VILLA-B/Photos", "villa-b", "photos"],
     ["properties/constructor", "constructor", "property"],
   ])("reads %s as %s, %s", (sitePath, slug, pageKind) => {
