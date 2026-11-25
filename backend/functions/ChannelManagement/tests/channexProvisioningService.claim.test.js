@@ -79,7 +79,7 @@ describe("ChannexProvisioningService.claimListing: the host's account row (D8)",
     expect(props.findInUseByAccountAndListing).toHaveBeenCalledWith("account-winner", "listing-1");
   });
 
-  // #4031 review: a host who connected their own Channex account keeps it. Pointing that row at
+  // A host who connected their own Channex account keeps it. Pointing that row at
   // Domits' key would push their existing mappings to the wrong account, so nothing is changed.
   test.each([["CONNECTED"], ["DISCONNECTED"]])(
     "a %s account row with its own Channex key is left alone and answers 409",
@@ -150,7 +150,7 @@ describe("ChannexProvisioningService.claimListing: the claim (D2)", () => {
   });
 
   // A claim left by an attempt that stopped halfway is continued, not claimed again.
-  // #4031 review: a claim is only taken over when its attempt has stopped. A request that is still
+  // A claim is only taken over when its attempt has stopped. A request that is still
   // running keeps updating the claim (each saved id), and the route ends within 29 s, so a claim
   // untouched for a minute belongs to an attempt that died.
   test("takes over a PROVISIONING claim untouched for a minute, with a conditional update", async () => {
@@ -234,7 +234,7 @@ describe("ChannexProvisioningService.claimListing: the claim (D2)", () => {
   });
 });
 
-// #4031 review (Rakib and a second reviewer): an attempt that ends without success releases its own claim,
+// An attempt that ends without success releases its own claim,
 // so a host who clicks again after "try again" continues straight away instead of waiting out the lease.
 describe("ChannexProvisioningService.claimListing: releasing the claim", () => {
   const account = { id: "account-1", status: "CONNECTED", credentialsRef: "domits-channex-secret" };

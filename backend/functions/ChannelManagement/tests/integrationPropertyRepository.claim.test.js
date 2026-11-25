@@ -94,7 +94,7 @@ describe("IntegrationPropertyRepository claim", () => {
     expect(write.andWhere).toHaveBeenCalledWith("status = :s", { s: "PROVISIONING" });
   });
 
-  // #4031 review: only one of two requests that find the same stale claim may take it over.
+  // Only one of two requests that find the same stale claim may take it over.
   test.each([
     [1, true],
     [0, false],

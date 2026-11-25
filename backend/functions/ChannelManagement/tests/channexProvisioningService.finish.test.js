@@ -47,7 +47,7 @@ describe("ChannexProvisioningService.finishProvisioning", () => {
     );
   });
 
-  // #4031 review: a claim that is no longer PROVISIONING (archived or finished by someone else) must not
+  // A claim that is no longer PROVISIONING (archived or finished by someone else) must not
   // be reported as provisioned, and gets no full sync from this request.
   test("a claim that could not be activated answers needs attention and queues nothing", async () => {
     const { service, props, outbox } = build();

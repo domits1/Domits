@@ -174,7 +174,7 @@ export default class ChannexProvisioningService {
 
   // A running attempt updates its claim with every saved id and ends within the 29 s route limit, so a
   // claim untouched for CLAIM_LEASE_MS belongs to an attempt that died. Only that one is continued, and
-  // only by the request whose conditional update wins (#4031 review). Returns null otherwise.
+  // only by the request whose conditional update wins. Returns null otherwise.
   async takeOverStaleClaim(claim) {
     const now = this.now();
     if (now - Number(claim.updatedAt) < CLAIM_LEASE_MS) return null;
@@ -192,7 +192,7 @@ export default class ChannexProvisioningService {
     const account = await this.accounts.findByUserIdAndChannel(userId, CHANNEL);
     if (!account) return this.createHostAccount(userId, now);
     // A row with another Channex key belongs to a host who connected their own Channex account; pointing it
-    // at Domits' key would push their mappings to the wrong account (#4031 review). Returns null for it.
+    // at Domits' key would push their mappings to the wrong account. Returns null for it.
     if (account.credentialsRef && account.credentialsRef !== this.credentialsRef) return null;
     if (account.status === CONNECTED && account.credentialsRef === this.credentialsRef) return account;
     return this.accounts.update(account.id, { status: CONNECTED, credentialsRef: this.credentialsRef, updatedAt: now });

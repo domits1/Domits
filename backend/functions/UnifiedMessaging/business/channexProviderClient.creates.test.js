@@ -60,7 +60,7 @@ describe.each(CREATES)("ChannexProviderClient.$method", ({ method, endpoint, bod
     });
   });
 
-  // #4031 review: 429 means Channex was too busy; nothing was created or refused, so it can be retried.
+  // 429 means Channex was too busy; nothing was created or refused, so it can be retried.
   test("a 429 is a known, retryable failure", async () => {
     global.fetch.mockResolvedValue(jsonResponse(429, {}));
 

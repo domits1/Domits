@@ -35,7 +35,7 @@ const listingRow = (overrides = {}) => ({
 describe("ListingDistributionRepository.findListing", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  // Readiness (D3) and the Channex payloads (D2) both read this shape (#4031 review: the title was missing).
+  // Readiness (D3) and the Channex payloads (D2) both read this shape.
   test("returns the listing in the shape readiness and the Channex payloads read", async () => {
     const { repository } = setup([listingRow()]);
 

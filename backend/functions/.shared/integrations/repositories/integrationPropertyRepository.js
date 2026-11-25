@@ -140,7 +140,7 @@ class IntegrationPropertyRepository {
   }
 
   // Takes over a stale claim only if nobody touched it since it was read, so of two requests that find
-  // the same stale claim exactly one wins (design note D2, #4031 review).
+  // the same stale claim exactly one wins (design note D2).
   async takeOverClaim({ claimId, expectedUpdatedAt, now }) {
     const client = await Database.getInstance();
     const result = await client
@@ -155,7 +155,7 @@ class IntegrationPropertyRepository {
   }
 
   // An attempt that ended without success makes its claim stale at once, so the next click can take it
-  // over instead of waiting out the lease (#4031 review).
+  // over instead of waiting out the lease.
   async releaseClaim(claimId) {
     const client = await Database.getInstance();
     await client

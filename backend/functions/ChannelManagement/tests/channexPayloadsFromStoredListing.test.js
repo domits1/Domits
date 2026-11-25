@@ -10,9 +10,8 @@ import {
   buildChannexRoomTypePayload,
 } from "../../.shared/channelManagement/utils/channexProvisioningPayloads.js";
 
-// #4031 review: the payload tests used a hand-made listing, while findListing returned no title, type
-// or address, so every real Channex create would have been refused. This test goes through the stored
-// row the database returns, so the two shapes cannot drift apart again.
+// The payload tests use a hand-made listing. This test goes through the stored row the database returns,
+// so a field findListing stops loading (title, type, address) fails here instead of in a real Channex create.
 const storedRow = {
   id: "property-1",
   hostid: "host-1",
