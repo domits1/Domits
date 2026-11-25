@@ -394,13 +394,24 @@ describe("host automated messages v1", () => {
       expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
     });
 
-    test("keeps the automation and shows the error when deleting fails", async () => {
-      deleteAutomation.mockRejectedValueOnce(new Error("Automation not found."));
+    test("removes the automation without an error when it was already deleted", async () => {
+      deleteAutomation.mockRejectedValueOnce(Object.assign(new Error("Automation not found."), { status: 404 }));
       await openAutomation();
 
       fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
-      expect(await screen.findByRole("alert")).toHaveTextContent("Automation not found.");
+      await waitFor(() => expect(screen.queryByText("Paid booking welcome")).not.toBeInTheDocument());
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Automation name")).toHaveValue("");
+    });
+
+    test("keeps the automation and shows the error when deleting fails", async () => {
+      deleteAutomation.mockRejectedValueOnce(Object.assign(new Error("Delete failed."), { status: 500 }));
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Delete failed.");
       expect(within(screen.getByLabelText("Automation list")).getByText("Paid booking welcome")).toBeInTheDocument();
     });
   });

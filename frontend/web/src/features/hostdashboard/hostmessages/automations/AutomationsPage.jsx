@@ -228,14 +228,18 @@ export const AutomationsContent = () => {
     const { id } = form;
     if (!id) return;
     if (!window.confirm("Delete this automation? Its scheduled messages will be cancelled.")) return;
+    const dropFromList = () => {
+      setAutomations((current) => current.filter((item) => item.id !== id));
+      startNew();
+    };
     setSaving(true);
     setError("");
     try {
       await deleteAutomation(id);
-      setAutomations((current) => current.filter((item) => item.id !== id));
-      startNew();
+      dropFromList();
     } catch (requestError) {
-      setError(requestError.message);
+      if (requestError.status === 404) dropFromList();
+      else setError(requestError.message);
     } finally {
       setSaving(false);
     }

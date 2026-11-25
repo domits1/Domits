@@ -32,6 +32,15 @@ The automation list gets All / Active / Paused tabs in the same style as the inb
 | P3 (6/10) | AutomationsPage.jsx `removeAutomation` | Deleting disables Save and Delete, but not Activate or Pause. | Accepted: both fail with 404 after the delete and show the error. |
 | Release step | API Gateway UnifiedMessaging (54s3llwby8) | `/automations/{id}` has no DELETE method yet, so the browser call fails until it exists. | Add DELETE with `DomitsCognitoAuthorizer` and Lambda proxy integration to AutomatedMessaging, then deploy to `default`. Listed in the pull request. |
 
+## Review fix: delete answered 404
+
+Pull request review (#4056) pointed out that a delete whose commit succeeded but was reported as a conflict and retried by `withDsqlRetry` answers 404, and the automation stayed in the list with an error.
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P3 (7/10) | AutomationsPage.jsx `removeAutomation` | A 404 on delete means the automation is already gone, but the page kept it in the list and showed "Automation not found." | Fixed: a 404 removes it from the list without an error; other errors still keep it and show the message. Test added. |
+| P3 (6/10) | AutomationsPage.jsx `LIST_FILTERS` | New automations are DRAFT, and drafts only show under All. | Accepted: a draft has never sent anything; All shows every automation, and a fourth tab would crowd the narrow list card. |
+
 ## Not in scope
 
 - A lighter font weight for automation names in the list. Tried and reverted after a look in the browser; the names stay bold, like the inbox.
