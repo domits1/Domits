@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PlatformCardsSection from "./PlatformCardsSection";
 import { createConnectSession, getHostListings, refreshChannels } from "../services/hostDistributionApi";
@@ -391,6 +391,70 @@ describe("PlatformCardsSection", () => {
     pending.resolve({ listing: LIVE_LISTING });
     await waitFor(() => expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled());
     expect(screen.queryByText("Refreshing…")).not.toBeInTheDocument();
+  });
+
+  describe("a late answer for a listing the host has moved away from", () => {
+    const LISTING_B = listing("p2", "Beach Apartment");
+
+    // Refresh A (pending), switch to B, refresh B (pending). Returns what the test settles by hand.
+    const refreshAThenB = async (user) => {
+      const answerA = deferred();
+      const answerB = deferred();
+      refreshChannels.mockImplementation(({ propertyId }) => (propertyId === "p1" ? answerA.promise : answerB.promise));
+      getHostListings.mockResolvedValue({ listings: [LIVE_LISTING, LISTING_B] });
+
+      render(<PlatformCardsSection />);
+      await screen.findByText("Booking.com");
+      await user.click(screen.getByRole("button", { name: "Refresh" }));
+      await user.selectOptions(screen.getByRole("combobox", { name: "Property" }), "p2");
+      await user.click(screen.getByRole("button", { name: "Refresh" }));
+      expect(refreshChannels).toHaveBeenCalledTimes(2);
+      return { answerA, answerB };
+    };
+
+    test("A's answer does not clear B's Refreshing…, so B cannot be refreshed twice", async () => {
+      const user = userEvent.setup();
+      const { answerA, answerB } = await refreshAThenB(user);
+
+      const syncedA = { ...LIVE_LISTING, channels: [channel("BookingCom", "LIVE"), channel("Airbnb", "LIVE")] };
+      await act(async () => answerA.resolve({ listing: syncedA }));
+
+      expect(screen.getByText("Refreshing…")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Refresh" })).toBeDisabled();
+      await user.click(screen.getByRole("button", { name: "Refresh" }));
+      expect(refreshChannels).toHaveBeenCalledTimes(2);
+
+      answerB.resolve({ listing: LISTING_B });
+      await waitFor(() => expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled());
+      expect(screen.queryByText("Refreshing…")).not.toBeInTheDocument();
+
+      // A's late answer was not thrown away: its own card shows it.
+      await user.selectOptions(screen.getByRole("combobox", { name: "Property" }), "p1");
+      expect(within(cardFor("Airbnb")).getByText("Live")).toBeInTheDocument();
+    });
+
+    test("A's late failure does not take away the error B's own refresh already showed", async () => {
+      const user = userEvent.setup();
+      const { answerA, answerB } = await refreshAThenB(user);
+      await act(async () => answerB.reject(new Error("B failed")));
+      expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't refresh your connections.");
+
+      await act(async () => answerA.reject(new Error("A failed late")));
+
+      expect(screen.getByRole("alert")).toHaveTextContent("We couldn't refresh your connections.");
+    });
+
+    test("A's late failure neither clears B's Refreshing… nor puts an error under B", async () => {
+      const user = userEvent.setup();
+      const { answerA } = await refreshAThenB(user);
+
+      await act(async () => answerA.reject(new Error("boom")));
+      expect(console.error).toHaveBeenCalled();
+
+      expect(screen.getByText("Refreshing…")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Refresh" })).toBeDisabled();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
   });
 
   test("a refresh answer without a listing counts as a failed refresh and keeps the cards", async () => {
