@@ -1,6 +1,6 @@
 # docs(standards): user-facing errors say what happened and what to do next
 
-Pull request: (to be opened)
+Pull request: #4057
 Issue: none. Follow-up to the Engineers thread of 25 Nov: a host saw "Network error: You must be logged in." while logged in, with no way forward. The thread asked for errors that say what to do next, and for tests that prevent this behaviour.
 Reviewed: staged diff on `docs/user-facing-error-rule`, on top of `origin/acceptance`
 Result: no blocking findings
