@@ -85,9 +85,9 @@ describe("allocateByBasisPoints", () => {
         { allocationPolicy: "largest-remainder" }
       )
     ).toEqual([
-      { ownerId: "owner-a", ownershipBasisPoints: 3333, amountMinorUnits: "33" },
-      { ownerId: "owner-b", ownershipBasisPoints: 3333, amountMinorUnits: "33" },
-      { ownerId: "owner-c", ownershipBasisPoints: 3334, amountMinorUnits: "34" },
+      { ownerId: "owner-a", ownershipBasisPoints: 3333, amountMinorUnits: 33n },
+      { ownerId: "owner-b", ownershipBasisPoints: 3333, amountMinorUnits: 33n },
+      { ownerId: "owner-c", ownershipBasisPoints: 3334, amountMinorUnits: 34n },
     ]);
   });
 
@@ -102,12 +102,12 @@ describe("allocateByBasisPoints", () => {
         { allocationPolicy: "largest-remainder" }
       )
     ).toEqual([
-      { ownerId: "owner-b", ownershipBasisPoints: 5000, amountMinorUnits: "0" },
-      { ownerId: "owner-a", ownershipBasisPoints: 5000, amountMinorUnits: "1" },
+      { ownerId: "owner-b", ownershipBasisPoints: 5000, amountMinorUnits: 0n },
+      { ownerId: "owner-a", ownershipBasisPoints: 5000, amountMinorUnits: 1n },
     ]);
   });
 
-  test("preserves negative adjustments and returns amounts as JSON-safe strings", () => {
+  test("preserves negative adjustments and returns amounts as BigInt values", () => {
     expect(
       allocateByBasisPoints(
         -1n,
@@ -118,8 +118,8 @@ describe("allocateByBasisPoints", () => {
         { allocationPolicy: "largest-remainder" }
       )
     ).toEqual([
-      { ownerId: "owner-b", ownershipBasisPoints: 5000, amountMinorUnits: "0" },
-      { ownerId: "owner-a", ownershipBasisPoints: 5000, amountMinorUnits: "-1" },
+      { ownerId: "owner-b", ownershipBasisPoints: 5000, amountMinorUnits: 0n },
+      { ownerId: "owner-a", ownershipBasisPoints: 5000, amountMinorUnits: -1n },
     ]);
   });
 
