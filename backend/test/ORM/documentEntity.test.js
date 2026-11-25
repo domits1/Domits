@@ -87,15 +87,22 @@ const TABLES = [
 
 const migrationSql = () => readOrmFile("migrations", `${MIGRATION}.sql`);
 
+const ormFileLoader =
+  (...parts) =>
+  async () =>
+    readOrmFile(...parts);
+
+const migrationRecordLoader = (direction) => () => recordQueries((runner) => new Document20261124()[direction](runner));
+
 const SOURCES = [
-  [`${MIGRATION}.sql`, async () => migrationSql()],
-  ["schema.psql", async () => readOrmFile("schema.psql")],
-  [`${MIGRATION}.js up()`, () => recordQueries((runner) => new Document20261124().up(runner))],
+  [`${MIGRATION}.sql`, ormFileLoader("migrations", `${MIGRATION}.sql`)],
+  ["schema.psql", ormFileLoader("schema.psql")],
+  [`${MIGRATION}.js up()`, migrationRecordLoader("up")],
 ];
 
 const DROP_SOURCES = [
-  [`${MIGRATION}_rollback.sql`, async () => readOrmFile("migrations", `${MIGRATION}_rollback.sql`)],
-  [`${MIGRATION}.js down()`, () => recordQueries((runner) => new Document20261124().down(runner))],
+  [`${MIGRATION}_rollback.sql`, ormFileLoader("migrations", `${MIGRATION}_rollback.sql`)],
+  [`${MIGRATION}.js down()`, migrationRecordLoader("down")],
 ];
 
 describeOrmConsistency({ tables: TABLES, schemas: SCHEMAS, sources: SOURCES, dropSources: DROP_SOURCES });
@@ -154,6 +161,10 @@ describe("migration SQL smoke tests", () => {
   const documentBlock = (schema) =>
     smokeBlocks(migrationSql()).find((block) => inserts(block).some((insert) => insert.table === `${schema}.document`));
 
+  itEndsEveryTransactionInRollback(migrationSql);
+
+  itCountsOnlySmokeRowsInFinalCheck(migrationSql, SCHEMAS.length * TABLES.length);
+
   it.each(SCHEMAS)("repeats version 1 only with ON CONFLICT DO NOTHING in $schema", ({ schema }) => {
     const versions = new Map(
       inserts(documentBlock(schema))
@@ -192,17 +203,14 @@ describe("migration SQL smoke tests", () => {
       ["1", "0"],
     ]);
   });
-
-  itEndsEveryTransactionInRollback(migrationSql);
-
-  itCountsOnlySmokeRowsInFinalCheck(migrationSql, SCHEMAS.length * TABLES.length);
 });
 
 describe("Tables registration", () => {
   it("registers document and document_version in the full entity list", async () => {
     const dataSource = new DataSource({ type: "postgres", entities: Tables });
     await dataSource.buildMetadatas();
-    const tableNames = dataSource.entityMetadatas.map((metadata) => metadata.tableName);
-    expect(tableNames).toEqual(expect.arrayContaining(["document", "document_version"]));
+    expect(dataSource.entityMetadatas.map(({ tableName }) => tableName)).toEqual(
+      expect.arrayContaining(TABLES.map(({ table }) => table))
+    );
   });
 });
