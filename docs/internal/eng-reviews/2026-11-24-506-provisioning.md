@@ -45,6 +45,22 @@ Each commit was reviewed on its staged diff before it was made. The design is D2
 | PR over 1,000 lines | Split: timezone, payloads and create calls in their own pull request; this one keeps the service and the migration. |
 | Adopting by title could take another host's leftover property with the same title | Accepted: Channex offers no field of our own to match on; leftovers are Domits' own, and two matches stop with "needs attention". |
 
+## Findings from the second PR review (25 Nov)
+
+Commits: fa838e111 (pagination), 13429c798 (list deadline), cee404e3a (website link), 9cc99cfd2 (match on the id inside the link), d62a7ae2f (comment cleanup). Each was reviewed on its staged diff before it was made. The rows above about list timeouts and adopting by title are superseded by these.
+
+| Point | Decision |
+|---|---|
+| Channex lists answer 10 records unless asked for more, so look-before-create missed a match past the first page and created a duplicate | Fixed: `readAllPages` asks 100 per page and reads until `meta.total` or a short page; a failing page fails the whole list (a partial list would look like "not there yet"); more than 20 pages fails with `…_TOO_MANY_PAGES` |
+| The list calls had no timeout, so a hanging Channex held the turn-on until API Gateway's 504 | Fixed: one 5 s deadline across all pages of a list (`CHANNEX_LIST_TIMEOUT`, answered as try again). Accepted limit: three lists of 5 s plus three creates of 7 s is 36 s in the worst case, above the 29 s; it only happens when every call is slow, and the lease plus look-before-create cover an attempt that is cut off |
+| Adopting by title could take another host's property with the same title (all hosts share Domits' key) | Fixed: the property is created with `website` = the listing's Domits page, and only a property whose link carries this listing's id is adopted. A same-titled property with another link or none is not adopted |
+| Channex may store the link differently from how it was sent | Fixed: the listing id is read out of the link (scheme, `www`, host case, trailing slash and encoding do not matter; another host, page or a missing `ID` is no match) |
+| Is there a safer key? (Channex docs, 25 Nov) | No field for an external id or idempotency key exists; `website` is a documented property field (URI). Groups (`group_id` on create) would keep other hosts' properties out of the search, but `GET /properties` has no group filter (only `title`, `city`, `country`). Noted in D2 for later |
+| Properties created before this change have no link | Accepted: only staging test properties. Archive or delete them in Channex staging before the Booking.com test, so a retry cannot meet them |
+| "#4031 review" history in code comments | Removed; the why stays |
+
+Manual check before the Booking.com test: after the first turn-on on staging, open the property in Channex and confirm `website` holds the listing's link.
+
 ## How provisioning answers
 
 | Situation | Answer |
