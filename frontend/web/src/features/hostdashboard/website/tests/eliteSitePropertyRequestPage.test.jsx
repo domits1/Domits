@@ -107,7 +107,7 @@ const fillIn = (fields) =>
 
 const fillAndSend = async (extraFields = {}) => {
   const sendButton = await findForm();
-  fillIn({ "First name": "Ana", "Last name": "Silva", "Email address": GUEST.email, ...extraFields });
+  fillIn({ "First name": "Ana", "Last name (optional)": "Silva", "Email address": GUEST.email, ...extraFields });
   fireEvent.click(sendButton);
 };
 
@@ -240,7 +240,7 @@ describe("the request to book page of an Elite website", () => {
     renderSiteAt(REQUEST_URL);
 
     expect(await screen.findByText(/^Price expired/)).toBeInTheDocument();
-    fillIn({ "First name": "Ana", "Last name": "Silva", "Email address": GUEST.email });
+    fillIn({ "First name": "Ana", "Last name (optional)": "Silva", "Email address": GUEST.email });
     fireEvent.click(screen.getByRole("button", { name: "Request to book" }));
 
     await waitFor(() => expect(quoteBodies()).toHaveLength(2));
@@ -313,6 +313,16 @@ describe("the details on the request to book page", () => {
         message: "We arrive late.",
       })
     );
+  });
+
+  it("sends a guest with one name under that name alone", async () => {
+    answerWith();
+    renderSiteAt(REQUEST_URL);
+
+    await fillAndSend({ "Last name (optional)": "" });
+
+    expect(await screen.findByText("DBW-7KQ2M")).toBeInTheDocument();
+    expect(sends()[0].guest).toEqual({ name: "Ana", email: GUEST.email });
   });
 
   it("marks the first of the three steps and has no house rules box for a listing without rules", async () => {

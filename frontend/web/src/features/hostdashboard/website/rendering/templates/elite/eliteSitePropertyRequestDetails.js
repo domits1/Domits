@@ -13,8 +13,7 @@ const EXTRA_EMPTY_LINES = /\n{3,}/g;
 
 export const REQUEST_DETAIL_MESSAGES = Object.freeze({
   firstName: "Please enter your first name.",
-  lastName: "Please enter your last name.",
-  nameLength: `Your first and last name can be at most ${MAX_GUEST_NAME_LENGTH} characters together.`,
+  nameLength: `Your name can be at most ${MAX_GUEST_NAME_LENGTH} characters.`,
   email: "Please enter a valid email address.",
   phone:
     "Please enter a phone number of 6 to 15 digits, with only digits, spaces, brackets, dots, dashes and a leading +.",
@@ -52,7 +51,7 @@ const isValidPhone = (phone) => {
 export const validateRequestDetails = (details, { hasHouseRules }) => {
   const firstName = details.firstName.trim();
   const lastName = details.lastName.trim();
-  const name = `${firstName} ${lastName}`;
+  const name = lastName ? `${firstName} ${lastName}` : firstName;
   const email = details.email.trim().toLowerCase();
   const phone = details.phone.trim();
   const message = cleanMessage(details.message);
@@ -60,11 +59,8 @@ export const validateRequestDetails = (details, { hasHouseRules }) => {
 
   if (!firstName) {
     errors.firstName = REQUEST_DETAIL_MESSAGES.firstName;
-  }
-  if (!lastName) {
-    errors.lastName = REQUEST_DETAIL_MESSAGES.lastName;
   } else if (name.length > MAX_GUEST_NAME_LENGTH) {
-    errors.lastName = REQUEST_DETAIL_MESSAGES.nameLength;
+    errors[lastName ? "lastName" : "firstName"] = REQUEST_DETAIL_MESSAGES.nameLength;
   }
   if (email.length > MAX_GUEST_NAME_LENGTH || !BOOKING_GUEST_EMAIL_PATTERN.test(email)) {
     errors.email = REQUEST_DETAIL_MESSAGES.email;

@@ -6,7 +6,7 @@ import quoteStyles from "../../booking/QuoteAvailabilitySection.module.scss";
 
 const CONTACT_FIELDS = Object.freeze([
   { field: "firstName", label: "First name", autoComplete: "given-name" },
-  { field: "lastName", label: "Last name", autoComplete: "family-name" },
+  { field: "lastName", label: "Last name (optional)", autoComplete: "family-name" },
   { field: "email", label: "Email address", type: "email", autoComplete: "email" },
   { field: "phone", label: "Phone (optional)", type: "tel", autoComplete: "tel" },
 ]);

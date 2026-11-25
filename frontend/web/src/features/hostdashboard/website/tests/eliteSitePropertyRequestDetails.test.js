@@ -33,12 +33,20 @@ describe("the details of a request to book", () => {
     });
   });
 
+  it("refuses a first name of only spaces", () => {
+    expect(validateRequestDetails(details({ firstName: "   " }), NO_RULES).errors).toEqual({
+      firstName: REQUEST_DETAIL_MESSAGES.firstName,
+    });
+  });
+
   it.each([
-    ["first", { firstName: "   " }, "firstName"],
-    ["last", { lastName: "\t \n" }, "lastName"],
-  ])("refuses a %s name of only spaces", (_, changes, field) => {
-    expect(validateRequestDetails(details(changes), NO_RULES).errors).toEqual({
-      [field]: REQUEST_DETAIL_MESSAGES[field],
+    ["no last name", ""],
+    ["a last name of only spaces", "\t \n"],
+  ])("sends the first name alone for %s", (_, lastName) => {
+    expect(validateRequestDetails(details({ firstName: " Ana ", lastName }), NO_RULES)).toEqual({
+      guest: { name: "Ana", email: "ana@example.com" },
+      message: "",
+      errors: {},
     });
   });
 
@@ -48,6 +56,10 @@ describe("the details of a request to book", () => {
     expect(validateRequestDetails(longest, NO_RULES).errors).toEqual({});
     expect(validateRequestDetails({ ...longest, lastName: "b".repeat(128) }, NO_RULES).errors).toEqual({
       lastName: REQUEST_DETAIL_MESSAGES.nameLength,
+    });
+    expect(validateRequestDetails(details({ firstName: "a".repeat(255), lastName: "" }), NO_RULES).errors).toEqual({});
+    expect(validateRequestDetails(details({ firstName: "a".repeat(256), lastName: "" }), NO_RULES).errors).toEqual({
+      firstName: REQUEST_DETAIL_MESSAGES.nameLength,
     });
   });
 
