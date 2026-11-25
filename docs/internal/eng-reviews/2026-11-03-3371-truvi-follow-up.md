@@ -1,9 +1,15 @@
 # fix: Truvi follow-up before the schedule is enabled #3371
 
-Pull request: not opened yet (branch `feature/3371-truvi-follow-up`, on top of #3632)
+Pull request: #3781, then folded into #3603; back as its own pull request from branch `feature/3371-truvi-follow-up-before-schedule`
 Issue: #3371
-Reviewed commit: 5b896b868
+Reviewed commit: 5b896b868, and the merge onto acceptance 4fc0d5738
 Result: no blocking findings. Each commit was reviewed as a staged diff before it was made, then the whole branch against `feature/3371-truvi-echo-token`.
+
+## Why this pull request comes back
+
+This code was reviewed and approved in #3781 (Enes). On 16 November it was folded into #3603 together with the other Truvi parts, which made #3603 too big to review. The cancel part, the date changes and the echoToken part are merged since; this part comes back on its own, unchanged.
+
+The only new thing to review is the merge with acceptance. The review fixes of #3587 and #3602 came into acceptance after this branch was made, so `truviBookingScreener.js`, its test and the schedule doc had conflicts. Both sides are kept, the same way as on 16 November: acceptance's retry rules and the programming-error check, and this branch's UTC-midnight count and `SKIPPED` result. All 207 Truvi tests pass.
 
 This pull request closes the points the earlier Truvi reviews left for "the follow-up before the schedule is enabled" (#3555, #3625, #3632).
 
