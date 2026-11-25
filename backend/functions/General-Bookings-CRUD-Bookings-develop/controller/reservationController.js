@@ -22,6 +22,11 @@ const REFUND_STATUS = Object.freeze({
   NOT_REFUNDED: "not_refunded",
   UNKNOWN: "unknown",
 });
+const resolveRefundedAmount = (status, amount) => {
+  if (status === REFUND_STATUS.REFUNDED) return amount;
+  if (status === REFUND_STATUS.NOT_REFUNDED) return 0;
+  return undefined;
+};
 const CHANNEX_ACTIVE_CANCELLATION_STATUSES = new Set(["awaiting payment", "paid"]);
 const PUBLIC_SITE_BOOKINGS_PATH_PATTERN = /\/public\/sites\/([^/]+)\/bookings\/?$/;
 const PUBLIC_BOOKING_INTERNAL_ERROR_MESSAGE = "Something went wrong while sending your booking request. Please try again.";
@@ -387,7 +392,7 @@ class ReservationController {
     }
 
     const expectedCurrency = String(booking.currency || REFUND_CURRENCY).trim().toLowerCase();
-    if (!existingRefund.currency || existingRefund.currency.toLowerCase() !== expectedCurrency) {
+    if (existingRefund?.currency?.toLowerCase() !== expectedCurrency) {
       return {
         requestedAmount,
         stripeRefundId: booking.stripe_refund_id,
@@ -400,12 +405,7 @@ class ReservationController {
     if (refundStatus === REFUND_STATUS.REFUNDED && !Number.isSafeInteger(existingRefund.amount)) {
       refundStatus = REFUND_STATUS.UNKNOWN;
     }
-    const refundedAmount =
-      refundStatus === REFUND_STATUS.REFUNDED
-        ? existingRefund.amount
-        : refundStatus === REFUND_STATUS.NOT_REFUNDED
-          ? 0
-          : undefined;
+    const refundedAmount = resolveRefundedAmount(refundStatus, existingRefund.amount);
 
     return {
       requestedAmount,
@@ -438,12 +438,7 @@ class ReservationController {
     ) {
       refundStatus = REFUND_STATUS.UNKNOWN;
     }
-    const refundedAmount =
-      refundStatus === REFUND_STATUS.REFUNDED
-        ? refund.amount
-        : refundStatus === REFUND_STATUS.NOT_REFUNDED
-          ? 0
-          : undefined;
+    const refundedAmount = resolveRefundedAmount(refundStatus, refund.amount);
     const refundContext = {
       hostId: booking.hostid,
       bookingId: booking.id,
@@ -471,7 +466,7 @@ class ReservationController {
 
   async processCancellationRefund(booking) {
     const paymentId = String(booking.paymentid || "").trim();
-    const hasStripePaymentIntent = /^pi_[A-Za-z0-9_]+$/.test(paymentId);
+    const hasStripePaymentIntent = /^pi_\w+$/.test(paymentId);
     const isPaidBooking = normalizeBookingStatus(booking.status) === "paid";
     let refundAmountCents;
 

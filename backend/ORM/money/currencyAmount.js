@@ -33,14 +33,12 @@ export const getCurrencyFractionDigits = (currency) => {
 
 export const parseDecimalToMinorUnits = (amount, currency) => {
   const fractionDigits = getCurrencyFractionDigits(currency);
-  const decimalText =
-    typeof amount === "number"
-      ? Number.isFinite(amount)
-        ? String(amount)
-        : ""
-      : typeof amount === "string"
-        ? amount.trim()
-        : "";
+  let decimalText = "";
+  if (typeof amount === "number" && Number.isFinite(amount)) {
+    decimalText = String(amount);
+  } else if (typeof amount === "string") {
+    decimalText = amount.trim();
+  }
   const match = /^([+-]?)(?:(\d+)(?:\.(\d*))?|\.(\d+))(?:[eE]([+-]?\d+))?$/.exec(decimalText);
 
   if (!match) {
@@ -82,7 +80,7 @@ export const parseDecimalToMinorUnits = (amount, currency) => {
 };
 
 export const formatMinorUnits = (amountMinorUnits, currency) => {
-  const fractionDigits = getCurrencyFractionDigits(currency);
+  const fractionDigits = getCurrencyFractionDigits(currency) ?? 2;
   if (!/^-?\d+$/.test(String(amountMinorUnits))) {
     throw new TypeError("The amount must be an integer number of minor currency units.");
   }

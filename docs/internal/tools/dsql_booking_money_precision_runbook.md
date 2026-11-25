@@ -74,6 +74,8 @@ ORDER BY column_name;
 
 ## Backfill and reconciliation scripts
 
+The three operational scripts are maintained separately in [dependent PR #4047](https://github.com/domits1/Domits/pull/4047), which relies on the schema and ORM changes in this PR. Merge this PR before merging or running those scripts.
+
 All scripts are dry-run by default.
 
 - node scripts/backfill-total-price-from-stripe.js considers only native direct EUR bookings with a Stripe PaymentIntent ID. It requires a succeeded PaymentIntent whose amount and amount_received are the same safe integer, and skips rows whose existing total_price does not match that amount. It uses PaymentIntent.amount to preserve the customer-facing total_price meaning. Use --limit N for a limited review.
