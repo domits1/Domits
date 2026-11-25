@@ -12,6 +12,18 @@ const STRIPE_ACCOUNT_ERROR_CODES = new Set([
 const getStripeAccountErrorCode = (error) =>
   STRIPE_ACCOUNT_ERROR_CODES.has(error?.code) ? error.code : null;
 
+const toErrorResponse = (error) => {
+  const code = getStripeAccountErrorCode(error);
+  return {
+    statusCode: error.statusCode || 500,
+    headers: responseHeaderJSON,
+    response: {
+      message: error.message || "Something went wrong, please contact support.",
+      ...(code ? { code } : {}),
+    },
+  };
+};
+
 export default class StripeAccountController {
   constructor() {
     this.stripeAccountService = new StripeAccountService();
@@ -34,15 +46,7 @@ export default class StripeAccountController {
         },
       };
     } catch (error) {
-      const code = getStripeAccountErrorCode(error);
-      return {
-        statusCode: error.statusCode || 500,
-        headers: responseHeaderJSON,
-        response: {
-          message: error.message || "Something went wrong, please contact support.",
-          ...(code ? { code } : {}),
-        }
-      };
+      return toErrorResponse(error);
     }
   }
 
@@ -62,15 +66,7 @@ export default class StripeAccountController {
         },
       };
     } catch (error) {
-      const code = getStripeAccountErrorCode(error);
-      return {
-        statusCode: error.statusCode || 500,
-        headers: responseHeaderJSON,
-        response: {
-          message: error.message || "Something went wrong, please contact support.",
-          ...(code ? { code } : {}),
-        },
-      };
+      return toErrorResponse(error);
     }
   }
 }

@@ -1,16 +1,52 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import StripeAccountController from "../../functions/general-crud-payment-handler/controller/stripeAccountController.js";
 
-const PUBLIC_STRIPE_CODES = [
-  "STRIPE_ACCOUNT_NOT_FOUND",
-  "STRIPE_ACCOUNT_LOOKUP_FAILED",
-  "STRIPE_ONBOARDING_LINK_FAILED",
+const ERROR_CASES = [
+  {
+    name: "public Stripe account not found",
+    code: "STRIPE_ACCOUNT_NOT_FOUND",
+    expectedCode: "STRIPE_ACCOUNT_NOT_FOUND",
+    statusCode: 409,
+    message: "Stripe account not found.",
+  },
+  {
+    name: "public Stripe lookup failure",
+    code: "STRIPE_ACCOUNT_LOOKUP_FAILED",
+    expectedCode: "STRIPE_ACCOUNT_LOOKUP_FAILED",
+    statusCode: 503,
+    message: "Stripe account lookup failed.",
+  },
+  {
+    name: "public Stripe onboarding link failure",
+    code: "STRIPE_ONBOARDING_LINK_FAILED",
+    expectedCode: "STRIPE_ONBOARDING_LINK_FAILED",
+    statusCode: 502,
+    message: "Stripe onboarding link failed.",
+  },
+  {
+    name: "database error",
+    code: "23505",
+    expectedCode: null,
+    statusCode: 500,
+    message: "Database request failed.",
+  },
+  {
+    name: "internal error",
+    code: "INTERNAL_ERROR",
+    expectedCode: null,
+    statusCode: 500,
+    message: "Internal request failed.",
+  },
 ];
 
 const CONTROLLER_METHODS = [
   ["create", "createStripeAccount"],
   ["read", "getStatusOfStripeAccount"],
 ];
+
+const TEST_CASES = CONTROLLER_METHODS.flatMap(([controllerMethod, serviceMethod]) =>
+  ERROR_CASES.map((errorCase) => [controllerMethod, serviceMethod, errorCase])
+);
 
 const buildController = (serviceMethod, error) => {
   const controller = Object.create(StripeAccountController.prototype);
@@ -21,48 +57,23 @@ const buildController = (serviceMethod, error) => {
 };
 
 describe("StripeAccountController error responses", () => {
-  it.each(
-    CONTROLLER_METHODS.flatMap(([controllerMethod, serviceMethod]) =>
-      PUBLIC_STRIPE_CODES.map((code) => [controllerMethod, serviceMethod, code])
-    )
-  )("%s returns the public Stripe code %s", async (controllerMethod, serviceMethod, code) => {
-    const error = Object.assign(new Error("Stripe request failed."), { code, statusCode: 502 });
+  it.each(TEST_CASES)("%s handles %s", async (controllerMethod, serviceMethod, errorCase) => {
+    const error = Object.assign(new Error(errorCase.message), {
+      code: errorCase.code,
+      statusCode: errorCase.statusCode,
+    });
     const controller = buildController(serviceMethod, error);
 
     const result = await controller[controllerMethod]({});
 
-    expect(result.response).toMatchObject({ message: error.message, code });
+    const expectedResponse = { message: error.message };
+    if (errorCase.expectedCode) {
+      expectedResponse.code = errorCase.expectedCode;
+    }
+    expect(result).toMatchObject({
+      statusCode: errorCase.statusCode,
+      response: expectedResponse,
+    });
+    expect(result.response).toEqual(expectedResponse);
   });
-
-  it.each(CONTROLLER_METHODS)(
-    "%s does not expose a database error code",
-    async (controllerMethod, serviceMethod) => {
-      const error = Object.assign(new Error("Database request failed."), {
-        code: "23505",
-        statusCode: 500,
-      });
-      const controller = buildController(serviceMethod, error);
-
-      const result = await controller[controllerMethod]({});
-
-      expect(result.response).toEqual({ message: error.message });
-      expect(result.response).not.toHaveProperty("code");
-    }
-  );
-
-  it.each(CONTROLLER_METHODS)(
-    "%s does not expose an internal error code",
-    async (controllerMethod, serviceMethod) => {
-      const error = Object.assign(new Error("Internal request failed."), {
-        code: "INTERNAL_ERROR",
-        statusCode: 500,
-      });
-      const controller = buildController(serviceMethod, error);
-
-      const result = await controller[controllerMethod]({});
-
-      expect(result.response).toEqual({ message: error.message });
-      expect(result.response).not.toHaveProperty("code");
-    }
-  );
 });
