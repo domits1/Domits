@@ -8,7 +8,6 @@ import ElitePageHeader from "./ElitePageHeader";
 import EliteFooter from "./EliteFooter";
 import { resolveEliteLocation } from "./eliteSitePageContent";
 import { resolveHostContactHref } from "../../booking/quoteModel";
-import { formatStayDate } from "../../booking/quoteSelection";
 import { sitePropertyPagePropType } from "../templatePropTypes";
 
 const NEXT_STEPS = Object.freeze([
@@ -17,14 +16,33 @@ const NEXT_STEPS = Object.freeze([
   "After payment your stay is confirmed.",
 ]);
 
+const STAY_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const MONTH_FORMAT = new Intl.DateTimeFormat("en-GB", { month: "long", timeZone: "UTC" });
+
 const readText = (value) => (typeof value === "string" ? value.trim() : "");
+
+const readStayDay = (dateKey) => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return { day, month: MONTH_FORMAT.format(Date.UTC(year, month - 1, day)), year };
+};
+
+export const formatSentStay = (checkIn, checkOut) => {
+  const start = readStayDay(checkIn);
+  const end = readStayDay(checkOut);
+  const endText = `${end.day} ${end.month} ${end.year}`;
+  if (start.year !== end.year) {
+    return `${start.day} ${start.month} ${start.year} to ${endText}`;
+  }
+  return start.month === end.month ? `${start.day} to ${endText}` : `${start.day} ${start.month} to ${endText}`;
+};
 
 export const readSentRequest = (state) => {
   const sentRequest = state?.sentRequest;
   const reference = readText(sentRequest?.reference);
   const checkIn = readText(sentRequest?.checkIn);
   const checkOut = readText(sentRequest?.checkOut);
-  return reference && checkIn && checkOut ? { reference, checkIn, checkOut } : null;
+  const hasStay = STAY_DATE_PATTERN.test(checkIn) && STAY_DATE_PATTERN.test(checkOut);
+  return reference && hasStay ? { reference, checkIn, checkOut } : null;
 };
 
 function ContactHostLink({ contactHref, whatsappHref }) {
@@ -52,9 +70,7 @@ export default function EliteSitePropertySentPage({ sitePropertyPage, headerTone
   const sentRequest = readSentRequest(state);
   const { title, overviewHref, propertyHref, contactHref } = sitePropertyPage;
   const location = resolveEliteLocation(model);
-  const stayText = sentRequest
-    ? `${formatStayDate(sentRequest.checkIn)} to ${formatStayDate(sentRequest.checkOut)}`
-    : "";
+  const stayText = sentRequest ? formatSentStay(sentRequest.checkIn, sentRequest.checkOut) : "";
 
   return (
     <div
