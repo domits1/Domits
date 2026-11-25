@@ -37,11 +37,16 @@ const ok = (response) => ({ statusCode: 200, response });
 const CLAIM_NOT_ACTIVATED = Symbol("claim not activated");
 const needsAttention = () =>
   bad(409, {
-    error: "This listing needs a check by support before it can be connected.",
+    error: "This listing needs a check before it can be connected. Please contact support.",
     errorCode: "DISTRIBUTION_NEEDS_ATTENTION",
   });
 const tryAgain = () =>
   bad(503, { error: "Channex did not answer in time. Try again in a moment.", errorCode: "DISTRIBUTION_TRY_AGAIN" });
+const notConfigured = () =>
+  bad(503, {
+    error: "Distribution is not available right now. Please contact support.",
+    errorCode: "DISTRIBUTION_NOT_CONFIGURED",
+  });
 
 const CHANNEL = "CHANNEX";
 const ACTIVE = "ACTIVE";
@@ -52,10 +57,20 @@ const CONNECTED = "CONNECTED";
 const CLAIM_LEASE_MS = 60_000;
 const PROVISIONING = "PROVISIONING";
 
-const TIMEZONE_ERROR_CODES = Object.freeze({
-  [TIMEZONE_PROBLEM.UNKNOWN_COUNTRY]: "DISTRIBUTION_TIMEZONE_UNKNOWN_COUNTRY",
-  [TIMEZONE_PROBLEM.CHOICE_NEEDED]: "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED",
-  [TIMEZONE_PROBLEM.INVALID_CHOICE]: "DISTRIBUTION_TIMEZONE_INVALID_CHOICE",
+// Each problem needs another step from the host: an unknown country has no list to pick from.
+const TIMEZONE_ERRORS = Object.freeze({
+  [TIMEZONE_PROBLEM.UNKNOWN_COUNTRY]: {
+    error: "The listing's country is not recognised. Check the country in its address, then try again.",
+    errorCode: "DISTRIBUTION_TIMEZONE_UNKNOWN_COUNTRY",
+  },
+  [TIMEZONE_PROBLEM.CHOICE_NEEDED]: {
+    error: "This country has more than one time zone. Pick the listing's time zone, then try again.",
+    errorCode: "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED",
+  },
+  [TIMEZONE_PROBLEM.INVALID_CHOICE]: {
+    error: "That time zone does not match the listing's country. Pick one from the list, then try again.",
+    errorCode: "DISTRIBUTION_TIMEZONE_INVALID_CHOICE",
+  },
 });
 
 // On Aurora DSQL the loser of two simultaneous inserts fails on the unique key (23505) or, because DSQL
@@ -102,7 +117,7 @@ export default class ChannexProvisioningService {
     const readiness = listingDistributionReadiness(listing);
     if (!readiness.ready) {
       return bad(422, {
-        error: "The listing is not ready for distribution.",
+        error: "This listing is not ready for distribution yet. Complete the missing details, then try again.",
         errorCode: "DISTRIBUTION_LISTING_NOT_READY",
         missing: readiness.missing,
       });
@@ -111,8 +126,7 @@ export default class ChannexProvisioningService {
     const timezone = resolveListingTimezone({ country: listing.location?.country, chosenTimezone });
     if (!timezone.ok) {
       return bad(422, {
-        error: "The listing's timezone is not known.",
-        errorCode: TIMEZONE_ERROR_CODES[timezone.problem],
+        ...TIMEZONE_ERRORS[timezone.problem],
         options: timezone.options ?? [],
       });
     }
@@ -127,7 +141,7 @@ export default class ChannexProvisioningService {
   async claimListing({ userId, listing, place }) {
     // Without Domits' key reference every host row would point nowhere, so nothing is written.
     if (!this.credentialsRef) {
-      return bad(503, { error: "Distribution is not configured.", errorCode: "DISTRIBUTION_NOT_CONFIGURED" });
+      return notConfigured();
     }
 
     const account = await this.ensureHostAccount(userId);
@@ -146,7 +160,7 @@ export default class ChannexProvisioningService {
     const claim = inUse ? await this.takeOverStaleClaim(inUse) : await this.insertClaim(account, listing);
     if (!claim) {
       return bad(409, {
-        error: "This listing is already being connected.",
+        error: "This listing is already being connected. Wait a minute, then reload the page.",
         errorCode: "DISTRIBUTION_ALREADY_IN_PROGRESS",
       });
     }
@@ -238,7 +252,7 @@ export default class ChannexProvisioningService {
   async createChannexObjects({ account, claim, listing, place }) {
     const secret = await this.credentialStore.readSecretOrNull(account.credentialsRef);
     if (!secret?.apiKey) {
-      return bad(503, { error: "Distribution is not configured.", errorCode: "DISTRIBUTION_NOT_CONFIGURED" });
+      return notConfigured();
     }
     const credentials = { apiKey: secret.apiKey };
     const mapping = { integrationAccountId: account.id, domitsPropertyId: listing.propertyId };
@@ -331,7 +345,7 @@ export default class ChannexProvisioningService {
     return {
       ok: false,
       answer: bad(502, {
-        error: "Channex refused the listing.",
+        error: "Channex did not accept this listing's details. Check its address, guests and price, or contact support.",
         errorCode: "DISTRIBUTION_CHANNEX_REFUSED",
         validationDetails: result.validationDetails ?? null,
       }),

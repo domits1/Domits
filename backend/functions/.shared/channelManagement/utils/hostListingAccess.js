@@ -4,9 +4,17 @@
 const bad = (statusCode, response) => ({ statusCode, response });
 
 export const refuseUnlessHostListing = (listing, userId) => {
-  if (!listing) return bad(404, { error: "Listing not found.", errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" });
+  if (!listing) {
+    return bad(404, {
+      error: "This listing was not found. Reload the page and pick the listing again.",
+      errorCode: "DISTRIBUTION_LISTING_NOT_FOUND",
+    });
+  }
   if (listing.hostId !== userId) {
-    return bad(403, { error: "This listing belongs to another host.", errorCode: "DISTRIBUTION_LISTING_NOT_OWNED" });
+    return bad(403, {
+      error: "This listing belongs to another account. Sign in with the account that owns it.",
+      errorCode: "DISTRIBUTION_LISTING_NOT_OWNED",
+    });
   }
   return null;
 };

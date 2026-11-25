@@ -13,6 +13,11 @@ import { refuseUnlessHostListing } from "../utils/hostListingAccess.js";
 
 const bad = (statusCode, response) => ({ statusCode, response });
 const ok = (response) => ({ statusCode: 200, response });
+const notConfigured = () =>
+  bad(503, {
+    error: "Distribution is not available right now. Please contact support.",
+    errorCode: "DISTRIBUTION_NOT_CONFIGURED",
+  });
 
 const CHANNEL = "CHANNEX";
 const ACTIVE = "ACTIVE";
@@ -39,7 +44,7 @@ export default class ChannexConnectSessionService {
     const mapping = await this.findLiveMapping(userId, listing.propertyId);
     if (!mapping) {
       return bad(409, {
-        error: "Turn on distribution for this listing first.",
+        error: "Distribution is not turned on for this listing yet. Turn it on first, then connect a channel.",
         errorCode: "DISTRIBUTION_NOT_TURNED_ON",
       });
     }
@@ -47,7 +52,7 @@ export default class ChannexConnectSessionService {
     const account = mapping.account;
     const secret = await this.credentialStore.readSecretOrNull(account.credentialsRef);
     if (!secret?.apiKey) {
-      return bad(503, { error: "Distribution is not configured.", errorCode: "DISTRIBUTION_NOT_CONFIGURED" });
+      return notConfigured();
     }
 
     const token = await this.channex.createOneTimeToken(
