@@ -241,7 +241,9 @@ describe("ChannexProviderClient discovery reads", () => {
       await client.listProperties(CREDENTIALS);
 
       const [url] = global.fetch.mock.calls[0];
-      expect(url.toString()).toBe("https://staging.channex.io/api/v1/properties");
+      expect(url.toString()).toBe(
+        "https://staging.channex.io/api/v1/properties?pagination%5Blimit%5D=100&pagination%5Bpage%5D=1"
+      );
     });
 
     test("maps rows to externalPropertyId/Name/status, dropping rows without an id", async () => {
@@ -284,7 +286,10 @@ describe("ChannexProviderClient discovery reads", () => {
       await client.listRoomTypes(CREDENTIALS, "property-1");
 
       const [url] = global.fetch.mock.calls[0];
-      expect(url.toString()).toBe("https://staging.channex.io/api/v1/room_types?filter%5Bproperty_id%5D=property-1");
+      expect(url.toString()).toBe(
+        "https://staging.channex.io/api/v1/room_types?filter%5Bproperty_id%5D=property-1" +
+          "&pagination%5Blimit%5D=100&pagination%5Bpage%5D=1"
+      );
     });
 
     test("maps rows to externalRoomTypeId/Name/status, dropping rows without an id", async () => {
@@ -348,7 +353,10 @@ describe("ChannexProviderClient discovery reads", () => {
       await client.listRatePlans(CREDENTIALS, "room-type-1");
 
       const [url] = global.fetch.mock.calls[0];
-      expect(url.toString()).toBe("https://staging.channex.io/api/v1/rate_plans?filter%5Broom_type_id%5D=room-type-1");
+      expect(url.toString()).toBe(
+        "https://staging.channex.io/api/v1/rate_plans?filter%5Broom_type_id%5D=room-type-1" +
+          "&pagination%5Blimit%5D=100&pagination%5Bpage%5D=1"
+      );
     });
 
     test("maps rows to externalRatePlanId/Name/status, dropping rows without an id", async () => {
