@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import styles from "./eliteSitePage.module.scss";
 
-export default function EliteFooter({ title, location }) {
+export default function EliteFooter({ title, location = "" }) {
   return (
     <footer className={styles.eliteFooter}>
       <div className={`${styles.eliteSection} ${styles.eliteFooterInner}`}>
@@ -15,5 +15,5 @@ export default function EliteFooter({ title, location }) {
 
 EliteFooter.propTypes = {
   title: PropTypes.string.isRequired,
-  location: PropTypes.string.isRequired,
+  location: PropTypes.string,
 };
