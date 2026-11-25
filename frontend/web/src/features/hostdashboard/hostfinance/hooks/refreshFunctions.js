@@ -21,6 +21,7 @@ export function RefreshFunctions() {
   const [charges, setCharges] = useState([]);
   const [hostBalance, setHostBalance] = useState({ available: [], pending: [] });
   const [accountId, setAccountId] = useState(null);
+  const [stripeAccountError, setStripeAccountError] = useState(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [chargesEnabled, setChargesEnabled] = useState(true);
   const [payoutsEnabled, setPayoutsEnabled] = useState(true);
@@ -87,13 +88,14 @@ export function RefreshFunctions() {
       try {
         updateLoadingState("account", true);
         const details = await getStripeAccountDetails();
-        if (!details) return;
-        setAccountId(details.accountId);
-        setOnboardingComplete(details.onboardingComplete);
-        setChargesEnabled(details.chargesEnabled ?? true);
-        setPayoutsEnabled(details.payoutsEnabled ?? true);
+        setStripeAccountError(null);
+        setAccountId(details?.accountId ?? null);
+        setOnboardingComplete(!!details?.onboardingComplete);
+        setChargesEnabled(details?.chargesEnabled ?? true);
+        setPayoutsEnabled(details?.payoutsEnabled ?? true);
       } catch (error) {
         console.error("Error fetching user data or Stripe status:", error);
+        setStripeAccountError(error.message || "We couldn't verify your saved Stripe connection. Please try again. If the problem continues, contact Domits support.");
       } finally {
         updateLoadingState("account", false);
       }
@@ -176,12 +178,15 @@ export function RefreshFunctions() {
     try {
       const details = await getStripeAccountDetails();
       if (!isMountedRef.current) return;
+      setStripeAccountError(null);
       setAccountId(details?.accountId ?? null);
       setOnboardingComplete(!!details?.onboardingComplete);
       setChargesEnabled(details?.chargesEnabled ?? true);
       setPayoutsEnabled(details?.payoutsEnabled ?? true);
-    } catch (e) {
-      console.error("silent account refresh failed:", e);
+    } catch (error) {
+      if (!isMountedRef.current) return;
+      console.error("silent account refresh failed:", error);
+      setStripeAccountError(error.message || "We couldn't verify your saved Stripe connection. Please try again. If the problem continues, contact Domits support.");
     }
   }
   async function refreshChargesSilent() {
@@ -315,24 +320,25 @@ export function RefreshFunctions() {
       if (isProcessing) return;
       setIsProcessing(true);
       setProcessingStep("working");
+      setStripeAccountError(null);
 
-      let details;
-      if (!accountId) {
-        details = await createStripeAccount();
-        if (details.accountId) setAccountId(details.accountId);
-        setOnboardingComplete(Boolean(details.onboardingComplete));
-        setChargesEnabled(details.chargesEnabled ?? true);
-        setPayoutsEnabled(details.payoutsEnabled ?? true);
-      } else {
-        details = await getStripeAccountDetails();
-      }
+      const details = await createStripeAccount();
+      if (details.accountId) setAccountId(details.accountId);
+      setOnboardingComplete(Boolean(details.onboardingComplete));
+      setChargesEnabled(details.chargesEnabled ?? true);
+      setPayoutsEnabled(details.payoutsEnabled ?? true);
 
       const urlToOpen = details.onboardingComplete ? details.loginLinkUrl : details.onboardingUrl;
+      if (!urlToOpen) {
+        throw new Error("We couldn't create a Stripe access link. Please try again. If the problem continues, contact Domits support.");
+      }
 
+      setStripeAccountError(null);
       setProcessingStep("opening");
       setTimeout(() => window.location.assign(urlToOpen), 200);
     } catch (error) {
       console.error("Error during Stripe action:", error);
+      setStripeAccountError(error.message || "Unable to connect to Stripe. Please try again.");
       showToast(error.message || "Unable to connect to Stripe. Please try again.", "error");
       setProcessingStep(null);
       setIsProcessing(false);
@@ -341,6 +347,7 @@ export function RefreshFunctions() {
 
   return {
     toast,
+    stripeAccountError,
     payouts,
     charges,
     hostBalance,
