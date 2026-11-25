@@ -70,7 +70,15 @@ const normalizePublicSiteBooking = (payload) => {
   };
 };
 
-export const requestPublicSiteBooking = async ({ siteId, quoteToken, guest, sessionId, idempotencyKey, signal }) => {
+export const requestPublicSiteBooking = async ({
+  siteId,
+  quoteToken,
+  guest,
+  message = "",
+  sessionId,
+  idempotencyKey,
+  signal,
+}) => {
   let response;
   try {
     response = await fetch(buildPublicSiteBookingsUrl(siteId), {
@@ -80,7 +88,8 @@ export const requestPublicSiteBooking = async ({ siteId, quoteToken, guest, sess
       signal,
       body: JSON.stringify({
         quoteToken,
-        guest: { name: guest?.name, email: guest?.email },
+        guest: { name: guest?.name, email: guest?.email, ...(guest?.phone ? { phone: guest.phone } : {}) },
+        ...(message ? { message } : {}),
         session: { sessionId, source: BOOKING_SESSION_SOURCE },
       }),
     });

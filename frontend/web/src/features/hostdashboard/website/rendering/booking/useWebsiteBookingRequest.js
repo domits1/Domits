@@ -31,7 +31,7 @@ export const useWebsiteBookingRequest = ({ siteId, sessionId }) => {
   const abortControllerRef = useRef(null);
 
   const submitBookingRequest = useCallback(
-    async ({ quote, guest, idempotencyScope = "" }) => {
+    async ({ quote, guest, message = "", idempotencyScope = "" }) => {
       const keyRecord = idempotencyScope
         ? { siteId: `${siteId} ${idempotencyScope}`, quoteId: idempotencyScope }
         : { siteId, quoteId: quote.quoteId };
@@ -45,6 +45,7 @@ export const useWebsiteBookingRequest = ({ siteId, sessionId }) => {
           siteId,
           quoteToken: quote.quoteToken,
           guest,
+          message,
           sessionId,
           idempotencyKey,
           signal: abortController.signal,
