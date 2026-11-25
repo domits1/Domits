@@ -70,6 +70,8 @@ import { PriceLabs_Connection } from "../../models/PriceLabs_Connection.js";
 import { Team_Member } from "../../models/Team_Member.js";
 import { Property_Owner } from "../../models/Property_Owner.js";
 import { Property_Owner_Property } from "../../models/Property_Owner_Property.js";
+import { Document } from "../../models/Document.js";
+import { Document_Version } from "../../models/Document_Version.js";
 import { Property_Moderation_Event } from "../../models/Property_Moderation_Event.js";
 import { Invoice } from "../../models/Invoice.js";
 
@@ -152,6 +154,8 @@ export const Tables = [
   Team_Member,
   Property_Owner,
   Property_Owner_Property,
+  Document,
+  Document_Version,
   Property_Moderation_Event,
   Invoice,
   EnterpriseRatePlan,
