@@ -592,6 +592,7 @@ export default class ChannexProviderClient {
               requireStr(row?.attributes?.name) ||
               null,
             propertyStatus: requireStr(row?.attributes?.state) || null,
+            website: requireStr(row?.attributes?.website) || null,
           };
         })
         .filter(Boolean);

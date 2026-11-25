@@ -2,12 +2,14 @@ import {
   buildChannexPropertyPayload,
   buildChannexRatePlanPayload,
   buildChannexRoomTypePayload,
+  channexListingLink,
   toChannexPropertyType,
 } from "../../.shared/channelManagement/utils/channexProvisioningPayloads.js";
 
 // Design note D2 (#506): one Channex property, room type and rate plan per listing.
 // Field rules from the Channex API docs (properties, room_types, rate_plans; read 23 Nov 2026).
 const listing = () => ({
+  propertyId: "listing-1",
   title: "Villa Malee",
   propertyType: "Villa",
   guests: 8,
@@ -56,6 +58,7 @@ describe("buildChannexPropertyPayload", () => {
         longitude: "98.3921000",
         email: "host@example.com",
         phone: "+66 81 234 5678",
+        website: "https://www.domits.com/listingdetails?ID=listing-1",
         // Domits pushes availability itself; Channex recommends leaving these off for a PMS.
         settings: {
           allow_availability_autoupdate_on_modification: false,
@@ -63,6 +66,13 @@ describe("buildChannexPropertyPayload", () => {
         },
       },
     });
+  });
+
+  // All hosts share Domits' Channex key (D8), so titles repeat across hosts. The listing's own page link is
+  // unique per listing; look-before-create adopts a property only when this link matches.
+  test("the website is the listing's own Domits page, so the property can be told apart from another host's", () => {
+    expect(channexListingLink("listing-1")).toBe("https://www.domits.com/listingdetails?ID=listing-1");
+    expect(channexListingLink("a&b")).toBe("https://www.domits.com/listingdetails?ID=a%26b");
   });
 
   test("leaves out what Channex would refuse instead of failing the whole property", () => {

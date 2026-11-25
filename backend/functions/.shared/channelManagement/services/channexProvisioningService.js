@@ -17,6 +17,7 @@ import {
   buildChannexPropertyPayload,
   buildChannexRatePlanPayload,
   buildChannexRoomTypePayload,
+  channexListingLink,
 } from "../utils/channexProvisioningPayloads.js";
 
 // Turns a host's listing into a Channex property, room type and rate plan (design note D2, #506).
@@ -247,12 +248,14 @@ export default class ChannexProvisioningService {
 
     let externalPropertyId = claim.externalPropertyId;
     if (!externalPropertyId) {
+      // Matched by the listing's link, not its title: titles repeat across hosts on Domits' shared key (D8).
+      const ownLink = channexListingLink(listing.propertyId);
       const property = await this.findOrCreate({
         list: () => this.channex.listProperties(credentials),
         rows: (result) => result.properties,
         idOf: (row) => row.externalPropertyId,
         isMatch: async (row) =>
-          row.externalPropertyName === listing.title && !(await this.props.isExternalPropertyInUse(row.externalPropertyId)),
+          row.website === ownLink && !(await this.props.isExternalPropertyInUse(row.externalPropertyId)),
         create: () => this.channex.createProperty(credentials, buildChannexPropertyPayload(listing, place), { requestTimeoutMs: CREATE_TIMEOUT_MS }),
       });
       if (!property.ok) return property.answer;

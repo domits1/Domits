@@ -13,6 +13,12 @@ const FALLBACK_PROPERTY_TYPE = "holiday_home";
 
 export const toChannexPropertyType = (domitsType) => PROPERTY_TYPES[domitsType] ?? FALLBACK_PROPERTY_TYPE;
 
+// All hosts share Domits' Channex key (D8), so titles repeat across hosts. The listing's own page link is
+// unique per listing, which lets look-before-create (D2) adopt only a property made for this listing.
+const LISTING_PAGE_URL = "https://www.domits.com/listingdetails?ID=";
+
+export const channexListingLink = (propertyId) => `${LISTING_PAGE_URL}${encodeURIComponent(propertyId)}`;
+
 const textOrNull = (value, maxLength = MAX_TEXT) => {
   if (value === null || value === undefined) return null;
   const text = String(value).trim();
@@ -51,6 +57,7 @@ export const buildChannexPropertyPayload = (listing, { countryCode, timezone }) 
       longitude: coordinateOrNull(location.longitude),
       email: textOrNull(listing.contact?.email),
       phone: phoneOrNull(listing.contact?.phone),
+      website: channexListingLink(listing.propertyId),
       // Domits pushes availability itself; Channex recommends leaving these off for a PMS.
       settings: {
         allow_availability_autoupdate_on_modification: false,

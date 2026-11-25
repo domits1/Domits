@@ -250,7 +250,10 @@ describe("ChannexProviderClient discovery reads", () => {
       global.fetch.mockResolvedValue(
         jsonResponse(200, {
           data: [
-            { id: "ext-property-1", attributes: { title: "Beach House", state: "active" } },
+            {
+              id: "ext-property-1",
+              attributes: { title: "Beach House", state: "active", website: "https://www.domits.com/listingdetails?ID=l-1" },
+            },
             { id: "ext-property-2", attributes: { name: "Fallback Name" } },
             { attributes: { title: "No id, dropped" } },
           ],
@@ -259,9 +262,15 @@ describe("ChannexProviderClient discovery reads", () => {
 
       const result = await client.listProperties(CREDENTIALS);
 
+      // The website tells Domits' own properties apart from same-titled ones (look-before-create, D2).
       expect(result.properties).toEqual([
-        { externalPropertyId: "ext-property-1", externalPropertyName: "Beach House", propertyStatus: "active" },
-        { externalPropertyId: "ext-property-2", externalPropertyName: "Fallback Name", propertyStatus: null },
+        {
+          externalPropertyId: "ext-property-1",
+          externalPropertyName: "Beach House",
+          propertyStatus: "active",
+          website: "https://www.domits.com/listingdetails?ID=l-1",
+        },
+        { externalPropertyId: "ext-property-2", externalPropertyName: "Fallback Name", propertyStatus: null, website: null },
       ]);
     });
 

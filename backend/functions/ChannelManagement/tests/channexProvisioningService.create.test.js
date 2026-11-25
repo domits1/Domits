@@ -12,6 +12,7 @@ const listing = {
   location: { country: "Thailand", city: "Phuket" },
 };
 const place = { countryCode: "TH", timezone: "Asia/Bangkok" };
+const OWN_LINK = "https://www.domits.com/listingdetails?ID=listing-1";
 const account = { id: "account-1", credentialsRef: "domits-channex-secret" };
 const freshClaim = () => ({ id: "claim-1", externalPropertyId: null, status: "PROVISIONING" });
 
@@ -63,7 +64,9 @@ describe("ChannexProvisioningService.createChannexObjects: nothing exists yet", 
 
     expect(channex.createProperty).toHaveBeenCalledWith(
       { apiKey: "key-1" },
-      expect.objectContaining({ property: expect.objectContaining({ title: "Villa Malee", country: "TH" }) }),
+      expect.objectContaining({
+        property: expect.objectContaining({ title: "Villa Malee", country: "TH", website: OWN_LINK }),
+      }),
       { requestTimeoutMs: 7000 }
     );
     expect(props.setClaimExternalProperty).toHaveBeenCalledWith("claim-1", "property-new", "Villa Malee");
@@ -100,9 +103,10 @@ describe("ChannexProvisioningService.createChannexObjects: look before create", 
     expect(channex.listRoomTypes).toHaveBeenCalledWith({ apiKey: "key-1" }, "property-saved");
   });
 
-  test("adopts one unused Channex property with the listing's exact title", async () => {
+  // The link is unique per listing; the title may have been changed in Channex since the lost answer.
+  test("adopts one unused Channex property that carries this listing's link, whatever its title", async () => {
     const { service, channex, props } = build({
-      properties: [{ externalPropertyId: "property-orphan", externalPropertyName: "Villa Malee" }],
+      properties: [{ externalPropertyId: "property-orphan", externalPropertyName: "Renamed in Channex", website: OWN_LINK }],
     });
 
     await run(service);
@@ -111,9 +115,24 @@ describe("ChannexProvisioningService.createChannexObjects: look before create", 
     expect(props.setClaimExternalProperty).toHaveBeenCalledWith("claim-1", "property-orphan", "Villa Malee");
   });
 
-  test("never adopts a property another mapping already uses, even with the same title", async () => {
+  // All hosts share Domits' Channex key (D8): another host's "Villa Malee" must never become this listing.
+  test.each([
+    ["another listing's link", "https://www.domits.com/listingdetails?ID=listing-2"],
+    ["no link at all", null],
+  ])("never adopts a property with the same title but %s", async (_label, website) => {
+    const { service, channex, props } = build({
+      properties: [{ externalPropertyId: "property-other-host", externalPropertyName: "Villa Malee", website }],
+    });
+
+    await run(service);
+
+    expect(channex.createProperty).toHaveBeenCalled();
+    expect(props.setClaimExternalProperty).toHaveBeenCalledWith("claim-1", "property-new", "Villa Malee");
+  });
+
+  test("never adopts a property another mapping already uses, even with this listing's link", async () => {
     const { service, channex } = build({
-      properties: [{ externalPropertyId: "property-taken", externalPropertyName: "Villa Malee" }],
+      properties: [{ externalPropertyId: "property-taken", externalPropertyName: "Villa Malee", website: OWN_LINK }],
       inUse: new Set(["property-taken"]),
     });
 
@@ -122,11 +141,11 @@ describe("ChannexProvisioningService.createChannexObjects: look before create", 
     expect(channex.createProperty).toHaveBeenCalled();
   });
 
-  test("two unused properties with the same title stop with needs attention, creating nothing", async () => {
+  test("two unused properties with this listing's link stop with needs attention, creating nothing", async () => {
     const { service, channex } = build({
       properties: [
-        { externalPropertyId: "property-a", externalPropertyName: "Villa Malee" },
-        { externalPropertyId: "property-b", externalPropertyName: "Villa Malee" },
+        { externalPropertyId: "property-a", externalPropertyName: "Villa Malee", website: OWN_LINK },
+        { externalPropertyId: "property-b", externalPropertyName: "Villa Malee", website: OWN_LINK },
       ],
     });
 
