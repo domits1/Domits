@@ -117,7 +117,8 @@ describe("the request sent page of an Elite website", () => {
       payload: withSitePages({ contact: { enabled: true } }),
     });
     await screen.findByText("Total");
-    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana Silva" } });
+    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Ana" } });
+    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Silva" } });
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "ana@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Request to book" }));
 
@@ -204,7 +205,8 @@ describe("the request sent page of an Elite website", () => {
       payload: { ...withSitePages({ contact: { enabled: true } }), domain: renderPayload.domain },
     });
     await screen.findByText("Total");
-    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana Silva" } });
+    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Ana" } });
+    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Silva" } });
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "ana@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Request to book" }));
 

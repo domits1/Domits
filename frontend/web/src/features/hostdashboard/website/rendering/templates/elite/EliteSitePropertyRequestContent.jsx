@@ -5,7 +5,7 @@ import styles from "./eliteSitePage.module.scss";
 import requestStyles from "./eliteSitePropertyRequest.module.scss";
 import quoteStyles from "../../booking/QuoteAvailabilitySection.module.scss";
 import PanoramaPageLink from "../PanoramaPageLink";
-import BookingRequestForm from "../../booking/BookingRequestForm";
+import EliteSitePropertyRequestForm from "./EliteSitePropertyRequestForm";
 import EliteSitePropertyBookingPanel from "./EliteSitePropertyBookingPanel";
 import { QuoteBreakdown, QuotePanelAlert, deriveQuoteView } from "../../booking/QuotePanel";
 import { QUOTE_STALE_REASONS, QUOTE_STATUS, useWebsiteQuote } from "../../booking/useWebsiteQuote";
@@ -15,13 +15,19 @@ import {
   BOOKING_REQUEST_RECOVERY as RECOVERY,
   resolveBookingRequestErrorPresentation,
 } from "../../booking/bookingRequestErrorCopy";
-import { EMPTY_BOOKING_GUEST, validateBookingGuestContact } from "../../booking/bookingRequestContact";
+import {
+  EMPTY_REQUEST_DETAILS,
+  REQUEST_DETAIL_MESSAGES,
+  validateRequestDetails,
+} from "./eliteSitePropertyRequestDetails";
 import { resolveDefaultGuestCount, resolveGuestCapacity, resolveHostContactHref } from "../../booking/quoteModel";
 import { formatStayDate } from "../../booking/quoteSelection";
 import { getOrCreateVisitorId } from "../../../services/websiteVisitorId";
-import { hasEliteHeaderPhoto, resolveEliteLocation } from "./eliteSitePageContent";
+import { hasEliteHeaderPhoto, listEliteHouseRules, resolveEliteLocation } from "./eliteSitePageContent";
 
 const CHOOSE_DATES_TEXT = "Choose your dates to request this stay.";
+const REQUEST_STEPS = Object.freeze(["Your details", "Host confirms", "You pay"]);
+const FIELD_BY_ERROR_CODE = Object.freeze({ invalid_guest_phone: "phone", invalid_guest_message: "message" });
 
 const toAlert = (presentation) => ({
   ...presentation,
@@ -52,8 +58,9 @@ export default function EliteSitePropertyRequestContent({
   const { siteId, propertyId } = booking;
   const { requestQuote, markStale, ...quoteState } = useWebsiteQuote({ siteId, sessionId, propertyId });
   const { submitBookingRequest, ...bookingState } = useWebsiteBookingRequest({ siteId, sessionId });
-  const [guest, setGuest] = useState(EMPTY_BOOKING_GUEST);
-  const [guestErrors, setGuestErrors] = useState({});
+  const [details, setDetails] = useState(EMPTY_REQUEST_DETAILS);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const houseRules = useMemo(() => listEliteHouseRules(model.policies).map((rule) => rule.label), [model.policies]);
   const [datesProblem, setDatesProblem] = useState("");
   const isSendingRef = useRef(false);
   const quoteView = deriveQuoteView(quoteState);
@@ -73,21 +80,27 @@ export default function EliteSitePropertyRequestContent({
     if (isSendingRef.current || quoteState.status !== QUOTE_STATUS.SUCCESS) {
       return;
     }
-    const { guest: contact, errors } = validateBookingGuestContact(guest);
-    setGuestErrors(errors);
+    const { guest, message, errors } = validateRequestDetails(details, { hasHouseRules: houseRules.length > 0 });
+    setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       return;
     }
     isSendingRef.current = true;
     const outcome = await submitBookingRequest({
       quote,
-      guest: contact,
+      guest,
+      message,
       idempotencyScope: readIdempotencyScope(booking, quote),
     });
     isSendingRef.current = false;
     if (outcome?.ok) {
       const { publicBookingRef, checkIn, checkOut } = outcome.result;
       navigate(sentHref, { replace: true, state: { sentRequest: { reference: publicBookingRef, checkIn, checkOut } } });
+      return;
+    }
+    const field = FIELD_BY_ERROR_CODE[outcome?.error?.code];
+    if (field) {
+      setFieldErrors({ [field]: outcome.error.message || REQUEST_DETAIL_MESSAGES[field] });
       return;
     }
     const presentation = outcome?.error ? resolveBookingRequestErrorPresentation(outcome.error) : null;
@@ -144,15 +157,22 @@ export default function EliteSitePropertyRequestContent({
     );
   }
 
-  const sendError =
-    bookingState.status === BOOKING_REQUEST_STATUS.ERROR
-      ? resolveBookingRequestErrorPresentation(bookingState.error)
-      : null;
+  const isSendError =
+    bookingState.status === BOOKING_REQUEST_STATUS.ERROR && !FIELD_BY_ERROR_CODE[bookingState.error.code];
+  const sendError = isSendError ? resolveBookingRequestErrorPresentation(bookingState.error) : null;
   const location = resolveEliteLocation(model);
   const photo = hasEliteHeaderPhoto(model.media) ? model.media.heroImage : "";
 
   return (
     <div className={requestStyles.layout}>
+      <ol className={requestStyles.steps} aria-label="How booking works">
+        {REQUEST_STEPS.map((step, index) => (
+          <li key={step} aria-current={index === 0 ? "step" : undefined}>
+            <span className={requestStyles.stepNumber}>{index + 1}</span>
+            {step}
+          </li>
+        ))}
+      </ol>
       <aside className={styles.elitePriceCard} aria-label="Your stay">
         {photo ? <img className={requestStyles.summaryPhoto} src={photo} alt={title} /> : null}
         <div>
@@ -198,15 +218,16 @@ export default function EliteSitePropertyRequestContent({
           />
         ) : null}
         {sendError?.hideAction ? null : (
-          <BookingRequestForm
-            guest={guest}
-            onGuestChange={(field, value) => {
-              setGuest((currentGuest) => ({ ...currentGuest, [field]: value }));
-              setGuestErrors((currentErrors) => ({ ...currentErrors, [field]: "" }));
+          <EliteSitePropertyRequestForm
+            details={details}
+            onChange={(field, value) => {
+              setDetails((currentDetails) => ({ ...currentDetails, [field]: value }));
+              setFieldErrors((currentErrors) => ({ ...currentErrors, [field]: "" }));
             }}
             onSubmit={send}
+            houseRules={houseRules}
             isSubmitting={bookingState.status === BOOKING_REQUEST_STATUS.SUBMITTING}
-            fieldErrors={guestErrors}
+            fieldErrors={fieldErrors}
             formError={sendError?.scope === SCOPES.CONTACT ? sendError.message : ""}
           />
         )}
@@ -216,7 +237,12 @@ export default function EliteSitePropertyRequestContent({
 }
 
 EliteSitePropertyRequestContent.propTypes = {
-  model: PropTypes.shape({ stay: PropTypes.object, host: PropTypes.object, media: PropTypes.object }).isRequired,
+  model: PropTypes.shape({
+    stay: PropTypes.object,
+    host: PropTypes.object,
+    media: PropTypes.object,
+    policies: PropTypes.object,
+  }).isRequired,
   title: PropTypes.string.isRequired,
   booking: PropTypes.shape({ siteId: PropTypes.string.isRequired, propertyId: PropTypes.string.isRequired }).isRequired,
   stay: PropTypes.shape({ checkIn: PropTypes.string, checkOut: PropTypes.string, guests: PropTypes.number }).isRequired,
