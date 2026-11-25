@@ -320,7 +320,9 @@ export function RefreshFunctions() {
       if (!accountId) {
         details = await createStripeAccount();
         if (details.accountId) setAccountId(details.accountId);
-        setOnboardingComplete(false);
+        setOnboardingComplete(Boolean(details.onboardingComplete));
+        setChargesEnabled(details.chargesEnabled ?? true);
+        setPayoutsEnabled(details.payoutsEnabled ?? true);
       } else {
         details = await getStripeAccountDetails();
       }
