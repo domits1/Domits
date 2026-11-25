@@ -1,8 +1,8 @@
-# fix(automation): insert variables at the cursor and filter the automation list like the inbox (#768)
+# feat(automation): editor fixes, list filter and deleting an automation (#768)
 
 Pull request: to be opened
 Issue: #768
-Reviewed commits: b28505233 (insert at cursor), staged diff (list tabs and schedule line)
+Reviewed commits: b28505233 (insert at cursor), 47e3765e2 (list tabs and schedule line), staged diff (delete)
 Result: no blocking findings
 
 ## Findings
@@ -22,9 +22,18 @@ The automation list gets All / Active / Paused tabs in the same style as the inb
 | P3 (6/10) | AutomationsPage.jsx `visibleAutomations` | On the Active or Paused tab, a newly saved draft or an automation whose status just changed leaves the list, while it stays open in the editor. | Accepted: this is what the filter means; the All tab shows everything, including drafts. |
 | P3 (5/10) | automations.scss `.automation-list-tabs` | The tab styles repeat the inbox's `.contactlist-tabs`, which only apply inside `.messages-v2`. | Accepted: sharing them would mean moving inbox styles out of their scope; the copy is about 25 lines. |
 
+## Third commit: deleting an automation
+
+`DELETE /automations/{id}` deletes the host's automation and, in the same DSQL transaction (with `withDsqlRetry`), cancels its SCHEDULED deliveries with the reason "Automation was deleted.". Sent, failed and cancelled deliveries stay as history. The page gets a Delete button with a confirmation. The Lambda's CORS allow-methods now include PATCH, which the editor already uses.
+
+| Severity | Where | Finding | Decision |
+|---|---|---|---|
+| P3 (7/10) | schedulingService.js:105, :122 | A paid booking processed at the same moment can read the automation before the delete and create a SCHEDULED delivery after it. | Accepted: deliveryWorker.js:72-74 reloads the automation before sending and cancels the delivery when it is gone, and `authorizeSend` requires the automation row to be ACTIVE. Nothing is sent. |
+| P3 (6/10) | AutomationsPage.jsx `removeAutomation` | Deleting disables Save and Delete, but not Activate or Pause. | Accepted: both fail with 404 after the delete and show the error. |
+| Release step | API Gateway UnifiedMessaging (54s3llwby8) | `/automations/{id}` has no DELETE method yet, so the browser call fails until it exists. | Add DELETE with `DomitsCognitoAuthorizer` and Lambda proxy integration to AutomatedMessaging, then deploy to `default`. Listed in the pull request. |
+
 ## Not in scope
 
 - A lighter font weight for automation names in the list. Tried and reverted after a look in the browser; the names stay bold, like the inbox.
 - A search box in the automation list. Hosts have only a few automations.
-- Deleting an automation. It needs a backend route and an API Gateway method, so it gets its own pull request.
-- Adding PATCH to the Lambda's CORS allow-methods. Saving works in the browser today; it goes with the backend change of the delete pull request.
+- Showing the delivery history of a deleted automation. The rows stay in the database for support, but the page has no place for them.

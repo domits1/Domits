@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Pause, Play, Plus, RefreshCw, Save } from "lucide-react";
+import { Check, Pause, Play, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
 import { fetchAccommodationsByOwnerId } from "../../../../services/fetchAccommodationByOwnerIdService";
 import {
   activateAutomation,
   createAutomation,
+  deleteAutomation,
   listAutomationDeliveries,
   listAutomations,
   pauseAutomation,
@@ -223,6 +224,23 @@ export const AutomationsContent = () => {
     }
   };
 
+  const removeAutomation = async () => {
+    const { id } = form;
+    if (!id) return;
+    if (!window.confirm("Delete this automation? Its scheduled messages will be cancelled.")) return;
+    setSaving(true);
+    setError("");
+    try {
+      await deleteAutomation(id);
+      setAutomations((current) => current.filter((item) => item.id !== id));
+      startNew();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderPreview = async () => {
     setError("");
     try {
@@ -319,6 +337,16 @@ export const AutomationsContent = () => {
               ) : (
                 <button type="button" className="icon-text-button" onClick={() => changeStatus("ACTIVE")}>
                   <Play size={17} /> Activate
+                </button>
+              )}
+              {form.id && (
+                <button
+                  type="button"
+                  className="icon-text-button secondary danger"
+                  onClick={removeAutomation}
+                  disabled={saving}
+                >
+                  <Trash2 size={17} /> Delete
                 </button>
               )}
             </div>

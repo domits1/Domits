@@ -373,6 +373,15 @@
         transform: none;
       }
     }
+
+    &.danger {
+      color: #b42318;
+
+      &:hover:not(:disabled) {
+        background: #fef3f2;
+        border-color: #fecdca;
+      }
+    }
   }
 
   .icon-button {

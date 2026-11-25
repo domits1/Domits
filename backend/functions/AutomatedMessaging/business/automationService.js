@@ -215,6 +215,12 @@ export default class AutomationService {
     return toAutomationDto(await this.automations.update(id, hostId, { status }));
   }
 
+  async delete(hostId, id) {
+    await this.getAccessibleAutomation(hostId, id);
+    if (!(await this.automations.deleteForHost(id, hostId))) throw notFound("Automation not found.");
+    return { id, deleted: true };
+  }
+
   async preview(hostId, input, automationId = null) {
     const existing = automationId ? await this.getAccessibleAutomation(hostId, automationId) : null;
     const template = input.template ?? existing?.template;

@@ -10,6 +10,7 @@ import { fetchAccommodationsByOwnerId } from "../../../../services/fetchAccommod
 import {
   activateAutomation,
   createAutomation,
+  deleteAutomation,
   listAutomationDeliveries,
   listAutomations,
   pauseAutomation,
@@ -24,6 +25,7 @@ jest.mock("../../../../services/fetchAccommodationByOwnerIdService", () => ({
 jest.mock("../services/automationService", () => ({
   activateAutomation: jest.fn(),
   createAutomation: jest.fn(),
+  deleteAutomation: jest.fn(),
   listAutomationDeliveries: jest.fn(),
   listAutomations: jest.fn(),
   pauseAutomation: jest.fn(),
@@ -344,6 +346,62 @@ describe("host automated messages v1", () => {
 
       expect(list.getByText("Check-out thanks")).toBeInTheDocument();
       expect(list.getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+  });
+
+  describe("deleting an automation", () => {
+    const openAutomation = async () => {
+      render(<AutomationsContent />);
+      fireEvent.click(await screen.findByText("Paid booking welcome"));
+      await screen.findByRole("option", { name: "Canal Loft" });
+    };
+
+    beforeEach(() => {
+      jest.spyOn(window, "confirm").mockReturnValue(true);
+      deleteAutomation.mockResolvedValue({ id: "automation-1", deleted: true });
+    });
+
+    afterEach(() => {
+      window.confirm.mockRestore();
+    });
+
+    test("offers no Delete button for an automation that was never saved", async () => {
+      render(<AutomationsContent />);
+      await screen.findByText("Paid booking welcome");
+
+      expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    });
+
+    test("does nothing when the host cancels the confirmation", async () => {
+      window.confirm.mockReturnValue(false);
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      expect(deleteAutomation).not.toHaveBeenCalled();
+      expect(screen.getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+
+    test("deletes after confirmation and removes it from the list", async () => {
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      await waitFor(() => expect(deleteAutomation).toHaveBeenCalledWith("automation-1"));
+      expect(window.confirm).toHaveBeenCalledWith("Delete this automation? Its scheduled messages will be cancelled.");
+      await waitFor(() => expect(screen.queryByText("Paid booking welcome")).not.toBeInTheDocument());
+      expect(screen.getByLabelText("Automation name")).toHaveValue("");
+      expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    });
+
+    test("keeps the automation and shows the error when deleting fails", async () => {
+      deleteAutomation.mockRejectedValueOnce(new Error("Automation not found."));
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Automation not found.");
+      expect(within(screen.getByLabelText("Automation list")).getByText("Paid booking welcome")).toBeInTheDocument();
     });
   });
 
