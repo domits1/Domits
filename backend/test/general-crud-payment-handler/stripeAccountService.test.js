@@ -167,6 +167,23 @@ describe("StripeAccountService.createStripeAccount", () => {
     });
   });
 
+  it("returns a typed link failure after storing a newly created account", async () => {
+    const stripeFailure = Object.assign(new Error("Stripe link failed"), {
+      type: "StripeAPIError",
+      statusCode: 400,
+      requestId: "req_link",
+    });
+    const { service, repository } = buildService({ onboardingLinkError: stripeFailure });
+
+    const error = await service.createStripeAccount(EVENT).catch((failure) => failure);
+
+    expect(error).toMatchObject({
+      statusCode: 502,
+      code: "STRIPE_ONBOARDING_LINK_FAILED",
+    });
+    expect(repository.insertStripeAccount).toHaveBeenCalledTimes(1);
+  });
+
   it("creates and stores a new account only when no saved account exists", async () => {
     const { service, stripe, repository } = buildService();
 
