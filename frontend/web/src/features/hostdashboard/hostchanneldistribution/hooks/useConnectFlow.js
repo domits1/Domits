@@ -15,46 +15,25 @@ export const CONNECT_STEP = {
 };
 
 const SESSION_TIMEOUT_MS = 30000;
-// Longer than the session: turning on provisions a listing at Channex. It may still finish after
-// the host gave up, so the listings are read again.
+// Longer than the session: turning on provisions a listing at Channex.
 const ENABLE_TIMEOUT_MS = 60000;
 
 const NO_ERROR = { message: "", propertyId: null };
 
 const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, listing: null, url: null };
 
-// The connect flow behind a platform switch (design note #3954, D2, D4):
-//
-//   idle ──start──▶ checklist ──Continue──▶ ┬─ listing READY ───────────────────────────────────┐
-//     ▲                │                    └─ not turned on ─▶ timezone required?              │
-//     │              Cancel                                      yes ▶ timezone ─Continue(zone)─┐│
-//     │                                                          no ───────────────────────────┤│
-//     │                                                                                        ▼│
-//     │      enabling: enableDistribution ─ok──▶ rereadListings ─ READY ──────────────────────┤│
-//     │            │                                          └─ not READY ▶ idle ("Setting up…")││
-//     │            └─ error ─▶ idle, with the message; some codes also read the listings again   ││
-//     │                         (see utils/enableErrors.js)                                      ││
-//     │                                                                                        ▼▼
-//     └──close, refresh(propertyId) once ── iframe ◀──session ok── connecting ◀────────────────┘
-//                                                       session fails: message, idle (404 or 409
-//                                                       also rereadListings)
-//
-// retry({ listing }) is the same machine without the checklist and the session: idle ──▶ [timezone] ──▶
-// enabling ──▶ idle, for the Retry of a setup that did not finish.
-//
-// The checklist comes first and nothing is requested before the host has confirmed it. `refresh` and
-// `rereadListings` are useHostDistribution's: the listing the host sees follows every answer.
+// The connect flow behind a platform switch (design note #3954, D2, D4). Its state diagram is in
+// docs/internal/eng-reviews/2026-11-20-506-distribution-enable-flow.md.
 export function useConnectFlow({ refresh, rereadListings }) {
   const [flow, setFlow] = useState(IDLE_FLOW);
-  // The message of the last failure and the listing it belongs to, so it does not follow the host to another one.
+  // The last failure and the listing it belongs to, so it does not follow the host to another one.
   const [error, setError] = useState(NO_ERROR);
-  // A listing that was turned on but whose state could not be read afterwards. It shows as setting up.
+  // Turned on, but its state could not be read afterwards: shown as setting up.
   const [unconfirmedSetupPropertyId, setUnconfirmedSetupPropertyId] = useState(null);
-  // The step as the latest event handler sees it. State alone lags a double click by one render,
-  // and a Continue or a close must not run twice.
+  // The step as handlers see it: state alone lags a double click by one render.
   const stepRef = useRef(CONNECT_STEP.IDLE);
   const mountedRef = useRef(true);
-  // Numbers the requests, so a late answer of an attempt that was given up cannot act in a newer one.
+  // Numbers the requests, so a late answer of a reset attempt cannot act in a newer one.
   const attemptRef = useRef(0);
 
   useEffect(() => {
@@ -92,7 +71,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
       moveTo({ step: CONNECT_STEP.CONNECTING, platform, listing: null, url: null, propertyId });
       try {
         const { iframeUrl } = await withTimeout(createConnectSession({ propertyId }), SESSION_TIMEOUT_MS);
-        // A reset or a timeout ended this attempt: its answer must not open a screen.
+        // A reset or a timeout ended this attempt.
         if (!isCurrent()) return;
         moveTo({ step: CONNECT_STEP.IFRAME, platform, listing: null, url: iframeUrl, propertyId });
       } catch (err) {
@@ -124,18 +103,15 @@ export function useConnectFlow({ refresh, rereadListings }) {
     [moveTo, rereadListings]
   );
 
-  // Turns distribution on, reads the listings again, and goes on to the connect session once the
-  // listing is READY.
   const enableThenConnect = useCallback(
     async ({ platform, propertyId, timezone }) => {
       const attempt = ++attemptRef.current;
       moveTo({ step: CONNECT_STEP.ENABLING, platform, listing: null, url: null, propertyId });
-      // A reset, an unmount or a timeout ended this attempt: nothing more may happen.
+      // A reset, an unmount or a timeout ended this attempt.
       const isCurrent = () =>
         mountedRef.current && attemptRef.current === attempt && stepRef.current === CONNECT_STEP.ENABLING;
       let enabled;
       try {
-        // The timezone is sent only where the listing asked for one (D4).
         await withTimeout(
           enableDistribution({ propertyId, ...(timezone ? { chosenTimezone: timezone } : {}) }),
           ENABLE_TIMEOUT_MS
@@ -173,8 +149,6 @@ export function useConnectFlow({ refresh, rereadListings }) {
     [failEnable, moveTo, openSession, rereadListings]
   );
 
-  // Turns a listing on: asks for the timezone first where the listing requires one (D4), and
-  // otherwise enables straight away.
   const enableOrAskTimezone = useCallback(
     async ({ platform, listing }) => {
       const { propertyId } = listing;
@@ -206,8 +180,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
     await enableOrAskTimezone({ platform, listing });
   }, [enableOrAskTimezone, flow, openSession]);
 
-  // The Retry of a setup that did not finish (D2: the next attempt resumes). No checklist and no
-  // platform: the listing is only set up, and the host sees the cards when it is READY.
+  // The Retry of a setup that did not finish (D2: the next attempt resumes): no checklist, no platform.
   const retry = useCallback(
     async ({ listing }) => {
       if (stepRef.current !== CONNECT_STEP.IDLE) return;
@@ -226,8 +199,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
     [enableThenConnect, flow]
   );
 
-  // For a section that reloaded or lost the flow's listing: its modals are gone, so the step goes with
-  // them. Otherwise the step would stay, and keep every switch locked with nothing on screen.
+  // A reloaded section or a lost listing has no modals left, so the step ends with them.
   const reset = useCallback(() => {
     setUnconfirmedSetupPropertyId(null);
     if (stepRef.current === CONNECT_STEP.IDLE) return;

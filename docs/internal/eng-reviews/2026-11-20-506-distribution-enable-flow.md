@@ -41,28 +41,37 @@ Level: component. The step machine is in a hook, the rules are pure, and the sec
 ```text
 PlatformCardsSection ──▶ useHostDistribution ──▶ hostDistributionApi (getHostListings, refreshChannels)
   │                         exposes applyListing and refresh
-  ├──▶ useConnectFlow({ refresh, applyListing }) ──▶ hostDistributionApi (enableDistribution, createConnectSession)
+  ├──▶ useConnectFlow({ refresh, rereadListings }) ──▶ hostDistributionApi (enableDistribution, createConnectSession)
   │                                              └──▶ utils/enableErrors.js (classifyEnableError, pure)
-  ├──▶ PlatformCard x3 / SetupFailedNotice (Retry)
+  ├──▶ PlatformCard x3 / SettingUpNotice (Retry)
   └──▶ ConnectFlowLayer ──▶ ConnectChecklistModal | TimezoneModal | ChannexIframeModal | messages
 ```
 
 ```text
-idle ──start(platform, listing)──▶ checklist ──Continue──▶ ┬─ listing READY ─────────────────────────────────┐
-  ▲                                   │                    └─ not turned on ─▶ timezone required?            │
-  │                                 Cancel                                       yes ▶ timezone ─Continue(zone)─┐│
-  │                                                                              no ───────────────────────────┤│
-  │                                                                                                            ▼▼
-  │                                  enabling: enableDistribution({ propertyId, timezone? })                    │
-  │                                    ok, READY ───────▶ applyListing ─▶ connecting ─▶ iframe ─close─▶ idle + refresh (B1)
-  │                                    ok, not READY ───▶ applyListing ─▶ idle ("Setting up…")
-  │                                    409 / 422 / 400 / 5xx ─▶ idle + refresh(propertyId) + the message of that class
-  │                                    network / other ──────▶ idle + alert, listing unchanged
-  │
-  └── Retry (setup-failed notice): idle ─▶ [timezone] ─▶ enabling ─ok─▶ applyListing ─▶ idle (cards show)
+idle ──start──▶ checklist ──Continue──▶ ┬─ listing READY ─────────────────────────────────────────────┐
+  ▲                │                    └─ not turned on ─▶ timezone required?                          │
+  │              Cancel                                     yes ▶ timezone ─Continue(zone)─┐            │
+  │                                                         no ───────────────────────────┤            │
+  │                                                                                        ▼            │
+  │   enabling: enableDistribution (gives up after 60 s) ─ok─▶ rereadListings ─ READY ──────┤            │
+  │       │                                              ├─ not READY ▶ idle ("Setting up…")            │
+  │       │                                              └─ read failed ▶ idle, listing marked           │
+  │       │                                                 unconfirmed ("Setting up…" + Retry)         │
+  │       └─ error or timeout ▶ idle with the message; some codes, and a timeout, read the listings again │
+  │                             (utils/enableErrors.js)                                                   ▼
+  └──close, refresh(propertyId) once── iframe ◀──session ok── connecting ◀──────────────────────────────┘
+                                                  session fails or gives up after 30 s: message, idle
+                                                  (404 or 409 also read the listings again)
+
+retry({ listing }) is the same machine without the checklist and the session:
+idle ──▶ [timezone] ──▶ enabling ──▶ idle, for the Retry of a setup that did not finish.
+
+Every request carries an attempt number: after a reset or a timeout its late answer changes nothing,
+also when a newer attempt is already in the same step. The error message is stored with its listing id
+and shown only for the picked listing. Moved here from the comment of useConnectFlow.js.
 ```
 
-What each answer shows after the refresh:
+What each answer shows after the refresh (the first contract's codes; the current table is `utils/enableErrors.js`):
 
 ```text
 409 PROVISIONING_IN_PROGRESS ─▶ the card says "Setting up…"; Refresh finishes it

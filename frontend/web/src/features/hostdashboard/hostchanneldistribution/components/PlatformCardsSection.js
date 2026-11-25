@@ -21,8 +21,7 @@ const REFRESH_ERROR_MESSAGE = "We couldn't refresh your connections.";
 // A listing in any other state (setting up, or failed halfway) has its own card or notice instead.
 const STARTABLE_STATUSES = [DISTRIBUTION_STATUS.READY, DISTRIBUTION_STATUS.NOT_ENABLED];
 
-// The three OTA cards of the picked listing (design note #3954, D7), or the notice that explains why
-// there are none. Orchestration only: what each card says lives in utils/distributionStates.js.
+// The OTA cards of the picked listing (design note #3954, D7), or the notice that says why there are none.
 function PlatformCardsSection() {
   const { listings, loadState, reload, rereadListings, refresh, refreshingPropertyId, refreshFailedPropertyId } =
     useHostDistribution();
@@ -57,16 +56,14 @@ function PlatformCardsSection() {
 
   // Defaults to the first listing, and falls back to it if the picked one disappears.
   const selected = listings.find((listing) => listing.propertyId === pickedPropertyId) ?? listings[0];
-  // Turned on, but the state could not be read: say it is setting up, with Retry, until it is known.
+  // Turned on, state unreadable: shown as setting up until it is known.
   const setupUnconfirmed = connectFlow.unconfirmedSetupPropertyId === selected.propertyId;
   const baseView = describeListingView(selected);
   const listingView = setupUnconfirmed && baseView === LISTING_VIEW.CARDS ? LISTING_VIEW.SETTING_UP : baseView;
   const isRefreshing = refreshingPropertyId === selected.propertyId;
 
-  // A listing that is not turned on starts the same flow: the hook adds the timezone and enable
-  // steps. While a flow is open every switch and the picker are locked: a second flow cannot start
-  // underneath the first, and the host cannot move to a listing whose view has no cards, which would
-  // unmount the flow's modals and leave the step stuck.
+  // While a flow is open the switches, the picker and Refresh are locked: a second flow cannot start under
+  // the first, and moving to a listing without cards would unmount the flow's modals.
   const canStartConnect = STARTABLE_STATUSES.includes(selected.distribution?.status) && !connectFlow.isActive;
   const handleToggle = ({ otaCode, turnOn }) => {
     if (!turnOn) return;
@@ -131,8 +128,7 @@ function PlatformCardsSection() {
         </>
       )}
 
-      {/* Outside the cards view, so a Retry from the "Setting up" notice can show its dialogs too. The
-          notice already says it is setting up, so the flow's own sentence is left out there. */}
+      {/* Outside the cards view, so a Retry from the Setting up notice can show its dialogs. */}
       <ConnectFlowLayer
         connectFlow={connectFlow}
         listingId={selected.propertyId}
