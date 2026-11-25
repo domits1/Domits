@@ -347,13 +347,53 @@ describe("host automated messages v1", () => {
       expect(variables.getByRole("button", { name: ariaLabel })).toHaveAttribute("aria-label", ariaLabel);
     });
 
-    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when clicked", async (name, _short, _description, ariaLabel) => {
+    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when the message box was not focused", async (name, _short, _description, ariaLabel) => {
       const variables = await renderEditor();
       fireEvent.change(screen.getByLabelText("Message template"), { target: { value: "Welcome. " } });
 
       fireEvent.click(variables.getByRole("button", { name: ariaLabel }));
 
       expect(screen.getByLabelText("Message template")).toHaveValue(`Welcome. {{${name}}}`);
+    });
+
+    test("inserts the variable at the cursor and keeps the cursor after it", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      fireEvent.change(template, { target: { value: "Hi , welcome." } });
+      template.focus();
+      template.setSelectionRange(3, 3);
+
+      fireEvent.click(variables.getByRole("button", { name: "Insert guest name" }));
+
+      expect(template).toHaveValue("Hi {{guestName}}, welcome.");
+      expect(template).toHaveFocus();
+      expect(template.selectionStart).toBe(16);
+      expect(template.selectionEnd).toBe(16);
+    });
+
+    test("replaces the selected text with the variable", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      fireEvent.change(template, { target: { value: "Stay at NAME tonight." } });
+      template.focus();
+      template.setSelectionRange(8, 12);
+
+      fireEvent.click(variables.getByRole("button", { name: "Insert property name" }));
+
+      expect(template).toHaveValue("Stay at {{propertyName}} tonight.");
+    });
+
+    test("appends again after switching to another automation", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      template.focus();
+      template.setSelectionRange(0, 0);
+
+      fireEvent.click(screen.getByText("Paid booking welcome"));
+      template.setSelectionRange(0, 0);
+      fireEvent.click(variables.getByRole("button", { name: "Insert city" }));
+
+      expect(template).toHaveValue("Hi {{guestName}} at {{propertyName}}{{propertyCity}}");
     });
 
     test("sends a template with a new variable to the backend preview", async () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Pause, Play, Plus, RefreshCw, Save } from "lucide-react";
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
@@ -67,6 +67,9 @@ export const AutomationsContent = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const templateRef = useRef(null);
+  const templateFocused = useRef(false);
+  const pendingCursor = useRef(null);
 
   const selected = useMemo(
     () => automations.find((automation) => automation.id === form.id) || null,
@@ -110,7 +113,17 @@ export const AutomationsContent = () => {
       .catch((requestError) => setError(requestError.message));
   }, [accessToken, form.id]);
 
+  useEffect(() => {
+    const field = templateRef.current;
+    const position = pendingCursor.current;
+    if (position === null || !field) return;
+    pendingCursor.current = null;
+    field.focus();
+    field.setSelectionRange(position, position);
+  }, [form.template]);
+
   const selectAutomation = (automation) => {
+    templateFocused.current = false;
     setForm({
       ...EMPTY_FORM,
       ...automation,
@@ -123,6 +136,7 @@ export const AutomationsContent = () => {
   };
 
   const startNew = () => {
+    templateFocused.current = false;
     setForm({ ...EMPTY_FORM });
     setPreview(null);
     setDeliveries([]);
@@ -200,7 +214,16 @@ export const AutomationsContent = () => {
     }
   };
 
-  const insertVariable = (variable) => updateField("template", `${form.template}{{${variable}}}`);
+  const insertVariable = (variable) => {
+    const token = `{{${variable}}}`;
+    const template = form.template;
+    const field = templateRef.current;
+    const atCursor = templateFocused.current && field;
+    const start = atCursor ? field.selectionStart : template.length;
+    const end = atCursor ? field.selectionEnd : template.length;
+    pendingCursor.current = start + token.length;
+    updateField("template", `${template.slice(0, start)}${token}${template.slice(end)}`);
+  };
 
   return (
     <main className="automations-page">
@@ -297,10 +320,14 @@ export const AutomationsContent = () => {
             <label>
               <span>Message template</span>
               <textarea
+                ref={templateRef}
                 aria-label="Message template"
                 rows={7}
                 value={form.template}
                 onChange={(event) => updateField("template", event.target.value)}
+                onFocus={() => {
+                  templateFocused.current = true;
+                }}
               />
             </label>
             <div className="variable-buttons" aria-label="Supported variables">
