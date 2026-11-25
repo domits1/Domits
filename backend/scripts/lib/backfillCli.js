@@ -1,3 +1,5 @@
+import { Booking } from "database/models/Booking";
+
 export function parseBackfillArgs() {
   const args = process.argv.slice(2);
   const commit = args.includes("--commit");
@@ -14,8 +16,6 @@ export function parseBackfillArgs() {
 
   return { commit, limit };
 }
-
-import { Booking } from "database/models/Booking";
 
 export async function updateBookingMinorUnits(client, booking, changes, paymentId = null) {
   try {
