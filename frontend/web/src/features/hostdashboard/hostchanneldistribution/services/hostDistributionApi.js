@@ -32,7 +32,7 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //   }],
 // }
 // getHostListings  -> { listings: [listing] }
-// refreshChannels  -> { channels }                         // the channels as listed above, merged into the listing
+// refreshChannels  -> { listing }                          // the same shape as one listing above; it replaces that listing
 // createConnectSession -> { iframeUrl, expiresInSeconds }  // a one-time Channex screen address for this listing;
 //                                                          // errors: 404 DISTRIBUTION_LISTING_NOT_FOUND,
 //                                                          // 409 DISTRIBUTION_NOT_TURNED_ON
@@ -120,7 +120,7 @@ export const refreshChannels = async ({ propertyId } = {}) => {
   found.channels = found.channels.map((candidate) =>
     candidate.label === "SYNCING" ? { ...candidate, label: "LIVE" } : candidate
   );
-  return { channels: copy(found.channels) };
+  return { listing: copy(found) };
 };
 
 const MOCK_CONNECT_SESSION_URL = "https://staging.channex.io/mock-connect?token=mock";

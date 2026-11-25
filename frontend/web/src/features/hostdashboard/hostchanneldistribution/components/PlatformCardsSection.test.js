@@ -77,7 +77,7 @@ describe("PlatformCardsSection", () => {
     };
     const openIframe = async (user) => {
       createConnectSession.mockResolvedValue({ iframeUrl: URL_OK });
-      refreshChannels.mockResolvedValue({ channels: LIVE_LISTING.channels });
+      refreshChannels.mockResolvedValue({ listing: LIVE_LISTING });
       await openChecklist(user);
       await tickAll(user);
       await user.click(screen.getByRole("button", { name: "Continue" }));
@@ -314,7 +314,9 @@ describe("PlatformCardsSection", () => {
 
   test("Refresh asks for the picked listing's channels and updates its cards", async () => {
     const user = userEvent.setup();
-    refreshChannels.mockResolvedValue({ channels: [channel("BookingCom", "LIVE"), channel("Airbnb", "LIVE")] });
+    refreshChannels.mockResolvedValue({
+      listing: { ...LIVE_LISTING, channels: [channel("BookingCom", "LIVE"), channel("Airbnb", "LIVE")] },
+    });
 
     render(<PlatformCardsSection />);
     await screen.findByText("Booking.com");
@@ -324,20 +326,38 @@ describe("PlatformCardsSection", () => {
     expect(refreshChannels).toHaveBeenCalledWith({ propertyId: "p1" });
   });
 
-  test("a refresh updates the channels only, not what the listings read said about the listing", async () => {
+  test("a refresh replaces the whole listing: its distribution status and channels both come from the answer", async () => {
     const user = userEvent.setup();
     getHostListings.mockResolvedValue({
       listings: [listing("p1", "Canal House", { distribution: { status: "PROVISIONING", missing: [] } })],
     });
-    refreshChannels.mockResolvedValue({ channels: [channel("BookingCom", "LIVE")] });
+    refreshChannels.mockResolvedValue({
+      listing: listing("p1", "Canal House", { channels: [channel("BookingCom", "LIVE")] }),
+    });
+
+    render(<PlatformCardsSection />);
+    await screen.findAllByText("Setting up…");
+    await user.click(screen.getByRole("button", { name: "Refresh" }));
+
+    await waitFor(() => expect(within(cardFor("Booking.com")).getByText("Live")).toBeInTheDocument());
+    expect(screen.queryAllByText("Setting up…")).toHaveLength(0);
+  });
+
+  test("a refresh answer for another listing counts as failed and leaves every card as it was", async () => {
+    const user = userEvent.setup();
+    getHostListings.mockResolvedValue({ listings: [LIVE_LISTING, listing("p2", "Beach Apartment")] });
+    refreshChannels.mockResolvedValue({
+      listing: listing("p2", "Beach Apartment", { channels: [channel("Vrbo", "LIVE")] }),
+    });
 
     render(<PlatformCardsSection />);
     await screen.findByText("Booking.com");
     await user.click(screen.getByRole("button", { name: "Refresh" }));
 
-    await waitFor(() => expect(refreshChannels).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled());
-    expect(within(cardFor("Booking.com")).getByText("Setting up…")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't refresh your connections.");
+    expect(within(cardFor("Booking.com")).getByText("Live")).toBeInTheDocument();
+    await user.selectOptions(screen.getByRole("combobox", { name: "Property" }), "p2");
+    expect(within(cardFor("Vrbo")).getByText("Not connected")).toBeInTheDocument();
   });
 
   test("while refreshing, Refresh is disabled and a sentence says so", async () => {
@@ -352,12 +372,12 @@ describe("PlatformCardsSection", () => {
     expect(screen.getByRole("button", { name: "Refresh" })).toBeDisabled();
     expect(screen.getByText("Refreshing…").tagName).toBe("OUTPUT");
 
-    pending.resolve({ channels: LIVE_LISTING.channels });
+    pending.resolve({ listing: LIVE_LISTING });
     await waitFor(() => expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled());
     expect(screen.queryByText("Refreshing…")).not.toBeInTheDocument();
   });
 
-  test("a refresh answer without channels counts as a failed refresh and keeps the cards", async () => {
+  test("a refresh answer without a listing counts as a failed refresh and keeps the cards", async () => {
     const user = userEvent.setup();
     refreshChannels.mockResolvedValue({});
 
@@ -387,7 +407,7 @@ describe("PlatformCardsSection", () => {
   test("a failed refresh keeps the cards, says so, and the next successful refresh clears the message", async () => {
     const user = userEvent.setup();
     refreshChannels.mockRejectedValueOnce(new Error("boom"));
-    refreshChannels.mockResolvedValue({ channels: LIVE_LISTING.channels });
+    refreshChannels.mockResolvedValue({ listing: LIVE_LISTING });
 
     render(<PlatformCardsSection />);
     await screen.findByText("Booking.com");
