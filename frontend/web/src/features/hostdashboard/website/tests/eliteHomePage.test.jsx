@@ -1,10 +1,11 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import renderPayload from "../../../../../../../backend/prerender/__fixtures__/renderPayload.json";
 import { buildWebsiteTemplateModel } from "../rendering/buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "../rendering/websiteDraftContentOverrides";
 import { WebsiteTemplateSurface } from "../rendering/WebsiteTemplatePreview";
+import WebsitePublicSitePage from "../WebsitePublicSitePage";
 
 jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
   __esModule: true,
@@ -12,6 +13,18 @@ jest.mock("../rendering/booking/QuoteAvailabilitySection", () => ({
     return <div data-testid="quote-availability" data-site-id={siteId} />;
   },
 }));
+jest.mock("../services/websitePublicSiteService", () => ({
+  ...jest.requireActual("../services/websitePublicSiteService"),
+  fetchPublicWebsiteRenderModel: jest.fn(),
+}));
+jest.mock("../services/websitePropertyService", () => ({
+  enrichWebsitePropertyDetails: async (propertySnapshot) => propertySnapshot,
+}));
+jest.mock("../analytics/websiteAnalyticsService", () => ({
+  recordPublicWebsiteAnalyticsEventSafely: async () => {},
+}));
+
+const { fetchPublicWebsiteRenderModel } = jest.requireMock("../services/websitePublicSiteService");
 
 const ALL_PAGES_ON = Object.freeze({
   gallery: { enabled: true },
@@ -102,4 +115,52 @@ describe("the Elite style of the home page of a site with one property", () => {
     expect(document.querySelector(".panoramaTopBarShellElite")).toBeNull();
     expect(document.querySelector(".eliteFooter")).toBeNull();
   });
+});
+
+describe("the property page of an Elite website with its properties", () => {
+  const SITE_HOST_PAYLOAD = { ...renderPayload, domain: { ...renderPayload.domain, domain: "localhost" } };
+  const VILLA_B = {
+    propertyId: "property-b",
+    slug: "villa-b",
+    isMainProperty: false,
+    propertySnapshot: {
+      property: { id: "property-b", title: "Villa B" },
+      location: { city: "Canggu", country: "Indonesia" },
+      images: [],
+    },
+  };
+  const LIST_PAYLOAD = {
+    ...SITE_HOST_PAYLOAD,
+    siteProperties: [{ propertyId: renderPayload.site.propertyId, slug: "villa-a", isMainProperty: true }, VILLA_B],
+  };
+
+  beforeEach(() => {
+    global.fetch = jest.fn();
+    jest.spyOn(globalThis, "scrollTo").mockImplementation(() => {});
+    fetchPublicWebsiteRenderModel.mockResolvedValue(LIST_PAYLOAD);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete global.fetch;
+  });
+
+  it.each(["/properties/villa-a", "/properties/villa-b"])(
+    "gives %s one footer and leaves the home page style out",
+    async (url) => {
+      globalThis.history.replaceState(null, "", url);
+      render(
+        <MemoryRouter initialEntries={[url]}>
+          <Routes>
+            <Route path="/*" element={<WebsitePublicSitePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByRole("button", { name: "Check availability" })).toBeInTheDocument();
+      expect(document.querySelector('[data-elite-page="property"]')).not.toBeNull();
+      expect(document.querySelectorAll("footer.eliteFooter")).toHaveLength(1);
+      expect(document.querySelector(".panoramaEliteHome")).toBeNull();
+    }
+  );
 });
