@@ -48,6 +48,7 @@ const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBas
     pageKey: ACCOMMODATION_PAGE_KEY,
     title: model.hero.title,
     overviewHref,
+    propertyHref: buildSitePropertyHref(pageBasePath, property.slug, SITE_PROPERTY_PAGE_KINDS.property, staySearch),
     navItems: buildSitePropertyNavItems({ sitePages: model.sitePages, overviewHref, pageBasePath, pageSearch }),
     stay,
     booking: quoteSiteId
@@ -57,6 +58,7 @@ const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBas
           propertyId: property.isMainProperty ? "" : property.propertyId,
         }
       : null,
+    ...(pageKind === SITE_PROPERTY_PAGE_KINDS.request ? { headerTone: "light" } : {}),
     buildRequestHref: (requestStay) =>
       buildSitePropertyHref(
         pageBasePath,
@@ -143,5 +145,5 @@ SitePropertyPage.propTypes = sitePropertyPagePropTypes;
 export const SITE_PROPERTY_PAGES = Object.freeze({
   [SITE_PROPERTY_PAGE_KINDS.property]: SitePropertyPage,
   [SITE_PROPERTY_PAGE_KINDS.photos]: SitePropertyAccommodationPage,
-  [SITE_PROPERTY_PAGE_KINDS.request]: SitePropertyAccommodationPage,
+  [SITE_PROPERTY_PAGE_KINDS.request]: SitePropertyPage,
 });
