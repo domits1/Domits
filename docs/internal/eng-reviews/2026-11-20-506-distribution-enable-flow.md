@@ -148,3 +148,30 @@ None is a critical gap.
 - The full web suite: 284 suites passed, 1 failed. 3848 tests passed, 9 failed, 47 skipped.
 - The 9 failures are the known ones in `src/features/bookingengine/listingdetails/pages/listingDetails2.test.js`, also failing on the base of the stack, and unrelated to this change.
 - Two deliberate breaks were checked against the tests: dropping the 409 rule failed the 409 section test, and always showing the flow's alert failed three tests.
+
+## Update 2026-11-25: review fixes (Karim, Enes)
+
+The pieces that do not touch the flow (the enable mock, the error table and the timezone modal) moved to `feature/506-enable-building-blocks` (its review note, `2026-11-25-506-enable-building-blocks.md`, is on that branch until it merges). This PR keeps the wiring. The fixes, one commit each; items 1 to 4 each have mutation checks, item 5 changes no behaviour:
+
+1. **A failed re-read after turning on is not "we couldn't set up".** `rereadListings` answers `null` when the read fails. The flow now marks the listing unconfirmed and the section shows the Setting up notice with Retry (turning on again is safe: ALREADY_CONNECTED, or it resumes). The mark clears when a read succeeds, when the enable fails, and on start or reset, not when Retry starts, so the notice does not flip to locked cards for the length of the request. The mark is one id: starting a flow on another listing clears it for the first.
+2. **Timeouts.** `createConnectSession` gives up after 30 s and `enableDistribution` after 60 s (turning on provisions at Channex). The host reads "This is taking longer than expected. Try again." A timed-out enable also reads the listings again, since it may have finished. After a timeout the late answer never reaches the flow (`Promise.race` has settled). An attempt counter covers the other case: a reset followed by a new attempt in the same step.
+3. **Refresh is locked while a flow runs**, like the switches and the picker.
+4. **A connect or enable error belongs to its listing.** It is stored with the listing id and shown only for the picked one; going back to the first shows it again until a new flow starts.
+5. **Comments.** The comment lines of `useConnectFlow`, `PlatformCardsSection`, `ConnectFlowLayer` and `DistributionNotices` went from 58 at the start of this round (66 before this commit, with the new comments) to 31. The state diagram moved up into this document and is redrawn for the new branches.
+
+Not done, on purpose:
+
+- The Sonar finding on this PR (item 6) was not available to read and is open.
+- `rereadListings` and `refresh` have no timeout: a hung read keeps the flow in `ENABLING`, or Refresh disabled, until a reload. It fits fix 1 (a read that gives up counts as unreadable) and needs a decision.
+- `classifyEnableError` and `classifyListingError` look the code up in a plain object, so a code like "constructor" would find a function. It needs the backend to send such a code.
+
+| Failure | Test | Handling | What the host sees |
+|---|---|---|---|
+| Turned on, re-read fails | yes | marked unconfirmed | Setting up with Retry, no error |
+| Session or enable does not answer | yes (fake timers) | gives up, enable also re-reads | the "taking longer" sentence |
+| Late answer of a reset attempt | yes | ignored by attempt number | nothing changes |
+| Error of listing A while B is picked | yes | scoped by listing id | no alert under B |
+
+No critical gap.
+
+Tests: the distribution folder passes (399). In the whole web suite one file is red, `panoramaElitePagesPin.test.jsx` (4 snapshots), an accepted baseline that fails the same way on `acceptance` without these commits. `listingDetails2.test.js` did not fail in these runs.
