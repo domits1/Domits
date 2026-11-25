@@ -40,15 +40,16 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //   },
 //   channels: [{
 //     otaCode: "BookingCom" | "Airbnb" | "Vrbo",
-//     label: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
-//     // NOT IN THE CONTRACT YET: disconnect has no route, so its mock keeps these on every channel (see
-//     // MOCK_ONLY_CHANNEL_FIELDS). They go when the real disconnect route is wired.
+//     label: "LIVE" | "SYNCING" | "DISCONNECTED" | "UNKNOWN",  // UNKNOWN: Channex did not answer
+//     // NOT IN THE CONTRACT YET: disconnect has no route, so its mock also uses the labels DISCONNECTING and
+//     // NEEDS_ATTENTION and keeps these on every channel (see MOCK_ONLY_CHANNEL_FIELDS). They go when the
+//     // real disconnect route is wired.
 //     channelId, status: "ACTIVE" | "DISCONNECTING" | "DISCONNECTED" | "ERROR", lastErrorCode,
 //     disconnectedOutsideDomits, upcomingBookingCount,
 //   }],
 // }
 // getHostListings  -> { listings: [listing] }
-// refreshChannels  -> { channels }                         // the channels as listed above, merged into the listing
+// refreshChannels  -> { listing }                          // the same shape as one listing above; it replaces that listing
 // enableDistribution({ propertyId, chosenTimezone }) -> { status: "PROVISIONED" | "ALREADY_CONNECTED" }
 //                                                          // chosenTimezone only where distribution.timezone.required;
 //                                                          // the host then reads the listings again. A listing that is
@@ -58,6 +59,7 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //                                                          // 422 DISTRIBUTION_TIMEZONE_CHOICE_NEEDED, ..._INVALID_CHOICE
 //                                                          // (+ options), ..._UNKNOWN_COUNTRY,
 //                                                          // 409 DISTRIBUTION_ALREADY_IN_PROGRESS, ..._NEEDS_ATTENTION,
+//                                                          // ..._OWN_CHANNEX_ACCOUNT (no re-read),
 //                                                          // 503 DISTRIBUTION_TRY_AGAIN, ..._NOT_CONFIGURED,
 //                                                          // 502 DISTRIBUTION_CHANNEX_REFUSED (+ validationDetails)
 // disconnectChannel -> { listing }                       // NOT IN THE CONTRACT YET. Answers at once (D5): the channel
@@ -227,7 +229,7 @@ export const refreshChannels = async ({ propertyId } = {}) => {
   if (!found) throw listingNotFoundError(`/integrations/channex/host/listings/${propertyId}/channels/refresh`);
 
   found.channels = found.channels.map(finishPendingChannel);
-  return { channels: copy(found.channels) };
+  return { listing: copy(found) };
 };
 
 // Leaves behind what a real backend would, for the outcomes that change the listing, so the

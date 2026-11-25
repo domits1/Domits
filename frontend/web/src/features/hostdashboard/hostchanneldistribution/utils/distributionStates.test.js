@@ -78,11 +78,22 @@ describe("describePlatformCard", () => {
     expect(describePlatformCard(input, "Vrbo").label).toBe("Not connected");
   });
 
-  test("an unknown label is never shown as Live", () => {
-    const state = booking(listing({ channels: [channel("BookingCom", "SOMETHING_NEW")] }));
+  test("UNKNOWN reads as a neutral status that is on but locked, never as Live", () => {
+    const state = booking(listing({ channels: [channel("BookingCom", "UNKNOWN")] }));
 
-    expect(state).toMatchObject({ label: "Needs attention", tone: "error" });
+    expect(state).toMatchObject({ label: "Status unknown", tone: "neutral", switchOn: true, switchDisabled: true });
+    expect(state.note).toBe("We couldn't check this connection. Click Refresh to try again.");
   });
+
+  test.each(["SOMETHING_NEW", "", "constructor", "toString"])(
+    "the label %p is outside the list, so it reads like UNKNOWN and never as Live",
+    (label) => {
+      const state = booking(listing({ channels: [channel("BookingCom", label)] }));
+
+      expect(state).toEqual(booking(listing({ channels: [channel("BookingCom", "UNKNOWN")] })));
+      expect(state.label).not.toBe("Live");
+    }
+  );
 
   test("names the platform in the sentence for a channel that needs attention", () => {
     const state = describePlatformCard(listing({ channels: [channel("Vrbo", "NEEDS_ATTENTION")] }), "Vrbo");

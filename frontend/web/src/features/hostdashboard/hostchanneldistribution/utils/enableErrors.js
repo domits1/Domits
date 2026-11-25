@@ -25,6 +25,11 @@ const ENABLE_ERRORS = {
   DISTRIBUTION_TRY_AGAIN: { reread: true, message: "Setting up didn't finish. Try again." },
   DISTRIBUTION_CHANNEX_REFUSED: { reread: true, message: "Channex couldn't set up this listing. Contact support." },
   DISTRIBUTION_NEEDS_ATTENTION: { reread: true, message: "This listing needs help from Domits. Contact support." },
+  // Nothing about the listing changed, so there is nothing to read again.
+  DISTRIBUTION_OWN_CHANNEX_ACCOUNT: {
+    reread: false,
+    message: "This listing is linked to your own Channex account. Contact support.",
+  },
   DISTRIBUTION_NOT_CONFIGURED: { reread: false, message: "Distribution isn't available right now." },
 };
 

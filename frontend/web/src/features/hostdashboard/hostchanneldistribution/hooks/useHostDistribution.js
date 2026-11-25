@@ -46,23 +46,12 @@ export function useHostDistribution() {
 
   const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
-  // Replaces the one listing an answer carries. Only the disconnect mock answers with a whole listing:
-  // the contract's routes do not, so this goes when the real disconnect route is wired.
+  // Replaces the one listing an answer carries, with no merge: the answer is the whole listing. The
+  // refresh and the disconnect flow both end here, so there is one function and one meaning.
   const applyListing = useCallback((propertyId, listing) => {
     setResult((previous) => ({
       ...previous,
       listings: previous.listings.map((candidate) => (candidate.propertyId === propertyId ? listing : candidate)),
-    }));
-  }, []);
-
-  // The refresh answers with channels only, so they are merged into the listing: its status and
-  // missing items come from the listings read and must not be overwritten.
-  const applyChannels = useCallback((propertyId, channels) => {
-    setResult((previous) => ({
-      ...previous,
-      listings: previous.listings.map((candidate) =>
-        candidate.propertyId === propertyId ? { ...candidate, channels } : candidate
-      ),
     }));
   }, []);
 
@@ -86,18 +75,18 @@ export function useHostDistribution() {
     setRefreshingPropertyId(propertyId);
     setRefreshFailedPropertyId(null);
     try {
-      const { channels } = await refreshChannels({ propertyId });
-      // A body without channels must not replace them with nothing.
-      if (!Array.isArray(channels)) throw new Error("The refresh response did not contain channels.");
+      const { listing } = await refreshChannels({ propertyId });
+      // An answer without a listing, or for another listing, must not replace this card or any other.
+      if (listing?.propertyId !== propertyId) throw new Error("The refresh response did not contain this listing.");
       if (!mountedRef.current) return;
-      applyChannels(propertyId, channels);
+      applyListing(propertyId, listing);
     } catch (err) {
       console.error("Failed to refresh the channels of a listing:", err);
       if (mountedRef.current) setRefreshFailedPropertyId(propertyId);
     } finally {
       if (mountedRef.current) setRefreshingPropertyId(null);
     }
-  }, [applyChannels]);
+  }, [applyListing]);
 
   return {
     listings: result.listings,

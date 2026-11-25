@@ -62,3 +62,20 @@ Each mutant was applied, a test went red, and the change was reverted: the sessi
 ## Tests
 
 The frontend/web suite has one failing file, `listingDetails2.test.js` (9 tests), which fails the same way on the branch before these commits.
+
+## Update 2026-11-25: own Channex account, and the connect changes merged in
+
+- The merge of #3982 brought in two contract changes (refresh answers `{ listing }`, and the UNKNOWN channel label); they are reviewed in `2026-11-24-506-distribution-contract-connect.md`. The merge had two conflicts. The contract comment keeps both the `{ listing }` line and the `enableDistribution` notes. The test that read "a refresh updates the channels only" now asserts the replacement through the distribution status, which in this branch decides between the cards and the Setting up view (a refresh that answers a PROVISIONING listing swaps the cards for it).
+- Turning a listing on can answer `409 DISTRIBUTION_OWN_CHANNEX_ACCOUNT`. `classifyEnableError` maps it by code to "This listing is linked to your own Channex account. Contact support." with `reread: false`: the listing did not change, so there is nothing to read again. Other 409s keep their own entries, and an unknown 409 still gets the generic sentence.
+
+| Failure | Test | Handling | What the host sees |
+|---|---|---|---|
+| Turn-on answers 409 own Channex account | yes (unit and flow) | classified by code, no re-read, no session | "This listing is linked to your own Channex account. Contact support." |
+| The same code arrives with another status | yes | still classified by code | the same sentence |
+| Another 409 | yes | its own entry, or the generic sentence | unchanged |
+
+No critical gap.
+
+Mutation checks, each applied, red, then reverted: the re-read flag flipped for the own-account code; classification by status 409 instead of by code; the entry removed. The refresh test rewritten in the merge was also checked: a refresh that merged only the channels turned it red.
+
+Tests: the folder passes (385). The whole web suite has one failing file, `panoramaElitePagesPin.test.jsx` (one snapshot), which fails the same way on the branch before these commits and is an accepted baseline. `listingDetails2.test.js`, the baseline named above, passed in these runs.

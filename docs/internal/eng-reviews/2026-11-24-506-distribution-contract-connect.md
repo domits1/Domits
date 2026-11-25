@@ -28,7 +28,7 @@ connect session fails ── classifyConnectSessionError(error) ── by errorC
    anything else (502, no answer)        ─▶ "We couldn't start the connection. Try again."
 
 rereadListings ── getHostListings ──▶ replaces the listings, with no loading state
-refresh        ── refreshChannels ──▶ { channels } merged into the listing; status and missing stay
+refresh        ── refreshChannels ──▶ { listing } replaces that listing (a wrong propertyId counts as failed)
 ```
 
 The shapes follow the contract: `distribution.{status, missing, timezone}`, `channels[].{otaCode, label}`, `{ iframeUrl, expiresInSeconds }`, and the iframe hosts `staging.channex.io` and `app.channex.io`. The mock keeps its role: swapping to the real routes still changes `hostDistributionApi.js` only. `MOCK_HOST_DISTRIBUTION_ENABLED` stays false.
@@ -49,7 +49,7 @@ The shapes follow the contract: `distribution.{status, missing, timezone}`, `cha
 |---|---|---|---|
 | Listing not turned on, not found or not owned | yes | classified, re-read where the listing may have changed | a short sentence, and the cards update |
 | Connect session fails or the network drops | yes | the generic sentence | "We couldn't start the connection. Try again." |
-| Refresh answer without channels | yes | counts as a failed refresh | "We couldn't refresh your connections." |
+| Refresh answer without a listing | yes | counts as a failed refresh | "We couldn't refresh your connections." |
 | The re-read fails | no | console only | the cards as they were |
 
 No critical gap.
@@ -61,3 +61,26 @@ Each mutant was applied, a test went red, and the change was reverted: any `*.ch
 ## Tests
 
 The frontend/web suite has one failing file, `listingDetails2.test.js` (9 tests), which fails the same way on the branch before these commits.
+
+## Update 2026-11-25: refresh answers the listing, and UNKNOWN
+
+Two contract changes from Enes, reviewed per commit (staged diff, no blocking findings).
+
+- `channels/refresh` answers `{ listing }` again, in the shape of one listing of `GET /host/listings`. `useHostDistribution.applyListing` replaces that listing; nothing is merged. This supersedes the "merged into the listing" decision above.
+- A refresh counts as failed when the answer has no listing, or a listing whose `propertyId` is not the one asked for, so a wrong answer can never overwrite another card.
+- Channel labels are LIVE, SYNCING, DISCONNECTED and UNKNOWN. UNKNOWN (Channex did not answer) shows "Status unknown" in the neutral tone, with the switch on but locked, and the note "We couldn't check this connection. Click Refresh to try again." A label outside the list reads the same way, never as Live. Before, an unknown label got the attention state.
+- Own-property lookup (`Object.hasOwn`) keeps a label such as "constructor" from matching the state table. Found while writing the tests; it would have produced a card with no label.
+- DISCONNECTING and NEEDS_ATTENTION stay mapped for the #4007 mock only. They are no longer in the contract.
+
+| Failure | Test | Handling | What the host sees |
+|---|---|---|---|
+| Refresh answers another listing | yes | counts as failed, nothing replaced | "We couldn't refresh your connections." |
+| Refresh answers no listing | yes | counts as failed | the same sentence |
+| Channex does not answer for a channel | yes | UNKNOWN, locked switch | grey "Status unknown" and how to retry |
+| A new label the frontend does not know | yes | reads like UNKNOWN | the same grey card, never Live |
+
+No critical gap.
+
+Mutation checks, each applied, red, then reverted: no `propertyId` check; merge of channels instead of replacing the listing; no guard at all; UNKNOWN reading Live; an unknown label reading Live; an unknown label reading the attention state; the UNKNOWN switch unlocked; lookup without `hasOwn`; no UNKNOWN note.
+
+Tests: the folder passes (300). In the whole web suite two files were red, both unrelated and accepted: `panoramaElitePagesPin.test.jsx` (one snapshot, fails the same way on the branch before these commits) and `websiteEditorPageSitePages.test.jsx` (a 5 s timeout under parallel load, passes alone).

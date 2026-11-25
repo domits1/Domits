@@ -62,13 +62,15 @@ describe("hostDistributionApi (mock)", () => {
   test("refresh moves a syncing channel to live and a disconnecting one to disconnected, and leaves the others alone", async () => {
     const answer = await refreshChannels({ propertyId: "mock-listing-live" });
 
-    expect(Object.keys(answer)).toEqual(["channels"]);
-    expect(answer.channels.map((c) => [c.otaCode, c.label])).toEqual([
+    expect(Object.keys(answer)).toEqual(["listing"]);
+    expect(Object.keys(answer.listing).sort()).toEqual(["channels", "distribution", "propertyId", "title"]);
+    expect(answer.listing.propertyId).toBe("mock-listing-live");
+    expect(answer.listing.channels.map((c) => [c.otaCode, c.label])).toEqual([
       ["BookingCom", "LIVE"],
       ["Airbnb", "LIVE"],
     ]);
     const mixed = await refreshChannels({ propertyId: "mock-listing-mixed" });
-    expect(mixed.channels.map((c) => [c.status, c.label])).toEqual([
+    expect(mixed.listing.channels.map((c) => [c.status, c.label])).toEqual([
       ["DISCONNECTED", "DISCONNECTED"],
       ["DISCONNECTED", "DISCONNECTED"],
       ["ERROR", "NEEDS_ATTENTION"],
@@ -117,7 +119,9 @@ describe("hostDistributionApi (mock)", () => {
 
       expect(answer).toEqual({ status: "PROVISIONED" });
       expect(await statusOf("mock-listing-not-turned-on")).toBe("READY");
-      await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty("iframeUrl");
+      await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty(
+        "iframeUrl"
+      );
     });
 
     test("is idempotent: a listing that is already READY answers ALREADY_CONNECTED and stays as it was", async () => {
@@ -267,9 +271,9 @@ describe("hostDistributionApi (mock)", () => {
     test("a Refresh afterwards shows it DISCONNECTED", async () => {
       await disconnectChannel({ channelId: LIVE_CHANNEL });
 
-      const { channels } = await refreshChannels({ propertyId: "mock-listing-live" });
+      const { listing } = await refreshChannels({ propertyId: "mock-listing-live" });
 
-      expect(channels.find((c) => c.channelId === LIVE_CHANNEL).label).toBe("DISCONNECTED");
+      expect(listing.channels.find((c) => c.channelId === LIVE_CHANNEL).label).toBe("DISCONNECTED");
     });
 
     test("is idempotent: a channel that is already off comes back unchanged", async () => {

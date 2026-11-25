@@ -35,17 +35,21 @@ const NOT_CONNECTED = { label: "Not connected", tone: "neutral", switchOn: false
 
 // Keyed by the channel's label. A switch that is on means "connected or being connected".
 // DISCONNECTING reads as off and locked: the host just asked for it, and a second click must not
-// start another disconnect.
+// start another disconnect. UNKNOWN is Channex not answering: the channel exists, so the switch is
+// on, but locked, because nothing can be said about it until a Refresh gets an answer.
+// DISCONNECTING and NEEDS_ATTENTION are no longer in the contract; the mock of #4007 still uses them.
 const CHANNEL_STATES = {
   SYNCING: { label: "Syncing…", tone: "pending", switchOn: true, switchDisabled: false },
   LIVE: { label: "Live", tone: "success", switchOn: true, switchDisabled: false },
   DISCONNECTING: { label: "Disconnecting…", tone: "pending", switchOn: false, switchDisabled: true },
   DISCONNECTED: { label: "Disconnected", tone: "neutral", switchOn: false, switchDisabled: false },
   NEEDS_ATTENTION: { label: "Needs attention", tone: "error", switchOn: true, switchDisabled: false },
+  UNKNOWN: { label: "Status unknown", tone: "neutral", switchOn: true, switchDisabled: true },
 };
 
-// An unknown label must not read as healthy, so it gets the attention state.
-const UNKNOWN_CHANNEL_STATE = CHANNEL_STATES.NEEDS_ATTENTION;
+// A label outside the list reads like UNKNOWN: neutral and locked, never Live.
+const UNKNOWN_CHANNEL_STATE = CHANNEL_STATES.UNKNOWN;
+const UNKNOWN_NOTE = "We couldn't check this connection. Click Refresh to try again.";
 
 // The moment the host's turn-off request runs: off and locked, so a second click cannot start another.
 // After the answer the channel reads Disconnecting… (D7) until a Refresh finds it done.
@@ -79,8 +83,10 @@ export function describePlatformCard(listing, otaCode, { turningOff = false } = 
   const channel = listing.channels?.find((candidate) => candidate.otaCode === otaCode);
   if (!channel) return { ...NOT_CONNECTED, note: null };
 
-  const state = CHANNEL_STATES[channel.label] ?? UNKNOWN_CHANNEL_STATE;
+  // hasOwn: a label such as "constructor" must not find a function on the prototype.
+  const state = Object.hasOwn(CHANNEL_STATES, channel.label) ? CHANNEL_STATES[channel.label] : UNKNOWN_CHANNEL_STATE;
   if (state === CHANNEL_STATES.NEEDS_ATTENTION) return { ...state, note: describeAttentionNote(platformName) };
   if (state === CHANNEL_STATES.DISCONNECTING) return { ...state, note: DISCONNECTING_HINT };
+  if (state === CHANNEL_STATES.UNKNOWN) return { ...state, note: UNKNOWN_NOTE };
   return { ...state, note: null };
 }
