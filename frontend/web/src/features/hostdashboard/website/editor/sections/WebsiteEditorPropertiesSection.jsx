@@ -18,7 +18,7 @@ function WebsiteEditorPropertyCard({ entry, index, entryCount, onSlugKeyDown, si
   const { isActive, isListed, isMainProperty, propertyId, slug, slugProblem, title } = entry;
   const hasOtherEntries = entryCount > 1;
   const moves = [
-    ["up", -1, index < 1],
+    ["up", -1, index < 2],
     ["down", 1, index >= entryCount - 1],
   ];
 
@@ -46,7 +46,7 @@ function WebsiteEditorPropertyCard({ entry, index, entryCount, onSlugKeyDown, si
           </p>
         </>
       ) : null}
-      {hasOtherEntries ? (
+      {hasOtherEntries && !isMainProperty ? (
         <div className={pageStyles.collectionActionRow}>
           {moves.map(([direction, offset, isDisabled]) => (
             <button
@@ -59,16 +59,14 @@ function WebsiteEditorPropertyCard({ entry, index, entryCount, onSlugKeyDown, si
               Move {direction}
             </button>
           ))}
-          {isMainProperty ? null : (
-            <button
-              type="button"
-              className={`${ACTION_CLASS_NAME} ${pageStyles.collectionActionDeleteButton}`}
-              aria-label={`Remove ${title}`}
-              title={`Remove ${title}`}
-              onClick={() => sitePropertiesEditor.removeSiteProperty(propertyId)}>
-              <DeleteIcon fontSize="small" />
-            </button>
-          )}
+          <button
+            type="button"
+            className={`${ACTION_CLASS_NAME} ${pageStyles.collectionActionDeleteButton}`}
+            aria-label={`Remove ${title}`}
+            title={`Remove ${title}`}
+            onClick={() => sitePropertiesEditor.removeSiteProperty(propertyId)}>
+            <DeleteIcon fontSize="small" />
+          </button>
         </div>
       ) : null}
     </li>
@@ -105,7 +103,7 @@ export function WebsiteEditorPropertiesSection({
         <div className={pageStyles.collectionStack}>
           <p className={pageStyles.helperText}>
             {entries.length > 1
-              ? "Each property gets its own page, in this order."
+              ? "Each property gets its own page, in this order. Your main property stays first."
               : "Your website shows one property. Add another listing to give each property its own page."}
           </p>
           <ol className={styles.propertyList}>

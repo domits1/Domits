@@ -26,7 +26,7 @@ const toListingsRead = (options, mainPropertyId) => {
   return hasMainProperty ? { status: SITE_PROPERTIES_LISTINGS_STATUS.READY, listings } : LISTINGS_FAILED;
 };
 
-const withEntry = (entries, listing, atStart = false) => {
+const withEntry = (entries, listing) => {
   const isListed = entries.some((entry) => entry.propertyId === listing?.propertyId);
   if (!listing || isListed || entries.length >= MAX_SITE_PROPERTIES) {
     return entries;
@@ -38,8 +38,13 @@ const withEntry = (entries, listing, atStart = false) => {
       entries.map((e) => e.slug)
     ),
   };
-  return atStart ? [entry, ...entries] : [...entries, entry];
+  return [...entries, entry];
 };
+
+const withMainFirst = (entries, mainPropertyId) => [
+  ...entries.filter((entry) => entry.propertyId === mainPropertyId),
+  ...entries.filter((entry) => entry.propertyId !== mainPropertyId),
+];
 
 const moveEntry = (entries, propertyId, offset) => {
   const nextEntries = [...entries];
@@ -76,7 +81,10 @@ export const useWebsiteEditorSiteProperties = ({
 
   const isReady = canEditSiteProperties && listingsRead.status === SITE_PROPERTIES_LISTINGS_STATUS.READY;
   const listingsById = new Map(listingsRead.listings.map((listing) => [listing.propertyId, listing]));
-  const storedEntries = withEntry(readSiteProperties(workingOverrides), listingsById.get(mainPropertyId), true);
+  const storedEntries = withMainFirst(
+    withEntry(readSiteProperties(workingOverrides), listingsById.get(mainPropertyId)),
+    mainPropertyId
+  );
   const baseEntries = editedEntries || storedEntries;
   const entries = baseEntries.map((entry) => {
     const listing = listingsById.get(entry.propertyId);

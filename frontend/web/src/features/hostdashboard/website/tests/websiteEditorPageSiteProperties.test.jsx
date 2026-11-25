@@ -39,11 +39,13 @@ jest.mock("../rendering/WebsiteTemplatePreview", () => ({
 const PROPERTY_ID = renderPayload.site.propertyId;
 const MAIN = { propertyId: PROPERTY_ID, slug: "wellness-villa-bisous" };
 const GARDEN = { propertyId: "listing-garden", slug: "garden-house" };
+const BEACH = { propertyId: "listing-beach", slug: "beach-hut" };
 const LIVE_SITE = { site: { id: "site-1", status: "PUBLISHED" }, domains: [] };
 const LISTINGS = [
   { value: PROPERTY_ID, title: "Wellness Villa Bisous", status: "ACTIVE" },
   { value: GARDEN.propertyId, title: "Garden House", status: "ACTIVE" },
   { value: "listing-loft", title: "City Loft", status: "INACTIVE" },
+  { value: BEACH.propertyId, title: "Beach Hut", status: "ACTIVE" },
 ];
 
 const overridesWith = (siteProperties, otherOverrides) => ({
@@ -120,11 +122,15 @@ describe("the Properties section of an Elite website", () => {
     expect(fetchHostPropertySelectOptions).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps every address lower case and unique, and saves the chosen order", async () => {
-    await renderEditor(buildDraft([MAIN, GARDEN]));
-    click("Move Garden House up");
-    click("Move Garden House down");
-    expect(saveButton()).toBeDisabled();
+  it("keeps the main property first, every address lower case and unique, and saves the chosen order", async () => {
+    await renderEditor(buildDraft([GARDEN, BEACH, MAIN]));
+    expect(screen.getAllByText(/^\/properties\//).map((path) => path.textContent)).toEqual([
+      "/properties/wellness-villa-bisous",
+      "/properties/garden-house",
+      "/properties/beach-hut",
+    ]);
+    expect(screen.queryByRole("button", { name: /Wellness Villa Bisous$|Wellness Villa Bisous (up|down)/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Move Garden House up" })).toBeDisabled();
 
     fireEvent.change(slugField("Garden House"), { target: { value: "Wellness-Villa-Bisous" } });
     expect(slugField("Garden House")).toHaveValue("wellness-villa-bisous");
@@ -135,10 +141,27 @@ describe("the Properties section of an Elite website", () => {
     );
 
     fireEvent.change(slugField("Garden House"), { target: { value: "the-garden" } });
-    click("Move Garden House up");
+    click("Move Beach Hut up");
     fireEvent.click(saveButton());
 
-    expect((await savedWith(1)).contentOverrides.siteProperties).toEqual([{ ...GARDEN, slug: "the-garden" }, MAIN]);
+    expect((await savedWith(1)).contentOverrides.siteProperties).toEqual([
+      MAIN,
+      BEACH,
+      { ...GARDEN, slug: "the-garden" },
+    ]);
+  });
+
+  it("keeps the list on a save and a live site update that do not change it", async () => {
+    fetchWebsiteSiteByPropertyId.mockResolvedValue(LIVE_SITE);
+    await renderEditor(buildDraft([MAIN, GARDEN]));
+
+    fireEvent.change(screen.getByLabelText("Hero title"), { target: { value: "A quiet villa" } });
+    clickMenu("Update live site");
+
+    await waitFor(() => expect(publishWebsiteSite).toHaveBeenCalledTimes(1));
+    const payload = await savedWith(1);
+    expect(payload.contentOverrides.siteProperties).toEqual([MAIN, GARDEN]);
+    expect(payload.publishedContentOverrides.siteProperties).toEqual([MAIN, GARDEN]);
   });
 
   it("goes back to the one-property draft and live site when the other properties are removed", async () => {
@@ -228,13 +251,13 @@ describe("the Properties section of an Elite website", () => {
 
   it("returns the list to the published one on discard", async () => {
     jest.spyOn(globalThis, "confirm").mockReturnValue(true);
-    await renderEditor(buildDraft([MAIN, GARDEN]));
+    await renderEditor(buildDraft([MAIN, GARDEN, BEACH]));
 
-    click("Move Garden House up");
+    click("Move Beach Hut up");
     clickMenu("Discard all changes");
 
     await savedWith(1);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Move Wellness Villa Bisous up" })).toBeDisabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Move Beach Hut down" })).toBeDisabled());
   });
 
   it("keeps the server's message for a host without the plan", async () => {
