@@ -149,3 +149,12 @@ For the pull request description.
 - The full web suite: 288 suites passed, 1 failed. 3944 tests passed, 9 failed, 47 skipped.
 - The 9 failures are the known ones in `src/features/bookingengine/listingdetails/pages/listingDetails2.test.js`, also failing on the base of the stack, and unrelated to this change.
 - Deliberate breaks checked against the tests, each caught: the 409 rule, the singular form, the "Turning off…" state, the double-click guard, the mounted guard, the same-listing check on the answer, the switch lock, the picker lock, the Refresh lock, `turnOffEnabled`, and both stale-message clears.
+
+## Update 2026-11-25: after the contract changes of #3982 and #3984 were merged in
+
+- The refresh now answers `{ listing }` (reviewed in `2026-11-24-506-distribution-contract-connect.md`). `useHostDistribution` has one `applyListing`, exported: the refresh and the disconnect flow both end in it, so there is one function and one meaning. The disconnect answer was already a whole listing, so the flow itself did not change.
+- The merge had four conflicts, resolved as one function in the hook; the contract comment and the mock keep the disconnect extras (`MOCK_ONLY_CHANNEL_FIELDS`) next to the new refresh answer and the UNKNOWN label; the channel state lookup keeps the DISCONNECTING hint and adds the UNKNOWN note. The disconnect tests that mocked a channels-only refresh now mock `{ listing }`.
+- DISCONNECTING and NEEDS_ATTENTION are no longer in the contract; only this mock produces them. They stay mapped so the preview keeps working, and go with the real disconnect route.
+- A refresh that answers another listing, or no listing, counts as failed. This is the hook's behaviour and is tested for Refresh; the disconnect errors that read the listing again reach it through the same `refresh`, but no test drives a wrong answer through that path.
+
+Checks: the folder passes (493 tests, 30 suites), including the disconnect hook, the section and the mock. Deliberate breaks, each red and reverted: `applyListing` not exported (2 tests fail, so the disconnect flow depends on it); a refresh that merges only the channels; no `propertyId` check on the refresh answer. In the whole web suite one file is red, `panoramaElitePagesPin.test.jsx` (one snapshot), which fails the same way on the branch before these commits and is an accepted baseline. The `listingDetails2.test.js` failures listed above did not appear in these runs.
