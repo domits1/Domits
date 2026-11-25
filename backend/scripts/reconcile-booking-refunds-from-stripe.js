@@ -1,26 +1,12 @@
 #!/usr/bin/env node
 
+import { parseBackfillArgs, runBackfill } from "./lib/backfillCli.js";
 import Database from "database";
 import Stripe from "stripe";
 import { Booking } from "database/models/Booking";
 import { SystemManagerRepository } from "../ORM/data/systemManagerRepository.js";
 
-function parseArgs() {
-  const args = process.argv.slice(2);
-  const commit = args.includes("--commit");
-  const limitIndex = args.indexOf("--limit");
-  let limit = null;
 
-  if (limitIndex !== -1) {
-    const parsed = Number(args[limitIndex + 1]);
-    if (!Number.isSafeInteger(parsed) || parsed < 1) {
-      throw new Error("--limit expects a positive safe integer");
-    }
-    limit = parsed;
-  }
-
-  return { commit, limit };
-}
 
 async function fetchStripeSecret() {
   if (process.env.STRIPE_SECRET_KEY) return process.env.STRIPE_SECRET_KEY;
@@ -88,7 +74,7 @@ async function reconcileBooking(booking, stripe, client, commit) {
 }
 
 async function main() {
-  const { commit, limit } = parseArgs();
+  const { commit, limit } = parseBackfillArgs();
   const client = await Database.getInstance();
   let query = client.getRepository(Booking).createQueryBuilder("booking")
     .where("booking.stripe_refund_id IS NOT NULL")
@@ -117,9 +103,4 @@ async function main() {
   console.info(`Finished. reconciled=${verified} skipped=${skipped} errors=${errors}`);
 }
 
-try {
-  await main();
-} catch (error) {
-  console.error(error);
-  process.exitCode = 1;
-}
+await runBackfill(main);

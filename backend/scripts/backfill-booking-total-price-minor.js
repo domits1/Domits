@@ -1,25 +1,11 @@
 #!/usr/bin/env node
 
+import { parseBackfillArgs, runBackfill } from "./lib/backfillCli.js";
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { parseDecimalToMinorUnits } from "database/money";
 
-function parseArgs() {
-  const args = process.argv.slice(2);
-  const commit = args.includes("--commit");
-  const limitIndex = args.indexOf("--limit");
-  let limit = null;
 
-  if (limitIndex !== -1) {
-    const parsed = Number(args[limitIndex + 1]);
-    if (!Number.isSafeInteger(parsed) || parsed < 1) {
-      throw new Error("--limit expects a positive safe integer");
-    }
-    limit = parsed;
-  }
-
-  return { commit, limit };
-}
 
 const resolveSourceCurrency = (booking) => {
   const bookingType = String(booking.bookingtype || "").trim().toLowerCase();
@@ -65,7 +51,7 @@ async function backfillBooking(booking, client, commit) {
 }
 
 async function main() {
-  const { commit, limit } = parseArgs();
+  const { commit, limit } = parseBackfillArgs();
   const client = await Database.getInstance();
   let query = client.getRepository(Booking).createQueryBuilder("booking")
     .where("booking.total_price_minor IS NULL").andWhere("booking.total_price IS NOT NULL");
@@ -88,9 +74,4 @@ async function main() {
   console.info(`Finished. updated=${updated} skipped=${skipped} errors=${errors}`);
 }
 
-try {
-  await main();
-} catch (error) {
-  console.error(error);
-  process.exitCode = 1;
-}
+await runBackfill(main);
