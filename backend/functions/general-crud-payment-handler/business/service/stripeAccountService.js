@@ -10,6 +10,36 @@ import { ConflictException } from "../../util/exception/conflictException.js";
 const getAuth = (event) =>  event.headers.Authorization;
 const unixNow = () => Math.floor(Date.now() / 1000);
 
+const createStripeRequestError = (error, operation) => {
+  const accountMissing = error?.code === "resource_missing";
+  const statusCode = accountMissing ? 409 : error?.statusCode >= 500 ? 503 : 502;
+  const code = accountMissing
+    ? "STRIPE_ACCOUNT_NOT_FOUND"
+    : operation === "account_lookup"
+      ? "STRIPE_ACCOUNT_LOOKUP_FAILED"
+      : "STRIPE_ONBOARDING_LINK_FAILED";
+  const message = accountMissing
+    ? "The saved Stripe account could not be found in this Stripe platform. Please contact Domits support before reconnecting."
+    : operation === "account_lookup"
+      ? "We couldn't verify your saved Stripe connection. Please try again. If the problem continues, contact Domits support."
+      : "We couldn't create a Stripe access link. Please try again. If the problem continues, contact Domits support.";
+
+  console.error("Stripe connected account request failed.", {
+    operation,
+    errorType: error?.type,
+    errorCode: error?.code,
+    statusCode: error?.statusCode,
+    requestId: error?.requestId,
+  });
+
+  const requestError = new Error(message);
+  requestError.name = "StripeAccountRequestError";
+  requestError.statusCode = statusCode;
+  requestError.code = code;
+  requestError.cause = error;
+  return requestError;
+};
+
 export default class StripeAccountService {
   constructor() {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -43,7 +73,12 @@ export default class StripeAccountService {
     const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
     if (stripeAccount?.account_id) {
-      throw new ConflictException("Stripe account already exists", { accountId: stripeAccount.account_id });
+      const details = await this.buildStatusForStripeAccount(stripeAccount.account_id);
+      const message = details.onboardingComplete
+        ? "Existing Stripe account found. Redirecting to Stripe Express Dashboard."
+        : "Existing Stripe account found. Redirecting to Stripe onboarding.";
+
+      return { statusCode: 200, message, details };
     }
 
     const account = await this.stripe.accounts.create({
@@ -112,14 +147,19 @@ export default class StripeAccountService {
     let loginLinkUrl = null;
     let onboardingUrl = null;
 
+    let account;
     try {
-      const account = await this.stripe.accounts.retrieve(accountId);
+      account = await this.stripe.accounts.retrieve(accountId);
+    } catch (error) {
+      throw createStripeRequestError(error, "account_lookup");
+    }
 
-      onboardingComplete = account.details_submitted;
-      chargesEnabled = account.charges_enabled;
-      payoutsEnabled = account.payouts_enabled;
-      bankDetailsProvided = (account.external_accounts?.data?.length || 0) > 0;
+    onboardingComplete = account.details_submitted;
+    chargesEnabled = account.charges_enabled;
+    payoutsEnabled = account.payouts_enabled;
+    bankDetailsProvided = (account.external_accounts?.data?.length || 0) > 0;
 
+    try {
       if (!onboardingComplete) {
         onboardingUrl = await this.createOnboardingLink(accountId);
       } else {
@@ -128,7 +168,7 @@ export default class StripeAccountService {
         onboardingUrl = links.onboardingUrl;
       }
     } catch (error) {
-      throw new NotFoundException("Stripe account could not be retrieved, please contact support.");
+      throw createStripeRequestError(error, "onboarding_link");
     }
 
     return {
