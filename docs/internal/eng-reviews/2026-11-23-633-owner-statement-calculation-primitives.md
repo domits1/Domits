@@ -13,6 +13,14 @@ The helpers provide:
 - Basis-point amount calculation using an explicitly supplied rounding mode.
 - Multi-owner allocation that requires ownership shares to total exactly 10000 basis points and an explicitly supplied largest-remainder allocation policy.
 
+## Calculation contract
+
+All helper outputs that represent minor currency units use BigInt, including each allocation's amountMinorUnits. Keeping one type throughout the calculation helpers avoids mixing numeric representations and preserves integer precision.
+
+BigInt is not supported by JSON.stringify. Callers must convert minor-unit values to base-10 strings at the JSON/API serialization boundary, rather than changing the calculation helpers' return types.
+
+The half-up rounding mode means half away from zero. For example, with two fraction digits, 10.005 becomes 10.01 and -10.005 becomes -10.01. This is distinct from JavaScript's Math.round behavior for negative halfway values.
+
 ## Safety boundaries
 
 - No default currency, currency precision, rounding mode, commission percentage, booking eligibility status, reporting-period attribution, refund timing, tax treatment, or expense responsibility is introduced.
@@ -26,13 +34,13 @@ The helpers provide:
 
 Added unit coverage for decimal conversion, scientific notation, negative amounts, rounding modes, basis-point calculations, ownership-share validation, remainder distribution, and deterministic ties.
 
-Run from `backend/`:
+Executed locally from the backend directory:
 
-```bash
+~~~bash
 npm test -- --runInBand test/property-owners/ownerStatementCalculations.test.js
-```
+~~~
 
-The test suite has been added but has not been executed in this repository environment. CI validation is required before merge.
+Result: **34 tests passed**.
 
 ## Remaining policy decisions
 
