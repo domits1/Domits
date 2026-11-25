@@ -383,6 +383,24 @@ describe("PlatformCardsSection", () => {
       expect(refreshChannels).not.toHaveBeenCalled();
     });
 
+    test("Refresh is locked while a flow is open or a request of it runs, and usable again when it ends", async () => {
+      const user = userEvent.setup();
+      const pending = deferred();
+      createConnectSession.mockReturnValue(pending.promise);
+      await openChecklist(user);
+      const refreshButton = () => screen.getByRole("button", { name: "Refresh", hidden: true });
+
+      expect(refreshButton()).toBeDisabled();
+      await tickAll(user);
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+      expect(await screen.findByText("Connecting…")).toBeInTheDocument();
+      expect(refreshButton()).toBeDisabled();
+
+      pending.reject(new Error("boom"));
+      await screen.findByRole("alert");
+      expect(refreshButton()).toBeEnabled();
+    });
+
     test("Continue asks for a session with the listing id only and opens the Channex screen", async () => {
       const user = userEvent.setup();
       createConnectSession.mockResolvedValue({ iframeUrl: URL_OK });

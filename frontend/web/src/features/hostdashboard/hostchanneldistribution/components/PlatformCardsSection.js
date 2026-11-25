@@ -117,7 +117,7 @@ function PlatformCardsSection() {
             <button
               type="button"
               className="chdist-btn chdist-btn--secondary"
-              disabled={isRefreshing}
+              disabled={isRefreshing || connectFlow.isActive}
               onClick={() => refresh(selected.propertyId)}>
               Refresh
             </button>
