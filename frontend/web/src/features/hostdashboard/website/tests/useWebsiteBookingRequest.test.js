@@ -177,4 +177,25 @@ describe("useWebsiteBookingRequest", () => {
     expect(result.current.status).toBe(BOOKING_REQUEST_STATUS.IDLE);
     expect(result.current.error).toBeNull();
   });
+
+  it("keeps one key per scope across new quotes until a send succeeds, apart from the key of the quote", async () => {
+    requestPublicSiteBooking
+      .mockRejectedValueOnce(bookingError("network_error", 0))
+      .mockResolvedValueOnce(RESULT)
+      .mockResolvedValueOnce(RESULT);
+    const { result } = renderBookingHook();
+    const send = (quote) =>
+      act(async () => {
+        await result.current.submitBookingRequest({ quote, guest: GUEST, idempotencyScope: "villa-b 2026-10-01" });
+      });
+
+    await send(QUOTE);
+    await send({ ...QUOTE, quoteId: "quote_2", quoteToken: "qtok_2" });
+    await send({ ...QUOTE, quoteId: "quote_3", quoteToken: "qtok_3" });
+
+    const [first, second, third] = sentIdempotencyKeys();
+    expect(second).toBe(first);
+    expect(third).not.toBe(first);
+    expect(globalThis.localStorage.getItem(resolveBookingIdempotencyStorageKey("site-1"))).toBeNull();
+  });
 });

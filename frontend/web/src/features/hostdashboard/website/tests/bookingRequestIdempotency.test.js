@@ -21,6 +21,20 @@ describe("booking request idempotency key", () => {
     expect(typeof stored.createdAt).toBe("number");
   });
 
+  it("reads the stored key again after a reload of the page", () => {
+    const record = {
+      siteId: "site-1 property-b 2099-01-10 2099-01-14 3",
+      quoteId: "property-b 2099-01-10 2099-01-14 3",
+    };
+    const first = getOrCreateBookingIdempotencyKey(record);
+    let reloadedStore;
+    jest.isolateModules(() => {
+      reloadedStore = require("../rendering/booking/bookingRequestIdempotency");
+    });
+
+    expect(reloadedStore.getOrCreateBookingIdempotencyKey(record)).toBe(first);
+  });
+
   it("returns the same key for the same quote so a retry replays instead of double-booking", () => {
     const first = getOrCreateBookingIdempotencyKey({ siteId: "site-1", quoteId: "quote_1" });
     const second = getOrCreateBookingIdempotencyKey({ siteId: "site-1", quoteId: "quote_1" });
