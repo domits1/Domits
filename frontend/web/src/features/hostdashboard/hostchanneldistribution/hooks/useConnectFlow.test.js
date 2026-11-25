@@ -3,6 +3,7 @@ import { CONNECT_STEP, useConnectFlow } from "./useConnectFlow";
 import { CONNECT_ERROR_MESSAGE } from "../utils/connectErrors";
 import { createConnectSession, enableDistribution } from "../services/hostDistributionApi";
 import { ENABLE_ERROR_MESSAGE, TIMEZONE_REQUIRED_MESSAGE } from "../utils/enableErrors";
+import { TIMEOUT_MESSAGE } from "../utils/withTimeout";
 
 jest.mock("../services/hostDistributionApi");
 
@@ -171,13 +172,10 @@ describe("useConnectFlow", () => {
       expect(hook.result.current.errorMessage).toBe("");
     });
 
-    test.each([
-      ["a read that failed", null],
-      ["a read without the listing", [listing({ propertyId: "p2" })]],
-    ])("%s is an error: no session, no refresh", async (_name, fresh) => {
+    test("a read without the listing is an error: no session, no refresh", async () => {
       enableDistribution.mockResolvedValue({});
       const hook = setup();
-      hook.rereadListings.mockResolvedValue(fresh);
+      hook.rereadListings.mockResolvedValue([listing({ propertyId: "p2" })]);
       startFlow(hook, NOT_ENABLED_LISTING);
 
       await act(async () => hook.result.current.continueFromChecklist());
@@ -186,6 +184,82 @@ describe("useConnectFlow", () => {
       expect(hook.refresh).not.toHaveBeenCalled();
       expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.unconfirmedSetupPropertyId).toBeNull();
+    });
+
+    describe("when turning on worked but the listings could not be read again", () => {
+      const turnOnWithFailedRead = async () => {
+        enableDistribution.mockResolvedValue({});
+        const hook = setup();
+        hook.rereadListings.mockResolvedValue(null);
+        startFlow(hook, NOT_ENABLED_LISTING);
+        await act(async () => hook.result.current.continueFromChecklist());
+        return hook;
+      };
+
+      test("is not a failure to set up: no message, no session, and the listing is marked as unconfirmed", async () => {
+        const hook = await turnOnWithFailedRead();
+
+        expect(hook.result.current.errorMessage).toBe("");
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBe("p1");
+        expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+        expect(createConnectSession).not.toHaveBeenCalled();
+        expect(hook.refresh).not.toHaveBeenCalled();
+      });
+
+      test("retry keeps the mark while it runs, and clears it once the listings could be read", async () => {
+        const hook = await turnOnWithFailedRead();
+        const pending = deferred();
+        enableDistribution.mockReturnValue(pending.promise);
+        hook.rereadListings.mockResolvedValue([READY_LISTING]);
+
+        let retrying;
+        act(() => {
+          retrying = hook.result.current.retry({ listing: NOT_ENABLED_LISTING });
+        });
+        expect(hook.result.current.step).toBe(CONNECT_STEP.ENABLING);
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBe("p1");
+
+        await act(async () => {
+          pending.resolve({});
+          await retrying;
+        });
+
+        expect(enableDistribution).toHaveBeenCalledTimes(2);
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBeNull();
+      });
+
+      test("a retry that fails shows its own error instead of staying unconfirmed", async () => {
+        const hook = await turnOnWithFailedRead();
+        enableDistribution.mockRejectedValue(requestError(409, "DISTRIBUTION_OWN_CHANNEX_ACCOUNT"));
+
+        await act(async () => hook.result.current.retry({ listing: NOT_ENABLED_LISTING }));
+
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBeNull();
+        expect(hook.result.current.errorMessage).toBe(
+          "This listing is linked to your own Channex account. Contact support."
+        );
+      });
+
+      test("a retry whose read fails again stays unconfirmed", async () => {
+        const hook = await turnOnWithFailedRead();
+
+        await act(async () => hook.result.current.retry({ listing: NOT_ENABLED_LISTING }));
+
+        expect(enableDistribution).toHaveBeenCalledTimes(2);
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBe("p1");
+        expect(hook.result.current.errorMessage).toBe("");
+      });
+
+      test("starting a flow or a reset clears the mark", async () => {
+        const hook = await turnOnWithFailedRead();
+        startFlow(hook, READY_LISTING);
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBeNull();
+
+        const again = await turnOnWithFailedRead();
+        act(() => again.result.current.reset());
+        expect(again.result.current.unconfirmedSetupPropertyId).toBeNull();
+      });
     });
 
     test("an answer that arrives after unmount reads nothing and opens no session", async () => {
@@ -266,6 +340,7 @@ describe("useConnectFlow", () => {
 
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
       expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
+      expect(hook.result.current.errorPropertyId).toBe("p1");
       expect(enableDistribution).not.toHaveBeenCalled();
     });
 
@@ -311,6 +386,7 @@ describe("useConnectFlow", () => {
       expect(hook.result.current.errorMessage).toBe(
         "This listing is linked to your own Channex account. Contact support."
       );
+      expect(hook.result.current.errorPropertyId).toBe("p1");
       expect(hook.rereadListings).not.toHaveBeenCalled();
       expect(hook.refresh).not.toHaveBeenCalled();
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
@@ -365,6 +441,7 @@ describe("useConnectFlow", () => {
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
       expect(hook.result.current.url).toBeNull();
       expect(hook.result.current.errorMessage).toBe(CONNECT_ERROR_MESSAGE);
+      expect(hook.result.current.errorPropertyId).toBe("p1");
       expect(console.error).toHaveBeenCalled();
       expect(hook.refresh).not.toHaveBeenCalled();
       expect(hook.rereadListings).not.toHaveBeenCalled();
@@ -495,6 +572,105 @@ describe("useConnectFlow", () => {
 
       expect(hook.result.current.step).toBe(CONNECT_STEP.CHECKLIST);
       expect(enableDistribution).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("when the backend does not answer", () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+    const wait = (ms) =>
+      act(async () => {
+        jest.advanceTimersByTime(ms);
+      });
+
+    test("a connect session that takes 30 s ends the attempt: idle, a message, no re-read, and the late answer opens nothing", async () => {
+      const session = deferred();
+      createConnectSession.mockReturnValue(session.promise);
+      const hook = setup();
+      startFlow(hook);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+
+      await wait(29999);
+      expect(hook.result.current.step).toBe(CONNECT_STEP.CONNECTING);
+      await wait(1);
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.errorMessage).toBe(TIMEOUT_MESSAGE);
+      expect(hook.rereadListings).not.toHaveBeenCalled();
+
+      await act(async () => session.resolve({ iframeUrl: URL_OK }));
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.url).toBeNull();
+    });
+
+    test("an enable that takes 60 s ends the attempt and reads the listings, and the late success opens no Channex screen", async () => {
+      const enabling = deferred();
+      enableDistribution.mockReturnValue(enabling.promise);
+      const hook = setup();
+      startFlow(hook, NOT_ENABLED_LISTING);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+
+      await wait(59999);
+      expect(hook.result.current.step).toBe(CONNECT_STEP.ENABLING);
+      await wait(1);
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.errorMessage).toBe(TIMEOUT_MESSAGE);
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
+
+      hook.rereadListings.mockResolvedValue([READY_LISTING]);
+      await act(async () => enabling.resolve({}));
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
+      expect(createConnectSession).not.toHaveBeenCalled();
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+    });
+  });
+
+  describe("a request whose attempt was reset, then a new attempt in the same step", () => {
+    const restart = (hook, flowListing) => {
+      act(() => hook.result.current.reset());
+      startFlow(hook, flowListing);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+    };
+
+    test("the late session answer of the first does not open its screen in the second", async () => {
+      const first = deferred();
+      const second = deferred();
+      createConnectSession.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+      const hook = setup();
+      startFlow(hook);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+      restart(hook, READY_LISTING);
+
+      await act(async () => first.resolve({ iframeUrl: "https://staging.channex.io/first" }));
+      expect(hook.result.current.step).toBe(CONNECT_STEP.CONNECTING);
+
+      await act(async () => second.resolve({ iframeUrl: URL_OK }));
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IFRAME);
+      expect(hook.result.current.url).toBe(URL_OK);
+    });
+
+    test("the late enable answer of the first reads nothing for the second", async () => {
+      const first = deferred();
+      const second = deferred();
+      enableDistribution.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+      const hook = setup();
+      startFlow(hook, NOT_ENABLED_LISTING);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+      restart(hook, NOT_ENABLED_LISTING);
+
+      await act(async () => first.resolve({}));
+
+      expect(hook.result.current.step).toBe(CONNECT_STEP.ENABLING);
+      expect(hook.rereadListings).not.toHaveBeenCalled();
     });
   });
 

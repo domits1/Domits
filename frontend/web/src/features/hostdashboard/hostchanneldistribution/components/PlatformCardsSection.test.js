@@ -215,6 +215,36 @@ describe("PlatformCardsSection", () => {
         expect(switchOf("Vrbo")).toBeEnabled();
       });
 
+      test("turning on worked but reading the listing again failed: Setting up with Retry, no error, and Retry finishes it", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockResolvedValue({});
+        await openChecklistFor(user, NOT_ENABLED);
+        await tickAll(user);
+        getHostListings.mockRejectedValueOnce(new Error("network"));
+
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        expect(await screen.findByRole("button", { name: "Retry" })).toBeEnabled();
+        expect(screen.getByText("Setting up your listing…")).toBeInTheDocument();
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        expect(screen.queryByText("We couldn't set up this listing. Try again.")).not.toBeInTheDocument();
+        expect(createConnectSession).not.toHaveBeenCalled();
+
+        const pending = deferred();
+        enableDistribution.mockReturnValue(pending.promise);
+        getHostListings.mockResolvedValue({ listings: [ENABLED] });
+        await user.click(screen.getByRole("button", { name: "Retry" }));
+
+        // While Retry runs the notice stays, with Retry disabled: the stale cards do not come back.
+        expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled();
+        expect(screen.queryByText("Booking.com")).not.toBeInTheDocument();
+
+        pending.resolve({});
+        expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+        expect(enableDistribution).toHaveBeenCalledTimes(2);
+        expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+      });
+
       test("shows only the Setting up notice with Retry for a listing that is still setting up", async () => {
         getHostListings.mockResolvedValue({
           listings: [listing("p4", "Lighthouse Cabin", { distribution: { status: "PROVISIONING", missing: [] } })],
@@ -358,6 +388,42 @@ describe("PlatformCardsSection", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(createConnectSession).not.toHaveBeenCalled();
       expect(refreshChannels).not.toHaveBeenCalled();
+    });
+
+    test("a connect error belongs to the listing it failed for, not to the one picked next", async () => {
+      const user = userEvent.setup();
+      getHostListings.mockResolvedValue({ listings: [LIVE_LISTING, listing("p2", "Beach Apartment")] });
+      createConnectSession.mockRejectedValue(new Error("boom"));
+      render(<PlatformCardsSection />);
+      await screen.findByText("Booking.com");
+      await user.click(switchOf("Vrbo"));
+      await tickAll(user);
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't start the connection. Try again.");
+
+      await user.selectOptions(screen.getByRole("combobox", { name: "Property" }), "p2");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+      await user.selectOptions(screen.getByRole("combobox", { name: "Property" }), "p1");
+      expect(screen.getByRole("alert")).toHaveTextContent("We couldn't start the connection. Try again.");
+    });
+
+    test("Refresh is locked while a flow is open or a request of it runs, and usable again when it ends", async () => {
+      const user = userEvent.setup();
+      const pending = deferred();
+      createConnectSession.mockReturnValue(pending.promise);
+      await openChecklist(user);
+      const refreshButton = () => screen.getByRole("button", { name: "Refresh", hidden: true });
+
+      expect(refreshButton()).toBeDisabled();
+      await tickAll(user);
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+      expect(await screen.findByText("Connecting…")).toBeInTheDocument();
+      expect(refreshButton()).toBeDisabled();
+
+      pending.reject(new Error("boom"));
+      await screen.findByRole("alert");
+      expect(refreshButton()).toBeEnabled();
     });
 
     test("Continue asks for a session with the listing id only and opens the Channex screen", async () => {

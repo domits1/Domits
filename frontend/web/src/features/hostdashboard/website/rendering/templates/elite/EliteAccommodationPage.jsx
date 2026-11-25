@@ -120,12 +120,13 @@ export default function EliteAccommodationPage({
   onShowAllAmenities,
   onSelectTarget = undefined,
   activeTargetId = "",
+  bookingPanel = null,
 }) {
   const isInteractivePreview = Boolean(onSelectTarget);
   const facts = buildEliteFacts(model.stay);
   const description = buildEliteDescription(model.hero);
   const price = buildElitePrice(model.stay);
-  const hasPriceCard = Boolean(price.amount || availabilityHref);
+  const hasPriceCard = Boolean(bookingPanel || price.amount || availabilityHref);
   const photos = selectEliteAccommodationPhotos(model.media);
   const stillPhotoModel = useMemo(() => ({ ...model, media: { ...model.media, imageRotation: {} } }), [model]);
   const highlights = viewState.showAmenitiesPanel ? listEliteHighlights(viewState.featuredAmenities) : [];
@@ -157,7 +158,7 @@ export default function EliteAccommodationPage({
               activeTargetId={activeTargetId}
             />
           ) : null}
-          {hasPriceCard ? (
+          {hasPriceCard && !bookingPanel ? (
             <ElitePriceCard
               price={price}
               availabilityHref={availabilityHref}
@@ -165,6 +166,7 @@ export default function EliteAccommodationPage({
               isInteractivePreview={isInteractivePreview}
             />
           ) : null}
+          {bookingPanel}
         </section>
       ) : null}
 
@@ -256,4 +258,5 @@ EliteAccommodationPage.propTypes = {
   onShowAllAmenities: PropTypes.func.isRequired,
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
+  bookingPanel: PropTypes.node,
 };
