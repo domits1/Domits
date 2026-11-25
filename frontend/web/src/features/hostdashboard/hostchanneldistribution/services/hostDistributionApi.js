@@ -4,7 +4,7 @@
 //
 // Routes (all under /integrations/channex, Cognito-authenticated):
 //   getHostListings()          GET  /host/listings
-//   enableDistribution({ propertyId, timezone })  POST /host/listings/{propertyId}/distribution
+//   enableDistribution({ propertyId, chosenTimezone })  POST /host/listings/{propertyId}/distribution
 //   createConnectSession({ propertyId })  POST /host/listings/{propertyId}/connect-session
 //   refreshChannels({ propertyId })  POST /host/listings/{propertyId}/channels/refresh
 // disconnectChannel arrives with the pull request that uses it.
