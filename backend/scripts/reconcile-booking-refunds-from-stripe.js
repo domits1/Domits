@@ -1,0 +1,106 @@
+#!/usr/bin/env node
+
+import { parseBackfillArgs, runBackfill } from "./lib/backfillCli.js";
+import Database from "database";
+import Stripe from "stripe";
+import { Booking } from "database/models/Booking";
+import { SystemManagerRepository } from "../ORM/data/systemManagerRepository.js";
+
+
+
+async function fetchStripeSecret() {
+  if (process.env.STRIPE_SECRET_KEY) return process.env.STRIPE_SECRET_KEY;
+  const repository = new SystemManagerRepository();
+  return repository.getSystemManagerParameter("/stripe/keys/secret/live");
+}
+
+const statusForStripe = (status) => {
+  switch (String(status || "").toLowerCase()) {
+    case "succeeded":
+      return "refunded";
+    case "failed":
+    case "canceled":
+      return "not_refunded";
+    default:
+      return "unknown";
+  }
+};
+
+
+async function reconcileBooking(booking, stripe, client, commit) {
+  let refund;
+  try {
+    refund = await stripe.refunds.retrieve(booking.stripe_refund_id);
+  } catch (error) {
+    console.error(`Could not retrieve Stripe refund ${booking.stripe_refund_id} for booking ${booking.id}:`, error.message || error);
+    return "error";
+  }
+
+  const expectedCurrency = String(booking.currency || "EUR").trim().toLowerCase();
+  if (refund?.currency?.toLowerCase() !== expectedCurrency) {
+    console.warn(
+      `Skipping booking ${booking.id}: refund currency ${refund?.currency || "unknown"} does not match booking currency ${expectedCurrency}.`
+    );
+    return "skipped";
+  }
+
+  const refundStatus = statusForStripe(refund.status);
+  const changes = { refund_status: refundStatus };
+  if (refundStatus === "refunded") {
+    if (!Number.isSafeInteger(refund.amount) || refund.amount < 0) {
+      console.error(`Skipping booking ${booking.id}: Stripe returned an invalid refund amount.`);
+      return "error";
+    }
+    changes.refunded_amount = refund.amount;
+  } else if (refundStatus === "not_refunded") {
+    changes.refunded_amount = 0;
+  }
+
+  console.info(
+    `Booking ${booking.id}: Stripe refund ${refund.id} status=${refund.status}; actual amount=${changes.refunded_amount ?? "not confirmed"} ${expectedCurrency.toUpperCase()}`
+  );
+  if (!commit) return "skipped";
+
+  try {
+    await client.createQueryBuilder().update(Booking).set(changes)
+      .where("id = :id", { id: booking.id })
+      .andWhere("stripe_refund_id = :refundId", { refundId: booking.stripe_refund_id })
+      .execute();
+    return "verified";
+  } catch (error) {
+    console.error(`Failed to reconcile booking ${booking.id}:`, error.message || error);
+    return "error";
+  }
+}
+
+async function main() {
+  const { commit, limit } = parseBackfillArgs();
+  const client = await Database.getInstance();
+  let query = client.getRepository(Booking).createQueryBuilder("booking")
+    .where("booking.stripe_refund_id IS NOT NULL")
+    .andWhere("LEFT(booking.stripe_refund_id, 3) = 're_'");
+
+  if (limit) query = query.limit(limit);
+
+  const bookings = await query.getMany();
+  console.info(`Refund reconciliation dry-run=${!commit} limit=${limit ?? "none"}; found=${bookings.length}`);
+  if (bookings.length === 0) return;
+
+  const stripeSecret = await fetchStripeSecret();
+  if (!stripeSecret) {
+    throw new Error("Stripe secret not found. Set STRIPE_SECRET_KEY or ensure SSM access to /stripe/keys/secret/live.");
+  }
+  const stripe = new Stripe(stripeSecret);
+
+  let verified = 0, skipped = 0, errors = 0;
+  await bookings.reduce((pending, booking) => pending.then(async () => {
+    const result = await reconcileBooking(booking, stripe, client, commit);
+    if (result === "verified") verified++;
+    else if (result === "skipped") skipped++;
+    else errors++;
+  }), Promise.resolve());
+
+  console.info(`Finished. reconciled=${verified} skipped=${skipped} errors=${errors}`);
+}
+
+await runBackfill(main);
