@@ -7,9 +7,11 @@ import {
   SITE_PROPERTY_PAGE_KINDS,
   buildSitePropertyHref,
   buildSitePropertyStayQuery,
+  limitSitePropertyStayGuests,
   readSitePropertyStayQuery,
 } from "./websiteSiteProperties";
 import { resolveQuotePanelSiteId } from "./booking/quotePanelGate";
+import { resolveGuestCapacity } from "./booking/quoteModel";
 
 const ACCOMMODATION_PAGE_KEY = "accommodation";
 const CONTACT_PAGE_KEY = "contact";
@@ -39,7 +41,7 @@ const buildSitePropertyNavItems = ({ sitePages, overviewHref, pageBasePath, page
 };
 
 const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBasePath, pageSearch, search }) => {
-  const stay = readSitePropertyStayQuery(search);
+  const stay = limitSitePropertyStayGuests(readSitePropertyStayQuery(search), resolveGuestCapacity(model));
   const staySearch = buildSitePropertyStayQuery(pageSearch, stay);
   const overviewHref = buildSiteHref(pageBasePath, [], pageSearch);
 

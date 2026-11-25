@@ -168,6 +168,9 @@ export const readSitePropertyStayQuery = (search, todayKey = getTodayDateKey()) 
   };
 };
 
+export const limitSitePropertyStayGuests = (stay, capacity) =>
+  Number.isInteger(capacity) && capacity > 0 && stay.guests > capacity ? { ...stay, guests: capacity } : stay;
+
 export const buildSitePropertyStayQuery = (search, stay) => {
   const params = new URLSearchParams(typeof search === "string" ? search : "");
   SITE_PROPERTY_STAY_QUERY_KEYS.forEach((key) => params.delete(key));

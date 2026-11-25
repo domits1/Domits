@@ -8,6 +8,7 @@ import {
   isSitePropertyPath,
   normalizeServedSiteProperties,
   parseSitePropertyPath,
+  limitSitePropertyStayGuests,
   readSitePropertyStayQuery,
   resolveSitePropertyPageTitle,
   resolveSitePropertyRoute,
@@ -231,6 +232,20 @@ describe("buildSitePropertyModel", () => {
 
     expect(resolveSitePropertyPageTitle(buildVillaB(siteModel))).toBe("Villa B");
     expect(resolveSitePropertyPageTitle({ ...siteModel, hero: { title: siteModel.site.title } })).toBe("");
+  });
+});
+
+describe("limitSitePropertyStayGuests", () => {
+  const stay = { checkIn: "2099-01-10", checkOut: "2099-01-14", guests: 9 };
+
+  it.each([
+    ["more guests than the property takes", stay, 4, 4],
+    ["as many guests as the property takes", { ...stay, guests: 4 }, 4, 4],
+    ["fewer guests", { ...stay, guests: 3 }, 4, 3],
+    ["no guests in the address", { ...stay, guests: null }, 4, null],
+    ["a property without a known capacity", stay, null, 9],
+  ])("keeps the guests within the capacity for %s", (_, readStay, capacity, guests) => {
+    expect(limitSitePropertyStayGuests(readStay, capacity)).toEqual({ ...readStay, guests });
   });
 });
 
