@@ -18,6 +18,7 @@ import {
 import PanoramaPageLink from "./PanoramaPageLink";
 import { buildPanoramaContactContent } from "./panoramaContactContent";
 import PanoramaEliteSitePage from "./elite/PanoramaEliteSitePage";
+import EliteSitePropertyPage from "./elite/EliteSitePropertyPage";
 import { isEliteRestyledPage, resolveEliteHeaderTone } from "./elite/eliteSitePageContent";
 import {
   amenityPropType,
@@ -35,6 +36,7 @@ import {
   residenceSectionPropType,
   sitePagesPropType,
   sitePropType,
+  sitePropertyPagePropType,
   templateInteractionPropTypes,
   visibilityPropType,
   quoteContextPropType,
@@ -574,6 +576,7 @@ const renderPanoramaTopBar = ({
   onToggleNavDrawer,
   onCloseNavDrawer,
   eliteHeaderTone,
+  brandHref,
 }) => {
   const isInteractivePreview = Boolean(onSelectTarget);
 
@@ -594,6 +597,7 @@ const renderPanoramaTopBar = ({
           onSelectTarget={onSelectTarget}
           activeTargetId={activeTargetId}
           showMark={false}
+          brandHref={brandHref}
         >
           <div className={styles.panoramaTopBarActions}>
             <div className={styles.templateTopBarNav}>
@@ -1268,13 +1272,14 @@ export default function PanoramaLandingTemplate({
   pageBasePath = "",
   pageSearch = "",
   currentPageHref = "",
+  sitePropertyPage = null,
 }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const pageState = useMemo(
     () => buildPanoramaPageState(model.sitePages, activePageKey),
     [model.sitePages, activePageKey]
   );
-  const currentPageKey = pageState?.currentPage.key;
+  const currentPageKey = sitePropertyPage?.pageKey || pageState?.currentPage.key;
   const elitePageKey = isEliteRestyledPage(currentPageKey) ? currentPageKey : "";
   const eliteHeaderTone = elitePageKey ? resolveEliteHeaderTone(model.media, elitePageKey) : "";
   const showsPageSection = (section) => !elitePageKey && (!pageState || pageState.sections.includes(section));
@@ -1289,9 +1294,11 @@ export default function PanoramaLandingTemplate({
   const canScrollAfterPageChange = Boolean(pageState) && isInRouter && !isInteractivePreview;
   const shouldDeferBelowFoldSections = !isInteractivePreview;
   const { heroSectionRef, isTopBarSolid } = usePanoramaTopBarSolidState(viewState.showTopBar, currentPageKey);
-  const navItems = pageState
-    ? buildPanoramaPageNavItems(pageState, pageBasePath, pageSearch, viewState, currentPageHref)
-    : buildPanoramaNavItems(model, viewState);
+  const navItems =
+    sitePropertyPage?.navItems ||
+    (pageState
+      ? buildPanoramaPageNavItems(pageState, pageBasePath, pageSearch, viewState, currentPageHref)
+      : buildPanoramaNavItems(model, viewState));
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
     if (!canOpenGalleryBrowser) {
       return;
@@ -1368,8 +1375,21 @@ export default function PanoramaLandingTemplate({
     availabilityCalendar
   );
 
-  const renderPageOpening = () =>
-    elitePageKey ? (
+  const renderPageOpening = () => {
+    if (sitePropertyPage) {
+      return (
+        <EliteSitePropertyPage
+          sitePropertyPage={sitePropertyPage}
+          headerTone={eliteHeaderTone}
+          model={model}
+          viewState={viewState}
+          headerRef={heroSectionRef}
+          onShowAllAmenities={() => setShowAmenitiesModal(true)}
+        />
+      );
+    }
+
+    return elitePageKey ? (
       <PanoramaEliteSitePage
         pageKey={elitePageKey}
         pageTitle={pageState.currentPage.navLabel}
@@ -1389,6 +1409,7 @@ export default function PanoramaLandingTemplate({
         activeTargetId={activeTargetId}
       />
     ) : null;
+  };
 
   return (
     <>
@@ -1404,6 +1425,7 @@ export default function PanoramaLandingTemplate({
               onToggleNavDrawer: () => setIsNavDrawerOpen((currentState) => !currentState),
               onCloseNavDrawer: () => setIsNavDrawerOpen(false),
               eliteHeaderTone,
+              brandHref: sitePropertyPage?.overviewHref || "",
             })
           : null}
         {showsPageSection("hero") ? (
@@ -1562,4 +1584,5 @@ PanoramaLandingTemplate.propTypes = {
   pageBasePath: PropTypes.string,
   pageSearch: PropTypes.string,
   currentPageHref: PropTypes.string,
+  sitePropertyPage: sitePropertyPagePropType,
 };
