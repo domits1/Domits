@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchHostPropertySelectOptions } from "../../../services/hostTaskPropertyService";
 import { WEBSITE_ENTITLEMENT_MULTI_PROPERTY } from "../../services/websitePlanService";
 import {
@@ -81,10 +81,14 @@ export const useWebsiteEditorSiteProperties = ({
 
   const isReady = canEditSiteProperties && listingsRead.status === SITE_PROPERTIES_LISTINGS_STATUS.READY;
   const listingsById = new Map(listingsRead.listings.map((listing) => [listing.propertyId, listing]));
-  const storedEntries = withMainFirst(
-    withEntry(readSiteProperties(workingOverrides), listingsById.get(mainPropertyId)),
-    mainPropertyId
-  );
+  const { storedEntries, hasMainMoved } = useMemo(() => {
+    const savedEntries = readSiteProperties(workingOverrides);
+    const mainListing = listingsRead.listings.find((listing) => listing.propertyId === mainPropertyId);
+    return {
+      storedEntries: withMainFirst(withEntry(savedEntries, mainListing), mainPropertyId),
+      hasMainMoved: savedEntries.length > 1 && savedEntries[0].propertyId !== mainPropertyId,
+    };
+  }, [listingsRead, mainPropertyId, workingOverrides]);
   const baseEntries = editedEntries || storedEntries;
   const entries = baseEntries.map((entry) => {
     const listing = listingsById.get(entry.propertyId);
@@ -118,7 +122,7 @@ export const useWebsiteEditorSiteProperties = ({
       editEntries((current) =>
         current.map((e) => (e.propertyId === propertyId ? { ...e, slug: slug.toLowerCase() } : e))
       ),
-    sitePropertiesEdit: editedEntries,
+    sitePropertiesEdit: editedEntries || (isReady && hasMainMoved ? storedEntries : null),
     resetSitePropertiesEdit: () => setEditedEntries(null),
     findSitePropertiesProblem: ({ forPublish }) => (isReady ? findSitePropertiesProblem(entries, { forPublish }) : ""),
     explainSitePropertiesSaveError: (error) => (canEditSiteProperties ? explainSitePropertiesSaveError(error) : error),

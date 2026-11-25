@@ -151,6 +151,14 @@ describe("the Properties section of an Elite website", () => {
     ]);
   });
 
+  it("saves a stored list with the main property moved first, as the editor shows it", async () => {
+    await renderEditor(buildDraft([GARDEN, MAIN]));
+
+    fireEvent.click(saveButton());
+
+    expect((await savedWith(1)).contentOverrides.siteProperties).toEqual([MAIN, GARDEN]);
+  });
+
   it("keeps the list on a save and a live site update that do not change it", async () => {
     fetchWebsiteSiteByPropertyId.mockResolvedValue(LIVE_SITE);
     await renderEditor(buildDraft([MAIN, GARDEN]));
