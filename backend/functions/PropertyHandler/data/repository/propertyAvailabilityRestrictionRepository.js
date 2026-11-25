@@ -5,7 +5,8 @@ import {Availability_Restrictions} from "database/models/Availability_Restrictio
 import { randomUUID } from "node:crypto";
 import { withDsqlRetry } from "../../.shared/dsqlRetry.js";
 import ChannexAriOutboxWriter, { buildForwardSyncRange } from "../../.shared/channelManagement/services/channexAriOutboxWriter.js";
-import { CHANNEX_ARI_CHANGE_TYPE, CHANNEX_ARI_OUTBOX_SOURCE } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
+import { CHANNEX_ARI_CHANGE_TYPE } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
+import { ARI_CHANGE_SOURCE } from "../../.shared/channelManagement/utils/ariChangeConstants.js";
 
 const RESTRICTION_NAME_FALLBACKS = Object.freeze({
     MinimumAdvanceReservation: ["MinimumAdvanceNoticeDays", "MinimumAdvanceBookingDays"],
@@ -179,7 +180,7 @@ export class PropertyAvailabilityRestrictionRepository {
                     domitsPropertyId: propertyId,
                     changeTypes: [CHANNEX_ARI_CHANGE_TYPE.RESTRICTIONS],
                     ...buildForwardSyncRange(),
-                    source: CHANNEX_ARI_OUTBOX_SOURCE.GLOBAL_SETTINGS,
+                    source: ARI_CHANGE_SOURCE.GLOBAL_SETTINGS,
                 });
 
                 const updatedRestrictions = await transactionManager

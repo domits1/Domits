@@ -10,7 +10,7 @@ import {
 } from "../utils/channexBookingPollUtils.js";
 import { buildChannexPullIssue } from "../utils/channexBookingRevisionUtils.js";
 import { bookingAvailabilityChange } from "../utils/channexBookingChange.js";
-import { CHANNEX_ARI_OUTBOX_SOURCE } from "../utils/channexAriOutboxConstants.js";
+import { ARI_CHANGE_SOURCE } from "../utils/ariChangeConstants.js";
 import { isPermanentlyUnacknowledged } from "../utils/channexBookingWebhookClassification.js";
 
 const CHANNEX_BOOKING_REVISION_LIST_DEFAULT_LIMIT = 50;
@@ -341,7 +341,7 @@ const buildChannexBookingLinkPayload = ({ revision, externalReservationId, domit
 // A booking imported from Channex changes the nights on the other channels too, so its
 // change goes to the outbox with the booking write (design D8).
 const importedBookingChange = (propertyId, stay) =>
-  bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT, stay);
+  bookingAvailabilityChange(propertyId, ARI_CHANGE_SOURCE.CHANNEX_IMPORT, stay);
 const buildChannexBookingRevisionPersistencePayload = ({ revision, propertyMapping }) => ({
   provider: "CHANNEX",
   channel: CHANNEL_CHANNEX,

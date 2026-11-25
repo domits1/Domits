@@ -34,7 +34,7 @@ import {
 } from "../business/service/websiteSitePropertySnapshots.js";
 import { randomUUID } from "node:crypto";
 import { PriceLabsCalendarNotifier } from "../business/service/priceLabsCalendarNotifier.js";
-import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
+import { ARI_CHANGE_SOURCE } from "../.shared/channelManagement/utils/ariChangeConstants.js";
 
 import responseHeaders from "../util/constant/responseHeader.json" with { type: "json" };
 import { HOST_REQUESTABLE_STATUSES } from "../util/propertyStatus.js";
@@ -826,7 +826,7 @@ export class PropertyController {
                 changeTypes: [changeType],
                 dateFrom: this.calendarDateIntToIsoDate(first),
                 dateTo: this.calendarDateIntToIsoDate(last),
-                source: CHANNEX_ARI_OUTBOX_SOURCE.CALENDAR,
+                source: ARI_CHANGE_SOURCE.CALENDAR,
             }))
         );
     }

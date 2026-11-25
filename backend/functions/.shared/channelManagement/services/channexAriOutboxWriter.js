@@ -5,8 +5,8 @@ import ChannexAriOutboxRepository from "../repositories/channexAriOutboxReposito
 import {
   CHANNEX_ARI_CHANGE_TYPE,
   CHANNEX_ARI_OUTBOX_KIND,
-  CHANNEX_ARI_OUTBOX_SOURCE,
 } from "../utils/channexAriOutboxConstants.js";
+import { ARI_CHANGE_SOURCE } from "../utils/ariChangeConstants.js";
 
 const FORWARD_SYNC_DAYS = 500;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -86,7 +86,7 @@ export default class ChannexAriOutboxWriter {
         changeTypes: [type],
         dateFrom: isoToDateInt(dateFrom),
         dateTo: isoToDateInt(dateTo),
-        source: CHANNEX_ARI_OUTBOX_SOURCE.GO_LIVE,
+        source: ARI_CHANGE_SOURCE.GO_LIVE,
         now,
       });
     }

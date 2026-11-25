@@ -2,24 +2,24 @@ import {
   CHANNEX_ARI_CHANGE_TYPE,
   CHANNEX_ARI_OUTBOX_DEFAULTS,
   CHANNEX_ARI_OUTBOX_KIND,
-  CHANNEX_ARI_OUTBOX_SOURCE,
   CHANNEX_ARI_OUTBOX_STATUS,
   URGENT_SOURCES,
 } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
+import { ARI_CHANGE_SOURCE } from "../../.shared/channelManagement/utils/ariChangeConstants.js";
 
 describe("Channex ARI outbox constants", () => {
   test("bookings, Channex imports and SiteMinder imports are the sources that skip the quiet period", () => {
     expect(URGENT_SOURCES).toStrictEqual([
-      CHANNEX_ARI_OUTBOX_SOURCE.BOOKING,
-      CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT,
-      CHANNEX_ARI_OUTBOX_SOURCE.SITEMINDER_IMPORT,
+      ARI_CHANGE_SOURCE.BOOKING,
+      ARI_CHANGE_SOURCE.CHANNEX_IMPORT,
+      ARI_CHANGE_SOURCE.SITEMINDER_IMPORT,
     ]);
   });
 
   test("a calendar, global settings or go-live change is not urgent, so it waits for the quiet period", () => {
-    expect(URGENT_SOURCES).not.toContain(CHANNEX_ARI_OUTBOX_SOURCE.CALENDAR);
-    expect(URGENT_SOURCES).not.toContain(CHANNEX_ARI_OUTBOX_SOURCE.GLOBAL_SETTINGS);
-    expect(URGENT_SOURCES).not.toContain(CHANNEX_ARI_OUTBOX_SOURCE.GO_LIVE);
+    expect(URGENT_SOURCES).not.toContain(ARI_CHANGE_SOURCE.CALENDAR);
+    expect(URGENT_SOURCES).not.toContain(ARI_CHANGE_SOURCE.GLOBAL_SETTINGS);
+    expect(URGENT_SOURCES).not.toContain(ARI_CHANGE_SOURCE.GO_LIVE);
   });
 
   test("the timing defaults match the design: 60 seconds quiet, 5 minute cap", () => {
@@ -54,7 +54,7 @@ describe("Channex ARI outbox constants", () => {
       "FAILED",
     ]);
     expect(Object.values(CHANNEX_ARI_OUTBOX_KIND)).toEqual(["CHANGE", "FULL_SYNC"]);
-    expect(Object.values(CHANNEX_ARI_OUTBOX_SOURCE)).toEqual([
+    expect(Object.values(ARI_CHANGE_SOURCE)).toEqual([
       "CALENDAR",
       "GLOBAL_SETTINGS",
       "BOOKING",

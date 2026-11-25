@@ -15,7 +15,7 @@ import PropertyRepository from "../data/propertyRepository.js";
 import getHostEmailById from "./getHostEmailById.js";
 import ExternalCalendarService from "./externalCalendarService.js";
 import { bookingAvailabilityChange } from "../.shared/channelManagement/utils/channexBookingChange.js";
-import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
+import { ARI_CHANGE_SOURCE } from "../.shared/channelManagement/utils/ariChangeConstants.js";
 import { PriceLabsBookingNotifier } from "./priceLabsBookingNotifier.js";
 import { TaskAutomationNotifier } from "./taskAutomationNotifier.js";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
@@ -136,7 +136,7 @@ class BookingService {
     // An inquiry does not block nights yet; it reaches Channex when the host accepts it.
     const channexChanges =
       bookingStatus === BOOKING_STATUS_AWAITING_PAYMENT
-        ? [bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, { arrivalMs: arrivalDateMs, departureMs: departureDateMs })]
+        ? [bookingAvailabilityChange(propertyId, ARI_CHANGE_SOURCE.BOOKING, { arrivalMs: arrivalDateMs, departureMs: departureDateMs })]
         : [];
     const result = await this.reservationRepository.addBookingToTable(
       eventWithParsedDates,
@@ -208,7 +208,7 @@ class BookingService {
       paymentId: paymentid,
     };
     if (booking.status === BOOKING_STATUS_AWAITING_PAYMENT) {
-      const channexChange = bookingAvailabilityChange(booking.property_id, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
+      const channexChange = bookingAvailabilityChange(booking.property_id, ARI_CHANGE_SOURCE.BOOKING, {
         arrivalMs: Number(booking.arrivaldate),
         departureMs: Number(booking.departuredate),
       });
@@ -414,11 +414,11 @@ class BookingService {
     // night that did not change (design D9).
     const channexChanges = isActiveBookingStatus(bookingBefore.status)
       ? [
-          bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
+          bookingAvailabilityChange(propertyId, ARI_CHANGE_SOURCE.BOOKING, {
             arrivalMs: Number(bookingBefore.arrivaldate),
             departureMs: Number(bookingBefore.departuredate),
           }),
-          bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, { arrivalMs: arrivalDateMs, departureMs: departureDateMs }),
+          bookingAvailabilityChange(propertyId, ARI_CHANGE_SOURCE.BOOKING, { arrivalMs: arrivalDateMs, departureMs: departureDateMs }),
         ]
       : [];
     await this.reservationRepository.updateBookingDates(normalizedBookingId, arrivalDateMs, departureDateMs, channexChanges, {
@@ -493,7 +493,7 @@ class BookingService {
     if (!alreadyCancelled) {
       // Only a booking that blocked nights has nights to reopen on Channex.
       const channexChange = isActiveBookingStatus(bookingBefore.status)
-        ? bookingAvailabilityChange(getPropertyId(bookingBefore), CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
+        ? bookingAvailabilityChange(getPropertyId(bookingBefore), ARI_CHANGE_SOURCE.BOOKING, {
             arrivalMs: Number(bookingBefore.arrivaldate),
             departureMs: Number(bookingBefore.departuredate),
           })
