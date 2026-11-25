@@ -5,7 +5,6 @@ import StripeAccountRepository from "../../data/stripeAccountRepository.js";
 import AuthManager from "../../auth/authManager.js";
 import { NotFoundException } from "../../util/exception/NotFoundException.js";
 import { BadRequestException } from "../../util/exception/badRequestException.js";
-import { ConflictException } from "../../util/exception/conflictException.js";
 
 const getAuth = (event) =>  event.headers.Authorization;
 const unixNow = () => Math.floor(Date.now() / 1000);
@@ -66,8 +65,8 @@ export default class StripeAccountService {
        sub: cognitoUserId 
       } = await this.authManager.authenticateUser(token);
 
-    if (!userEmail || !cognitoUserId) {
-      throw new BadRequestException("Missing required fields: userEmail or cognitoUserId");
+    if (!cognitoUserId) {
+      throw new BadRequestException("Missing required field: cognitoUserId");
     }
 
     const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
@@ -79,6 +78,10 @@ export default class StripeAccountService {
         : "Existing Stripe account found. Redirecting to Stripe onboarding.";
 
       return { statusCode: 200, message, details };
+    }
+
+    if (!userEmail) {
+      throw new BadRequestException("Missing required field: userEmail");
     }
 
     const account = await this.stripe.accounts.create({
