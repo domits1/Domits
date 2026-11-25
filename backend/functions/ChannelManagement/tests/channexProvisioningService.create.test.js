@@ -115,6 +115,22 @@ describe("ChannexProvisioningService.createChannexObjects: look before create", 
     expect(props.setClaimExternalProperty).toHaveBeenCalledWith("claim-1", "property-orphan", "Villa Malee");
   });
 
+  test("adopts the property when Channex stored this listing's link in another form", async () => {
+    const { service, channex } = build({
+      properties: [
+        {
+          externalPropertyId: "property-orphan",
+          externalPropertyName: "Villa Malee",
+          website: "http://domits.com/listingdetails/?ID=listing-1",
+        },
+      ],
+    });
+
+    await run(service);
+
+    expect(channex.createProperty).not.toHaveBeenCalled();
+  });
+
   // All hosts share Domits' Channex key (D8): another host's "Villa Malee" must never become this listing.
   test.each([
     ["another listing's link", "https://www.domits.com/listingdetails?ID=listing-2"],

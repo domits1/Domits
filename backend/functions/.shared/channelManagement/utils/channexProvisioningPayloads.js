@@ -15,9 +15,26 @@ export const toChannexPropertyType = (domitsType) => PROPERTY_TYPES[domitsType] 
 
 // All hosts share Domits' Channex key (D8), so titles repeat across hosts. The listing's own page link is
 // unique per listing, which lets look-before-create (D2) adopt only a property made for this listing.
-const LISTING_PAGE_URL = "https://www.domits.com/listingdetails?ID=";
+const DOMITS_HOST = "domits.com";
+const LISTING_PAGE_PATH = "/listingdetails";
+const LISTING_PAGE_URL = `https://www.${DOMITS_HOST}${LISTING_PAGE_PATH}?ID=`;
 
 export const channexListingLink = (propertyId) => `${LISTING_PAGE_URL}${encodeURIComponent(propertyId)}`;
+
+// Channex may store the link a little differently from how it was sent (scheme, www, case, a trailing
+// slash, encoding), so adoption compares the listing id inside it. Anything else is no listing at all.
+export const listingIdOfChannexWebsite = (website) => {
+  let url;
+  try {
+    url = new URL(website);
+  } catch {
+    return null;
+  }
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  const path = url.pathname.replace(/\/+$/, "");
+  if (host !== DOMITS_HOST || path !== LISTING_PAGE_PATH) return null;
+  return url.searchParams.get("ID") || null;
+};
 
 const textOrNull = (value, maxLength = MAX_TEXT) => {
   if (value === null || value === undefined) return null;
