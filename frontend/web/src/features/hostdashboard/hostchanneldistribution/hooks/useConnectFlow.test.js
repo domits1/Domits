@@ -3,6 +3,7 @@ import { CONNECT_STEP, useConnectFlow } from "./useConnectFlow";
 import { CONNECT_ERROR_MESSAGE } from "../utils/connectErrors";
 import { createConnectSession, enableDistribution } from "../services/hostDistributionApi";
 import { ENABLE_ERROR_MESSAGE, TIMEZONE_REQUIRED_MESSAGE } from "../utils/enableErrors";
+import { TIMEOUT_MESSAGE } from "../utils/withTimeout";
 
 jest.mock("../services/hostDistributionApi");
 
@@ -556,6 +557,105 @@ describe("useConnectFlow", () => {
 
       expect(hook.result.current.step).toBe(CONNECT_STEP.CHECKLIST);
       expect(enableDistribution).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("when the backend does not answer", () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+    const wait = (ms) =>
+      act(async () => {
+        jest.advanceTimersByTime(ms);
+      });
+
+    test("a connect session that takes 30 s ends the attempt: idle, a message, no re-read, and the late answer opens nothing", async () => {
+      const session = deferred();
+      createConnectSession.mockReturnValue(session.promise);
+      const hook = setup();
+      startFlow(hook);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+
+      await wait(29999);
+      expect(hook.result.current.step).toBe(CONNECT_STEP.CONNECTING);
+      await wait(1);
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.errorMessage).toBe(TIMEOUT_MESSAGE);
+      expect(hook.rereadListings).not.toHaveBeenCalled();
+
+      await act(async () => session.resolve({ iframeUrl: URL_OK }));
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.url).toBeNull();
+    });
+
+    test("an enable that takes 60 s ends the attempt and reads the listings, and the late success opens no Channex screen", async () => {
+      const enabling = deferred();
+      enableDistribution.mockReturnValue(enabling.promise);
+      const hook = setup();
+      startFlow(hook, NOT_ENABLED_LISTING);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+
+      await wait(59999);
+      expect(hook.result.current.step).toBe(CONNECT_STEP.ENABLING);
+      await wait(1);
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.errorMessage).toBe(TIMEOUT_MESSAGE);
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
+
+      hook.rereadListings.mockResolvedValue([READY_LISTING]);
+      await act(async () => enabling.resolve({}));
+      expect(hook.rereadListings).toHaveBeenCalledTimes(1);
+      expect(createConnectSession).not.toHaveBeenCalled();
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+    });
+  });
+
+  describe("a request whose attempt was reset, then a new attempt in the same step", () => {
+    const restart = (hook, flowListing) => {
+      act(() => hook.result.current.reset());
+      startFlow(hook, flowListing);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+    };
+
+    test("the late session answer of the first does not open its screen in the second", async () => {
+      const first = deferred();
+      const second = deferred();
+      createConnectSession.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+      const hook = setup();
+      startFlow(hook);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+      restart(hook, READY_LISTING);
+
+      await act(async () => first.resolve({ iframeUrl: "https://staging.channex.io/first" }));
+      expect(hook.result.current.step).toBe(CONNECT_STEP.CONNECTING);
+
+      await act(async () => second.resolve({ iframeUrl: URL_OK }));
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IFRAME);
+      expect(hook.result.current.url).toBe(URL_OK);
+    });
+
+    test("the late enable answer of the first reads nothing for the second", async () => {
+      const first = deferred();
+      const second = deferred();
+      enableDistribution.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+      const hook = setup();
+      startFlow(hook, NOT_ENABLED_LISTING);
+      act(() => {
+        hook.result.current.continueFromChecklist();
+      });
+      restart(hook, NOT_ENABLED_LISTING);
+
+      await act(async () => first.resolve({}));
+
+      expect(hook.result.current.step).toBe(CONNECT_STEP.ENABLING);
+      expect(hook.rereadListings).not.toHaveBeenCalled();
     });
   });
 

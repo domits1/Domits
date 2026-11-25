@@ -3,6 +3,7 @@ import { createConnectSession, enableDistribution } from "../services/hostDistri
 import { classifyConnectSessionError } from "../utils/connectErrors";
 import { DISTRIBUTION_STATUS } from "../utils/distributionStates";
 import { classifyEnableError } from "../utils/enableErrors";
+import { TIMEOUT_MESSAGE, isTimeoutError, withTimeout } from "../utils/withTimeout";
 
 export const CONNECT_STEP = {
   IDLE: "idle",
@@ -12,6 +13,11 @@ export const CONNECT_STEP = {
   CONNECTING: "connecting",
   IFRAME: "iframe",
 };
+
+const SESSION_TIMEOUT_MS = 30000;
+// Longer than the session: turning on provisions a listing at Channex. It may still finish after
+// the host gave up, so the listings are read again.
+const ENABLE_TIMEOUT_MS = 60000;
 
 const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, listing: null, url: null };
 
@@ -45,6 +51,8 @@ export function useConnectFlow({ refresh, rereadListings }) {
   // and a Continue or a close must not run twice.
   const stepRef = useRef(CONNECT_STEP.IDLE);
   const mountedRef = useRef(true);
+  // Numbers the requests, so a late answer of an attempt that was given up cannot act in a newer one.
+  const attemptRef = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -75,16 +83,21 @@ export function useConnectFlow({ refresh, rereadListings }) {
 
   const openSession = useCallback(
     async ({ platform, propertyId }) => {
+      const attempt = ++attemptRef.current;
+      const isCurrent = () =>
+        mountedRef.current && attemptRef.current === attempt && stepRef.current === CONNECT_STEP.CONNECTING;
       moveTo({ step: CONNECT_STEP.CONNECTING, platform, listing: null, url: null, propertyId });
       try {
-        const { iframeUrl } = await createConnectSession({ propertyId });
-        // A reset while the session was being created ended this attempt: its answer must not open a screen.
-        if (!mountedRef.current || stepRef.current !== CONNECT_STEP.CONNECTING) return;
+        const { iframeUrl } = await withTimeout(createConnectSession({ propertyId }), SESSION_TIMEOUT_MS);
+        // A reset or a timeout ended this attempt: its answer must not open a screen.
+        if (!isCurrent()) return;
         moveTo({ step: CONNECT_STEP.IFRAME, platform, listing: null, url: iframeUrl, propertyId });
       } catch (err) {
         console.error("Failed to create a Channex connect session:", err);
-        if (!mountedRef.current || stepRef.current !== CONNECT_STEP.CONNECTING) return;
-        const { reread, message } = classifyConnectSessionError(err);
+        if (!isCurrent()) return;
+        const { reread, message } = isTimeoutError(err)
+          ? { reread: false, message: TIMEOUT_MESSAGE }
+          : classifyConnectSessionError(err);
         setErrorMessage(message);
         moveTo(IDLE_FLOW);
         if (reread) rereadListings();
@@ -98,7 +111,9 @@ export function useConnectFlow({ refresh, rereadListings }) {
       console.error("Failed to turn on distribution for a listing:", err);
       if (!mountedRef.current) return;
       setUnconfirmedSetupPropertyId(null);
-      const { reread, message } = classifyEnableError(err);
+      const { reread, message } = isTimeoutError(err)
+        ? { reread: true, message: TIMEOUT_MESSAGE }
+        : classifyEnableError(err);
       setErrorMessage(message);
       moveTo(IDLE_FLOW);
       if (reread) rereadListings();
@@ -110,13 +125,18 @@ export function useConnectFlow({ refresh, rereadListings }) {
   // listing is READY.
   const enableThenConnect = useCallback(
     async ({ platform, propertyId, timezone }) => {
+      const attempt = ++attemptRef.current;
       moveTo({ step: CONNECT_STEP.ENABLING, platform, listing: null, url: null, propertyId });
-      // A reset (or an unmount) while the request runs ended this attempt: nothing more may happen.
-      const isCurrent = () => mountedRef.current && stepRef.current === CONNECT_STEP.ENABLING;
+      // A reset, an unmount or a timeout ended this attempt: nothing more may happen.
+      const isCurrent = () =>
+        mountedRef.current && attemptRef.current === attempt && stepRef.current === CONNECT_STEP.ENABLING;
       let enabled;
       try {
         // The timezone is sent only where the listing asked for one (D4).
-        await enableDistribution({ propertyId, ...(timezone ? { chosenTimezone: timezone } : {}) });
+        await withTimeout(
+          enableDistribution({ propertyId, ...(timezone ? { chosenTimezone: timezone } : {}) }),
+          ENABLE_TIMEOUT_MS
+        );
         if (!isCurrent()) return;
         // The answer says nothing about the listing, so the listings are read again to see its state.
         const fresh = await rereadListings();
