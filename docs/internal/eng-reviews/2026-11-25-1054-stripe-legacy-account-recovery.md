@@ -67,6 +67,15 @@ flowchart TD
 - No Stripe Dashboard, AWS environment variable, API Gateway deployment or live database operation is part of this code change.
 - Replacing a genuinely inaccessible connected account remains a manual support decision after checking for balances, payouts and historical financial records.
 
+## Follow-up items outside this PR
+
+- Development API stage: leave `stripeAccountService.js` on the development endpoint for now. Confirm which API stage and Stripe key mode the affected host actually uses before changing it.
+- Concurrent Connect clicks: two requests can still race when no saved mapping exists. Track separately; a complete fix needs a database uniqueness constraint for the host mapping and safe Stripe account-creation race handling. A frontend-only click guard is not sufficient.
+
+## Public error response boundary
+
+The controller exposes only these Stripe-specific codes: `STRIPE_ACCOUNT_NOT_FOUND`, `STRIPE_ACCOUNT_LOOKUP_FAILED`, and `STRIPE_ONBOARDING_LINK_FAILED`. Database and other internal error codes are omitted from the API response.
+
 ## Tests
 
 Added `backend/test/general-crud-payment-handler/stripeAccountService.test.js` covering:
@@ -79,5 +88,9 @@ Added `backend/test/general-crud-payment-handler/stripeAccountService.test.js` c
 - A new account is created only when no saved row exists.
 - The Finance status area displays the persistent Stripe error while onboarding is incomplete.
 - The Finance action toast remains visible when the finance sections are hidden.
+
+Added `backend/test/general-crud-payment-handler/stripeAccountController.test.js` covering:
+- The three public Stripe codes are returned by both POST and GET.
+- Database and internal error codes are not returned by either endpoint.
 
 CI must pass before this change is considered ready to merge.
