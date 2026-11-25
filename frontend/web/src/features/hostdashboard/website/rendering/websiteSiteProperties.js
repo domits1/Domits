@@ -1,3 +1,4 @@
+import { getTodayDateKey } from "./booking/quoteSelection";
 import { buildWebsiteTemplateModel } from "./buildWebsiteTemplateModel";
 import { applyWebsiteDraftContentOverrides } from "./websiteDraftContentOverrides";
 import { applyWebsiteDraftThemeOverrides } from "./websiteDraftThemeOverrides";
@@ -21,7 +22,13 @@ const SITE_CONTENT_OVERRIDE_KEYS = new Set(
   ].flatMap((keys) => keys.split(" "))
 );
 
+export const MAX_SITE_PROPERTY_STAY_NIGHTS = 365;
+export const SITE_PROPERTY_STAY_QUERY_KEYS = Object.freeze(["checkIn", "checkOut", "guests"]);
+
 const SITE_PROPERTY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const STAY_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const STAY_GUESTS_PATTERN = /^[1-9]\d?$/;
+const DAY_MS = 86_400_000;
 const PAGE_KIND_BY_SEGMENT = new Map([
   [SITE_PROPERTY_PAGE_KINDS.photos, SITE_PROPERTY_PAGE_KINDS.photos],
   [SITE_PROPERTY_PAGE_KINDS.request, SITE_PROPERTY_PAGE_KINDS.request],
@@ -131,4 +138,47 @@ export const buildSitePropertyModel = ({ siteModel, property, contentOverrides, 
 export const resolveSitePropertyPageTitle = (propertyModel) => {
   const propertyTitle = String(propertyModel?.hero?.title || "").trim();
   return propertyTitle === String(propertyModel?.site?.title || "").trim() ? "" : propertyTitle;
+};
+
+const readStayDay = (value) => {
+  const match = STAY_DATE_PATTERN.exec(value ?? "");
+  const day = match ? Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : Number.NaN;
+  return Number.isFinite(day) && new Date(day).toISOString().startsWith(value) ? day : null;
+};
+
+const readSingleQueryValue = (params, key) => {
+  const values = params.getAll(key);
+  return values.length === 1 ? values[0] : null;
+};
+
+export const readSitePropertyStayQuery = (search, todayKey = getTodayDateKey()) => {
+  const params = new URLSearchParams(typeof search === "string" ? search : "");
+  const checkIn = readSingleQueryValue(params, "checkIn");
+  const checkOut = readSingleQueryValue(params, "checkOut");
+  const guests = readSingleQueryValue(params, "guests");
+  const checkInDay = readStayDay(checkIn);
+  const checkOutDay = readStayDay(checkOut);
+  const nights = checkInDay === null || checkOutDay === null ? 0 : (checkOutDay - checkInDay) / DAY_MS;
+  const hasDates = checkIn >= todayKey && nights > 0 && nights <= MAX_SITE_PROPERTY_STAY_NIGHTS;
+
+  return {
+    checkIn: hasDates ? checkIn : null,
+    checkOut: hasDates ? checkOut : null,
+    guests: STAY_GUESTS_PATTERN.test(guests ?? "") ? Number(guests) : null,
+  };
+};
+
+export const buildSitePropertyStayQuery = (search, stay) => {
+  const params = new URLSearchParams(typeof search === "string" ? search : "");
+  SITE_PROPERTY_STAY_QUERY_KEYS.forEach((key) => params.delete(key));
+  if (STAY_DATE_PATTERN.test(stay?.checkIn ?? "") && STAY_DATE_PATTERN.test(stay?.checkOut ?? "")) {
+    params.set("checkIn", stay.checkIn);
+    params.set("checkOut", stay.checkOut);
+  }
+  if (STAY_GUESTS_PATTERN.test(String(stay?.guests ?? ""))) {
+    params.set("guests", String(stay.guests));
+  }
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
 };

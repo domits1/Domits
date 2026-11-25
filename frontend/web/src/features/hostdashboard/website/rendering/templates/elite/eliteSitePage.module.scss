@@ -553,6 +553,29 @@ $frame-gutter: var(--template-preview-frame-gutter, 0px);
   flex: 0 1 560px;
 }
 
+.eliteCrumbLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.eliteBookingPanel {
+  --website-quote-ink: #{$ink};
+  --website-quote-muted: #{$muted};
+  --website-quote-line: #{$card-rule};
+  --website-quote-accent: #{$ink};
+}
+
+.eliteStayFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+  gap: 10px;
+}
+
+.eliteStayFields input {
+  min-width: 0;
+}
+
 @media (max-width: 720px) {
   .elitePage {
     margin-inline: -14px;

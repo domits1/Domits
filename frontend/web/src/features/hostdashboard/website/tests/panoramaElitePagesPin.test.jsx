@@ -73,3 +73,11 @@ describe("the Elite home page", () => {
     expect(container.innerHTML).toMatchSnapshot();
   });
 });
+
+describe("the restyled Elite site pages", () => {
+  it.each(["accommodation", "gallery", "contact"])("renders the public %s page as the restyle does", (pageKey) => {
+    const { container } = renderPublicPage(pageKey);
+
+    expect(container.innerHTML).toMatchSnapshot();
+  });
+});
