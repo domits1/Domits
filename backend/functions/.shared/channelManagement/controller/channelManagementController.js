@@ -286,6 +286,19 @@ export default class ChannelManagementController {
     });
   }
 
+  async listDistributionListings(event) {
+    return this.channelManagementApiService.listDistributionListings({
+      userId: event.queryStringParameters?.userId || null,
+    });
+  }
+
+  async refreshDistributionListing(event) {
+    return this.channelManagementApiService.refreshDistributionListing({
+      userId: event.queryStringParameters?.userId || null,
+      domitsPropertyId: listingIdFromHostPath(event.path),
+    });
+  }
+
   async getChannexHealth() {
     return { statusCode: 200, response: await this.channelManagementApiService.getChannexHealth() };
   }

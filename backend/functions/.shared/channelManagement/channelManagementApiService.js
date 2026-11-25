@@ -25,6 +25,7 @@ import ChannexAriExecutionService from "./services/channexAriExecutionService.js
 import ChannexAriOutboxWorker from "./services/channexAriOutboxWorker.js";
 import ChannexHealthService from "./services/channexHealthService.js";
 import ChannexConnectSessionService from "./services/channexConnectSessionService.js";
+import ChannexDistributionListingsService from "./services/channexDistributionListingsService.js";
 import ChannexProvisioningService from "./services/channexProvisioningService.js";
 import { outboxTimeBudgetMs } from "./utils/channexAriOutboxPlanning.js";
 import { CHANNEL_CHANNEX, isActiveChannexPropertyMapping } from "./utils/channexBookingPollUtils.js";
@@ -244,6 +245,16 @@ export default class ChannelManagementApiService {
   async createDistributionConnectSession({ userId, domitsPropertyId }) {
     this.channexConnectSessionService ??= new ChannexConnectSessionService();
     return this.channexConnectSessionService.createConnectSession({ userId, domitsPropertyId });
+  }
+
+  async listDistributionListings({ userId }) {
+    this.channexDistributionListingsService ??= new ChannexDistributionListingsService();
+    return this.channexDistributionListingsService.listHostListings({ userId });
+  }
+
+  async refreshDistributionListing({ userId, domitsPropertyId }) {
+    this.channexDistributionListingsService ??= new ChannexDistributionListingsService();
+    return this.channexDistributionListingsService.refreshListing({ userId, domitsPropertyId });
   }
 
   async verifyChannexBookingWebhookSecret(headers) {

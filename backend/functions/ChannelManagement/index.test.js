@@ -9,6 +9,8 @@ const mockChannelManagementControllerMethods = {
   getChannexHealth: jest.fn(),
   turnOnDistribution: jest.fn(),
   createDistributionConnectSession: jest.fn(),
+  listDistributionListings: jest.fn(),
+  refreshDistributionListing: jest.fn(),
 };
 
 jest.mock("../.shared/channelManagement/controller/channelManagementController.js", () => ({
@@ -233,13 +235,42 @@ describe("ChannelManagement handler contracts", () => {
   });
 
   test.each([
-    ["/default/integrations/channex/host/listings/listing-1/distribution", "turnOnDistribution"],
-    ["/default/integrations/channex/host/listings/listing-1/connect-session", "createDistributionConnectSession"],
-  ])("POST %s requires Cognito claims", async (routePath, method) => {
-    const response = await handler(buildHttpEvent({ method: "POST", path: routePath }));
+    ["POST", "/default/integrations/channex/host/listings/listing-1/distribution", "turnOnDistribution"],
+    ["POST", "/default/integrations/channex/host/listings/listing-1/connect-session", "createDistributionConnectSession"],
+    ["GET", "/default/integrations/channex/host/listings", "listDistributionListings"],
+    ["POST", "/default/integrations/channex/host/listings/listing-1/channels/refresh", "refreshDistributionListing"],
+  ])("%s %s requires Cognito claims", async (httpMethod, routePath, method) => {
+    const response = await handler(buildHttpEvent({ method: httpMethod, path: routePath }));
 
     expect(response.statusCode).toBe(401);
     expect(mockChannelManagementControllerMethods[method]).not.toHaveBeenCalled();
+  });
+
+  // The Distribution tab's cards (section 6): the tab opens with the host's listings and reads one
+  // listing again after the Channex screen closes. A userId sent by the browser is replaced by the
+  // signed-in host, so nobody can read another host's listings.
+  test.each([
+    ["GET", "/default/integrations/channex/host/listings", "listDistributionListings"],
+    ["POST", "/default/integrations/channex/host/listings/listing-1/channels/refresh", "refreshDistributionListing"],
+  ])("%s %s reaches %s for a host who is not an admin, as the signed-in host", async (httpMethod, routePath, method) => {
+    mockChannelManagementControllerMethods[method].mockResolvedValue({ statusCode: 200, response: { ok: true } });
+
+    const response = await handler(
+      buildHttpEvent({ method: httpMethod, path: routePath, query: { userId: "someone-else" }, sub: "plain-host" })
+    );
+
+    expect(response.statusCode).toBe(200);
+    const [event] = mockChannelManagementControllerMethods[method].mock.calls[0];
+    expect(event.queryStringParameters.userId).toBe("plain-host");
+  });
+
+  test("GET on a listing's refresh path is not a route", async () => {
+    const response = await handler(
+      buildHttpEvent({ path: "/default/integrations/channex/host/listings/listing-1/channels/refresh", sub: "plain-host" })
+    );
+
+    expect(response.statusCode).toBe(404);
+    expect(mockChannelManagementControllerMethods.refreshDistributionListing).not.toHaveBeenCalled();
   });
 
   test("unsupported channel routes return a clean 404 without invoking polling", async () => {

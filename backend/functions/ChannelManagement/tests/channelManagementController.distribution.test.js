@@ -13,6 +13,8 @@ const build = () => {
   const channelManagementApiService = {
     turnOnDistribution: jest.fn(async () => ({ statusCode: 200, response: { status: "PROVISIONED" } })),
     createDistributionConnectSession: jest.fn(async () => ({ statusCode: 200, response: { iframeUrl: "u" } })),
+    listDistributionListings: jest.fn(async () => ({ statusCode: 200, response: { listings: [] } })),
+    refreshDistributionListing: jest.fn(async () => ({ statusCode: 200, response: { listing: {} } })),
   };
   return { controller: new ChannelManagementController({ channelManagementApiService }), channelManagementApiService };
 };
@@ -62,6 +64,32 @@ describe("ChannelManagementController distribution routes", () => {
     expect(channelManagementApiService.createDistributionConnectSession).toHaveBeenCalledWith({
       userId: "host-1",
       domitsPropertyId: null,
+    });
+  });
+
+  test("the listings of the tab are read for the signed-in host only", async () => {
+    const { controller, channelManagementApiService } = build();
+
+    const result = await controller.listDistributionListings({
+      httpMethod: "GET",
+      path: "/default/integrations/channex/host/listings",
+      queryStringParameters: { userId: "host-1" },
+    });
+
+    expect(channelManagementApiService.listDistributionListings).toHaveBeenCalledWith({ userId: "host-1" });
+    expect(result).toEqual({ statusCode: 200, response: { listings: [] } });
+  });
+
+  test("refresh passes the listing from the path and the host", async () => {
+    const { controller, channelManagementApiService } = build();
+
+    await controller.refreshDistributionListing(
+      event({ path: "/default/integrations/channex/host/listings/listing-1/channels/refresh" })
+    );
+
+    expect(channelManagementApiService.refreshDistributionListing).toHaveBeenCalledWith({
+      userId: "host-1",
+      domitsPropertyId: "listing-1",
     });
   });
 
