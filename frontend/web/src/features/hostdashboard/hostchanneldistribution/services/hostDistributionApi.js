@@ -35,11 +35,12 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //   },
 //   channels: [{
 //     otaCode: "BookingCom" | "Airbnb" | "Vrbo",
-//     label: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
+//     label: "LIVE" | "SYNCING" | "DISCONNECTED" | "UNKNOWN",  // UNKNOWN: Channex did not answer
+//            // DISCONNECTING and NEEDS_ATTENTION are not in the contract; only the mock of #4007 uses them
 //   }],
 // }
 // getHostListings  -> { listings: [listing] }
-// refreshChannels  -> { channels }                         // the channels as listed above, merged into the listing
+// refreshChannels  -> { listing }                          // the same shape as one listing above; it replaces that listing
 // enableDistribution({ propertyId, chosenTimezone }) -> { status: "PROVISIONED" | "ALREADY_CONNECTED" }
 //                                                          // chosenTimezone only where distribution.timezone.required;
 //                                                          // the host then reads the listings again. A listing that is
@@ -164,7 +165,7 @@ export const refreshChannels = async ({ propertyId } = {}) => {
   found.channels = found.channels.map((candidate) =>
     candidate.label === "SYNCING" ? { ...candidate, label: "LIVE" } : candidate
   );
-  return { channels: copy(found.channels) };
+  return { listing: copy(found) };
 };
 
 // Leaves behind what a real backend would, for the outcomes that change the listing, so the
