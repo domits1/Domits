@@ -3,7 +3,7 @@
 Pull request: #4036  
 Issue: #633  
 Reviewed commit: d55c515  
-Result: one finding fixed; one performance finding assigned to follow-up PR #4048 before broad rollout.
+Result: one finding fixed; one performance finding assigned to follow-up PR #4049 before broad rollout.
 
 ## Review passes
 
@@ -14,7 +14,7 @@ Reviewed architecture, code quality, tests and performance. The review covers th
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
 | P2 (10/10) | `backend/functions/property-owners/business/service/service.js:159-162` | The missing-minor-unit warning excluded bookings when both `total_price` and `total_price_minor` were absent. | Fixed in `d55c515`: report every candidate with a null/undefined `total_price_minor`. Regression test covers legacy-only and both-fields-missing bookings. |
-| P2 (8/10) | `backend/functions/property-owners/data/repository.js:293-299`; `backend/ORM/schema.psql:127-129` | The new financial-data query filters by host, property and date, but existing booking indexes only cover ID, public reference and idempotency key. This can become a scan bottleneck as booking volume grows. | Accepted as a focused follow-up in [PR #4048](https://github.com/domits1/Domits/pull/4048): add separate created-time and stay-overlap indexes in both schemas, plus a DSQL EXPLAIN deployment gate. Complete before broad rollout. |
+| P2 (8/10) | `backend/functions/property-owners/data/repository.js:293-299`; `backend/ORM/schema.psql:127-129` | The new financial-data query filters by host, property and date, but existing booking indexes only cover ID, public reference and idempotency key. This can become a scan bottleneck as booking volume grows. | Accepted as a focused follow-up in [PR #4049](https://github.com/domits1/Domits/pull/4049): add separate created-time and stay-overlap indexes in both schemas, plus a DSQL EXPLAIN deployment gate. Complete before broad rollout. |
 
 ## Evidence
 
@@ -82,8 +82,8 @@ Owner Statements source-data response (not accounting totals)
 | Booking has no exact amount, including no legacy amount | `financialDataService.test.js` covers both cases | Booking ID appears in the missing-minor-unit warning; no amount is invented. |
 | Owner does not belong to authenticated host | Service/controller tests cover owner-not-found and role rejection | Request is rejected; no cross-host booking data is queried. |
 | Invalid reporting window or pagination | Service/controller validation tests | Client receives a validation error. |
-| DSQL index build fails or remains invalid | Follow-up migration test checks the intended statements; live DSQL build is not exercised by Jest | Query remains correct but may be slower. PR #4048's runbook checks `sys.jobs` and `pg_index.indisvalid`, and drops an invalid index before retry. |
-| Optimizer does not select the new indexes | Cannot be validated with mocked unit tests | PR #4048 requires `EXPLAIN ANALYZE VERBOSE` with representative data and a recorded plan/DPU before broad rollout. |
+| DSQL index build fails or remains invalid | Follow-up migration test checks the intended statements; live DSQL build is not exercised by Jest | Query remains correct but may be slower. PR #4049's runbook checks `sys.jobs` and `pg_index.indisvalid`, and drops an invalid index before retry. |
+| Optimizer does not select the new indexes | Cannot be validated with mocked unit tests | PR #4049 requires `EXPLAIN ANALYZE VERBOSE` with representative data and a recorded plan/DPU before broad rollout. |
 
 ## Architecture decision: query performance
 
