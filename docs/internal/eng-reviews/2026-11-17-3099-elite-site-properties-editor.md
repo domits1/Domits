@@ -18,9 +18,11 @@ Again on 2026-11-25, on `acceptance`. The main property is now always first and 
 
 | Risk | Where it is closed |
 |---|---|
-| A normal editor save drops the list | Not edited, the stored list is sent back as it is; pinned for an Elite host on save and publish, and for every host without the section. |
+| A normal editor save drops the list | Not edited, the stored list is sent back as it is; pinned for an Elite host on save and publish, and for every host without the section. A stored list with the main property further down is saved with it first, as the editor shows it. |
 | Another host's or an inactive property | The draft save checks the owner of every new property (`authorizeSitePropertyOwners`); the publish checks owner and `ACTIVE` in its transaction (`site_property_not_active`); the render serves only the host's `ACTIVE` properties. |
 | Duplicate or empty addresses, main removed | Checked in the editor with the server's rules, and refused by `normalizeSiteProperties` on save. |
 | A host without `website.multi_property` | No section and no listings read; the publish snapshots nothing and the render serves no list. |
 | Two tabs saving at once | Not closed: the last save wins, as for every editor field. The server checks the owner again for a property the stored draft no longer holds. |
 | A property that becomes inactive while published | The render leaves it out at once and its pages show the not found page; the editor marks it and holds the next publish back. |
+
+Second review, 2026-11-25: the stored order above (fixed), and an edit made while a save is in flight being reset by the answer (existing for every editor field, kept; see the third row of the first table).
