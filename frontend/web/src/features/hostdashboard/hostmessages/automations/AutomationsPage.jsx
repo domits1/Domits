@@ -31,6 +31,11 @@ const VARIABLES = [
   { name: "propertyCity", shortLabel: "City", label: "City of the property" },
   { name: "numberOfGuests", shortLabel: "Number of guests", label: "Number of guests on the booking" },
 ];
+const LIST_FILTERS = [
+  { value: "ALL", label: "All", empty: "No automations yet." },
+  { value: "ACTIVE", label: "Active", empty: "No active automations." },
+  { value: "PAUSED", label: "Paused", empty: "No paused automations." },
+];
 const asArray = (value) => (Array.isArray(value) ? value : []);
 const EMPTY_FORM = {
   id: null,
@@ -51,6 +56,13 @@ const normalizeProperties = (items) =>
     title: item?.title || item?.property?.title || "Untitled property",
   })).filter((item) => item.id);
 
+const scheduleOf = (automation) =>
+  describeSchedule({
+    ...automation,
+    scheduleOption: optionFromRule(automation),
+    sendTime: automation.sendTime || "",
+  });
+
 const formatTimestamp = (value) => {
   if (value === null || value === undefined || value === "") return "-";
   const date = new Date(Number(value));
@@ -67,9 +79,16 @@ export const AutomationsContent = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [listFilter, setListFilter] = useState("ALL");
   const templateRef = useRef(null);
   const templateFocused = useRef(false);
   const pendingCursor = useRef(null);
+
+  const visibleAutomations = useMemo(
+    () => (listFilter === "ALL" ? automations : automations.filter((automation) => automation.status === listFilter)),
+    [automations, listFilter]
+  );
+  const activeFilter = LIST_FILTERS.find((filter) => filter.value === listFilter);
 
   const selected = useMemo(
     () => automations.find((automation) => automation.id === form.id) || null,
@@ -247,19 +266,38 @@ export const AutomationsContent = () => {
               <RefreshCw size={17} />
             </button>
           </div>
+          <div className="automation-list-tabs" role="group" aria-label="Filter automations">
+            {LIST_FILTERS.map(({ value, label }) => (
+              <button
+                type="button"
+                key={value}
+                className={`automation-list-tab ${listFilter === value ? "active" : ""}`}
+                aria-pressed={listFilter === value}
+                onClick={() => setListFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {loading && <p>Loading...</p>}
-          {!loading && automations.length === 0 && <p>No automations yet.</p>}
-          {automations.map((automation) => (
-            <button
-              type="button"
-              key={automation.id}
-              className={`automation-list-item ${form.id === automation.id ? "selected" : ""}`}
-              onClick={() => selectAutomation(automation)}
-            >
-              <span>{automation.name}</span>
-              <small className={`automation-status ${automation.status.toLowerCase()}`}>{automation.status}</small>
-            </button>
-          ))}
+          {!loading && visibleAutomations.length === 0 && <p>{activeFilter.empty}</p>}
+          {visibleAutomations.map((automation) => {
+            const schedule = scheduleOf(automation);
+            return (
+              <button
+                type="button"
+                key={automation.id}
+                className={`automation-list-item ${form.id === automation.id ? "selected" : ""}`}
+                onClick={() => selectAutomation(automation)}
+              >
+                <span className="automation-list-text">
+                  <span className="automation-list-name">{automation.name}</span>
+                  <span className="automation-list-schedule" title={schedule}>{schedule}</span>
+                </span>
+                <small className={`automation-status ${automation.status.toLowerCase()}`}>{automation.status}</small>
+              </button>
+            );
+          })}
         </aside>
 
         <div className="automation-editor">

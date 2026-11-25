@@ -287,6 +287,66 @@ describe("host automated messages v1", () => {
     });
   });
 
+  describe("automation list", () => {
+    const stayAutomation = {
+      ...automation,
+      id: "automation-3",
+      name: "Check-out thanks",
+      triggerType: "CHECK_OUT",
+      offsetDirection: "AFTER",
+      offsetAmount: 1,
+      offsetUnit: "DAYS",
+      sendTime: "10:00",
+      status: "ACTIVE",
+    };
+
+    const renderList = async (items) => {
+      listAutomations.mockResolvedValueOnce(items);
+      render(<AutomationsContent />);
+      await screen.findByRole("option", { name: "Canal Loft" });
+      return within(screen.getByLabelText("Automation list"));
+    };
+
+    test("shows when each automation sends under its name", async () => {
+      const list = await renderList([automation, stayAutomation]);
+
+      expect(await list.findByText("2 hours after the booking is paid")).toBeInTheDocument();
+      expect(list.getByText("1 day after check-out, at 10:00 (Amsterdam time)")).toBeInTheDocument();
+    });
+
+    test("shows only active automations on the Active tab", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+
+      fireEvent.click(list.getByRole("button", { name: "Active" }));
+
+      expect(list.getByText("Check-out thanks")).toBeInTheDocument();
+      expect(list.queryByText("Paid booking welcome")).not.toBeInTheDocument();
+      expect(list.getByRole("button", { name: "Active" })).toHaveAttribute("aria-pressed", "true");
+    });
+
+    test("shows an empty state on the Paused tab when nothing is paused", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+
+      fireEvent.click(list.getByRole("button", { name: "Paused" }));
+
+      expect(list.getByText("No paused automations.")).toBeInTheDocument();
+      expect(list.queryByText("Check-out thanks")).not.toBeInTheDocument();
+    });
+
+    test("shows every automation again on the All tab", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+      fireEvent.click(list.getByRole("button", { name: "Paused" }));
+
+      fireEvent.click(list.getByRole("button", { name: "All" }));
+
+      expect(list.getByText("Check-out thanks")).toBeInTheDocument();
+      expect(list.getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+  });
+
   test("activates and pauses an automation", async () => {
     render(<AutomationsContent />);
     fireEvent.click(await screen.findByText("Paid booking welcome"));

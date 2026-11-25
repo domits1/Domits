@@ -106,6 +106,35 @@
     }
   }
 
+  .automation-list-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 4px;
+    padding: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .automation-list-tab {
+    padding: 9px 10px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    color: #667085;
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+
+    &.active {
+      color: var(--text);
+      background: var(--surface);
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    }
+  }
+
   .automation-list p {
     margin: 8px 0 0;
     font-size: 13px;
@@ -129,13 +158,29 @@
     font: inherit;
     cursor: pointer;
 
-    span {
+    .automation-list-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
       min-width: 0;
+    }
+
+    .automation-list-name,
+    .automation-list-schedule {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .automation-list-name {
       font-size: 15px;
       font-weight: 900;
+    }
+
+    .automation-list-schedule {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
     }
 
     &:hover {
