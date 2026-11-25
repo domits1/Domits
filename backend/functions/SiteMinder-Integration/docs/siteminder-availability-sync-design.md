@@ -1,6 +1,6 @@
 # Design: send Domits availability to SiteMinder (#603, step 5)
 
-Status: proposal, for review by Enes before any code. Nothing here is built yet.
+Status: agreed with Enes on 23 November 2026. Step 1 is built (the shared night availability and `ARI_CHANGE_SOURCE`); steps 2 to 4 are not built yet.
 
 ## Problem
 
@@ -13,6 +13,9 @@ Scope of this design: **availability only** (a night is open or closed). Rates a
 1. The "is this night available" logic is pulled out of `channexAriPayloadUtils.js` into a shared function, as a pure refactor commit. `channexAriPayloadSnapshot.test.js` and the other ARI tests stay green without edits. `DEFAULT_SELLABLE_UNIT_COUNT` becomes a parameter, because it is a Channex setting.
 2. SiteMinder gets its own outbox table. It does not read the Channex rows: those are only written for listings mapped to Channex (`channexAriOutboxWriter.js:54`), and sharing them would tie SiteMinder to the Channex claim, cleanup and disconnect hold.
 3. The write sites get one small class that forwards "availability changed" to the existing `ChannexAriOutboxWriter` (unchanged) and to a new SiteMinder writer. Each write site only swaps the object it gets.
+4. The fan-out has a neutral `enqueueAriChange`, with no alias. The call at the write sites and their test mocks is renamed in the fan-out pull request.
+5. One shared source list, `ARI_CHANGE_SOURCE`, imported by both writers, so the two cannot drift. It replaces `CHANNEX_ARI_OUTBOX_SOURCE` (step 1).
+6. The SiteMinder writer also respects `SITEMINDER_AVAILABILITY_ENABLED`. It runs inside the booking transaction, so a bug there would roll back Domits bookings too; one switch turns SiteMinder fully off.
 
 ## How it fits together
 
@@ -20,7 +23,7 @@ Scope of this design: **availability only** (a night is open or closed). Rates a
  write site (inside its own transaction)
    reservationRepository, channexExternalBookingImportRepository,
    propertyCalendarOverrideRepository
-        │ enqueueChannexAriChange(manager, change)
+        │ enqueueAriChange(manager, change)
         ▼
  AriChangeFanout ──────────────▶ ChannexAriOutboxWriter (unchanged) ──▶ channex_ari_outbox
         │
@@ -40,7 +43,7 @@ Scope of this design: **availability only** (a night is open or closed). Rates a
  SiteMinder ──▶ rows PROCESSED, or back to PENDING with a later attempt, or FAILED
 ```
 
-## Step 1: shared night availability (refactor only)
+## Step 1: shared night availability and source list (refactor only, built)
 
 New file `.shared/channelManagement/utils/domitsNightAvailability.js` with the pieces that decide whether a night can be sold, moved as they are:
 
@@ -50,7 +53,9 @@ New file `.shared/channelManagement/utils/domitsNightAvailability.js` with the p
 
 `channexAriPayloadUtils.js` imports them and passes `CHANNEX_FULL_SYNC_DEFAULTS.DEFAULT_SELLABLE_UNIT_COUNT`, so what Channex gets does not change. `countActiveBookingsByNight` stays where it is (`channexBookingAvailabilityBridge.js`) and is imported from there.
 
-Proof that nothing changes: the snapshot and ARI tests pass without edits, in the same commit.
+Proof that nothing changes: the snapshot and ARI tests pass without edits, in the same commit. A small new test covers the unit count as a parameter.
+
+In a second commit `CHANNEX_ARI_OUTBOX_SOURCE` becomes `ARI_CHANGE_SOURCE` in `utils/ariChangeConstants.js`, with the same values. `URGENT_SOURCES` stays in the Channex constants and lists the same three sources.
 
 ## Step 2: SiteMinder outbox table and writer
 
@@ -69,11 +74,11 @@ Proof that nothing changes: the snapshot and ARI tests pass without edits, in th
 
 Indexes: `(status, domitspropertyid, createdat)` to claim, `(status, updatedat)` for stale and old rows.
 
-`SiteMinderAriOutboxWriter.enqueueAvailabilityChange(manager, change)` writes one row inside the caller's transaction, only when the change has the `availability` type, ends today or later, and the property is linked to an `ACTIVE` SiteMinder room type. Otherwise it writes nothing, like the Channex writer does for unmapped listings.
+`SiteMinderAriOutboxWriter.enqueueAriChange(manager, change)` writes one row inside the caller's transaction, only when `SITEMINDER_AVAILABILITY_ENABLED` is `true`, the change has the `availability` type, ends today or later, and the property is linked to an `ACTIVE` SiteMinder room type. Otherwise it writes nothing and touches no table, like the Channex writer does for unmapped listings.
 
 ## Step 3: the fan-out at the write sites
 
-`AriChangeFanout` in `.shared/channelManagement/services/` has the same `enqueueChannexAriChange(manager, change)` the write sites call today. It calls the Channex writer first, then the SiteMinder writer, in the same transaction. If either throws, the transaction rolls back, so a booking is never saved without its rows.
+`AriChangeFanout` in `.shared/channelManagement/services/` has a neutral `enqueueAriChange(manager, change)`. The write sites call it instead of `enqueueChannexAriChange`, and their test mocks are renamed in the same pull request. It calls the Channex writer first, then the SiteMinder writer, in the same transaction. If either throws, the transaction rolls back, so a booking is never saved without its rows.
 
 Write sites that swap `new ChannexAriOutboxWriter()` for `new AriChangeFanout()`:
 
@@ -121,12 +126,13 @@ Each stays under 1000 lines. The schedule stays off until the certification.
 ## Not in scope
 
 - Rates and restrictions to SiteMinder: the same outbox and worker with the `rates` and `restrictions` types, after availability works. `SiteMinderInventoryService` can already send both.
-- A full sync when a villa is linked to SiteMinder (like the Channex `GO_LIVE`): needed before go-live, its own small pull request after step 4.
+- A full sync when a villa is linked to SiteMinder (like the Channex `GO_LIVE`): needed before go-live, its own small pull request after step 4. It also covers the availability windows, which are only written when a listing is created.
 - More than one unit per room type: Domits has one unit per villa.
 
-## Questions for Enes
+## Answers from Enes (23 November 2026)
 
-1. Changing the availability windows (`propertyAvailabilityRepository`, through `propertyService.createAvailability`) writes no outbox row today, for Channex either; the Channex full sync covers them at go-live. Is that a known gap, or is there another path I missed? If it is a gap, I would add it to the fan-out in step 3 for both channels.
+1. Availability windows are only written when a listing is created (`propertyService.create`), and there is no edit path. A new listing has no mapping yet, and the Channex go-live full sync covers its windows. For SiteMinder this only holds once its own go-live full sync exists (see Not in scope), so that comes before go-live. If an edit path is added later, it goes through the fan-out.
+2. A neutral `enqueueAriChange`, no alias (decision 4).
+3. One shared source list, `ARI_CHANGE_SOURCE` (decision 5), renamed in the refactor pull request.
 
-2. Is `AriChangeFanout` with the same `enqueueChannexAriChange` name fine, or would you rather have a neutral name such as `enqueueAriChange` and keep the old one as an alias?
-3. Should the SiteMinder writer reuse `CHANNEX_ARI_OUTBOX_SOURCE` for its sources, or get its own copy, so a new Channex source never changes the SiteMinder table?
+He also asked for the kill switch in the SiteMinder writer (decision 6).
