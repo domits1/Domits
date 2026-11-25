@@ -1,6 +1,6 @@
 # #3099 Keep the guests of a property stay within the property's capacity
 
-Branch: `elite-site-properties-guest-cap`, from `acceptance`. Issue: #3099. Reviewed before the commit, each guard broken on purpose, then a second review.
+Branch: `elite-site-properties-guest-cap`, from `acceptance`. Issue: #3099. Reviewed before the commit, each guard broken on purpose (4 of 4 caught), then a second review, which found that the routing test did not check the request link and the booking key; it does now.
 
 `readSitePropertyStayQuery` reads 1 to 99 guests from the address. `buildSitePropertyPage` now passes that stay through `limitSitePropertyStayGuests` with `resolveGuestCapacity` of the property's own model, so the property page, its booking panel, its links and, once the request page is merged, the request page quote and show at most as many guests as the property takes.
 
