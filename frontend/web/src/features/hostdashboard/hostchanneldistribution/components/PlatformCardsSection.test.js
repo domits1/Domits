@@ -211,6 +211,36 @@ describe("PlatformCardsSection", () => {
         expect(switchOf("Vrbo")).toBeEnabled();
       });
 
+      test("turning on worked but reading the listing again failed: Setting up with Retry, no error, and Retry finishes it", async () => {
+        const user = userEvent.setup();
+        enableDistribution.mockResolvedValue({});
+        await openChecklistFor(user, NOT_ENABLED);
+        await tickAll(user);
+        getHostListings.mockRejectedValueOnce(new Error("network"));
+
+        await user.click(screen.getByRole("button", { name: "Continue" }));
+
+        expect(await screen.findByRole("button", { name: "Retry" })).toBeEnabled();
+        expect(screen.getByText("Setting up your listing…")).toBeInTheDocument();
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        expect(screen.queryByText("We couldn't set up this listing. Try again.")).not.toBeInTheDocument();
+        expect(createConnectSession).not.toHaveBeenCalled();
+
+        const pending = deferred();
+        enableDistribution.mockReturnValue(pending.promise);
+        getHostListings.mockResolvedValue({ listings: [ENABLED] });
+        await user.click(screen.getByRole("button", { name: "Retry" }));
+
+        // While Retry runs the notice stays, with Retry disabled: the stale cards do not come back.
+        expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled();
+        expect(screen.queryByText("Booking.com")).not.toBeInTheDocument();
+
+        pending.resolve({});
+        expect(await screen.findByText("Booking.com")).toBeInTheDocument();
+        expect(enableDistribution).toHaveBeenCalledTimes(2);
+        expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+      });
+
       test("shows only the Setting up notice with Retry for a listing that is still setting up", async () => {
         getHostListings.mockResolvedValue({
           listings: [listing("p4", "Lighthouse Cabin", { distribution: { status: "PROVISIONING", missing: [] } })],

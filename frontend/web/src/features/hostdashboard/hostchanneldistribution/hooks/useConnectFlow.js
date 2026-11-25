@@ -39,6 +39,8 @@ const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, listing: null, url:
 export function useConnectFlow({ refresh, rereadListings }) {
   const [flow, setFlow] = useState(IDLE_FLOW);
   const [errorMessage, setErrorMessage] = useState("");
+  // A listing that was turned on but whose state could not be read afterwards. It shows as setting up.
+  const [unconfirmedSetupPropertyId, setUnconfirmedSetupPropertyId] = useState(null);
   // The step as the latest event handler sees it. State alone lags a double click by one render,
   // and a Continue or a close must not run twice.
   const stepRef = useRef(CONNECT_STEP.IDLE);
@@ -60,6 +62,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
     ({ platform, listing }) => {
       if (stepRef.current !== CONNECT_STEP.IDLE) return;
       setErrorMessage("");
+      setUnconfirmedSetupPropertyId(null);
       moveTo({ step: CONNECT_STEP.CHECKLIST, platform, listing, url: null });
     },
     [moveTo]
@@ -94,6 +97,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
     (err) => {
       console.error("Failed to turn on distribution for a listing:", err);
       if (!mountedRef.current) return;
+      setUnconfirmedSetupPropertyId(null);
       const { reread, message } = classifyEnableError(err);
       setErrorMessage(message);
       moveTo(IDLE_FLOW);
@@ -116,6 +120,13 @@ export function useConnectFlow({ refresh, rereadListings }) {
         if (!isCurrent()) return;
         // The answer says nothing about the listing, so the listings are read again to see its state.
         const fresh = await rereadListings();
+        // Turning on worked, only the read failed: that is not "we couldn't set up", so no error.
+        if (fresh === null && isCurrent()) {
+          setUnconfirmedSetupPropertyId(propertyId);
+          moveTo(IDLE_FLOW);
+          return;
+        }
+        if (fresh && isCurrent()) setUnconfirmedSetupPropertyId(null);
         enabled = fresh?.find((candidate) => candidate.propertyId === propertyId);
         if (!enabled) throw new Error("The listings read after turning on did not contain the listing.");
       } catch (err) {
@@ -195,6 +206,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
   // For a section that reloaded or lost the flow's listing: its modals are gone, so the step goes with
   // them. Otherwise the step would stay, and keep every switch locked with nothing on screen.
   const reset = useCallback(() => {
+    setUnconfirmedSetupPropertyId(null);
     if (stepRef.current === CONNECT_STEP.IDLE) return;
     moveTo(IDLE_FLOW);
   }, [moveTo]);
@@ -214,6 +226,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
     propertyId: flow.propertyId ?? flow.listing?.propertyId ?? null,
     url: flow.url,
     errorMessage,
+    unconfirmedSetupPropertyId,
     isActive: flow.step !== CONNECT_STEP.IDLE,
     start,
     cancel,

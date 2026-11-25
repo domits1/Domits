@@ -57,7 +57,10 @@ function PlatformCardsSection() {
 
   // Defaults to the first listing, and falls back to it if the picked one disappears.
   const selected = listings.find((listing) => listing.propertyId === pickedPropertyId) ?? listings[0];
-  const listingView = describeListingView(selected);
+  // Turned on, but the state could not be read: say it is setting up, with Retry, until it is known.
+  const setupUnconfirmed = connectFlow.unconfirmedSetupPropertyId === selected.propertyId;
+  const baseView = describeListingView(selected);
+  const listingView = setupUnconfirmed && baseView === LISTING_VIEW.CARDS ? LISTING_VIEW.SETTING_UP : baseView;
   const isRefreshing = refreshingPropertyId === selected.propertyId;
 
   // A listing that is not turned on starts the same flow: the hook adds the timezone and enable

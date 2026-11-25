@@ -171,13 +171,10 @@ describe("useConnectFlow", () => {
       expect(hook.result.current.errorMessage).toBe("");
     });
 
-    test.each([
-      ["a read that failed", null],
-      ["a read without the listing", [listing({ propertyId: "p2" })]],
-    ])("%s is an error: no session, no refresh", async (_name, fresh) => {
+    test("a read without the listing is an error: no session, no refresh", async () => {
       enableDistribution.mockResolvedValue({});
       const hook = setup();
-      hook.rereadListings.mockResolvedValue(fresh);
+      hook.rereadListings.mockResolvedValue([listing({ propertyId: "p2" })]);
       startFlow(hook, NOT_ENABLED_LISTING);
 
       await act(async () => hook.result.current.continueFromChecklist());
@@ -186,6 +183,82 @@ describe("useConnectFlow", () => {
       expect(hook.refresh).not.toHaveBeenCalled();
       expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(hook.result.current.unconfirmedSetupPropertyId).toBeNull();
+    });
+
+    describe("when turning on worked but the listings could not be read again", () => {
+      const turnOnWithFailedRead = async () => {
+        enableDistribution.mockResolvedValue({});
+        const hook = setup();
+        hook.rereadListings.mockResolvedValue(null);
+        startFlow(hook, NOT_ENABLED_LISTING);
+        await act(async () => hook.result.current.continueFromChecklist());
+        return hook;
+      };
+
+      test("is not a failure to set up: no message, no session, and the listing is marked as unconfirmed", async () => {
+        const hook = await turnOnWithFailedRead();
+
+        expect(hook.result.current.errorMessage).toBe("");
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBe("p1");
+        expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+        expect(createConnectSession).not.toHaveBeenCalled();
+        expect(hook.refresh).not.toHaveBeenCalled();
+      });
+
+      test("retry keeps the mark while it runs, and clears it once the listings could be read", async () => {
+        const hook = await turnOnWithFailedRead();
+        const pending = deferred();
+        enableDistribution.mockReturnValue(pending.promise);
+        hook.rereadListings.mockResolvedValue([READY_LISTING]);
+
+        let retrying;
+        act(() => {
+          retrying = hook.result.current.retry({ listing: NOT_ENABLED_LISTING });
+        });
+        expect(hook.result.current.step).toBe(CONNECT_STEP.ENABLING);
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBe("p1");
+
+        await act(async () => {
+          pending.resolve({});
+          await retrying;
+        });
+
+        expect(enableDistribution).toHaveBeenCalledTimes(2);
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBeNull();
+      });
+
+      test("a retry that fails shows its own error instead of staying unconfirmed", async () => {
+        const hook = await turnOnWithFailedRead();
+        enableDistribution.mockRejectedValue(requestError(409, "DISTRIBUTION_OWN_CHANNEX_ACCOUNT"));
+
+        await act(async () => hook.result.current.retry({ listing: NOT_ENABLED_LISTING }));
+
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBeNull();
+        expect(hook.result.current.errorMessage).toBe(
+          "This listing is linked to your own Channex account. Contact support."
+        );
+      });
+
+      test("a retry whose read fails again stays unconfirmed", async () => {
+        const hook = await turnOnWithFailedRead();
+
+        await act(async () => hook.result.current.retry({ listing: NOT_ENABLED_LISTING }));
+
+        expect(enableDistribution).toHaveBeenCalledTimes(2);
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBe("p1");
+        expect(hook.result.current.errorMessage).toBe("");
+      });
+
+      test("starting a flow or a reset clears the mark", async () => {
+        const hook = await turnOnWithFailedRead();
+        startFlow(hook, READY_LISTING);
+        expect(hook.result.current.unconfirmedSetupPropertyId).toBeNull();
+
+        const again = await turnOnWithFailedRead();
+        act(() => again.result.current.reset());
+        expect(again.result.current.unconfirmedSetupPropertyId).toBeNull();
+      });
     });
 
     test("an answer that arrives after unmount reads nothing and opens no session", async () => {
