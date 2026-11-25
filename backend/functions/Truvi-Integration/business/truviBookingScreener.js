@@ -1,4 +1,4 @@
-import { DEFAULT_CHANNEL } from "../util/truviMapper.js";
+import { DEFAULT_CHANNEL, isUtcMidnight } from "../util/truviMapper.js";
 
 const RETRYABLE_CLIENT_STATUSES = new Set([401, 403, 408, 429]);
 
@@ -11,8 +11,10 @@ const isRetryableError = (error) =>
 const sentDates = (booking, result) =>
   result.providerAssessmentId ? { arrivalDate: booking.arrivaldate, departureDate: booking.departuredate } : {};
 
+const hasUtcMidnightDates = (booking) => isUtcMidnight(booking.arrivaldate) && isUtcMidnight(booking.departuredate);
+
 export class TruviBookingScreener {
-  constructor({ bookingRepository, screeningService, assessmentRepository, contactLookup, extendedAmount }) {
+  constructor({ bookingRepository, screeningService, assessmentRepository, contactLookup, extendedAmount, logger = console }) {
     if (!extendedAmount) {
       throw new Error("extendedAmount is required for the Truvi screener");
     }
@@ -21,15 +23,20 @@ export class TruviBookingScreener {
     this.assessmentRepository = assessmentRepository;
     this.contactLookup = contactLookup;
     this.extendedAmount = extendedAmount;
+    this.logger = logger;
   }
 
   async run({ limit, now = Date.now() } = {}) {
     const bookings = await this.bookingRepository.listBookingsToScreen({ now, limit });
-    const summary = { listed: bookings.length, saved: 0, retryLater: 0, rejected: 0, errors: [] };
+    const summary = { listed: bookings.length, saved: 0, retryLater: 0, rejected: 0, notUtcMidnight: 0, errors: [] };
 
     for (const candidate of bookings) {
       const bookingId = candidate.booking.id;
       try {
+        if (!hasUtcMidnightDates(candidate.booking)) {
+          summary.notUtcMidnight += 1;
+          this.logger.warn(JSON.stringify({ event: "TRUVI_DATE_NOT_UTC_MIDNIGHT", bookingId }));
+        }
         const input = await this.#buildInput(candidate, now);
         const result = await this.#screen(input);
 
@@ -69,10 +76,10 @@ export class TruviBookingScreener {
 
   async #screen(input) {
     if (!input.location) {
-      return this.#rejected("Property has no location");
+      return this.#skipped("Property has no location");
     }
     if (!input.host.email) {
-      return this.#rejected("Host has no email");
+      return this.#skipped("Host has no email");
     }
     try {
       return await this.screeningService.screenBooking(input);
@@ -80,16 +87,16 @@ export class TruviBookingScreener {
       if (isProgrammingError(error)) {
         throw error;
       }
-      return this.#rejected(error.message);
+      return this.#skipped(error.message);
     }
   }
 
-  #rejected(message) {
+  #skipped(message) {
     return {
       providerAssessmentId: null,
-      status: "ERROR",
+      status: "SKIPPED",
       flaggedReason: null,
-      error: { status: 400, message: String(message).slice(0, 200) },
+      error: { status: null, message: String(message).slice(0, 200) },
       rejectedInput: true,
     };
   }

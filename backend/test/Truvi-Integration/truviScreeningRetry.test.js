@@ -71,7 +71,7 @@ describe("TruviScreeningService retry of a create that already went through", ()
       providerAssessmentId: "v-1",
       status: "ERROR",
       flaggedReason: null,
-      error: { status: 503, message: "Service Unavailable" },
+      error: { status: 503, message: "Truvi failed with status 503" },
     });
   });
 
@@ -87,7 +87,7 @@ describe("TruviScreeningService retry of a create that already went through", ()
     const result = await service.screenBooking(input());
 
     expect(apiClient.getVerification).not.toHaveBeenCalled();
-    expect(result.error).toEqual({ status: 400, message: "checkIn must not be in the past." });
+    expect(result.error).toEqual({ status: 400, message: "Truvi refused the request with status 400" });
   });
 
   test("sends the same echo token on two runs for the same booking", async () => {

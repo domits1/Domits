@@ -1,4 +1,5 @@
 import { bookingToCreateRequest, mapCreateResponse } from "../util/truviMapper.js";
+import { truviErrorMessage } from "../util/truviErrorMessage.js";
 
 const ECHO_TOKEN_USED = "already exists from a previous request";
 
@@ -9,7 +10,7 @@ const toErrorResult = (error) => ({
   providerAssessmentId: null,
   status: "ERROR",
   flaggedReason: null,
-  error: { status: error.status ?? null, message: String(error.message ?? "Truvi request failed").slice(0, 200) },
+  error: { status: error.status ?? null, message: truviErrorMessage(error) },
 });
 
 export class TruviScreeningService {

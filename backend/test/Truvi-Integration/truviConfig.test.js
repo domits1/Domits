@@ -3,8 +3,8 @@ import { DEFAULT_SECRET_NAME, readTruviConfig } from "../../functions/Truvi-Inte
 import { TRUVI_SANDBOX_URL } from "../../functions/Truvi-Integration/data/truviApiClient.js";
 
 describe("readTruviConfig", () => {
-  it("uses the sandbox and the default secret when only the amount is set", () => {
-    expect(readTruviConfig({ TRUVI_EXTENDED_AMOUNT: "1000" })).toEqual({
+  it("uses the default secret when only the amount and the base url are set", () => {
+    expect(readTruviConfig({ TRUVI_EXTENDED_AMOUNT: "1000", TRUVI_BASE_URL: TRUVI_SANDBOX_URL })).toEqual({
       secretName: DEFAULT_SECRET_NAME,
       baseUrl: TRUVI_SANDBOX_URL,
       extendedAmount: 1000,
@@ -26,6 +26,12 @@ describe("readTruviConfig", () => {
 
   it.each([[undefined], [""], ["123"], ["abc"]])("refuses an extended amount of %p", (amount) => {
     expect(() => readTruviConfig({ TRUVI_EXTENDED_AMOUNT: amount })).toThrow("TRUVI_EXTENDED_AMOUNT");
+  });
+
+  it.each([[undefined], [""], ["  "]])("refuses to fall back to the sandbox when TRUVI_BASE_URL is %p", (baseUrl) => {
+    expect(() => readTruviConfig({ TRUVI_EXTENDED_AMOUNT: "1000", TRUVI_BASE_URL: baseUrl })).toThrow(
+      "TRUVI_BASE_URL is required"
+    );
   });
 
   it("refuses a base url without https", () => {
