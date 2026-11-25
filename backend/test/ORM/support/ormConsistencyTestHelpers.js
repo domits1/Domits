@@ -5,6 +5,14 @@ import { DataSource } from "typeorm";
 
 const SQL_TYPES = { uuid: "uuid", varchar: "varchar", text: "text", bigint: "bigint", integer: "int" };
 
+const compareAsDefaultSort = (left, right) => {
+  const leftText = String(left);
+  const rightText = String(right);
+  if (leftText < rightText) return -1;
+  if (leftText > rightText) return 1;
+  return 0;
+};
+
 export const readOrmFile = (...parts) =>
   readFileSync(path.join(process.cwd(), "ORM", ...parts), "utf8").replaceAll("\r\n", "\n");
 
@@ -21,9 +29,8 @@ export const loadMetadata = async (entity) => {
 };
 
 export const createTableBlockIndentAware = (sql, qualifiedTable) => {
-  const match = new RegExp(
-    String.raw`CREATE TABLE IF NOT EXISTS ${qualifiedTable.replace(".", String.raw`\.`)} \(([\s\S]*?)\n\s*\);`
-  ).exec(sql);
+  const escapedTable = qualifiedTable.replace(".", String.raw`\.`);
+  const match = new RegExp(String.raw`CREATE TABLE IF NOT EXISTS ${escapedTable} \(([\s\S]*?)\n\s*\);`).exec(sql);
   if (!match) throw new Error(`No CREATE TABLE block found for ${qualifiedTable}`);
   return match[1];
 };
@@ -57,25 +64,27 @@ export const checkConstraints = (sql, qualifiedTable) =>
       if (!match) throw new Error(`Unexpected constraint in ${qualifiedTable}: ${line}`);
       return [match[1], match[2]];
     })
-    .sort();
+    .sort(compareAsDefaultSort);
 
 export const expectedChecks = (checks, suffix) =>
-  checks.map(([name, expression]) => [`${name}${suffix}`, expression]).sort();
+  checks.map(([name, expression]) => [`${name}${suffix}`, expression]).sort(compareAsDefaultSort);
 
 export const normalizePredicate = (predicate = "") => predicate.replaceAll(/\s+/g, " ").trim();
 
 export const indexesOn = (sql, qualifiedTable) =>
   [
     ...sql.matchAll(
-      /CREATE (UNIQUE )?INDEX ASYNC (?:IF NOT EXISTS )?(\w+)\s+ON (\w+\.\w+) \(([^)]+)\)(?:\s+WHERE ([^;]+?))?\s*;/g
+      /CREATE (UNIQUE )?INDEX ASYNC (?:IF NOT EXISTS )?(\w+)\s+ON (\w+\.\w+) \(([^)]+)\)(?:\s+WHERE ([^;]+)|\s*);/g
     ),
   ]
     .filter((match) => match[3] === qualifiedTable)
     .map(([, unique = "", name, , keyColumns, predicate]) => [unique, name, keyColumns, normalizePredicate(predicate)])
-    .sort();
+    .sort(compareAsDefaultSort);
 
 export const expectedIndexes = (indexes, suffix) =>
-  indexes.map(([unique, name, keyColumns, predicate]) => [unique, `${name}${suffix}`, keyColumns, predicate]).sort();
+  indexes
+    .map(([unique, name, keyColumns, predicate]) => [unique, `${name}${suffix}`, keyColumns, predicate])
+    .sort(compareAsDefaultSort);
 
 export const dropStatements = (sql) =>
   [...sql.matchAll(/DROP (INDEX|TABLE) IF EXISTS (\w+\.\w+);/g)].map((match) => match[2]);
@@ -193,7 +202,9 @@ const describeDropSources = (tables, schemas, dropSources) =>
     );
 
     it("drops every index and table the migration creates, in both schemas", async () => {
-      expect(dropStatements(await loadSql()).sort()).toEqual([...expectedDrops].sort());
+      expect(dropStatements(await loadSql()).sort(compareAsDefaultSort)).toEqual(
+        [...expectedDrops].sort(compareAsDefaultSort)
+      );
     });
 
     it("drops each index before the table it belongs to", async () => {
