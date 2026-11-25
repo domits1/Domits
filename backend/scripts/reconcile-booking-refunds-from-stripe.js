@@ -76,10 +76,7 @@ async function reconcileBooking(booking, stripe, client, commit) {
   if (!commit) return "skipped";
 
   try {
-    await client
-      .createQueryBuilder()
-      .update(Booking)
-      .set(changes)
+    await client.createQueryBuilder().update(Booking).set(changes)
       .where("id = :id", { id: booking.id })
       .andWhere("stripe_refund_id = :refundId", { refundId: booking.stripe_refund_id })
       .execute();
@@ -93,9 +90,7 @@ async function reconcileBooking(booking, stripe, client, commit) {
 async function main() {
   const { commit, limit } = parseArgs();
   const client = await Database.getInstance();
-  let query = client
-    .getRepository(Booking)
-    .createQueryBuilder("booking")
+  let query = client.getRepository(Booking).createQueryBuilder("booking")
     .where("booking.stripe_refund_id IS NOT NULL")
     .andWhere("LEFT(booking.stripe_refund_id, 3) = 're_'");
 
@@ -111,19 +106,13 @@ async function main() {
   }
   const stripe = new Stripe(stripeSecret);
 
-  let verified = 0;
-  let skipped = 0;
-  let errors = 0;
-
-  await bookings.reduce(
-    (pending, booking) => pending.then(async () => {
-      const result = await reconcileBooking(booking, stripe, client, commit);
-      if (result === "verified") verified++;
-      else if (result === "skipped") skipped++;
-      else errors++;
-    }),
-    Promise.resolve()
-  );
+  let verified = 0, skipped = 0, errors = 0;
+  await bookings.reduce((pending, booking) => pending.then(async () => {
+    const result = await reconcileBooking(booking, stripe, client, commit);
+    if (result === "verified") verified++;
+    else if (result === "skipped") skipped++;
+    else errors++;
+  }), Promise.resolve());
 
   console.info(`Finished. reconciled=${verified} skipped=${skipped} errors=${errors}`);
 }
