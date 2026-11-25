@@ -26,7 +26,9 @@ That prevents a host from retrying the flow if the Stripe account was created an
 
 **Evidence:** `frontend/web/src/features/hostdashboard/hostfinance/hooks/refreshFunctions.js` previously only called `console.error` in the Stripe action catch block.
 
-**Resolution:** The frontend now reads the safe message and code returned by the API and displays the message through the existing Finance toast.
+**Resolution:** The frontend now reads the safe message and code returned by the API. Lookup failures are kept as Finance state and displayed in the top-level Finance status area, which remains visible before onboarding completes. The short-lived toast is also rendered outside the conditional finance sections so it cannot disappear for an incomplete account.
+
+**Regression coverage:** `HostFinanceTab.test.js` verifies that both the persistent lookup error and the action-error toast remain visible while onboarding is incomplete.
 
 ## Historical evidence
 
@@ -75,5 +77,7 @@ Added `backend/test/general-crud-payment-handler/stripeAccountService.test.js` c
 - Stripe `resource_missing` is distinct from a missing database row.
 - Stripe availability errors are not converted into HTTP 404.
 - A new account is created only when no saved row exists.
+- The Finance status area displays the persistent Stripe error while onboarding is incomplete.
+- The Finance action toast remains visible when the finance sections are hidden.
 
 CI must pass before this change is considered ready to merge.
