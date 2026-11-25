@@ -301,6 +301,22 @@ describe("useConnectFlow", () => {
       expect(console.error).toHaveBeenCalled();
     });
 
+    test("a 409 for a listing on the host's own Channex account shows its message and reads nothing again", async () => {
+      enableDistribution.mockRejectedValue(requestError(409, "DISTRIBUTION_OWN_CHANNEX_ACCOUNT"));
+      const hook = setup();
+      startFlow(hook, NOT_ENABLED_LISTING);
+
+      await act(async () => hook.result.current.continueFromChecklist());
+
+      expect(hook.result.current.errorMessage).toBe(
+        "This listing is linked to your own Channex account. Contact support."
+      );
+      expect(hook.rereadListings).not.toHaveBeenCalled();
+      expect(hook.refresh).not.toHaveBeenCalled();
+      expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
+      expect(createConnectSession).not.toHaveBeenCalled();
+    });
+
     test("a network error alerts and leaves the listing alone, with no refresh", async () => {
       enableDistribution.mockRejectedValue(new Error("Failed to fetch"));
       const hook = setup();

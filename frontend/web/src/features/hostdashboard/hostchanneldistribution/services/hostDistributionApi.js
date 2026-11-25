@@ -50,6 +50,7 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //                                                          // 422 DISTRIBUTION_TIMEZONE_CHOICE_NEEDED, ..._INVALID_CHOICE
 //                                                          // (+ options), ..._UNKNOWN_COUNTRY,
 //                                                          // 409 DISTRIBUTION_ALREADY_IN_PROGRESS, ..._NEEDS_ATTENTION,
+//                                                          // ..._OWN_CHANNEX_ACCOUNT (no re-read),
 //                                                          // 503 DISTRIBUTION_TRY_AGAIN, ..._NOT_CONFIGURED,
 //                                                          // 502 DISTRIBUTION_CHANNEX_REFUSED (+ validationDetails)
 // createConnectSession -> { iframeUrl, expiresInSeconds }  // a one-time Channex screen address for this listing;

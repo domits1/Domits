@@ -11,6 +11,7 @@ const TRY_AGAIN = "Setting up didn't finish. Try again.";
 const REFUSED = "Channex couldn't set up this listing. Contact support.";
 const NEEDS_ATTENTION = "This listing needs help from Domits. Contact support.";
 const NOT_CONFIGURED = "Distribution isn't available right now.";
+const OWN_CHANNEX_ACCOUNT = "This listing is linked to your own Channex account. Contact support.";
 
 describe("classifyEnableError", () => {
   test.each([
@@ -25,6 +26,12 @@ describe("classifyEnableError", () => {
     ["a refusal by Channex", requestError(502, "DISTRIBUTION_CHANNEX_REFUSED"), true, REFUSED],
     ["a listing that needs attention", requestError(409, "DISTRIBUTION_NEEDS_ATTENTION"), true, NEEDS_ATTENTION],
     ["a backend that is not configured", requestError(503, "DISTRIBUTION_NOT_CONFIGURED"), false, NOT_CONFIGURED],
+    [
+      "a listing linked to the host's own Channex account",
+      requestError(409, "DISTRIBUTION_OWN_CHANNEX_ACCOUNT"),
+      false,
+      OWN_CHANNEX_ACCOUNT,
+    ],
   ])("%s", (_name, error, reread, message) => {
     expect(classifyEnableError(error)).toEqual({ reread, message });
   });
@@ -37,6 +44,18 @@ describe("classifyEnableError", () => {
     ["a 503 with an unknown code", requestError(503, "SOMETHING_NEW"), true],
   ])("decides by the code, so %s only says to try again", (_name, error, reread) => {
     expect(classifyEnableError(error)).toEqual({ reread, message: ENABLE_ERROR_MESSAGE });
+  });
+
+  test("tells the own-account 409 apart from the other 409s by its code, whatever the status", () => {
+    expect(classifyEnableError(requestError(409, "DISTRIBUTION_OWN_CHANNEX_ACCOUNT")).message).toBe(
+      OWN_CHANNEX_ACCOUNT
+    );
+    expect(classifyEnableError(requestError(500, "DISTRIBUTION_OWN_CHANNEX_ACCOUNT")).message).toBe(
+      OWN_CHANNEX_ACCOUNT
+    );
+    expect(classifyEnableError(requestError(409, "DISTRIBUTION_ALREADY_IN_PROGRESS")).message).not.toBe(
+      OWN_CHANNEX_ACCOUNT
+    );
   });
 
   test.each([
