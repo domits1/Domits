@@ -19,6 +19,8 @@ const SESSION_TIMEOUT_MS = 30000;
 // the host gave up, so the listings are read again.
 const ENABLE_TIMEOUT_MS = 60000;
 
+const NO_ERROR = { message: "", propertyId: null };
+
 const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, listing: null, url: null };
 
 // The connect flow behind a platform switch (design note #3954, D2, D4):
@@ -44,7 +46,8 @@ const IDLE_FLOW = { step: CONNECT_STEP.IDLE, platform: null, listing: null, url:
 // `rereadListings` are useHostDistribution's: the listing the host sees follows every answer.
 export function useConnectFlow({ refresh, rereadListings }) {
   const [flow, setFlow] = useState(IDLE_FLOW);
-  const [errorMessage, setErrorMessage] = useState("");
+  // The message of the last failure and the listing it belongs to, so it does not follow the host to another one.
+  const [error, setError] = useState(NO_ERROR);
   // A listing that was turned on but whose state could not be read afterwards. It shows as setting up.
   const [unconfirmedSetupPropertyId, setUnconfirmedSetupPropertyId] = useState(null);
   // The step as the latest event handler sees it. State alone lags a double click by one render,
@@ -69,7 +72,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
   const start = useCallback(
     ({ platform, listing }) => {
       if (stepRef.current !== CONNECT_STEP.IDLE) return;
-      setErrorMessage("");
+      setError(NO_ERROR);
       setUnconfirmedSetupPropertyId(null);
       moveTo({ step: CONNECT_STEP.CHECKLIST, platform, listing, url: null });
     },
@@ -98,7 +101,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
         const { reread, message } = isTimeoutError(err)
           ? { reread: false, message: TIMEOUT_MESSAGE }
           : classifyConnectSessionError(err);
-        setErrorMessage(message);
+        setError({ message, propertyId });
         moveTo(IDLE_FLOW);
         if (reread) rereadListings();
       }
@@ -107,14 +110,14 @@ export function useConnectFlow({ refresh, rereadListings }) {
   );
 
   const failEnable = useCallback(
-    (err) => {
+    (err, propertyId) => {
       console.error("Failed to turn on distribution for a listing:", err);
       if (!mountedRef.current) return;
       setUnconfirmedSetupPropertyId(null);
       const { reread, message } = isTimeoutError(err)
         ? { reread: true, message: TIMEOUT_MESSAGE }
         : classifyEnableError(err);
-      setErrorMessage(message);
+      setError({ message, propertyId });
       moveTo(IDLE_FLOW);
       if (reread) rereadListings();
     },
@@ -150,7 +153,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
         enabled = fresh?.find((candidate) => candidate.propertyId === propertyId);
         if (!enabled) throw new Error("The listings read after turning on did not contain the listing.");
       } catch (err) {
-        if (isCurrent()) failEnable(err);
+        if (isCurrent()) failEnable(err, propertyId);
         return;
       }
       if (!isCurrent()) return;
@@ -178,7 +181,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
       if (listing.distribution?.timezone?.required) {
         // A required choice with no options would be a dead modal, so it is an error instead.
         if (!listing.distribution.timezone.options?.length) {
-          failEnable(new Error("The listing requires a timezone but offered no options."));
+          failEnable(new Error("The listing requires a timezone but offered no options."), propertyId);
           return;
         }
         moveTo({ step: CONNECT_STEP.TIMEZONE, platform, listing, url: null });
@@ -208,7 +211,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
   const retry = useCallback(
     async ({ listing }) => {
       if (stepRef.current !== CONNECT_STEP.IDLE) return;
-      setErrorMessage("");
+      setError(NO_ERROR);
       await enableOrAskTimezone({ platform: null, listing });
     },
     [enableOrAskTimezone]
@@ -245,7 +248,8 @@ export function useConnectFlow({ refresh, rereadListings }) {
     listing: flow.listing,
     propertyId: flow.propertyId ?? flow.listing?.propertyId ?? null,
     url: flow.url,
-    errorMessage,
+    errorMessage: error.message,
+    errorPropertyId: error.propertyId,
     unconfirmedSetupPropertyId,
     isActive: flow.step !== CONNECT_STEP.IDLE,
     start,

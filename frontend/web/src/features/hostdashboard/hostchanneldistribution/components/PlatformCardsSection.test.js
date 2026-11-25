@@ -383,6 +383,24 @@ describe("PlatformCardsSection", () => {
       expect(refreshChannels).not.toHaveBeenCalled();
     });
 
+    test("a connect error belongs to the listing it failed for, not to the one picked next", async () => {
+      const user = userEvent.setup();
+      getHostListings.mockResolvedValue({ listings: [LIVE_LISTING, listing("p2", "Beach Apartment")] });
+      createConnectSession.mockRejectedValue(new Error("boom"));
+      render(<PlatformCardsSection />);
+      await screen.findByText("Booking.com");
+      await user.click(switchOf("Vrbo"));
+      await tickAll(user);
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("We couldn't start the connection. Try again.");
+
+      await user.selectOptions(screen.getByRole("combobox", { name: "Property" }), "p2");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+      await user.selectOptions(screen.getByRole("combobox", { name: "Property" }), "p1");
+      expect(screen.getByRole("alert")).toHaveTextContent("We couldn't start the connection. Try again.");
+    });
+
     test("Refresh is locked while a flow is open or a request of it runs, and usable again when it ends", async () => {
       const user = userEvent.setup();
       const pending = deferred();

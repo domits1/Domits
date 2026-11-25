@@ -340,6 +340,7 @@ describe("useConnectFlow", () => {
 
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
       expect(hook.result.current.errorMessage).toBe(ENABLE_ERROR_MESSAGE);
+      expect(hook.result.current.errorPropertyId).toBe("p1");
       expect(enableDistribution).not.toHaveBeenCalled();
     });
 
@@ -385,6 +386,7 @@ describe("useConnectFlow", () => {
       expect(hook.result.current.errorMessage).toBe(
         "This listing is linked to your own Channex account. Contact support."
       );
+      expect(hook.result.current.errorPropertyId).toBe("p1");
       expect(hook.rereadListings).not.toHaveBeenCalled();
       expect(hook.refresh).not.toHaveBeenCalled();
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
@@ -427,6 +429,7 @@ describe("useConnectFlow", () => {
       expect(hook.result.current.step).toBe(CONNECT_STEP.IDLE);
       expect(hook.result.current.url).toBeNull();
       expect(hook.result.current.errorMessage).toBe(CONNECT_ERROR_MESSAGE);
+      expect(hook.result.current.errorPropertyId).toBe("p1");
       expect(console.error).toHaveBeenCalled();
       expect(hook.refresh).not.toHaveBeenCalled();
       expect(hook.rereadListings).not.toHaveBeenCalled();

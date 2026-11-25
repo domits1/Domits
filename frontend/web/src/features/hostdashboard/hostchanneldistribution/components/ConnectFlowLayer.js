@@ -13,10 +13,11 @@ const CONNECTING_MESSAGE = "Connecting…";
 // result, so the section only decides where to put it. showError is off while another notice already
 // tells the host the same thing, and so is showEnabling while the notice of a listing being set up
 // already says it.
-function ConnectFlowLayer({ connectFlow, showError = true, showEnabling = true }) {
+function ConnectFlowLayer({ connectFlow, listingId, showError = true, showEnabling = true }) {
+  const errorBelongsHere = connectFlow.errorPropertyId === listingId;
   return (
     <>
-      {showError && connectFlow.errorMessage && (
+      {showError && errorBelongsHere && connectFlow.errorMessage && (
         <p className="host-chdist__error-text" role="alert">
           {connectFlow.errorMessage}
         </p>
@@ -52,6 +53,7 @@ ConnectFlowLayer.propTypes = {
   connectFlow: PropTypes.shape({
     step: PropTypes.string.isRequired,
     errorMessage: PropTypes.string.isRequired,
+    errorPropertyId: PropTypes.string,
     platform: PropTypes.object,
     listing: PropTypes.object,
     url: PropTypes.string,
@@ -60,6 +62,7 @@ ConnectFlowLayer.propTypes = {
     continueFromTimezone: PropTypes.func.isRequired,
     closeIframe: PropTypes.func.isRequired,
   }).isRequired,
+  listingId: PropTypes.string.isRequired,
   showError: PropTypes.bool,
   showEnabling: PropTypes.bool,
 };

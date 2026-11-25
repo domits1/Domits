@@ -133,7 +133,11 @@ function PlatformCardsSection() {
 
       {/* Outside the cards view, so a Retry from the "Setting up" notice can show its dialogs too. The
           notice already says it is setting up, so the flow's own sentence is left out there. */}
-      <ConnectFlowLayer connectFlow={connectFlow} showEnabling={listingView !== LISTING_VIEW.SETTING_UP} />
+      <ConnectFlowLayer
+        connectFlow={connectFlow}
+        listingId={selected.propertyId}
+        showEnabling={listingView !== LISTING_VIEW.SETTING_UP}
+      />
     </div>
   );
 }
