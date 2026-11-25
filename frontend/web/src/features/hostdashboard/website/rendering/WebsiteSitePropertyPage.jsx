@@ -25,6 +25,15 @@ const buildAccommodationPageModel = (model, property) => ({
   visibility: property.isMainProperty ? model.visibility : { ...model.visibility, availabilityCalendar: false },
 });
 
+export const buildSiteBookingHref = ({ property, quoteContext, model, pageBasePath, pageSearch }) => {
+  if (!property) {
+    return null;
+  }
+  return resolveQuotePanelSiteId({ quoteContext, model })
+    ? buildSitePropertyHref(pageBasePath, property.slug, SITE_PROPERTY_PAGE_KINDS.request, pageSearch)
+    : "";
+};
+
 const buildSitePropertyNavItems = ({ sitePages, overviewHref, pageBasePath, pageSearch }) => {
   const contactPage = normalizeSitePages(sitePages)[CONTACT_PAGE_KEY];
   const contactItem = {
@@ -79,6 +88,7 @@ function SitePropertyAccommodationPage({
   pageSearch,
 }) {
   const pageModel = useMemo(() => buildAccommodationPageModel(model, property), [model, property]);
+  const bookingHref = buildSiteBookingHref({ property, quoteContext, model, pageBasePath, pageSearch });
 
   return (
     <WebsiteTemplateSurface
@@ -92,6 +102,7 @@ function SitePropertyAccommodationPage({
       pageBasePath={pageBasePath}
       pageSearch={pageSearch}
       currentPageHref={buildSitePropertyHref(pageBasePath, property.slug, pageKind, pageSearch)}
+      bookingHref={bookingHref}
     />
   );
 }

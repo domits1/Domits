@@ -769,7 +769,7 @@ describe("property paths of an Elite website on its own domain", () => {
     }
   );
 
-  it("shows the Accommodation page of the other property on its photos path", async () => {
+  it("shows the Accommodation page of the other property on its photos path, with Book on its request page", async () => {
     renderAppAt("/properties/villa-b/photos");
     await screen.findByRole("link", { name: "Home" });
 
@@ -781,6 +781,7 @@ describe("property paths of an Elite website on its own domain", () => {
     expect(readMenuItems()).toEqual([
       ["Home", "/"],
       ["Villa B", "/properties/villa-b/photos"],
+      ["Book", "/properties/villa-b/request"],
     ]);
     expect(screen.queryByTestId("quote-availability")).toBeNull();
     expect(document.querySelector('.publicPreviewCanvas a[href*="#availability"]')).toBeNull();
@@ -931,6 +932,7 @@ describe("property paths of an Elite website in the live view", () => {
     expect(readMenuItems()).toEqual([
       ["Home", `${LIVE_BASE}${SITE_SEARCH}`],
       ["Villa B", `${LIVE_BASE}/properties/villa-b/photos${SITE_SEARCH}`],
+      ["Book", `${LIVE_BASE}/properties/villa-b/request${SITE_SEARCH}`],
     ]);
     expect(fetchPublicWebsiteRenderModel).toHaveBeenCalledTimes(2);
     expect(fetchPublicWebsiteRenderModel).toHaveBeenLastCalledWith({ siteId: SITE_ID, domain: SITE_DOMAIN });

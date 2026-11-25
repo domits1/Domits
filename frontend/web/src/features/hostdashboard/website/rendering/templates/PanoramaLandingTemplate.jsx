@@ -387,10 +387,12 @@ const buildPanoramaPageState = (sitePages, activePageKey) => {
   };
 };
 
-const buildPanoramaPageNavItems = (pageState, pageBasePath, pageSearch, viewState, currentPageHref) => {
+const buildPanoramaPageNavItems = (pageState, pageBasePath, pageSearch, viewState, currentPageHref, bookingHref) => {
   const isMainPage = pageState.currentPage.key === MAIN_SITE_PAGE_KEY;
   const mainPageHref = buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY, pageSearch);
-  const bookHref = isMainPage ? PANORAMA_AVAILABILITY_ANCHOR : `${mainPageHref}${PANORAMA_AVAILABILITY_ANCHOR}`;
+  const availabilityHref = isMainPage ? PANORAMA_AVAILABILITY_ANCHOR : `${mainPageHref}${PANORAMA_AVAILABILITY_ANCHOR}`;
+  const bookHref = bookingHref ?? availabilityHref;
+  const showsBook = bookingHref === null ? viewState.showAvailabilityCalendar : bookingHref !== "";
 
   return [
     ...pageState.menuItems.map((item) => ({
@@ -402,9 +404,7 @@ const buildPanoramaPageNavItems = (pageState, pageBasePath, pageSearch, viewStat
       isPageLink: true,
       isCurrentPage: item.key === pageState.currentPage.key,
     })),
-    ...(viewState.showAvailabilityCalendar
-      ? [{ href: bookHref, label: PANORAMA_BOOK_NAV_LABEL, isPageLink: !isMainPage }]
-      : []),
+    ...(showsBook ? [{ href: bookHref, label: PANORAMA_BOOK_NAV_LABEL, isPageLink: !isMainPage }] : []),
   ];
 };
 
@@ -1276,6 +1276,7 @@ export default function PanoramaLandingTemplate({
   pageSearch = "",
   currentPageHref = "",
   sitePropertyPage = null,
+  bookingHref = null,
 }) {
   const viewState = useMemo(() => buildPanoramaViewState(model), [model]);
   const pageState = useMemo(
@@ -1302,7 +1303,7 @@ export default function PanoramaLandingTemplate({
   const navItems =
     sitePropertyPage?.navItems ||
     (pageState
-      ? buildPanoramaPageNavItems(pageState, pageBasePath, pageSearch, viewState, currentPageHref)
+      ? buildPanoramaPageNavItems(pageState, pageBasePath, pageSearch, viewState, currentPageHref, bookingHref)
       : buildPanoramaNavItems(model, viewState));
   const handleOpenGalleryBrowser = (imageIndex = 0) => {
     if (!canOpenGalleryBrowser) {
@@ -1414,9 +1415,10 @@ export default function PanoramaLandingTemplate({
         model={model}
         viewState={viewState}
         availabilityHref={
-          viewState.showAvailabilityCalendar
+          bookingHref ??
+          (viewState.showAvailabilityCalendar
             ? `${buildSitePageHref(pageBasePath, MAIN_SITE_PAGE_KEY, pageSearch)}${PANORAMA_AVAILABILITY_ANCHOR}`
-            : ""
+            : "")
         }
         headerRef={heroSectionRef}
         onShowAllAmenities={() => setShowAmenitiesModal(true)}
@@ -1606,4 +1608,5 @@ PanoramaLandingTemplate.propTypes = {
   pageSearch: PropTypes.string,
   currentPageHref: PropTypes.string,
   sitePropertyPage: sitePropertyPagePropType,
+  bookingHref: PropTypes.string,
 };

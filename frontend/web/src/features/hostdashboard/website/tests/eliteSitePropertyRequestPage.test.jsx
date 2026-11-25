@@ -274,3 +274,44 @@ describe("the request to book page of an Elite website", () => {
     expect(screen.queryByLabelText("Your name")).toBeNull();
   });
 });
+
+describe("the price card of a site with more than one property", () => {
+  const ACCOMMODATION_ON = {
+    ...PAYLOAD,
+    contentOverrides: { ...PAYLOAD.contentOverrides, sitePages: { accommodation: { enabled: true } } },
+  };
+
+  it.each([
+    ["another property", "/properties/villa-b/photos", PAYLOAD, "/properties/villa-b/request"],
+    ["the main property", "/properties/villa-a/photos", PAYLOAD, "/properties/villa-a/request"],
+    ["the Accommodation page", "/accommodation", ACCOMMODATION_ON, "/properties/villa-a/request"],
+  ])("links %s to its request page", async (_, url, payload, requestHref) => {
+    renderSiteAt(url, payload);
+
+    const priceCard = await screen.findByRole("complementary", { name: "Price and availability" });
+    expect(within(priceCard).getByRole("link")).toHaveAttribute("href", requestHref);
+    expect(document.querySelector('a[href*="#availability"]')).toBeNull();
+  });
+
+  it("has no request link when the site has no quote panel", async () => {
+    const contentOverrides = { ...PAYLOAD.contentOverrides, visibility: { quotePanel: false } };
+    renderSiteAt("/properties/villa-a/photos", { ...PAYLOAD, contentOverrides });
+
+    const priceCard = await screen.findByRole("complementary", { name: "Price and availability" });
+    expect(within(priceCard).queryByRole("link")).toBeNull();
+  });
+});
+
+describe("the price card of a site with one property", () => {
+  it("still links to the availability of the home page", async () => {
+    const payload = {
+      ...PAYLOAD,
+      siteProperties: [],
+      contentOverrides: { ...PAYLOAD.contentOverrides, sitePages: { accommodation: { enabled: true } } },
+    };
+    renderSiteAt("/accommodation", payload);
+
+    const priceCard = await screen.findByRole("complementary", { name: "Price and availability" });
+    expect(within(priceCard).getByRole("link")).toHaveAttribute("href", "/#availability");
+  });
+});
