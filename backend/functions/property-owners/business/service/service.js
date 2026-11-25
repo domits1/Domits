@@ -157,8 +157,7 @@ export class Service {
       .filter((booking) => isChannexBooking(booking) && !resolveBookingCurrency(booking))
       .map((booking) => booking.id);
     const missingMinorUnitAmountBookingIds = bookingCandidates
-      .filter((booking) => booking.total_price !== null && booking.total_price !== undefined &&
-        (booking.total_price_minor === null || booking.total_price_minor === undefined))
+      .filter((booking) => booking.total_price_minor === null || booking.total_price_minor === undefined)
       .map((booking) => booking.id);
 
     return {

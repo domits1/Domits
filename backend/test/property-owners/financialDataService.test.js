@@ -252,20 +252,34 @@ describe("Service.getFinancialSourceData", () => {
 
   test("reports legacy amounts without exact minor-unit snapshots on the returned page", async () => {
     const assignments = [{ owner_id: OWNER_ID, property_id: "property-1" }];
-    const bookings = [{
-      id: "legacy-booking",
-      property_id: "property-1",
-      bookingtype: "direct",
-      total_price: 75,
-      total_price_minor: null,
-      currency: "EUR",
-      createdat: PERIOD_START,
-    }];
+    const bookings = [
+      {
+        id: "legacy-booking",
+        property_id: "property-1",
+        bookingtype: "direct",
+        total_price: 75,
+        total_price_minor: null,
+        currency: "EUR",
+        createdat: PERIOD_START,
+      },
+      {
+        id: "missing-all-amounts",
+        property_id: "property-1",
+        bookingtype: "channex",
+        total_price: null,
+        total_price_minor: null,
+        currency: null,
+        createdat: PERIOD_START + 1,
+      },
+    ];
     const { service } = createService({ assignments, bookings });
 
     const result = await service.getFinancialSourceData("host-1", { ...QUERY, limit: "5" });
 
-    expect(result.dataQuality.missingMinorUnitAmountBookingIds).toEqual(["legacy-booking"]);
+    expect(result.dataQuality.missingMinorUnitAmountBookingIds).toEqual([
+      "legacy-booking",
+      "missing-all-amounts",
+    ]);
   });
 
   test("does not query bookings or invoices when the owner has no ownership periods in the window", async () => {
