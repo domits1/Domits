@@ -4,20 +4,29 @@ const { ChannexProviderClient, CREDENTIALS, jsonResponse, useMockedFetch } = req
 // and 100 is the most per page. Look-before-create (design note D2) reads these lists to find an
 // object an earlier attempt already made; a list cut off at page one makes it create a duplicate.
 const LISTS = [
-  { method: "listProperties", call: (c) => c.listProperties(CREDENTIALS), rows: "properties", id: "externalPropertyId" },
+  {
+    method: "listProperties",
+    call: (c, options) => c.listProperties(CREDENTIALS, options),
+    rows: "properties",
+    id: "externalPropertyId",
+  },
   {
     method: "listRoomTypes",
-    call: (c) => c.listRoomTypes(CREDENTIALS, "property-1"),
+    call: (c, options) => c.listRoomTypes(CREDENTIALS, "property-1", options),
     rows: "roomTypes",
     id: "externalRoomTypeId",
   },
   {
     method: "listRatePlans",
-    call: (c) => c.listRatePlans(CREDENTIALS, "room-type-1"),
+    call: (c, options) => c.listRatePlans(CREDENTIALS, "room-type-1", options),
     rows: "ratePlans",
     id: "externalRatePlanId",
   },
 ];
+
+// A fetch that never answers until its signal aborts, like a Channex that hangs.
+const hangUntilAborted = (_url, { signal } = {}) =>
+  new Promise((_resolve, reject) => signal?.addEventListener("abort", () => reject(new Error("aborted"))));
 
 const rowsWithIds = (from, count) =>
   Array.from({ length: count }, (_value, index) => ({ id: `row-${from + index}`, attributes: { title: "Title" } }));
@@ -93,5 +102,46 @@ describe.each(LISTS)("ChannexProviderClient.$method pagination", ({ call, rows, 
     expect(result.success).toBe(false);
     expect(result.errorCode).toMatch(/TOO_MANY_PAGES$/);
     expect(global.fetch.mock.calls.length).toBeLessThanOrEqual(20);
+  });
+});
+
+// A turn-on runs three lists and three creates inside API Gateway's 29 s, so a list that hangs must end
+// as "try again" instead of holding the host's request until the gateway cuts it off with a 504.
+describe.each(LISTS)("ChannexProviderClient.$method timeout", ({ call, rows }) => {
+  useMockedFetch();
+  let client;
+
+  beforeEach(() => {
+    client = new ChannexProviderClient();
+  });
+
+  test("a page that hangs ends the list as a timeout", async () => {
+    global.fetch.mockImplementation(hangUntilAborted);
+
+    const result = await call(client, { requestTimeoutMs: 5 });
+
+    expect(result).toMatchObject({ success: false, errorCode: "CHANNEX_LIST_TIMEOUT", [rows]: [] });
+  });
+
+  // One deadline for the whole list, so twenty slow pages cannot add up past the gateway's limit.
+  test("the deadline covers all pages together, not each page on its own", async () => {
+    global.fetch.mockImplementation((url, init) =>
+      pageOf(url) === 1
+        ? Promise.resolve(jsonResponse(200, { data: rowsWithIds(1, 100), meta: { total: 200 } }))
+        : hangUntilAborted(url, init)
+    );
+
+    const result = await call(client, { requestTimeoutMs: 5 });
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({ success: false, errorCode: "CHANNEX_LIST_TIMEOUT" });
+  });
+
+  test("without an explicit timeout the request still carries a deadline", async () => {
+    global.fetch.mockResolvedValue(jsonResponse(200, { data: [] }));
+
+    await call(client);
+
+    expect(global.fetch.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
   });
 });

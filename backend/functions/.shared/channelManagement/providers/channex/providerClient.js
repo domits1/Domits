@@ -263,9 +263,11 @@ const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody, reque
 // grows with Domits; the page cap keeps a Lambda from paging until its timeout and fails loudly instead.
 const LIST_PAGE_LIMIT = 100;
 const LIST_MAX_PAGES = 20;
+// One deadline for all pages of a list: a turn-on runs three lists and three creates inside
+// API Gateway's 29 s, and a per-page timeout could still add up past it over twenty pages.
+const LIST_REQUEST_TIMEOUT_MS = 5000;
 
-// Returns { rows }, { httpStatus, parsed } for an error answer, { invalidResponse: true } or { tooManyPages: true }.
-const readAllPages = async ({ url, apiKey }) => {
+const fetchPages = async ({ url, apiKey, signal }) => {
   const rows = [];
   for (let page = 1; page <= LIST_MAX_PAGES; page += 1) {
     const pageUrl = new URL(url);
@@ -275,6 +277,7 @@ const readAllPages = async ({ url, apiKey }) => {
     const response = await fetch(pageUrl, {
       method: "GET",
       headers: { "Content-Type": "application/json", "user-api-key": apiKey },
+      signal,
     });
     const parsed = parseJsonSafely(await response.text());
     if (!response.ok) return { httpStatus: response.status, parsed };
@@ -288,6 +291,23 @@ const readAllPages = async ({ url, apiKey }) => {
     if (lastPage) return { rows };
   }
   return { tooManyPages: true };
+};
+
+// Returns { rows }, { httpStatus, parsed } for an error answer, { invalidResponse: true } or { tooManyPages: true }.
+// Throws an error with code CHANNEX_LIST_TIMEOUT when the deadline passes.
+const readAllPages = async ({ url, apiKey, requestTimeoutMs = LIST_REQUEST_TIMEOUT_MS }) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+  try {
+    return await fetchPages({ url, apiKey, signal: controller.signal });
+  } catch (error) {
+    if (!controller.signal.aborted) throw error;
+    const timeoutError = new Error(`Channex list request timed out after ${requestTimeoutMs} ms.`);
+    timeoutError.code = "CHANNEX_LIST_TIMEOUT";
+    throw timeoutError;
+  } finally {
+    clearTimeout(timer);
+  }
 };
 
 // A 4xx is a known refusal: nothing was created (design note D2).
@@ -507,7 +527,7 @@ export default class ChannexProviderClient {
     }
   }
 
-  async listProperties(credentials) {
+  async listProperties(credentials, { requestTimeoutMs } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
 
     if (!apiKey) {
@@ -522,7 +542,7 @@ export default class ChannexProviderClient {
 
     try {
       const url = new URL("/api/v1/properties", CHANNEX_BASE_URL);
-      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey });
+      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey, requestTimeoutMs });
 
       if (httpStatus) {
         return {
@@ -594,7 +614,7 @@ export default class ChannexProviderClient {
     }
   }
 
-  async listRoomTypes(credentials, externalPropertyId) {
+  async listRoomTypes(credentials, externalPropertyId, { requestTimeoutMs } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const propertyId = requireStr(externalPropertyId);
 
@@ -621,7 +641,7 @@ export default class ChannexProviderClient {
     try {
       const url = new URL("/api/v1/room_types", CHANNEX_BASE_URL);
       url.searchParams.set("filter[property_id]", propertyId);
-      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey });
+      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey, requestTimeoutMs });
 
       if (httpStatus) {
         return {
@@ -699,7 +719,7 @@ export default class ChannexProviderClient {
     }
   }
 
-  async listRatePlans(credentials, externalRoomTypeId) {
+  async listRatePlans(credentials, externalRoomTypeId, { requestTimeoutMs } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const roomTypeId = requireStr(externalRoomTypeId);
 
@@ -726,7 +746,7 @@ export default class ChannexProviderClient {
     try {
       const url = new URL("/api/v1/rate_plans", CHANNEX_BASE_URL);
       url.searchParams.set("filter[room_type_id]", roomTypeId);
-      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey });
+      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey, requestTimeoutMs });
 
       if (httpStatus) {
         return {
