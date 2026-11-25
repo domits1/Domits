@@ -28,7 +28,8 @@ const MOCK_REQUEST_DELAY_MS = 300;
 //   },
 //   channels: [{
 //     otaCode: "BookingCom" | "Airbnb" | "Vrbo",
-//     label: "SYNCING" | "LIVE" | "DISCONNECTING" | "DISCONNECTED" | "NEEDS_ATTENTION",
+//     label: "LIVE" | "SYNCING" | "DISCONNECTED" | "UNKNOWN",  // UNKNOWN: Channex did not answer
+//            // DISCONNECTING and NEEDS_ATTENTION are not in the contract; only the mock of #4007 uses them
 //   }],
 // }
 // getHostListings  -> { listings: [listing] }

@@ -305,6 +305,22 @@ describe("PlatformCardsSection", () => {
     expect(within(cardFor("Booking.com")).getByText("Not connected")).toBeInTheDocument();
   });
 
+  test("a channel Channex did not answer for shows a grey status, a locked switch and how to retry", async () => {
+    getHostListings.mockResolvedValue({
+      listings: [listing("p1", "Canal House", { channels: [channel("BookingCom", "UNKNOWN")] })],
+    });
+
+    render(<PlatformCardsSection />);
+    await screen.findByText("Booking.com");
+
+    const card = within(cardFor("Booking.com"));
+    expect(card.getByText("Status unknown")).toHaveClass("chdist-badge--neutral");
+    expect(card.queryByText("Live")).not.toBeInTheDocument();
+    expect(card.getByRole("switch")).toBeChecked();
+    expect(card.getByRole("switch")).toBeDisabled();
+    expect(card.getByText("We couldn't check this connection. Click Refresh to try again.")).toBeInTheDocument();
+  });
+
   test("has no picker for a single listing", async () => {
     render(<PlatformCardsSection />);
     await screen.findByText("Booking.com");
