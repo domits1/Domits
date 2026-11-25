@@ -1,4 +1,5 @@
 import { BOOKING_GUEST_EMAIL_PATTERN } from "../../booking/bookingRequestContact";
+import { parseHouseRules } from "../../../../../../utils/policyDisplayUtils";
 
 const MAX_GUEST_NAME_LENGTH = 255;
 const MAX_GUEST_PHONE_LENGTH = 32;
@@ -37,6 +38,26 @@ const cleanMessage = (value) =>
     .replaceAll(INVISIBLE_CHARACTERS, "")
     .replaceAll(EXTRA_EMPTY_LINES, "\n\n")
     .trim();
+
+const PERMISSION_SUFFIX = " allowed";
+
+const toGuestHouseRule = ({ label, value }) => {
+  if (label.endsWith(PERMISSION_SUFFIX)) {
+    return value === false ? `No ${label.slice(0, -PERMISSION_SUFFIX.length).toLowerCase()}` : "";
+  }
+  if (value === true) {
+    return label;
+  }
+  return typeof value === "number" || (typeof value === "string" && value.trim()) ? `${label}: ${value}` : "";
+};
+
+export const listRequestHouseRules = ({ rules, checkInLabel, checkOutLabel }) => [
+  ...parseHouseRules(Array.isArray(rules) ? rules : [], {})
+    .map(toGuestHouseRule)
+    .filter(Boolean),
+  ...(checkInLabel ? [`Check-in from ${checkInLabel}`] : []),
+  ...(checkOutLabel ? [`Check-out by ${checkOutLabel}`] : []),
+];
 
 const isValidPhone = (phone) => {
   const digitCount = phone.replaceAll(/\D/g, "").length;

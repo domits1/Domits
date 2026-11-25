@@ -362,6 +362,35 @@ describe("the details on the request to book page", () => {
     expect(sends()).toHaveLength(2);
   });
 
+  it("has no house rules box for a listing with only safety items, property rules and a cancellation policy", async () => {
+    answerWith();
+    const rules = ["SmokeDetector", "FireExtinguisher", "CancellationPolicy:Flexible", "CookingAllowed", "PetsAllowed"];
+    const villaB = {
+      ...VILLA_B,
+      propertySnapshot: { ...VILLA_B.propertySnapshot, rules: rules.map((name) => ({ rule: name, value: true })) },
+    };
+    renderSiteAt(REQUEST_URL, { ...PAYLOAD, siteProperties: [SITE_PROPERTIES[0], villaB] });
+
+    await fillAndSend();
+
+    expect(await screen.findByText("DBW-7KQ2M")).toBeInTheDocument();
+    expect(screen.queryByText("Smoke detector")).toBeNull();
+  });
+
+  it("lists the house rules and the check-in and check-out times of the main property", async () => {
+    answerWith({ quotes: [quoteAnswer({ propertyId: MAIN_ID })] });
+    const propertySnapshot = { ...PAYLOAD.propertySnapshot, rules: [{ rule: "SmokingAllowed", value: false }] };
+    renderSiteAt(`/properties/villa-a/request?${STAY_QUERY}`, { ...PAYLOAD, propertySnapshot });
+    await findForm();
+
+    const houseRules = screen.getByRole("group", { name: "House rules" });
+    expect(
+      within(houseRules)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent)
+    ).toEqual(["No smoking", "Check-in from 15:00", "Check-out by 11:00"]);
+  });
+
   it("shows a phone the server refuses at its field, with what the guest typed", async () => {
     const refusal = "Please enter a phone number of 6 to 15 digits.";
     answerWith({ sends: [errorAnswer("invalid_guest_phone", 400, refusal)] });

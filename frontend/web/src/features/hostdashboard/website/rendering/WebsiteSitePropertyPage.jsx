@@ -48,7 +48,16 @@ const buildSitePropertyNavItems = ({ sitePages, overviewHref, pageBasePath, page
   ];
 };
 
-const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBasePath, pageSearch, search }) => {
+const buildSitePropertyPage = ({
+  pageKind,
+  model,
+  property,
+  propertyRules,
+  quoteSiteId,
+  pageBasePath,
+  pageSearch,
+  search,
+}) => {
   const stay = readSitePropertyStayQuery(search);
   const staySearch = buildSitePropertyStayQuery(pageSearch, stay);
   const overviewHref = buildSiteHref(pageBasePath, [], pageSearch);
@@ -64,6 +73,7 @@ const buildSitePropertyPage = ({ pageKind, model, property, quoteSiteId, pageBas
     contactHref: hasContactPage ? buildSitePageHref(pageBasePath, CONTACT_PAGE_KEY, pageSearch) : "",
     navItems: buildSitePropertyNavItems({ sitePages: model.sitePages, overviewHref, pageBasePath, pageSearch }),
     stay,
+    rules: Array.isArray(propertyRules) ? propertyRules : [],
     booking: quoteSiteId
       ? {
           key: `${property.propertyId}${staySearch}`,
@@ -111,12 +121,31 @@ function SitePropertyAccommodationPage({
   );
 }
 
-function SitePropertyElitePage({ pageKind, templateId, model, property, quoteContext, pageBasePath, pageSearch }) {
+function SitePropertyElitePage({
+  pageKind,
+  templateId,
+  model,
+  property,
+  propertyRules = [],
+  quoteContext,
+  pageBasePath,
+  pageSearch,
+}) {
   const { search } = useLocation();
   const quoteSiteId = resolveQuotePanelSiteId({ quoteContext, model });
   const sitePropertyPage = useMemo(
-    () => buildSitePropertyPage({ pageKind, model, property, quoteSiteId, pageBasePath, pageSearch, search }),
-    [model, pageBasePath, pageKind, pageSearch, property, quoteSiteId, search]
+    () =>
+      buildSitePropertyPage({
+        pageKind,
+        model,
+        property,
+        propertyRules,
+        quoteSiteId,
+        pageBasePath,
+        pageSearch,
+        search,
+      }),
+    [model, pageBasePath, pageKind, pageSearch, property, propertyRules, quoteSiteId, search]
   );
 
   return (
@@ -151,6 +180,7 @@ const sitePropertyPagePropTypes = {
   quoteContext: PropTypes.shape({ siteId: PropTypes.string }),
   pageBasePath: PropTypes.string.isRequired,
   pageSearch: PropTypes.string.isRequired,
+  propertyRules: PropTypes.arrayOf(PropTypes.object),
 };
 
 SitePropertyAccommodationPage.propTypes = sitePropertyPagePropTypes;

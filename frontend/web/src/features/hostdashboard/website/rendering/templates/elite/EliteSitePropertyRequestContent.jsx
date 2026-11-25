@@ -18,12 +18,13 @@ import {
 import {
   EMPTY_REQUEST_DETAILS,
   REQUEST_DETAIL_MESSAGES,
+  listRequestHouseRules,
   validateRequestDetails,
 } from "./eliteSitePropertyRequestDetails";
 import { resolveDefaultGuestCount, resolveGuestCapacity, resolveHostContactHref } from "../../booking/quoteModel";
 import { formatStayDate } from "../../booking/quoteSelection";
 import { getOrCreateVisitorId } from "../../../services/websiteVisitorId";
-import { hasEliteHeaderPhoto, listEliteHouseRules, resolveEliteLocation } from "./eliteSitePageContent";
+import { hasEliteHeaderPhoto, resolveEliteLocation } from "./eliteSitePageContent";
 
 const CHOOSE_DATES_TEXT = "Choose your dates to request this stay.";
 const REQUEST_STEPS = Object.freeze(["Your details", "Host confirms", "You pay"]);
@@ -42,6 +43,7 @@ export default function EliteSitePropertyRequestContent({
   title,
   booking,
   stay,
+  rules,
   propertyHref,
   overviewHref,
   sentHref,
@@ -60,7 +62,11 @@ export default function EliteSitePropertyRequestContent({
   const { submitBookingRequest, ...bookingState } = useWebsiteBookingRequest({ siteId, sessionId });
   const [details, setDetails] = useState(EMPTY_REQUEST_DETAILS);
   const [fieldErrors, setFieldErrors] = useState({});
-  const houseRules = useMemo(() => listEliteHouseRules(model.policies).map((rule) => rule.label), [model.policies]);
+  const { checkInLabel, checkOutLabel } = model.stay ?? {};
+  const houseRules = useMemo(
+    () => listRequestHouseRules({ rules, checkInLabel, checkOutLabel }),
+    [rules, checkInLabel, checkOutLabel]
+  );
   const [datesProblem, setDatesProblem] = useState("");
   const isSendingRef = useRef(false);
   const quoteView = deriveQuoteView(quoteState);
@@ -241,11 +247,11 @@ EliteSitePropertyRequestContent.propTypes = {
     stay: PropTypes.object,
     host: PropTypes.object,
     media: PropTypes.object,
-    policies: PropTypes.object,
   }).isRequired,
   title: PropTypes.string.isRequired,
   booking: PropTypes.shape({ siteId: PropTypes.string.isRequired, propertyId: PropTypes.string.isRequired }).isRequired,
   stay: PropTypes.shape({ checkIn: PropTypes.string, checkOut: PropTypes.string, guests: PropTypes.number }).isRequired,
+  rules: PropTypes.arrayOf(PropTypes.object).isRequired,
   propertyHref: PropTypes.string.isRequired,
   overviewHref: PropTypes.string.isRequired,
   sentHref: PropTypes.string.isRequired,

@@ -2,6 +2,7 @@ import { readGuestNote } from "../../../../../../../backend/functions/General-Bo
 import {
   EMPTY_REQUEST_DETAILS,
   REQUEST_DETAIL_MESSAGES,
+  listRequestHouseRules,
   validateRequestDetails,
 } from "../rendering/templates/elite/eliteSitePropertyRequestDetails";
 
@@ -103,5 +104,44 @@ describe("the details of a request to book", () => {
     expect(validateRequestDetails(details({ message: " Hi\r\n\n\n\nthere\t! " }), NO_RULES).message).toBe(
       "Hi\n\nthere !"
     );
+  });
+});
+
+describe("the house rules of a request to book", () => {
+  const rule = (name, value) => ({ rule: name, value });
+
+  it("lists what the guest must do or not do, and the check-in and check-out times", () => {
+    const rules = [
+      rule("SmokingAllowed", false),
+      rule("PetsAllowed", true),
+      rule("Parties/EventsAllowed", false),
+      rule("QuietHours", true),
+      rule("SmokeDetector", true),
+      rule("FireExtinguisher", true),
+      rule("CancellationPolicy:Flexible", true),
+      rule("CookingAllowed", true),
+    ];
+
+    expect(listRequestHouseRules({ rules, checkInLabel: "15:00", checkOutLabel: "11:00" })).toEqual([
+      "No smoking",
+      "No parties / events",
+      "Quiet hours enforced",
+      "Check-in from 15:00",
+      "Check-out by 11:00",
+    ]);
+  });
+
+  it("lists nothing for safety items, property rules, a cancellation policy and what the guest may do", () => {
+    const rules = [
+      rule("SmokeDetector", true),
+      rule("CarbonMonoxide", true),
+      rule("FirstAidKit", true),
+      rule("CancellationPolicy:Strict", true),
+      rule("ParkingAvailable", true),
+      rule("PetsAllowed", true),
+      rule("QuietHours", false),
+    ];
+
+    expect(listRequestHouseRules({ rules, checkInLabel: "", checkOutLabel: "" })).toEqual([]);
   });
 });

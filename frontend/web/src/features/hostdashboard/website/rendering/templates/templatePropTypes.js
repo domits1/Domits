@@ -156,6 +156,7 @@ export const sitePropertyPagePropType = PropTypes.shape({
   contactHref: PropTypes.string.isRequired,
   navItems: PropTypes.arrayOf(PropTypes.shape({ href: PropTypes.string, label: PropTypes.string })).isRequired,
   stay: PropTypes.shape({ checkIn: PropTypes.string, checkOut: PropTypes.string, guests: PropTypes.number }).isRequired,
+  rules: PropTypes.arrayOf(PropTypes.object).isRequired,
   booking: PropTypes.shape({ key: PropTypes.string, siteId: PropTypes.string, propertyId: PropTypes.string }),
   buildRequestHref: PropTypes.func.isRequired,
   headerTone: PropTypes.oneOf(["photo", "light"]),
