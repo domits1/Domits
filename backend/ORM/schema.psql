@@ -125,6 +125,8 @@ CREATE TABLE IF NOT EXISTS main.booking (
 CREATE UNIQUE INDEX ASYNC id_UNIQUE_booking ON main.booking (id);
 CREATE UNIQUE INDEX ASYNC booking_public_booking_ref_unique ON main.booking (public_booking_ref);
 CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique ON main.booking (idempotency_key);
+CREATE INDEX ASYNC IF NOT EXISTS booking_owner_financial_created_idx ON main.booking (hostid, property_id, createdat, id);
+CREATE INDEX ASYNC IF NOT EXISTS booking_owner_financial_stay_idx ON main.booking (hostid, property_id, arrivaldate) INCLUDE (departuredate);
 
 -- -----------------------------------------------------
 -- Table main.faq
@@ -631,6 +633,8 @@ ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS cancelled_at BIGINT;
 ALTER TABLE test.booking ADD COLUMN IF NOT EXISTS currency VARCHAR(3);
 CREATE UNIQUE INDEX ASYNC booking_public_booking_ref_unique_test ON test.booking (public_booking_ref);
 CREATE UNIQUE INDEX ASYNC booking_idempotency_key_unique_test ON test.booking (idempotency_key);
+CREATE INDEX ASYNC IF NOT EXISTS booking_owner_financial_created_idx_test ON test.booking (hostid, property_id, createdat, id);
+CREATE INDEX ASYNC IF NOT EXISTS booking_owner_financial_stay_idx_test ON test.booking (hostid, property_id, arrivaldate) INCLUDE (departuredate);
 
 CREATE TABLE IF NOT EXISTS test.property_custom_rules (
   id VARCHAR(255) NOT NULL,
