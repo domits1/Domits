@@ -126,7 +126,7 @@ describe("the request sent page of an Elite website", () => {
     expect(readHeading()).toBe("Your request has been sent");
     expect(
       within(card).getByText(
-        "The host of Villa B has your request for Sat 10 Jan to Wed 14 Jan. You have not paid anything yet."
+        "The host of Villa B has your request for 10 to 14 January 2099. You have not paid anything yet."
       )
     ).toBeInTheDocument();
     expect(
@@ -148,6 +148,22 @@ describe("the request sent page of an Elite website", () => {
     expect(globalThis.fetch.mock.calls.filter(([url]) => String(url).endsWith("/bookings"))).toHaveLength(1);
   });
 
+  it.each([
+    ["within one month", "2027-01-15", "2027-01-22", "15 to 22 January 2027"],
+    ["across two months", "2027-01-28", "2027-02-03", "28 January to 3 February 2027"],
+    ["across two years", "2026-12-30", "2027-01-02", "30 December 2026 to 2 January 2027"],
+  ])("writes the dates of a stay %s with the year", async (_, checkIn, checkOut, stayText) => {
+    renderSite({
+      entries: [
+        { pathname: "/properties/villa-b/sent", state: { sentRequest: { reference: "DBW-7KQ2M", checkIn, checkOut } } },
+      ],
+    });
+
+    expect(
+      await screen.findByText(`The host of Villa B has your request for ${stayText}. You have not paid anything yet.`)
+    ).toBeInTheDocument();
+  });
+
   it("shows the sent request again after a reload of the page, without sending anything", async () => {
     fetchPublicWebsiteRenderModel.mockResolvedValue(PAYLOAD);
     globalThis.history.replaceState({ usr: SENT_STATE, key: "sent", idx: 0 }, "", "/properties/villa-b/sent");
@@ -167,6 +183,10 @@ describe("the request sent page of an Elite website", () => {
   it.each([
     ["opened directly", undefined],
     ["opened with a state that is not a request", { sentRequest: { reference: " ", checkIn: "2099-01-10" } }],
+    [
+      "opened with dates that are not dates",
+      { sentRequest: { reference: "DBW-7KQ2M", checkIn: "10 January", checkOut: "2099-01-14" } },
+    ],
   ])("says there is no request to show when %s", async (_, state) => {
     renderSite({ entries: [{ pathname: "/properties/villa-b/sent", state }] });
 
