@@ -6,6 +6,7 @@ const QUOTE_CURRENCY = "EUR";
 
 export const WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES = Object.freeze({
   NETWORK_ERROR: "network_error",
+  PROPERTY_NOT_FOUND: "property_not_found",
   RATE_LIMITED: "rate_limited",
   UNEXPECTED_RESPONSE: "unexpected_response",
 });
@@ -69,7 +70,7 @@ const normalizePublicWebsiteQuote = (payload) => {
 };
 
 const postPublicWebsiteQuote = async (
-  { propertyIds, siteId, checkIn, checkOut, guests, sessionId, signal },
+  { propertyId = "", propertyIds, siteId, checkIn, checkOut, guests, sessionId, signal },
   readAnswer
 ) => {
   let response;
@@ -81,6 +82,7 @@ const postPublicWebsiteQuote = async (
       signal,
       body: JSON.stringify({
         siteId,
+        ...(propertyId ? { propertyId } : {}),
         propertyIds,
         checkIn,
         checkOut,
@@ -125,7 +127,7 @@ const postPublicWebsiteQuote = async (
     });
   }
 
-  const answer = readAnswer(payload);
+  const answer = readAnswer(payload, response);
   if (!answer) {
     throw new WebsitePublicQuoteError({
       code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE,
@@ -137,7 +139,20 @@ const postPublicWebsiteQuote = async (
   return answer;
 };
 
-export const requestPublicWebsiteQuote = (request) => postPublicWebsiteQuote(request, normalizePublicWebsiteQuote);
+const readSingleQuote = (propertyId) => (payload, response) => {
+  const quote = normalizePublicWebsiteQuote(payload);
+  if (quote && propertyId && quote.propertyId !== propertyId) {
+    throw new WebsitePublicQuoteError({
+      code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.PROPERTY_NOT_FOUND,
+      message: "The quote service did not quote this property.",
+      status: response.status,
+    });
+  }
+  return quote;
+};
+
+export const requestPublicWebsiteQuote = (request) =>
+  postPublicWebsiteQuote(request, readSingleQuote(request.propertyId));
 
 const readText = (value) => (typeof value === "string" ? value : "");
 
