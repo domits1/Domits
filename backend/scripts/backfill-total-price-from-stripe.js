@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { parseBackfillArgs, runBackfill } from "./lib/backfillCli.js";
+import { parseBackfillArgs, runBackfill, updateBookingMinorUnits } from "./lib/backfillCli.js";
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { SystemManagerRepository } from "../ORM/data/systemManagerRepository.js";
@@ -75,25 +75,12 @@ async function processBooking(booking, stripe, client, commit) {
 
   if (commit !== true) return "skipped";
 
-  try {
-    await client
-      .createQueryBuilder()
-      .update(Booking)
-      .set({
-        total_price_minor: String(amountMinor),
-        ...(booking.total_price === null || booking.total_price === undefined || Number(booking.total_price) === 0
-          ? { total_price: amountMajor }
-          : {}),
-      })
-      .where("id = :id", { id: booking.id })
-      .andWhere("paymentid = :paymentId", { paymentId })
-      .andWhere("total_price_minor IS NULL")
-      .execute();
-    return "updated";
-  } catch (error) {
-    console.error(`Failed to update booking ${booking.id}:`, error.message || error);
-    return "error";
-  }
+  return updateBookingMinorUnits(client, booking, {
+    total_price_minor: String(amountMinor),
+    ...(booking.total_price === null || booking.total_price === undefined || Number(booking.total_price) === 0
+      ? { total_price: amountMajor }
+      : {}),
+  }, paymentId);
 }
 
 async function main() {

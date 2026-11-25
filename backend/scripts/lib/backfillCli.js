@@ -15,6 +15,21 @@ export function parseBackfillArgs() {
   return { commit, limit };
 }
 
+import { Booking } from "database/models/Booking";
+
+export async function updateBookingMinorUnits(client, booking, changes, paymentId = null) {
+  try {
+    let query = client.createQueryBuilder().update(Booking).set(changes)
+      .where("id = :id", { id: booking.id }).andWhere("total_price_minor IS NULL");
+    if (paymentId) query = query.andWhere("paymentid = :paymentId", { paymentId });
+    await query.execute();
+    return "updated";
+  } catch (error) {
+    console.error(`Failed to update booking ${booking.id}:`, error.message || error);
+    return "error";
+  }
+}
+
 export async function runBackfill(main) {
   try {
     await main();

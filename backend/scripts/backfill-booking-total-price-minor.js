@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { parseBackfillArgs, runBackfill } from "./lib/backfillCli.js";
+import { parseBackfillArgs, runBackfill, updateBookingMinorUnits } from "./lib/backfillCli.js";
 import Database from "database";
 import { Booking } from "database/models/Booking";
 import { parseDecimalToMinorUnits } from "database/money";
@@ -40,14 +40,7 @@ async function backfillBooking(booking, client, commit) {
   console.info(`Booking ${booking.id}: ${booking.total_price} ${currency} -> total_price_minor=${amountMinor}`);
   if (!commit) return "skipped";
 
-  try {
-    await client.createQueryBuilder().update(Booking).set({ total_price_minor: amountMinor })
-      .where("id = :id", { id: booking.id }).andWhere("total_price_minor IS NULL").execute();
-    return "updated";
-  } catch (error) {
-    console.error(`Failed to update booking ${booking.id}:`, error.message || error);
-    return "error";
-  }
+  return updateBookingMinorUnits(client, booking, { total_price_minor: amountMinor });
 }
 
 async function main() {
