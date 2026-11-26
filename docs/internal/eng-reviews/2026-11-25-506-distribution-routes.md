@@ -1,8 +1,8 @@
 # feat(channex): Distribution tab routes for hosts (#506)
 
-Pull request: (to be opened)
+Pull request: #4066
 Issue: #506
-Base: `feat/506-provisioning` (PR #4031); this branch adds 11 commits on top of it
+Base: `acceptance`; built on `feat/506-provisioning` (PR #4031, merged 26 Nov); the commits below come on top of it
 Reviewed: each commit on its staged diff before it was made (24–25 Nov)
 Result: no blocking findings; every non-blocking finding decided below
 
