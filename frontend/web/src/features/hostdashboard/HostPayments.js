@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Auth } from "aws-amplify";
-import { HostRevenueService } from "../hostdashboard/services/HostRevenueService.js";
 import { HostKpiAllService } from "../hostdashboard/services/HostKpiAllService.js";
 import ClipLoader from "react-spinners/ClipLoader";
 import { FaMoneyBillWave, FaBed, FaRegClock, FaBuilding, FaExclamationTriangle } from "react-icons/fa";
@@ -10,7 +9,7 @@ import MonthlyComparison from "./HostRevenueCards/MonthlyComparison.jsx";
 
 import "./HostRevenueStyle.scss";
 
-const POLL_MS = 2000;
+const POLL_MS = 30000;
 
 const HostRevenues = () => {
   const [cognitoUserId, setCognitoUserId] = useState(null);
@@ -68,28 +67,23 @@ const HostRevenues = () => {
       try {
         await Auth.currentSession();
 
-        const [revenue, nights, available, properties, kpiAll] = await Promise.all([
-          HostRevenueService.getRevenue(cognitoUserId),
-          HostRevenueService.getBookedNights(cognitoUserId),
-          HostRevenueService.getAvailableNights(cognitoUserId),
-          HostRevenueService.getPropertyCount(cognitoUserId),
-          HostKpiAllService.fetchAll(cognitoUserId, "monthly"),
-        ]);
+        const kpiAll = await HostKpiAllService.fetchAll(cognitoUserId, "monthly");
 
         if (!isMountedRef.current) return;
 
-        const nextRevenue = revenue ?? 0;
-        const nextNights = nights ?? 0;
-        const nextAvailable = available ?? 0;
-        const nextProperties = properties ?? 0;
-        // kpiAll is null when the ADR fetch itself failed (distinct from a
-        // legitimate 0 rate) - keep that distinction so Gross Missed Revenue
-        // can show "unavailable" instead of implying nothing was missed.
-        const nextAdr = kpiAll == null ? null : Number(kpiAll?.averageDailyRate ?? 0);
+        // fetchAll returns null when the request failed. Showing zeros would
+        // look like a real month with no revenue, so surface the error instead.
+        if (kpiAll == null) throw new Error("Monthly figures unavailable");
+
+        const nextRevenue = Number(kpiAll.revenue?.totalRevenue ?? 0);
+        const nextNights = Number(kpiAll.bookedNights?.bookedNights ?? 0);
+        const nextAvailable = Number(kpiAll.availableNights?.availableNights ?? 0);
+        const nextProperties = Number(kpiAll.propertyCount?.propertyCount ?? 0);
+        const nextAdr = Number(kpiAll.averageDailyRate ?? 0);
 
         // Passed whole to MonthlyComparison so it doesn't need its own
         // redundant metric=all fetch for the same current-month data.
-        setMonthlyKpiAll(kpiAll ?? null);
+        setMonthlyKpiAll(kpiAll);
 
         if (lastRef.current.revenue !== nextRevenue) {
           setTotalRevenue(nextRevenue);

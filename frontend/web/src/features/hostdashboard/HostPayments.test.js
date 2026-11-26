@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { act, render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { Auth } from "aws-amplify";
 import HostRevenues from "./HostPayments";
 import { HostRevenueService } from "./services/HostRevenueService.js";
@@ -38,14 +38,19 @@ describe("HostRevenues gross missed revenue display", () => {
     jest.clearAllMocks();
     Auth.currentAuthenticatedUser.mockResolvedValue({ attributes: { sub: "host-1" } });
     Auth.currentSession.mockResolvedValue({});
-    HostRevenueService.getRevenue.mockResolvedValue(5000);
-    HostRevenueService.getBookedNights.mockResolvedValue(10);
-    HostRevenueService.getAvailableNights.mockResolvedValue(20);
-    HostRevenueService.getPropertyCount.mockResolvedValue(2);
+  });
+
+  const monthlyKpis = (overrides = {}) => ({
+    revenue: { totalRevenue: 5000 },
+    bookedNights: { bookedNights: 10 },
+    availableNights: { availableNights: 20 },
+    propertyCount: { propertyCount: 2 },
+    averageDailyRate: "100.00",
+    ...overrides,
   });
 
   test("shows a computed euro amount when ADR loaded successfully", async () => {
-    HostKpiAllService.fetchAll.mockResolvedValue({ averageDailyRate: 100 });
+    HostKpiAllService.fetchAll.mockResolvedValue(monthlyKpis());
 
     render(<HostRevenues />);
 
@@ -54,18 +59,46 @@ describe("HostRevenues gross missed revenue display", () => {
     expect(screen.getByText("€1,000")).toBeInTheDocument();
   });
 
-  test("shows a dash instead of €0 when the ADR fetch failed", async () => {
+  test("shows an error instead of zeros when the monthly figures could not be loaded", async () => {
     HostKpiAllService.fetchAll.mockResolvedValue(null);
 
     render(<HostRevenues />);
 
-    await waitFor(() => expect(screen.getByText("Gross Missed Revenue")).toBeInTheDocument());
-    expect(screen.getByText("–")).toBeInTheDocument();
-    expect(screen.queryByText("€0")).not.toBeInTheDocument();
+    expect(await screen.findByText("Failed to fetch revenue data")).toBeInTheDocument();
+    expect(screen.queryByText("Gross Missed Revenue")).not.toBeInTheDocument();
+  });
+
+  test("fills every figure from one monthly request instead of one request per figure", async () => {
+    HostKpiAllService.fetchAll.mockResolvedValue(monthlyKpis());
+
+    render(<HostRevenues />);
+
+    expect(await screen.findByText("€5,000")).toBeInTheDocument();
+    expect(screen.getByText(/10 of 20 nights booked/)).toBeInTheDocument();
+    expect(HostKpiAllService.fetchAll).toHaveBeenCalledTimes(1);
+    expect(HostRevenueService.getRevenue).not.toHaveBeenCalled();
+    expect(HostRevenueService.getBookedNights).not.toHaveBeenCalled();
+    expect(HostRevenueService.getAvailableNights).not.toHaveBeenCalled();
+    expect(HostRevenueService.getPropertyCount).not.toHaveBeenCalled();
+  });
+
+  test("does not refetch the figures every few seconds while the page stays open", async () => {
+    jest.useFakeTimers();
+    HostKpiAllService.fetchAll.mockResolvedValue(monthlyKpis());
+
+    render(<HostRevenues />);
+    await screen.findByText("€5,000");
+
+    await act(async () => {
+      jest.advanceTimersByTime(20000);
+    });
+
+    expect(HostKpiAllService.fetchAll).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 
   test("labels the downloaded report as this month, not the year, and shows the monthly page title", async () => {
-    HostKpiAllService.fetchAll.mockResolvedValue({ averageDailyRate: 100 });
+    HostKpiAllService.fetchAll.mockResolvedValue(monthlyKpis());
     URL.createObjectURL = jest.fn(() => "blob:mock");
     URL.revokeObjectURL = jest.fn();
     jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
