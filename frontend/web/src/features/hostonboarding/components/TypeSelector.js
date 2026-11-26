@@ -2,6 +2,7 @@
 function AccommodationTypeSelector( {
   options,
   icons,
+  labels = {},
   selectedType,
   onSelectType,
 }) {
@@ -16,9 +17,9 @@ function AccommodationTypeSelector( {
           <img
             className="accommodation-icon"
             src={icons[option]}
-            alt={option}
+            alt={labels[option] ?? option}
           />
-          {option}
+          {labels[option] ?? option}
         </div>
       ))}
     </section>
