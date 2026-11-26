@@ -31,4 +31,14 @@ export default class StripeAccountRepository {
       })
       .execute();
   }
+
+  async replaceStripeAccount(cognitoUserId, accountId, updatedAt) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .update(Stripe_Connected_Accounts)
+      .set({ account_id: accountId, updated_at: updatedAt })
+      .where("user_id = :user_id", { user_id: cognitoUserId })
+      .execute();
+  }
 }
