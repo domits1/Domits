@@ -170,6 +170,7 @@ Constants                   UPPERCASE_WITH_UNDERSCORES
 - Prefer explicit simple solutions over clever abstractions. Remove dead code and commented-out logic.
 - Comment why, not what.
 - Handle failure paths intentionally. Do not swallow errors.
+- Write every user-facing error so it tells the user what happened and what they can do next.
 - Validate inputs and data consistency before any persistence side effect.
 - Prefer responsive relationships (`clamp(...)`, container size, shared tokens) over hardcoded pixel values.
 

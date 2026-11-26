@@ -40,8 +40,8 @@ export class PropertyRepository {
         this.systemManager = systemManager
     }
 
-    async create(property) {
-        const client = await Database.getInstance();
+    async create(property, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         await client
             .createQueryBuilder()
             .insert()
@@ -59,7 +59,7 @@ export class PropertyRepository {
                 bookingtype: property.bookingType || "direct",
             })
             .execute();
-        const result = await this.getPropertyById(property.id);
+        const result = await this.getPropertyById(property.id, transactionManager);
         return result ? result : null;
     }
 
@@ -144,6 +144,13 @@ export class PropertyRepository {
             `UPDATE ${qualifiedPropertyTable(schemaName)} SET ${metadataUpdates.join(", ")} WHERE id = $${metadataParams.length}`,
             metadataParams
         );
+    }
+
+    // One transaction for a unit of work spanning several repositories. withDsqlRetry may run `work`
+    // more than once after a commit conflict, so `work` must only write rows and nothing outside them.
+    async withTransaction(work) {
+        const client = await Database.getInstance();
+        return await withDsqlRetry(() => client.transaction(work));
     }
 
     async transitionStatusWithEvent(
@@ -428,8 +435,8 @@ export class PropertyRepository {
         }
     }
 
-    async getPropertyById(id) {
-        const client = await Database.getInstance();
+    async getPropertyById(id, transactionManager = null) {
+        const client = transactionManager || (await Database.getInstance());
         const result = await client
             .getRepository(Property)
             .createQueryBuilder("property")

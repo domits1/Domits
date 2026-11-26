@@ -1,0 +1,288 @@
+@use "sass:meta";
+@use "./eliteFonts" as fonts;
+
+$ivory: #f7f4ee;
+$ink: #1c1b19;
+$muted: #6b6458;
+$body-ink: #3d3830;
+$rule: #d9d1c4;
+$card-rule: #e4dccf;
+$accent: #7a5c3e;
+$paper: #ffffff;
+$header-eyebrow: #f1e9dc;
+$frame-gutter: var(--template-preview-frame-gutter, 0px);
+
+@mixin elite-eyebrow {
+  font-family: fonts.$elite-sans-stack;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: $accent;
+}
+
+@mixin elite-heading {
+  font-family: fonts.$elite-serif-stack;
+  font-size: clamp(2rem, 1.5rem + 1.8vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: $ink;
+  overflow-wrap: anywhere;
+}
+
+@mixin elite-card {
+  border: 1px solid $card-rule;
+  border-radius: 18px;
+  background: $paper;
+  box-shadow: none;
+}
+
+.templateSitePanorama.panoramaEliteHome {
+  --panorama-calendar-ink: #{$ink};
+  --panorama-calendar-accent: #{$accent};
+  --panorama-calendar-muted: #{$muted};
+  --panorama-calendar-line: #{$card-rule};
+  --panorama-calendar-card: #{$paper};
+  --panorama-calendar-range: rgba(122, 92, 62, 0.14);
+  --panorama-calendar-month-card-radius: 18px;
+  --panorama-calendar-serif: #{meta.inspect(fonts.$elite-serif-stack)};
+  --website-quote-theme-ink: #{$ink};
+  --website-quote-theme-muted: #{$muted};
+  --website-quote-theme-line: #{$card-rule};
+  --website-quote-theme-accent: #{$ink};
+  --website-quote-theme-radius: 18px;
+  --website-quote-theme-shadow: none;
+  --website-quote-theme-title-font: #{meta.inspect(fonts.$elite-serif-stack)};
+  margin: 0 calc(0px - #{$frame-gutter}) calc(0px - #{$frame-gutter});
+  padding: 0 $frame-gutter;
+  background: $ivory;
+  color: $ink;
+  font-family: fonts.$elite-sans-stack;
+
+  > section:not(.panoramaEditorialHero),
+  .panoramaTrustRail {
+    box-sizing: border-box;
+    width: min(100%, 1200px);
+    margin-inline: auto;
+  }
+
+  > section:not(.panoramaEditorialHero) {
+    margin-top: clamp(24px, 4vw, 48px);
+  }
+
+  > footer {
+    margin: clamp(40px, 6vw, 72px) calc(0px - #{$frame-gutter}) 0;
+  }
+
+  .panoramaHeroOverlay {
+    background: linear-gradient(180deg, rgba(20, 18, 15, 0.15) 0%, rgba(20, 18, 15, 0.55) 100%);
+  }
+
+  .panoramaHeroEyebrow {
+    @include elite-eyebrow;
+    color: $header-eyebrow;
+    overflow-wrap: anywhere;
+  }
+
+  .panoramaHeroHeadline {
+    font-family: fonts.$elite-serif-stack;
+    font-size: clamp(2.75rem, 1.6rem + 4.4vw, 4.75rem);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .panoramaHeroPrimaryAction {
+    min-height: 52px;
+    padding: 16px 28px;
+    border-color: transparent;
+    background: $ivory;
+    color: $ink;
+  }
+
+  .panoramaHeroPrimaryAction:hover {
+    background: $paper;
+    transform: none;
+  }
+
+  .panoramaHeroPrimaryAction span,
+  .panoramaHeroPrimaryActionLabel {
+    color: $ink;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .panoramaTrustCard {
+    @include elite-card;
+    transform: none;
+  }
+
+  .panoramaTrustCard:hover {
+    border-color: $rule;
+    background: $paper;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .panoramaTrustCardIcon {
+    border-radius: 999px;
+    background: $ivory;
+    box-shadow: none;
+    color: $accent;
+  }
+
+  .panoramaTrustCard:hover .panoramaTrustCardIcon {
+    background: $ivory;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .panoramaTrustCardTitle {
+    font-weight: 500;
+    color: $muted;
+  }
+
+  .panoramaTrustCardDescription {
+    color: $ink;
+  }
+
+  @media (min-width: 521px) {
+    .panoramaTrustCardTitle {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .panoramaTrustCardDescription {
+      font-family: fonts.$elite-serif-stack;
+      font-size: 20px;
+      line-height: 1.35;
+    }
+  }
+
+  .sectionCard {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .sectionEyebrow,
+  .panoramaResidenceEyebrow,
+  .panoramaAmenityEyebrow {
+    @include elite-eyebrow;
+  }
+
+  .sectionHeading h2,
+  .panoramaResidenceHeadline,
+  .panoramaGalleryHeadingTitle,
+  .panoramaAmenityTitle {
+    @include elite-heading;
+  }
+
+  .panoramaResidenceCopy {
+    color: $body-ink;
+  }
+
+  .panoramaResidenceCard {
+    @include elite-card;
+  }
+
+  .statLabel {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: $muted;
+  }
+
+  .panoramaResidenceImage,
+  .panoramaGalleryTile {
+    border-radius: 12px;
+  }
+
+  .panoramaAmenityIcon {
+    border-color: $card-rule;
+    background: $paper;
+    color: $accent;
+  }
+
+  .panoramaAmenityLabel {
+    font-weight: 500;
+    color: $body-ink;
+  }
+
+  .panoramaAmenityShowAllButton {
+    border-color: $ink;
+    background: transparent;
+    color: $ink;
+    font-weight: 500;
+  }
+
+  .panoramaAmenityShowAllButton:hover {
+    background: $ink;
+    color: $ivory;
+    transform: none;
+  }
+
+  .panoramaJourneyCard {
+    @include elite-card;
+    min-height: 0;
+  }
+
+  .panoramaJourneyCard:hover {
+    border-color: $rule;
+    background: $paper;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .panoramaJourneyIndex {
+    font-family: fonts.$elite-serif-stack;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: $accent;
+  }
+
+  .panoramaJourneyTitle {
+    font-family: fonts.$elite-serif-stack;
+    font-size: 24px;
+    font-weight: 500;
+    color: $ink;
+  }
+
+  .panoramaJourneyDescription {
+    color: $body-ink;
+  }
+
+  .panoramaContactSection {
+    border-radius: 18px;
+  }
+
+  .panoramaContactTitle,
+  .panoramaHostName {
+    font-family: fonts.$elite-serif-stack;
+    letter-spacing: 0;
+  }
+
+  .panoramaContactEyebrow {
+    @include elite-eyebrow;
+    color: rgb(var(--panorama-contact-accent-rgb) / 0.76);
+  }
+
+  .panoramaTrustCard.previewInteractiveTarget:hover,
+  .panoramaJourneyCard.previewInteractiveTarget:hover,
+  .panoramaResidenceCard.previewInteractiveTarget:hover {
+    box-shadow: 0 0 0 3px rgba(122, 92, 62, 0.16);
+  }
+
+  .panoramaTrustCard.previewInteractiveTargetActive,
+  .panoramaJourneyCard.previewInteractiveTargetActive,
+  .panoramaResidenceCard.previewInteractiveTargetActive {
+    border-color: $accent;
+    box-shadow: 0 0 0 3px rgba(122, 92, 62, 0.28);
+  }
+}

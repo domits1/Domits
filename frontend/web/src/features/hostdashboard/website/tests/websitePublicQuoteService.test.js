@@ -3,6 +3,7 @@ import {
   WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES,
   WebsitePublicQuoteError,
   requestPublicWebsiteQuote,
+  requestPublicWebsiteQuotes,
 } from "../services/websitePublicQuoteService";
 
 const QUOTE_REQUEST = {
@@ -68,6 +69,23 @@ describe("requestPublicWebsiteQuote", () => {
       currency: "EUR",
       session: { sessionId: "visitor-1", source: "standalone_site" },
     });
+  });
+
+  it("sends the property id of another property", async () => {
+    mockFetchResponse({ body: { ...QUOTE_RESPONSE, propertyId: "property-b" } });
+
+    await requestPublicWebsiteQuote({ ...QUOTE_REQUEST, propertyId: "property-b" });
+
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toMatchObject({ propertyId: "property-b" });
+  });
+
+  it("refuses a quote of another property than the one asked for", async () => {
+    mockFetchResponse({ body: QUOTE_RESPONSE });
+
+    await expectQuoteError(
+      requestPublicWebsiteQuote({ ...QUOTE_REQUEST, propertyId: "property-b" }),
+      WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.PROPERTY_NOT_FOUND
+    );
   });
 
   it("returns the normalized quote on success", async () => {
@@ -137,5 +155,66 @@ describe("requestPublicWebsiteQuote", () => {
     global.fetch = jest.fn().mockRejectedValue(abortError);
 
     await expect(requestPublicWebsiteQuote(QUOTE_REQUEST)).rejects.toBe(abortError);
+  });
+});
+
+describe("requestPublicWebsiteQuotes", () => {
+  const BATCH_REQUEST = { ...QUOTE_REQUEST, propertyIds: ["property-1", "property-2", "__proto__"] };
+  const quoteOf = (propertyId) => ({ ...QUOTE_RESPONSE, propertyId });
+  const answerWith = (quotes, siteId = "site-1") => mockFetchResponse({ body: { siteId, quotes } });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  it("asks for every property in one request and reads each answer by its property id", async () => {
+    answerWith([
+      { propertyId: "property-2", error: { code: "unavailable_dates", message: "Not available." } },
+      { propertyId: "__proto__", quote: quoteOf("__proto__") },
+      { propertyId: "property-1", quote: quoteOf("property-1") },
+      { propertyId: "property-1", error: { code: "internal_error", message: "" } },
+      { quote: quoteOf("property-3") },
+      null,
+    ]);
+
+    const answers = await requestPublicWebsiteQuotes(BATCH_REQUEST);
+
+    expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toMatchObject({
+      siteId: "site-1",
+      propertyIds: ["property-1", "property-2", "__proto__"],
+      guests: 2,
+    });
+    expect([...answers.keys()]).toEqual(["property-2", "__proto__", "property-1"]);
+    expect(answers.get("property-1").quote).toMatchObject({ propertyId: "property-1", nights: 4 });
+    expect(answers.get("__proto__").quote.propertyId).toBe("__proto__");
+    expect(answers.get("property-2")).toEqual({ error: { code: "unavailable_dates", message: "Not available." } });
+  });
+
+  it.each([
+    ["a quote of another property", { propertyId: "property-1", quote: quoteOf("property-2") }],
+    [
+      "a quote in another currency",
+      { propertyId: "property-1", quote: { ...QUOTE_RESPONSE, priceBreakdown: { total: 1, currency: "EURO" } } },
+    ],
+    ["an empty total", { propertyId: "property-1", quote: { ...QUOTE_RESPONSE, priceBreakdown: { total: "" } } }],
+    ["an error without a code", { propertyId: "property-1", error: { message: "Nope" } }],
+  ])("answers unexpected_response for %s", async (_, entry) => {
+    answerWith([entry]);
+
+    const answers = await requestPublicWebsiteQuotes(BATCH_REQUEST);
+
+    expect(answers.get("property-1").error.code).toBe(WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE);
+  });
+
+  it.each([
+    ["another site", { siteId: "site-2", quotes: [] }],
+    ["a single quote", QUOTE_RESPONSE],
+  ])("fails the whole request for an answer of %s", async (_, body) => {
+    mockFetchResponse({ body });
+
+    await expectQuoteError(
+      requestPublicWebsiteQuotes(BATCH_REQUEST),
+      WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE
+    );
   });
 });

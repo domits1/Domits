@@ -268,3 +268,28 @@
   .chdist-property-row { flex-wrap: wrap; }
   .chdist-property-row__side { align-items: flex-start; text-align: left; }
 }
+
+.chdist-badge--neutral { background: #f3f4f6; color: #4b5563; border: 1px solid var(--chdist-border); }
+
+.chdist-platform__identity { display: flex; align-items: center; gap: .75rem; }
+.chdist-platform__logo { width: 32px; height: 32px; object-fit: contain; }
+.chdist-platform__controls { display: flex; align-items: center; gap: .75rem; }
+
+.chdist-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.chdist-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.chdist-switch input:disabled { cursor: not-allowed; }
+.chdist-switch__track { position: absolute; inset: 0; border-radius: 99px; background: #d1d5db; pointer-events: none; transition: background .15s; }
+.chdist-switch__track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.chdist-switch input:checked + .chdist-switch__track { background: var(--chdist-primary); }
+.chdist-switch input:checked + .chdist-switch__track::after { transform: translateX(20px); }
+.chdist-switch input:disabled + .chdist-switch__track { opacity: .5; }
+.chdist-switch input:focus-visible + .chdist-switch__track { outline: 2px solid var(--chdist-primary); outline-offset: 2px; }
+
+.chdist-notice__list { margin: 0; padding: 0; list-style: none; text-align: center; }
+
+.chdist-modal--wide { max-width: min(45rem, 100%); }
+.chdist-iframe { display: block; width: 100%; height: clamp(22.5rem, 65vh, 40rem); margin-bottom: 1rem; border: 1px solid var(--chdist-border); border-radius: 8px; }
+
+.chdist-checklist { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-direction: column; gap: .75rem; }
+.chdist-checklist__item { display: flex; align-items: flex-start; gap: .6rem; font-size: .9rem; color: #333; line-height: 1.4; cursor: pointer; }
+.chdist-checklist__item input { margin-top: .2rem; }

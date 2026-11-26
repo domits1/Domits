@@ -1,37 +1,51 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Pause, Play, Plus, RefreshCw, Save } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Check, Pause, Play, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
 import { fetchAccommodationsByOwnerId } from "../../../../services/fetchAccommodationByOwnerIdService";
 import {
   activateAutomation,
   createAutomation,
+  deleteAutomation,
   listAutomationDeliveries,
   listAutomations,
   pauseAutomation,
   previewAutomation,
   updateAutomation,
 } from "../services/automationService";
+import {
+  SCHEDULE_OPTIONS,
+  buildSchedulePayload,
+  describeSchedule,
+  optionFromRule,
+  timeOfDayHint,
+} from "./scheduleOptions";
 
 const VARIABLES = [
-  { name: "guestName", label: "Guest's name" },
-  { name: "propertyName", label: "Name of the property" },
-  { name: "checkInDate", label: "Arrival date" },
-  { name: "checkOutDate", label: "Departure date" },
-  { name: "checkInTime", label: "Earliest check-in time" },
-  { name: "checkOutTime", label: "Latest check-out time" },
-  { name: "propertyAddress", label: "Street, number and postal code" },
-  { name: "propertyCity", label: "City of the property" },
-  { name: "numberOfGuests", label: "Number of guests on the booking" },
+  { name: "guestName", shortLabel: "Guest name", label: "Guest's name" },
+  { name: "propertyName", shortLabel: "Property name", label: "Name of the property" },
+  { name: "checkInDate", shortLabel: "Check-in date", label: "Arrival date" },
+  { name: "checkOutDate", shortLabel: "Check-out date", label: "Departure date" },
+  { name: "checkInTime", shortLabel: "Check-in time", label: "Earliest check-in time" },
+  { name: "checkOutTime", shortLabel: "Check-out time", label: "Latest check-out time" },
+  { name: "propertyAddress", shortLabel: "Address", label: "Street, number and postal code" },
+  { name: "propertyCity", shortLabel: "City", label: "City of the property" },
+  { name: "numberOfGuests", shortLabel: "Number of guests", label: "Number of guests on the booking" },
+];
+const LIST_FILTERS = [
+  { value: "ALL", label: "All", empty: "No automations yet." },
+  { value: "ACTIVE", label: "Active", empty: "No active automations." },
+  { value: "PAUSED", label: "Paused", empty: "No paused automations." },
 ];
 const asArray = (value) => (Array.isArray(value) ? value : []);
 const EMPTY_FORM = {
   id: null,
   name: "",
   propertyId: "",
-  triggerType: "BOOKING_PAID",
+  scheduleOption: "BOOKING_PAID",
   offsetAmount: 0,
   offsetUnit: "MINUTES",
+  sendTime: "",
   template: "Hi {{guestName}}, your booking at {{propertyName}} from {{checkInDate}} to {{checkOutDate}} is confirmed.",
   channel: "DOMITS_DIRECT",
   status: "DRAFT",
@@ -42,6 +56,13 @@ const normalizeProperties = (items) =>
     id: String(item?.id || item?.propertyId || ""),
     title: item?.title || item?.property?.title || "Untitled property",
   })).filter((item) => item.id);
+
+const scheduleOf = (automation) =>
+  describeSchedule({
+    ...automation,
+    scheduleOption: optionFromRule(automation),
+    sendTime: automation.sendTime || "",
+  });
 
 const formatTimestamp = (value) => {
   if (value === null || value === undefined || value === "") return "-";
@@ -59,6 +80,16 @@ export const AutomationsContent = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [listFilter, setListFilter] = useState("ALL");
+  const templateRef = useRef(null);
+  const templateFocused = useRef(false);
+  const pendingCursor = useRef(null);
+
+  const visibleAutomations = useMemo(
+    () => (listFilter === "ALL" ? automations : automations.filter((automation) => automation.status === listFilter)),
+    [automations, listFilter]
+  );
+  const activeFilter = LIST_FILTERS.find((filter) => filter.value === listFilter);
 
   const selected = useMemo(
     () => automations.find((automation) => automation.id === form.id) || null,
@@ -102,13 +133,30 @@ export const AutomationsContent = () => {
       .catch((requestError) => setError(requestError.message));
   }, [accessToken, form.id]);
 
+  useEffect(() => {
+    const field = templateRef.current;
+    const position = pendingCursor.current;
+    if (position === null || !field) return;
+    pendingCursor.current = null;
+    field.focus();
+    field.setSelectionRange(position, position);
+  }, [form.template]);
+
   const selectAutomation = (automation) => {
-    setForm({ ...EMPTY_FORM, ...automation, propertyId: automation.propertyId || "" });
+    templateFocused.current = false;
+    setForm({
+      ...EMPTY_FORM,
+      ...automation,
+      propertyId: automation.propertyId || "",
+      scheduleOption: optionFromRule(automation),
+      sendTime: automation.sendTime || "",
+    });
     setPreview(null);
     setError("");
   };
 
   const startNew = () => {
+    templateFocused.current = false;
     setForm({ ...EMPTY_FORM });
     setPreview(null);
     setDeliveries([]);
@@ -120,12 +168,23 @@ export const AutomationsContent = () => {
     setPreview(null);
   };
 
+  const changeScheduleOption = (scheduleOption) => {
+    setForm((current) => {
+      let offsetAmount = current.offsetAmount;
+      if (scheduleOption === "ON_CHECK_IN") offsetAmount = 0;
+      if (scheduleOption === "AFTER_CHECK_IN" && Number(offsetAmount || 0) === 0) offsetAmount = 1;
+      return { ...current, scheduleOption, offsetAmount };
+    });
+    setPreview(null);
+  };
+
+  const isStayRule = form.scheduleOption !== "BOOKING_PAID";
+  const timeHint = timeOfDayHint(form);
+
   const payload = () => ({
     name: form.name,
     propertyId: form.propertyId || null,
-    triggerType: "BOOKING_PAID",
-    offsetAmount: Number(form.offsetAmount || 0),
-    offsetUnit: Number(form.offsetAmount || 0) === 0 ? "MINUTES" : form.offsetUnit,
+    ...buildSchedulePayload(form),
     template: form.template,
     channel: "DOMITS_DIRECT",
   });
@@ -165,6 +224,27 @@ export const AutomationsContent = () => {
     }
   };
 
+  const removeAutomation = async () => {
+    const { id } = form;
+    if (!id) return;
+    if (!window.confirm("Delete this automation? Its scheduled messages will be cancelled.")) return;
+    const dropFromList = () => {
+      setAutomations((current) => current.filter((item) => item.id !== id));
+      startNew();
+    };
+    setSaving(true);
+    setError("");
+    try {
+      await deleteAutomation(id);
+      dropFromList();
+    } catch (requestError) {
+      if (requestError.status === 404) dropFromList();
+      else setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderPreview = async () => {
     setError("");
     try {
@@ -175,14 +255,23 @@ export const AutomationsContent = () => {
     }
   };
 
-  const insertVariable = (variable) => updateField("template", `${form.template}{{${variable}}}`);
+  const insertVariable = (variable) => {
+    const token = `{{${variable}}}`;
+    const template = form.template;
+    const field = templateRef.current;
+    const atCursor = templateFocused.current && field;
+    const start = atCursor ? field.selectionStart : template.length;
+    const end = atCursor ? field.selectionEnd : template.length;
+    pendingCursor.current = start + token.length;
+    updateField("template", `${template.slice(0, start)}${token}${template.slice(end)}`);
+  };
 
   return (
     <main className="automations-page">
       <header className="automations-header">
         <div>
           <h1>Automated messages</h1>
-          <p>Booking Paid workflows delivered through Domits Direct.</p>
+          <p>Messages for new bookings, check-ins and check-outs, delivered through Domits Direct.</p>
         </div>
         <button type="button" className="icon-text-button" onClick={startNew}>
           <Plus size={17} /> New automation
@@ -199,19 +288,38 @@ export const AutomationsContent = () => {
               <RefreshCw size={17} />
             </button>
           </div>
+          <div className="automation-list-tabs" role="group" aria-label="Filter automations">
+            {LIST_FILTERS.map(({ value, label }) => (
+              <button
+                type="button"
+                key={value}
+                className={`automation-list-tab ${listFilter === value ? "active" : ""}`}
+                aria-pressed={listFilter === value}
+                onClick={() => setListFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           {loading && <p>Loading...</p>}
-          {!loading && automations.length === 0 && <p>No automations yet.</p>}
-          {automations.map((automation) => (
-            <button
-              type="button"
-              key={automation.id}
-              className={`automation-list-item ${form.id === automation.id ? "selected" : ""}`}
-              onClick={() => selectAutomation(automation)}
-            >
-              <span>{automation.name}</span>
-              <small className={`automation-status ${automation.status.toLowerCase()}`}>{automation.status}</small>
-            </button>
-          ))}
+          {!loading && visibleAutomations.length === 0 && <p>{activeFilter.empty}</p>}
+          {visibleAutomations.map((automation) => {
+            const schedule = scheduleOf(automation);
+            return (
+              <button
+                type="button"
+                key={automation.id}
+                className={`automation-list-item ${form.id === automation.id ? "selected" : ""}`}
+                onClick={() => selectAutomation(automation)}
+              >
+                <span className="automation-list-text">
+                  <span className="automation-list-name">{automation.name}</span>
+                  <span className="automation-list-schedule" title={schedule}>{schedule}</span>
+                </span>
+                <small className={`automation-status ${automation.status.toLowerCase()}`}>{automation.status}</small>
+              </button>
+            );
+          })}
         </aside>
 
         <div className="automation-editor">
@@ -235,16 +343,30 @@ export const AutomationsContent = () => {
                   <Play size={17} /> Activate
                 </button>
               )}
+              {form.id && (
+                <button
+                  type="button"
+                  className="icon-text-button secondary danger"
+                  onClick={removeAutomation}
+                  disabled={saving}
+                >
+                  <Trash2 size={17} /> Delete
+                </button>
+              )}
             </div>
           </div>
 
           <section className="automation-section">
             <h2>Events &amp; Triggers</h2>
-            <div className="automation-fields two-columns">
+            <div className="automation-fields equal-three-columns">
               <label>
-                <span>Trigger</span>
-                <select aria-label="Trigger" value="BOOKING_PAID" disabled>
-                  <option value="BOOKING_PAID">Booking Paid</option>
+                <span>When to send</span>
+                <select
+                  aria-label="When to send"
+                  value={form.scheduleOption}
+                  onChange={(event) => changeScheduleOption(event.target.value)}
+                >
+                  {SCHEDULE_OPTIONS.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </label>
               <label>
@@ -252,6 +374,12 @@ export const AutomationsContent = () => {
                 <select value={form.propertyId} onChange={(event) => updateField("propertyId", event.target.value)}>
                   <option value="">All owned properties</option>
                   {properties.map((property) => <option key={property.id} value={property.id}>{property.title}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>Channel</span>
+                <select aria-label="Channel" value="DOMITS_DIRECT" disabled>
+                  <option value="DOMITS_DIRECT">Domits Direct</option>
                 </select>
               </label>
             </div>
@@ -262,15 +390,27 @@ export const AutomationsContent = () => {
             <label>
               <span>Message template</span>
               <textarea
+                ref={templateRef}
                 aria-label="Message template"
                 rows={7}
                 value={form.template}
                 onChange={(event) => updateField("template", event.target.value)}
+                onFocus={() => {
+                  templateFocused.current = true;
+                }}
               />
             </label>
             <div className="variable-buttons" aria-label="Supported variables">
-              {VARIABLES.map(({ name, label }) => (
-                <button type="button" key={name} title={label} onClick={() => insertVariable(name)}>{`{{${name}}}`}</button>
+              {VARIABLES.map(({ name, shortLabel, label }) => (
+                <button
+                  type="button"
+                  key={name}
+                  title={`${label} · {{${name}}}`}
+                  aria-label={`Insert ${shortLabel.toLowerCase()}`}
+                  onClick={() => insertVariable(name)}
+                >
+                  {shortLabel}
+                </button>
               ))}
             </div>
           </section>
@@ -286,6 +426,7 @@ export const AutomationsContent = () => {
                   min="0"
                   max="365"
                   value={form.offsetAmount}
+                  disabled={form.scheduleOption === "ON_CHECK_IN"}
                   onChange={(event) => updateField("offsetAmount", event.target.value)}
                 />
               </label>
@@ -297,18 +438,25 @@ export const AutomationsContent = () => {
                   disabled={Number(form.offsetAmount || 0) === 0}
                   onChange={(event) => updateField("offsetUnit", event.target.value)}
                 >
-                  <option value="MINUTES">Minutes after trigger</option>
-                  <option value="HOURS">Hours after trigger</option>
-                  <option value="DAYS">Days after trigger</option>
+                  <option value="MINUTES">Minutes</option>
+                  <option value="HOURS">Hours</option>
+                  <option value="DAYS">Days</option>
                 </select>
               </label>
               <label>
-                <span>Channel</span>
-                <select aria-label="Channel" value="DOMITS_DIRECT" disabled>
-                  <option value="DOMITS_DIRECT">Domits Direct</option>
-                </select>
+                <span>Time of day (optional)</span>
+                <input
+                  aria-label="Time of day"
+                  type="time"
+                  value={form.sendTime}
+                  disabled={timeHint !== ""}
+                  onChange={(event) => updateField("sendTime", event.target.value)}
+                />
               </label>
             </div>
+            {timeHint && <p className="automation-hint">{timeHint}</p>}
+            <p className="automation-schedule-sentence" data-testid="schedule-sentence">{describeSchedule(form)}</p>
+            {isStayRule && <p className="automation-hint">Applies to bookings paid after you activate it</p>}
           </section>
 
           <section className="automation-section">

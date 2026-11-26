@@ -9,6 +9,8 @@ import HostReports from "./HostPayments";
 import HostReviews from "../review/views/HostReviews";
 import HostTasks from "./hosttasks/pages/HostTasks";
 import HostOwners from "./hostowners/pages/HostOwners";
+import OwnerManagementLayout from "./hostowners/pages/OwnerManagementLayout";
+import HostOwnerStatements from "./hostowners/pages/HostOwnerStatements";
 import HostOwnerDetail from "./hostowners/pages/HostOwnerDetail";
 import HostFinanceTab from "./hostfinance/components/HostFinanceTab";
 import HostListings from "./HostListings";
@@ -33,6 +35,7 @@ import HostIntegrations from "./HostIntegrations";
 import WhatsAppConnectCallback from "./WhatsAppConnectCallback";
 import HostPriceLabs from "./hostpricelabs/views/HostPriceLabs";
 import HostChannelDistribution from "./hostchanneldistribution/views/HostChannelDistribution";
+import ChannexInternalRoute from "./hostchanneldistribution/components/ChannexInternalRoute";
 import ChannexCertificationAdminPage from "./channexadmin/ChannexCertificationAdminPage";
 import {
   CHANNEX_CERTIFICATION_ADMIN_ROUTE,
@@ -160,9 +163,19 @@ function MainDashboardHost() {
 
           <Route path="finance" element={<HostFinanceTab />} />
           <Route path="pricelabs" element={<HostPriceLabs />} />
-          <Route path="distribution" element={<HostChannelDistribution />} />
+          <Route
+            path="distribution"
+            element={
+              <ChannexInternalRoute>
+                <HostChannelDistribution />
+              </ChannexInternalRoute>
+            }
+          />
           <Route path="listings" element={<HostListings />} />
-          <Route path="owners" element={<HostOwners />} />
+          <Route path="owners" element={<OwnerManagementLayout />}>
+            <Route index element={<HostOwners />} />
+            <Route path="statements" element={<HostOwnerStatements />} />
+          </Route>
           <Route path="owners/:id" element={<HostOwnerDetail />} />
           <Route path="website" element={<WebsiteBuilderPage />} />
           <Route path="website/kpis" element={<WebsiteKpiDashboardPage />} />

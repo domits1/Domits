@@ -20,6 +20,12 @@ const createHarness = () => {
       records.push(record);
       return record;
     }),
+    deleteForHost: jest.fn(async (id, hostId) => {
+      const index = records.findIndex((item) => item.id === id && item.hostId === hostId);
+      if (index === -1) return false;
+      records.splice(index, 1);
+      return true;
+    }),
     update: jest.fn(async (id, hostId, patch) => {
       const record = records.find((item) => item.id === id && item.hostId === hostId);
       Object.assign(record, patch, { updatedAt: 2 });
@@ -35,6 +41,7 @@ const createHarness = () => {
   return {
     controller: new AutomationController(service),
     records,
+    automationRepository,
     bookingContextRepository,
     deliveryRepository,
   };
@@ -118,6 +125,49 @@ describe("AutomatedMessaging host management", () => {
     await expect(controller.pause(hostEvent(), "automation-1")).rejects.toMatchObject({ statusCode: 403 });
     await expect(controller.deliveries(hostEvent(), "automation-1")).rejects.toMatchObject({ statusCode: 403 });
     expect(deliveryRepository.listByAutomation).not.toHaveBeenCalled();
+  });
+
+  test("host deletes an owned automation and it leaves the list", async () => {
+    const { controller, automationRepository } = createHarness();
+    await controller.create(hostEvent(validAutomation));
+
+    await expect(controller.delete(hostEvent(), "automation-1")).resolves.toEqual({
+      statusCode: 200,
+      response: { id: "automation-1", deleted: true },
+    });
+    expect(automationRepository.deleteForHost).toHaveBeenCalledWith("automation-1", "host-1");
+    await expect(controller.list(hostEvent())).resolves.toMatchObject({ response: [] });
+  });
+
+  test("deleting an unknown automation is not found", async () => {
+    const { controller, automationRepository } = createHarness();
+
+    await expect(controller.delete(hostEvent(), "automation-missing")).rejects.toMatchObject({ statusCode: 404 });
+    expect(automationRepository.deleteForHost).not.toHaveBeenCalled();
+  });
+
+  test("deleting is not found when the row disappeared before the delete", async () => {
+    const { controller, automationRepository } = createHarness();
+    await controller.create(hostEvent(validAutomation));
+    automationRepository.deleteForHost.mockResolvedValueOnce(false);
+
+    await expect(controller.delete(hostEvent(), "automation-1")).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  test("a guest cannot delete an automation", async () => {
+    const { controller, automationRepository } = createHarness();
+
+    await expect(controller.delete(hostEvent(null, "guest"), "automation-1")).rejects.toMatchObject({ statusCode: 403 });
+    expect(automationRepository.deleteForHost).not.toHaveBeenCalled();
+  });
+
+  test("deleting an automation of a transferred property is rejected", async () => {
+    const { controller, automationRepository, bookingContextRepository } = createHarness();
+    await controller.create(hostEvent(validAutomation));
+    bookingContextRepository.hostOwnsProperty.mockResolvedValue(false);
+
+    await expect(controller.delete(hostEvent(), "automation-1")).rejects.toMatchObject({ statusCode: 403 });
+    expect(automationRepository.deleteForHost).not.toHaveBeenCalled();
   });
 
   test("host-wide automation remains accessible to its creator", async () => {

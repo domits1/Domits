@@ -49,7 +49,7 @@ InvoicesTableSkeleton.propTypes = {
 function InvoiceState({ title, description, isError = false }) {
   return (
     <div
-      className={`finance-empty-state invoices-state${isError ? " invoices-state--error" : ""}`}
+      className={`finance-empty-state invoices-state${isError ? " invoices-state--error" : " invoices-state--neutral"}`}
       role={isError ? "alert" : "status"}
     >
       <strong>{title}</strong>
@@ -127,7 +127,7 @@ export default function InvoicesSection() {
 
       {!loading && !error && invoices.length === 0 ? (
         <InvoiceState
-          title="No invoices yet"
+          title="There are no invoices yet"
           description="Your invoices will appear here once they're available."
         />
       ) : null}

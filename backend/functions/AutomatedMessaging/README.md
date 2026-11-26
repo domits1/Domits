@@ -1,6 +1,6 @@
 # Automated Messaging v1
 
-`AutomatedMessaging` owns host automation definitions, booking-paid event processing, scheduling, rendering, and delivery state. It supports only `BOOKING_PAID` and `DOMITS_DIRECT`.
+`AutomatedMessaging` owns host automation definitions, booking-paid event processing, scheduling, rendering, and delivery state. It supports the `BOOKING_PAID`, `CHECK_IN` and `CHECK_OUT` triggers and the `DOMITS_DIRECT` channel. A check-in or check-out automation has a direction (`BEFORE` or `AFTER`) and an optional send time (`HH:MM`, Europe/Amsterdam) that needs an offset in days or no offset.
 
 ## Deployment status
 
@@ -29,6 +29,7 @@ The following Lambda proxy routes are configured. Every listed non-`OPTIONS` met
 - `GET /automations/health`
 - `GET /automations/{id}`
 - `PATCH /automations/{id}`
+- `DELETE /automations/{id}`
 - `POST /automations/{id}/activate`
 - `POST /automations/{id}/pause`
 - `POST /automations/{id}/preview`

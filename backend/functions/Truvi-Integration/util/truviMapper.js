@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { findCountryAlpha3 } from "./truviCountries.js";
 
 export const SCREENING_STATUS = {
@@ -29,6 +29,15 @@ function toIsoDate(epochMs) {
 
 function toTruviTimestamp(date) {
   return date.toISOString().slice(0, 22);
+}
+
+export function createEchoToken(bookingId) {
+  if (!bookingId) {
+    throw new Error("bookingId is required for the Truvi echo token");
+  }
+  const hex = createHash("sha256").update(`domits:truvi:create:${bookingId}`).digest("hex");
+  const variant = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
 function splitName(fullName = "") {
@@ -70,7 +79,7 @@ export function bookingToCreateRequest({
   };
 
   return {
-    metadata: { timeStamp: toTruviTimestamp(now), echoToken: randomUUID() },
+    metadata: { timeStamp: toTruviTimestamp(now), echoToken: createEchoToken(booking.id) },
     company: { name: host.name, email: host.email },
     listing: {
       listingId: property.id,
@@ -122,4 +131,19 @@ export function toCancelRequest({ verificationId, reservationId, now = new Date(
     verification: { verificationId },
     reservation: { reservationId },
   };
+}
+
+export function toModifyRequest({ verificationId, reservationId, arrivaldate, departuredate, now = new Date() }) {
+  if (!verificationId || !reservationId) {
+    throw new Error("verificationId and reservationId are required to modify a Truvi verification");
+  }
+  return {
+    metadata: { timeStamp: toTruviTimestamp(now), echoToken: randomUUID() },
+    verification: { verificationId },
+    reservation: { reservationId, checkIn: toIsoDate(arrivaldate), checkOut: toIsoDate(departuredate) },
+  };
+}
+
+export function sameTruviDates(left, right) {
+  return toIsoDate(left.arrivaldate) === toIsoDate(right.arrivaldate) && toIsoDate(left.departuredate) === toIsoDate(right.departuredate);
 }

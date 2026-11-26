@@ -176,11 +176,15 @@ sequenceDiagram
     database->>-stripeAccountRepository.js: returns stripeAccount or null
     stripeAccountRepository.js->>-stripeAccountService.js: returns stripeAccount
 
-    %% Scenario 1: Stripe account already exists -> 409 Conflict
+    %% Scenario 1: Existing account -> reuse it and issue a fresh link
     stripeAccountService.js->>stripeAccountService.js: check stripeAccount?.account_id
-    stripeAccountService.js->>stripeAccountController.js: throw ConflictException("Stripe account already exists")
-    stripeAccountController.js->>index.js: build HTTP 409 response
-    index.js->>user: returns 409, message "Stripe account already exists"
+    stripeAccountService.js->>stripe: accounts.retrieve(account_id)
+    stripe->>stripeAccountService.js: existing account details
+    stripeAccountService.js->>stripe: accountLinks.create(...) or accounts.createLoginLink(...)
+    stripe->>stripeAccountService.js: fresh onboarding or login link
+    stripeAccountService.js->>stripeAccountController.js: returns statusCode 200 with existing account details
+    stripeAccountController.js->>index.js: build HTTP 200 response
+    index.js->>user: returns fresh link without creating another account
 
     %% Scenario 2: No existing account -> create new Stripe Express account
     stripeAccountService.js->>+stripe: accounts.create(type="express", email=userEmail)
@@ -231,13 +235,25 @@ sequenceDiagram
     stripeAccountController.js->>index.js: build HTTP 404 response
     index.js->>user: returns 404, message "No Stripe account has been found..."
 
-    %% Scenario 2 & 3: Stripe account exists -> retrieve status from Stripe
+    %% Scenario 2: Saved account is not found by Stripe -> typed 409
+    stripeAccountService.js->>stripe: accounts.retrieve(account_id)
+    stripe-->>stripeAccountService.js: resource_missing
+    stripeAccountService.js->>stripeAccountController.js: error code STRIPE_ACCOUNT_NOT_FOUND
+    stripeAccountController.js->>index.js: build HTTP 409 response
+    index.js->>user: support-required message; do not create a replacement
+
+    %% Scenario 3: Stripe lookup or link generation fails -> typed 502/503
+    stripeAccountService.js->>stripeAccountController.js: Stripe lookup/link error code
+    stripeAccountController.js->>index.js: build HTTP 502/503 response
+    index.js->>user: retry or contact support message
+
+    %% Scenario 4: Stripe account exists -> retrieve status from Stripe
     stripeAccountService.js->>stripe: accounts.retrieve(account_id)
     stripe->>stripeAccountService.js: returns Stripe account details
 
     stripeAccountService.js->>stripeAccountService.js: set onboardingComplete, chargesEnabled, payoutsEnabled, bankDetailsProvided
 
-    %% Scenario 2: onboarding NOT complete -> always onboarding link
+    %% Scenario 4a: onboarding NOT complete -> always onboarding link
     stripeAccountService.js->>stripe: accountLinks.create(accountId, refresh_url, return_url)
     stripe->>stripeAccountService.js: returns onboardingUrl
     stripeAccountService.js->>stripeAccountController.js: { statusCode: 200, message "Onboarding not complete...", details { onboardingUrl, loginLinkUrl: null, flags... } }

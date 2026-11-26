@@ -15,6 +15,10 @@ The `Truvi-Integration` Lambda screens paid upcoming bookings that have no Truvi
 1. Lists up to `limit` bookings (default 10, max 50) with status `Paid`, an arrival date in the future and no row in `guest_risk_assessment`.
 2. Sends each booking to Truvi (`POST /verificationRequests`) and maps the answer to `PASSED`, `FLAGGED`, `FAILED` or `ERROR`.
 3. Saves the result. A booking whose Truvi call timed out or got a 5xx is not saved, so the next run tries it again.
+   The retry sends the same `echoToken`, because it is derived from the booking id. If the first call did reach Truvi, Truvi answers `400 echoToken (...) already exists from a previous request` with the earlier `verificationId`. The run then reads that verification (`GET /v1/verificationRequests/{id}`) and saves its result, so a booking never gets two Truvi verifications. The same happens when the Truvi call worked but saving the result failed.
+   The token is `createEchoToken(bookingId)` in `util/truviMapper.js`: a UUID-shaped sha256 of `domits:truvi:create:<bookingId>`. Only the create uses it. Modify and cancel send a random `echoToken`, because each of those requests is new for Truvi.
+   This is on purpose: screening the same booking again later also gives back its first verification, not a new one.
+   The read is the only call under `/v1`. Create, modify and cancel use `/verificationRequests` directly on `TRUVI_BASE_URL`, but Truvi serves the read at `/v1/verificationRequests/{id}`, so `getVerification` in `data/truviApiClient.js` adds `/v1` itself. This path was checked in the sandbox for #3632: the same booking screened twice gave back the same `verificationId` and status.
 4. Fails the run (so CloudWatch shows an error) when a booking could not be handled at all, for example when the database is down.
 
 ## What One Cancel Run Does
@@ -58,8 +62,21 @@ Without `TRUVI_BASE_URL` the Lambda uses the Truvi sandbox. Production needs the
 Safety behavior:
 
 - `TRUVI_SCREENING_ENABLED` switches both tasks. If it is not exactly `true`, the run returns `{ "skipped": true }` without reading the secret, the database or calling Truvi.
-- An event without `"task": "screen-pending-bookings"` or `"task": "cancel-cancelled-bookings"` returns 400 and does nothing.
+- An event with another task than `screen-pending-bookings`, `cancel-cancelled-bookings` or `modify-changed-bookings` returns 400 and does nothing.
 - A missing or invalid `TRUVI_EXTENDED_AMOUNT` or a non-https `TRUVI_BASE_URL` fails the run before any Truvi call.
+
+## What One Modify Run Does
+
+With `"task": "modify-changed-bookings"` the Lambda sends date changes to Truvi:
+
+1. Lists up to `limit` Truvi rows with a verification id and status `PASSED`, `FLAGGED` or `FAILED`, whose booking is not cancelled, whose check-out is still in the future, and whose `arrivaldate`/`departuredate` in `guest_risk_assessment` differ from the booking (or are still empty).
+2. A row with empty dates only gets the current booking dates saved, without a Truvi call. This is only for rows screened before the screening run saved the dates it sent; a new screening already stores the dates of the create request, so a date change right after it is sent to Truvi.
+3. When the dates differ on the day, sends `PUT /verificationRequests` with both new dates (Truvi only accepts the dates, it does not screen again).
+4. Saves the new dates on a 200, so the booking is not sent again.
+5. When Truvi refuses (check-in or check-out in the past, verification cancelled or unknown), saves the new dates with the reason in `errormessage`, so it is not sent again. Truvi then still has the old dates; a non-empty `errormessage` on the row means the stored dates were refused.
+6. Leaves the row for the next run on a timeout or a 5xx, and fails the run on any other 400. In both cases only `updatedat` is set to now, so the row moves to the back of the list (the query sorts on `updatedat` ascending) and a row that keeps failing does not block newer date changes. Truvi's error text is not saved for these rows.
+
+Uses the `arrivaldate` and `departuredate` columns of `guest_risk_assessment` (in the create migration of #3555).
 
 ## EventBridge Rule
 
@@ -102,6 +119,22 @@ Target input:
 }
 ```
 
+Modify rule:
+
+```text
+domits-truvi-modify-rate-15-minutes
+rate(15 minutes)
+```
+
+Target input:
+
+```json
+{
+  "task": "modify-changed-bookings",
+  "limit": 10
+}
+```
+
 Truvi only accepts a cancel up to the check-in day (until 12:00 UTC the day after). A booking cancelled later ends as `CANCEL_REFUSED`.
 
 ## Enablement Steps
@@ -120,7 +153,7 @@ Before you start, this must be done:
 
 ## Manual Lambda Test Event
 
-Use `backend/functions/Truvi-Integration/events/truvi-screen-pending-bookings.event.json` for screening and `truvi-cancel-cancelled-bookings.event.json` for cancellations:
+Use `backend/functions/Truvi-Integration/events/truvi-screen-pending-bookings.event.json` for screening, `truvi-cancel-cancelled-bookings.event.json` for cancellations and `truvi-modify-changed-bookings.event.json` for date changes:
 
 ```json
 {
@@ -134,13 +167,13 @@ Use `backend/functions/Truvi-Integration/events/truvi-screen-pending-bookings.ev
 1. Disable the EventBridge rule.
 2. Set `TRUVI_SCREENING_ENABLED=false`.
 
-Saved results stay in `guest_risk_assessment`. Deleting a row makes the booking eligible for screening again on the next run.
+Saved results stay in `guest_risk_assessment`. Deleting a row makes the next run pick the booking up again, but Truvi then returns the first verification of that booking (same `echoToken`), so the guest is not screened again.
 
 ## What Not To Claim
 
 - Do not claim production screening is enabled; the default is the Truvi sandbox.
 - Do not claim screening happens at booking time; it runs every 15 minutes.
-- Do not claim date or guest changes are sent to Truvi yet; only cancellations are.
+- Do not claim guest, listing or amount changes are sent to Truvi; Truvi only accepts new dates on a modify.
+- Do not claim a date change is sent at once; it is picked up within 15 minutes.
 - Do not claim a cancelled booking keeps its screening status; the row status becomes `CANCELLED` or `CANCEL_REFUSED`.
 - Do not claim Truvi webhooks are handled.
-- Do not claim retries are idempotent at Truvi: a retried booking creates a new verification request.
