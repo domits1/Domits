@@ -5,6 +5,7 @@ import ElitePageHeader from "./ElitePageHeader";
 import EliteAccommodationPage from "./EliteAccommodationPage";
 import EliteAvailabilityLink from "./EliteAvailabilityLink";
 import EliteContactPage from "./EliteContactPage";
+import EliteFooter from "./EliteFooter";
 import EliteGalleryPage from "./EliteGalleryPage";
 import { resolveEliteAvailabilityLabel, resolveEliteGalleryIntro, resolveEliteLocation } from "./eliteSitePageContent";
 import { getDefaultWebsiteCalendarTitle } from "../../../config/websiteCalendarSectionConfig";
@@ -101,12 +102,7 @@ export default function PanoramaEliteSitePage({
           isInteractivePreview={isInteractivePreview}
         />
       ) : null}
-      <footer className={styles.eliteFooter}>
-        <div className={`${styles.eliteSection} ${styles.eliteFooterInner}`}>
-          <span className={styles.eliteFooterName}>{model.site.title}</span>
-          {location ? <span>{location}</span> : null}
-        </div>
-      </footer>
+      <EliteFooter title={model.site.title} location={location} />
     </div>
   );
 }

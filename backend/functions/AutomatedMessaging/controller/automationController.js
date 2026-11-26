@@ -49,6 +49,11 @@ export default class AutomationController {
     return ok(await this.service.update(host.userId, id, parseBody(event)));
   }
 
+  async delete(event, id) {
+    const host = await this.authorize(event);
+    return ok(await this.service.delete(host.userId, id));
+  }
+
   async activate(event, id) {
     const host = await this.authorize(event);
     return ok(await this.service.setStatus(host.userId, id, "ACTIVE"));

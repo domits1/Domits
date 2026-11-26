@@ -179,6 +179,7 @@ test("keeps review publication and property visibility parameters independent in
     propertyId: "p1", filterMinimum: 4, filterMaximum: 5, filterStart: 1000, filterEnd: 2000 });
   expect(query.getQuery()).toContain(">= :filterStart");
   expect(query.getQuery()).toContain("< :filterEnd");
+  expect(query.getQuery().split(" WHERE ")[1]).not.toContain("verification_status");
   expect(query.getParameters()).toMatchObject({ cursorDate: 1500, cursorId: "r2" });
   expect(query.getQuery()).toContain("< :cursorId");
   expect(query.getQueryAndParameters()[1]).toEqual(expect.arrayContaining(["PUBLISHED", "ACTIVE", "GUEST_TO_PROPERTY"]));

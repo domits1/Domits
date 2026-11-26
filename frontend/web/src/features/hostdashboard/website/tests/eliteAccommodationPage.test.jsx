@@ -254,7 +254,7 @@ describe("where the Elite accommodation page does not appear", () => {
     const { container } = renderPage(model, { activePageKey });
 
     expect(container.querySelector("[data-elite-page]")).toBeNull();
-    expect(topBar(container)).not.toHaveClass("panoramaTopBarShellElite");
+    expect(topBar(container)).toHaveClass("panoramaTopBarShellElite");
   });
 });
 

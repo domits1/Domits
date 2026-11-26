@@ -17,10 +17,15 @@ const RULE_VALUE_TYPE_OVERRIDES = Object.freeze({
   LateCheckoutTime: "time",
 });
 
+const isMissingColumnError = (error) =>
+  String(error?.code || error?.driverError?.code || "") === "42703" ||
+  /column .* does not exist/i.test(error?.message || "");
+
 export class PropertyRuleRepository {
   constructor(dynamoDbClient, systemManager) {
     this.systemManager = systemManager;
     this.propertyRuleHasValueNew = undefined;
+    this.propertyRuleHasValueType = undefined;
   }
 
   normalizeValueType(valueType) {
@@ -88,6 +93,61 @@ export class PropertyRuleRepository {
     return this.propertyRuleHasValueNew;
   }
 
+  // Unlike the value_new probe, only a missing column is cached as "unsupported". Any other failure
+  // (a dropped connection, a timeout) is thrown, so one transient error cannot make every later
+  // rule lose its value type for the life of the Lambda.
+  async detectValueTypeSupport(client) {
+    if (this.propertyRuleHasValueType !== undefined) {
+      return this.propertyRuleHasValueType;
+    }
+
+    try {
+      await client
+        .createQueryBuilder()
+        .select("rules.value_type", "value_type")
+        .from("rules", "rules")
+        .where("1 = 0")
+        .getRawMany();
+      this.propertyRuleHasValueType = true;
+    } catch (error) {
+      if (!isMissingColumnError(error)) {
+        throw error;
+      }
+      this.propertyRuleHasValueType = false;
+    }
+
+    return this.propertyRuleHasValueType;
+  }
+
+  // Run before a transaction opens. A probe that fails inside a transaction aborts it, so the
+  // answers have to be cached before the first write.
+  async warmProbes() {
+    const client = await Database.getInstance();
+    await this.detectValueNewSupport(client);
+    await this.detectValueTypeSupport(client);
+  }
+
+  // Once the probes are warm the column is known, so no failing query is issued (and swallowed)
+  // inside a transaction. Without a warm cache the old try-then-fall-back behaviour stays.
+  async queryRuleDefinitionRows(client, applyWhere, fetchMethod) {
+    const run = (withValueType) => {
+      const query = client.createQueryBuilder().select("rules.rule", "rule");
+      if (withValueType) {
+        query.addSelect("rules.value_type", "value_type");
+      }
+      return applyWhere(query.from("rules", "rules"))[fetchMethod]();
+    };
+
+    if (this.propertyRuleHasValueType !== undefined) {
+      return await run(this.propertyRuleHasValueType);
+    }
+    try {
+      return await run(true);
+    } catch {
+      return await run(false);
+    }
+  }
+
   async getRuleDefinitionsByNames(client, ruleNames) {
     const normalizedRuleNames = Array.from(new Set((ruleNames || []).map(String).filter(Boolean)));
     if (normalizedRuleNames.length === 0) {
@@ -95,42 +155,21 @@ export class PropertyRuleRepository {
     }
 
     if (typeof client.createQueryBuilder === "function") {
-      try {
-        const rows = await client
-          .createQueryBuilder()
-          .select("rules.rule", "rule")
-          .addSelect("rules.value_type", "value_type")
-          .from("rules", "rules")
-          .where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames })
-          .getRawMany();
+      const rows = await this.queryRuleDefinitionRows(
+        client,
+        (query) => query.where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames }),
+        "getRawMany"
+      );
 
-        return new Map(
-          rows.map((row) => [
-            String(row.rule),
-            {
-              rule: row.rule,
-              value_type: this.resolveRuleValueType(row.rule, row.value_type),
-            },
-          ])
-        );
-      } catch {
-        const rows = await client
-          .createQueryBuilder()
-          .select("rules.rule", "rule")
-          .from("rules", "rules")
-          .where("rules.rule IN (:...ruleNames)", { ruleNames: normalizedRuleNames })
-          .getRawMany();
-
-        return new Map(
-          rows.map((row) => [
-            String(row.rule),
-            {
-              rule: row.rule,
-              value_type: this.resolveRuleValueType(row.rule),
-            },
-          ])
-        );
-      }
+      return new Map(
+        rows.map((row) => [
+          String(row.rule),
+          {
+            rule: row.rule,
+            value_type: this.resolveRuleValueType(row.rule, row.value_type),
+          },
+        ])
+      );
     }
 
     const rows = await Promise.all(normalizedRuleNames.map(async (ruleName) => await this.getRuleById(ruleName)));
@@ -141,36 +180,18 @@ export class PropertyRuleRepository {
     const client = transactionManager || (await Database.getInstance());
 
     if (typeof client.createQueryBuilder === "function") {
-      try {
-        const row = await client
-          .createQueryBuilder()
-          .select("rules.rule", "rule")
-          .addSelect("rules.value_type", "value_type")
-          .from("rules", "rules")
-          .where("rules.rule = :id", { id })
-          .getRawOne();
+      const row = await this.queryRuleDefinitionRows(
+        client,
+        (query) => query.where("rules.rule = :id", { id }),
+        "getRawOne"
+      );
 
-        return row
-          ? {
-              rule: row.rule,
-              value_type: this.resolveRuleValueType(row.rule, row.value_type),
-            }
-          : null;
-      } catch {
-        const row = await client
-          .createQueryBuilder()
-          .select("rules.rule", "rule")
-          .from("rules", "rules")
-          .where("rules.rule = :id", { id })
-          .getRawOne();
-
-        return row
-          ? {
-              rule: row.rule,
-              value_type: this.resolveRuleValueType(row.rule),
-            }
-          : null;
-      }
+      return row
+        ? {
+            rule: row.rule,
+            value_type: this.resolveRuleValueType(row.rule, row.value_type),
+          }
+        : null;
     }
 
     const repository = client.getRepository?.("rules") || client.getRepository?.(Property_Rule);
@@ -261,7 +282,7 @@ export class PropertyRuleRepository {
 
   async upsertRuleByPropertyId(propertyId, ruleName, rawValue, transactionManager = null) {
     const client = transactionManager || (await Database.getInstance());
-    const ruleDefinition = await this.getRuleById(ruleName);
+    const ruleDefinition = await this.getRuleById(ruleName, transactionManager);
 
     if (!ruleDefinition) {
       throw new Error(`Unknown policy rule: ${ruleName}`);
@@ -273,7 +294,7 @@ export class PropertyRuleRepository {
       valuesToPersist.value_new = typedValues.value_new;
     }
 
-    const existingRule = await this.getRuleByPropertyIdAndRule(propertyId, ruleName);
+    const existingRule = await this.getRuleByPropertyIdAndRule(propertyId, ruleName, transactionManager);
 
     if (existingRule) {
       await client
@@ -295,7 +316,7 @@ export class PropertyRuleRepository {
         .execute();
     }
 
-    return await this.getRuleByPropertyIdAndRule(propertyId, ruleName);
+    return await this.getRuleByPropertyIdAndRule(propertyId, ruleName, transactionManager);
   }
 
   async replaceRulesByPropertyId(propertyId, rules) {

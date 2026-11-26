@@ -56,6 +56,7 @@ related:
 
 ## Error Handling / Testing
 - Handle failure paths intentionally instead of swallowing errors or returning vague junk.
+- Write every user-facing error so it tells the user what happened and what they can do next.
 - Tests should be readable, reliable, and scoped to one behavior/concept at a time.
 - On backend work, validate inputs and data consistency before persistence side effects.
 

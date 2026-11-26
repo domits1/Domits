@@ -4,6 +4,20 @@ import { randomUUID } from "node:crypto";
 import { ChannelIntegrationAccount } from "database/models/unified/integrations/ChannelIntegrationAccount";
 import { ChannelIntegrationProperty } from "database/models/unified/integrations/ChannelIntegrationProperty";
 
+// Same statuses as the partial unique index on (integrationAccountId, domitsPropertyId);
+// one legacy row is stored as lowercase "active" (design note D2, #506).
+export const IN_USE_STATUSES = ["PROVISIONING", "ACTIVE", "active"];
+
+// Thrown when a listing already has an in-use mapping to another external property.
+// The caller decides the answer (409); the data layer knows nothing about HTTP.
+export class MappingConflictError extends Error {
+  constructor(existingExternalPropertyId) {
+    super("This listing is already connected to another external property.");
+    this.name = "MappingConflictError";
+    this.existingExternalPropertyId = existingExternalPropertyId;
+  }
+}
+
 class IntegrationPropertyRepository {
   async upsert({ integrationAccountId, domitsPropertyId, externalPropertyId, externalPropertyName, status }) {
     const client = await Database.getInstance();
@@ -15,6 +29,22 @@ class IntegrationPropertyRepository {
       .andWhere("p.domitsPropertyId = :d", { d: domitsPropertyId })
       .andWhere("p.externalPropertyId = :e", { e: externalPropertyId })
       .getOne();
+
+    // A second live external property would keep selling with availability Domits no longer
+    // updates, so it is refused instead of saved next to the first (design note D2).
+    const resultingStatus = status ?? existing?.status ?? "ACTIVE";
+    if (IN_USE_STATUSES.includes(resultingStatus)) {
+      const inUseElsewhere = await client
+        .getRepository(ChannelIntegrationProperty)
+        .createQueryBuilder("p")
+        .where("p.integrationAccountId = :a", { a: integrationAccountId })
+        .andWhere("p.domitsPropertyId = :d", { d: domitsPropertyId })
+        // A claim row (PROVISIONING) has no external id yet; NULL <> :e is not true in SQL, so name it.
+        .andWhere("(p.externalPropertyId IS NULL OR p.externalPropertyId <> :e)", { e: externalPropertyId })
+        .andWhere("p.status IN (:...inUse)", { inUse: IN_USE_STATUSES })
+        .getOne();
+      if (inUseElsewhere) throw new MappingConflictError(inUseElsewhere.externalPropertyId);
+    }
 
     const now = Date.now();
 
@@ -51,6 +81,102 @@ class IntegrationPropertyRepository {
 
     await client.createQueryBuilder().insert().into(ChannelIntegrationProperty).values(row).execute();
     return row;
+  }
+
+  async findInUseByAccountAndListing(integrationAccountId, domitsPropertyId) {
+    const client = await Database.getInstance();
+    const row = await client
+      .getRepository(ChannelIntegrationProperty)
+      .createQueryBuilder("p")
+      .where("p.integrationAccountId = :a", { a: integrationAccountId })
+      .andWhere("p.domitsPropertyId = :d", { d: domitsPropertyId })
+      .andWhere("p.status IN (:...inUse)", { inUse: IN_USE_STATUSES })
+      .getOne();
+    return row ?? null;
+  }
+
+  // Does not look first (design note D2): two simultaneous claims are decided by the partial unique key, and the loser's error reaches the caller.
+  async insertClaim({ id, integrationAccountId, domitsPropertyId, now }) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .insert()
+      .into(ChannelIntegrationProperty)
+      .values({
+        id,
+        integrationAccountId,
+        domitsPropertyId,
+        externalPropertyId: null,
+        externalPropertyName: null,
+        status: "PROVISIONING",
+        createdAt: now,
+        updatedAt: now,
+      })
+      .execute();
+  }
+
+  // Look before create (design note D2): a Channex property is only adopted when no in-use mapping uses it.
+  async isExternalPropertyInUse(externalPropertyId) {
+    const client = await Database.getInstance();
+    const count = await client
+      .getRepository(ChannelIntegrationProperty)
+      .createQueryBuilder("p")
+      .where("p.externalPropertyId = :e", { e: externalPropertyId })
+      .andWhere("p.status IN (:...inUse)", { inUse: IN_USE_STATUSES })
+      .getCount();
+    return count > 0;
+  }
+
+  // Saved before the next Channex call, so a later attempt continues from this property.
+  async setClaimExternalProperty(claimId, externalPropertyId, externalPropertyName) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationProperty)
+      .set({ externalPropertyId, externalPropertyName, updatedAt: Date.now() })
+      .where("id = :id", { id: claimId })
+      .andWhere("status = :s", { s: "PROVISIONING" })
+      .execute();
+  }
+
+  // Takes over a stale claim only if nobody touched it since it was read, so of two requests that find
+  // the same stale claim exactly one wins (design note D2).
+  async takeOverClaim({ claimId, expectedUpdatedAt, now }) {
+    const client = await Database.getInstance();
+    const result = await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationProperty)
+      .set({ updatedAt: now })
+      .where("id = :id", { id: claimId })
+      .andWhere("status = :s", { s: "PROVISIONING" })
+      .andWhere('"updatedAt" = :expected', { expected: expectedUpdatedAt })
+      .execute();
+    return result?.affected === 1;
+  }
+
+  // An attempt that ended without success makes its claim stale at once, so the next click can take it
+  // over instead of waiting out the lease.
+  async releaseClaim(claimId) {
+    const client = await Database.getInstance();
+    await client
+      .createQueryBuilder()
+      .update(ChannelIntegrationProperty)
+      .set({ updatedAt: 0 })
+      .where("id = :id", { id: claimId })
+      .andWhere("status = :s", { s: "PROVISIONING" })
+      .execute();
+  }
+
+  // Runs on the caller's transaction, together with the full sync (design note D2).
+  async activateClaim(manager, claimId) {
+    const result = await manager
+      .createQueryBuilder()
+      .update(ChannelIntegrationProperty)
+      .set({ status: "ACTIVE", updatedAt: Date.now() })
+      .where("id = :id", { id: claimId })
+      .andWhere("status = :s", { s: "PROVISIONING" })
+      .execute();
+    return result?.affected === 1;
   }
 
   async listByAccountId(integrationAccountId) {

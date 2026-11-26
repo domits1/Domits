@@ -32,6 +32,21 @@ export const buildAccommodationImageUrl = (key) => {
   return normalizedKey ? `${ACCOMMODATION_IMAGE_BASE_URL}${normalizedKey}` : "";
 };
 
+const readyVariantKey = (schemaName, variant) => `(SELECT v.s3_key
+         FROM ${schemaName}.property_image_v2 i
+         JOIN ${schemaName}.property_image_variant v ON v.image_id = i.id AND v.variant = '${variant}'
+         WHERE i.property_id = p.id AND i.status = 'READY'
+         ORDER BY i.sort_order ASC, i.id ASC
+         LIMIT 1)`;
+
+const isOwnImageKey = (key, propertyId) => {
+  const prefix = `images/${propertyId}/`;
+  return typeof key === "string" && key.length > prefix.length && key.startsWith(prefix);
+};
+
+const pickListingImageKey = (row) =>
+  [row.web_key, row.original_key, row.legacy_key].find((key) => isOwnImageKey(key, String(row.id))) ?? "";
+
 export class DestinationPageRepository {
   async listDestinationsWithActiveListings() {
     const client = await Database.getInstance();
@@ -66,12 +81,13 @@ export class DestinationPageRepository {
 
     const rows = await client.query(
       `SELECT p.id, p.title, l.city, l.country, pr.roomrate, d.path,
-        (SELECT v.s3_key
-         FROM ${schemaName}.property_image_v2 i
-         JOIN ${schemaName}.property_image_variant v ON v.image_id = i.id AND v.variant = 'web'
-         WHERE i.property_id = p.id AND i.status = 'READY'
-         ORDER BY i.sort_order ASC, i.id ASC
-         LIMIT 1) AS image_key
+        ${readyVariantKey(schemaName, "web")} AS web_key,
+        ${readyVariantKey(schemaName, "original")} AS original_key,
+        (SELECT li.key
+         FROM ${schemaName}.property_image li
+         WHERE li.property_id = p.id AND li.key LIKE ('images/' || p.id || '/%')
+         ORDER BY li.key ASC
+         LIMIT 1) AS legacy_key
       FROM ${schemaName}.property_destination m
       JOIN ${schemaName}.destination d ON d.id = m.destination_id
       JOIN ${schemaName}.property p ON p.id = m.property_id AND p.status = $1
@@ -94,7 +110,7 @@ export class DestinationPageRepository {
       city: String(row.city ?? ""),
       country: String(row.country ?? ""),
       nightlyRate: Number(row.roomrate) || 0,
-      imageUrl: buildAccommodationImageUrl(row.image_key),
+      imageUrl: buildAccommodationImageUrl(pickListingImageKey(row)),
       destinationPath: String(row.path ?? ""),
     }));
   }

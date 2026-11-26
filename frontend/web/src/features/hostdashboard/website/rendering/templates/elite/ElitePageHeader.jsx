@@ -57,7 +57,7 @@ export default function ElitePageHeader({
 
 ElitePageHeader.propTypes = {
   title: PropTypes.string.isRequired,
-  eyebrow: PropTypes.string.isRequired,
+  eyebrow: PropTypes.node.isRequired,
   intro: PropTypes.string,
   tone: PropTypes.oneOf(["photo", "light"]).isRequired,
   model: PropTypes.shape({ media: PropTypes.object.isRequired }).isRequired,

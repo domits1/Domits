@@ -62,6 +62,7 @@ const normalizePublicWebsiteRenderPayload = (payload) => {
     contentOverrides: payload.contentOverrides && typeof payload.contentOverrides === "object" ? payload.contentOverrides : {},
     themeOverrides: payload.themeOverrides && typeof payload.themeOverrides === "object" ? payload.themeOverrides : {},
     renderSource: String(payload.renderSource || "").trim(),
+    ...(Array.isArray(payload.siteProperties) ? { siteProperties: payload.siteProperties } : {}),
   };
 };
 

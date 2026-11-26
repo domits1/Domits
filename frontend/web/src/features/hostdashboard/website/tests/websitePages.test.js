@@ -16,6 +16,7 @@ import {
   resolveSitePageFromPath,
   resolveSitePageTitle,
 } from "../rendering/websitePages";
+import { SITE_PROPERTY_PATH_SEGMENT } from "../rendering/websiteSiteProperties";
 
 const CONFIGURABLE_PAGE_KEYS = ["gallery", "accommodation", "contact"];
 
@@ -184,6 +185,14 @@ describe("reserved site paths", () => {
       expect(isReservedSitePath(segment)).toBe(true);
     }
   );
+
+  it("keeps the property paths of a site out of the app routes and out of the site page slugs", () => {
+    expect(readAppRouteSegments()).not.toContain(SITE_PROPERTY_PATH_SEGMENT);
+    expect(isReservedSitePath(SITE_PROPERTY_PATH_SEGMENT)).toBe(true);
+    expect(findSitePageTableProblems(withPage({ slug: SITE_PROPERTY_PATH_SEGMENT }))).toEqual([
+      'slug "properties" is a Domits path on a site host',
+    ]);
+  });
 
   it.each([[undefined], [null], [7]])("does not reserve %p", (segment) => {
     expect(isReservedSitePath(segment)).toBe(false);

@@ -49,19 +49,52 @@ class ReservationRepository {
 
   // A booking change that opens or closes nights must reach Channex, so its outbox rows
   // are saved in the same transaction (design D8). Without changes the write runs as before.
-  async #saveWithOutbox(channexChanges, work) {
+  async #saveWithOutbox(channexChanges, work, writeAutomationEvent = null) {
     const client = await Database.getInstance();
     const changes = channexChanges.filter(Boolean);
-    if (!changes.length) return work(client);
+    if (!changes.length && !writeAutomationEvent) return work(client);
     return withDsqlRetry(() =>
       client.transaction(async (manager) => {
         const result = await work(manager);
         for (const change of changes) {
           await this.channexAriOutboxWriter.enqueueChannexAriChange(manager, change);
         }
+        if (writeAutomationEvent) await writeAutomationEvent(manager);
         return result;
       })
     );
+  }
+
+  async #enqueueBookingDatesChanged(manager, bookingId) {
+    const latest = await manager
+      .createQueryBuilder()
+      .select("MAX(event.eventVersion)", "version")
+      .from(BookingAutomationOutbox, "event")
+      .where("event.bookingId = :bookingId AND event.eventType = :eventType", {
+        bookingId,
+        eventType: "BOOKING_DATES_CHANGED",
+      })
+      .getRawOne();
+    const changedAt = Date.now();
+
+    await manager
+      .createQueryBuilder()
+      .insert()
+      .into(BookingAutomationOutbox)
+      .values({
+        id: randomUUID(),
+        bookingId,
+        eventType: "BOOKING_DATES_CHANGED",
+        eventVersion: Number(latest?.version || 0) + 1,
+        occurredAt: changedAt,
+        status: "PENDING",
+        attemptCount: 0,
+        failureReason: null,
+        createdAt: changedAt,
+        updatedAt: changedAt,
+        processedAt: null,
+      })
+      .execute();
   }
 
   // ---------
@@ -592,17 +625,20 @@ class ReservationRepository {
     });
   }
 
-  async updateBookingDates(id, arrivalDateMs, departureDateMs, channexChanges = []) {
-    const query = await this.#saveWithOutbox(channexChanges, (manager) =>
-      manager
-        .createQueryBuilder()
-        .update(Booking)
-        .set({
-          arrivaldate: Number.parseFloat(arrivalDateMs),
-          departuredate: Number.parseFloat(departureDateMs),
-        })
-        .where("id = :id", { id })
-        .execute()
+  async updateBookingDates(id, arrivalDateMs, departureDateMs, channexChanges = [], { notifyAutomations = false } = {}) {
+    const query = await this.#saveWithOutbox(
+      channexChanges,
+      (manager) =>
+        manager
+          .createQueryBuilder()
+          .update(Booking)
+          .set({
+            arrivaldate: Number.parseFloat(arrivalDateMs),
+            departuredate: Number.parseFloat(departureDateMs),
+          })
+          .where("id = :id", { id })
+          .execute(),
+      notifyAutomations ? (manager) => this.#enqueueBookingDatesChanged(manager, id) : null
     );
 
     return {

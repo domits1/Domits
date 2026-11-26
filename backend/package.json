@@ -44,6 +44,7 @@
 		"database": "file:./ORM",
 		"fast-xml-parser": "~5.12.1",
 		"pg": "^8.16.0",
+		"react-select-country-list": "^2.2.3",
 		"reflect-metadata": "^0.2.2",
 		"sharp": "^0.35.5",
 		"stripe": "^18.1.1",

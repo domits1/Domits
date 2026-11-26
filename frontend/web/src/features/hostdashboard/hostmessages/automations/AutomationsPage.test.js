@@ -10,6 +10,7 @@ import { fetchAccommodationsByOwnerId } from "../../../../services/fetchAccommod
 import {
   activateAutomation,
   createAutomation,
+  deleteAutomation,
   listAutomationDeliveries,
   listAutomations,
   pauseAutomation,
@@ -24,6 +25,7 @@ jest.mock("../../../../services/fetchAccommodationByOwnerIdService", () => ({
 jest.mock("../services/automationService", () => ({
   activateAutomation: jest.fn(),
   createAutomation: jest.fn(),
+  deleteAutomation: jest.fn(),
   listAutomationDeliveries: jest.fn(),
   listAutomations: jest.fn(),
   pauseAutomation: jest.fn(),
@@ -72,13 +74,13 @@ describe("host automated messages v1", () => {
     });
   });
 
-  test("shows the host automation list, fixed trigger/channel, and delivery status", async () => {
+  test("shows the host automation list, the stored schedule, the fixed channel, and delivery status", async () => {
     render(<AutomationsContent />);
     expect(await screen.findByText("Paid booking welcome")).toBeInTheDocument();
     await screen.findByRole("option", { name: "Canal Loft" });
     fireEvent.click(screen.getByText("Paid booking welcome"));
 
-    expect(screen.getByLabelText("Trigger")).toHaveValue("BOOKING_PAID");
+    expect(screen.getByLabelText("When to send")).toHaveValue("BOOKING_PAID");
     expect(screen.getByLabelText("Channel")).toHaveValue("DOMITS_DIRECT");
     expect(await screen.findByText("FAILED")).toBeInTheDocument();
     expect(await screen.findByText("Domits Direct delivery failed.")).toBeInTheDocument();
@@ -145,6 +147,275 @@ describe("host automated messages v1", () => {
     ));
   });
 
+  describe("when to send", () => {
+    const openEditor = async () => {
+      render(<AutomationsContent />);
+      await screen.findByText("Paid booking welcome");
+      await screen.findByRole("option", { name: "Canal Loft" });
+    };
+
+    const choose = (option) => fireEvent.change(screen.getByLabelText("When to send"), { target: { value: option } });
+
+    beforeEach(() => {
+      createAutomation.mockImplementation(async (payload) => ({ ...automation, ...payload, id: "automation-2" }));
+      updateAutomation.mockImplementation(async (id, payload) => ({ ...automation, ...payload, id }));
+    });
+
+    test("offers the six options", async () => {
+      await openEditor();
+
+      expect(within(screen.getByLabelText("When to send")).getAllByRole("option").map((option) => option.textContent)).toEqual([
+        "Booking paid",
+        "Before check-in",
+        "On check-in day",
+        "After check-in",
+        "Before check-out",
+        "After check-out",
+      ]);
+    });
+
+    test("loads an automation saved before the new fields as booking paid and saves it as booking paid", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("Paid booking welcome"));
+
+      expect(screen.getByLabelText("When to send")).toHaveValue("BOOKING_PAID");
+      expect(screen.getByLabelText("Time of day")).toBeDisabled();
+      expect(screen.queryByText("Applies to bookings paid after you activate it")).not.toBeInTheDocument();
+      expect(screen.getByTestId("schedule-sentence")).toHaveTextContent("2 hours after the booking is paid");
+
+      fireEvent.click(screen.getByText("Save"));
+
+      await waitFor(() =>
+        expect(updateAutomation).toHaveBeenCalledWith(
+          "automation-1",
+          expect.objectContaining({
+            triggerType: "BOOKING_PAID",
+            offsetDirection: null,
+            offsetAmount: 2,
+            offsetUnit: "HOURS",
+            sendTime: null,
+          })
+        )
+      );
+    });
+
+    test("describes a check-in rule in one sentence, with the note, and saves it", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("New automation"));
+      fireEvent.change(screen.getByLabelText("Automation name"), { target: { value: "Pre-arrival" } });
+      choose("BEFORE_CHECK_IN");
+      fireEvent.change(screen.getByLabelText("Offset amount"), { target: { value: "3" } });
+      fireEvent.change(screen.getByLabelText("Offset unit"), { target: { value: "DAYS" } });
+      fireEvent.change(screen.getByLabelText("Time of day"), { target: { value: "10:00" } });
+
+      expect(screen.getByTestId("schedule-sentence")).toHaveTextContent("3 days before check-in, at 10:00 (Amsterdam time)");
+      expect(screen.getByText("Applies to bookings paid after you activate it")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("Save"));
+
+      await waitFor(() =>
+        expect(createAutomation).toHaveBeenCalledWith(
+          expect.objectContaining({
+            triggerType: "CHECK_IN",
+            offsetDirection: "BEFORE",
+            offsetAmount: 3,
+            offsetUnit: "DAYS",
+            sendTime: "10:00",
+          })
+        )
+      );
+    });
+
+    test("on the check-in day the amount is fixed at zero", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("New automation"));
+      fireEvent.change(screen.getByLabelText("Offset amount"), { target: { value: "4" } });
+
+      choose("ON_CHECK_IN");
+
+      expect(screen.getByLabelText("Offset amount")).toBeDisabled();
+      expect(screen.getByLabelText("Offset amount")).toHaveValue(0);
+      expect(screen.getByTestId("schedule-sentence")).toHaveTextContent(
+        "On the day of check-in, at the property's check-in time (Amsterdam time)"
+      );
+    });
+
+    test("a time of day is unavailable with hours and is not sent", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("New automation"));
+      choose("AFTER_CHECK_OUT");
+      fireEvent.change(screen.getByLabelText("Offset amount"), { target: { value: "2" } });
+      fireEvent.change(screen.getByLabelText("Offset unit"), { target: { value: "DAYS" } });
+      fireEvent.change(screen.getByLabelText("Time of day"), { target: { value: "09:00" } });
+      fireEvent.change(screen.getByLabelText("Offset unit"), { target: { value: "HOURS" } });
+
+      expect(screen.getByLabelText("Time of day")).toBeDisabled();
+      expect(screen.getByText("A time of day works with days, or on the day of check-in or check-out.")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("Save"));
+      await waitFor(() => expect(createAutomation).toHaveBeenCalledWith(expect.objectContaining({ sendTime: null })));
+    });
+
+    test("loads a stored check-out rule into the picker and its fields", async () => {
+      listAutomations.mockResolvedValueOnce([
+        {
+          ...automation,
+          id: "automation-3",
+          name: "Thanks",
+          triggerType: "CHECK_OUT",
+          offsetDirection: "AFTER",
+          offsetAmount: 1,
+          offsetUnit: "DAYS",
+          sendTime: "09:00",
+        },
+      ]);
+      render(<AutomationsContent />);
+      fireEvent.click(await screen.findByText("Thanks"));
+
+      expect(screen.getByLabelText("When to send")).toHaveValue("AFTER_CHECK_OUT");
+      expect(screen.getByLabelText("Offset amount")).toHaveValue(1);
+      expect(screen.getByLabelText("Offset unit")).toHaveValue("DAYS");
+      expect(screen.getByLabelText("Time of day")).toHaveValue("09:00");
+    });
+
+    test("choosing After check-in after the check-in day starts at one so the rule stays after check-in", async () => {
+      await openEditor();
+      fireEvent.click(screen.getByText("New automation"));
+      choose("ON_CHECK_IN");
+
+      choose("AFTER_CHECK_IN");
+
+      expect(screen.getByLabelText("Offset amount")).toHaveValue(1);
+    });
+  });
+
+  describe("automation list", () => {
+    const stayAutomation = {
+      ...automation,
+      id: "automation-3",
+      name: "Check-out thanks",
+      triggerType: "CHECK_OUT",
+      offsetDirection: "AFTER",
+      offsetAmount: 1,
+      offsetUnit: "DAYS",
+      sendTime: "10:00",
+      status: "ACTIVE",
+    };
+
+    const renderList = async (items) => {
+      listAutomations.mockResolvedValueOnce(items);
+      render(<AutomationsContent />);
+      await screen.findByRole("option", { name: "Canal Loft" });
+      return within(screen.getByLabelText("Automation list"));
+    };
+
+    test("shows when each automation sends under its name", async () => {
+      const list = await renderList([automation, stayAutomation]);
+
+      expect(await list.findByText("2 hours after the booking is paid")).toBeInTheDocument();
+      expect(list.getByText("1 day after check-out, at 10:00 (Amsterdam time)")).toBeInTheDocument();
+    });
+
+    test("shows only active automations on the Active tab", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+
+      fireEvent.click(list.getByRole("button", { name: "Active" }));
+
+      expect(list.getByText("Check-out thanks")).toBeInTheDocument();
+      expect(list.queryByText("Paid booking welcome")).not.toBeInTheDocument();
+      expect(list.getByRole("button", { name: "Active" })).toHaveAttribute("aria-pressed", "true");
+    });
+
+    test("shows an empty state on the Paused tab when nothing is paused", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+
+      fireEvent.click(list.getByRole("button", { name: "Paused" }));
+
+      expect(list.getByText("No paused automations.")).toBeInTheDocument();
+      expect(list.queryByText("Check-out thanks")).not.toBeInTheDocument();
+    });
+
+    test("shows every automation again on the All tab", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+      fireEvent.click(list.getByRole("button", { name: "Paused" }));
+
+      fireEvent.click(list.getByRole("button", { name: "All" }));
+
+      expect(list.getByText("Check-out thanks")).toBeInTheDocument();
+      expect(list.getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+  });
+
+  describe("deleting an automation", () => {
+    const openAutomation = async () => {
+      render(<AutomationsContent />);
+      fireEvent.click(await screen.findByText("Paid booking welcome"));
+      await screen.findByRole("option", { name: "Canal Loft" });
+    };
+
+    beforeEach(() => {
+      jest.spyOn(window, "confirm").mockReturnValue(true);
+      deleteAutomation.mockResolvedValue({ id: "automation-1", deleted: true });
+    });
+
+    afterEach(() => {
+      window.confirm.mockRestore();
+    });
+
+    test("offers no Delete button for an automation that was never saved", async () => {
+      render(<AutomationsContent />);
+      await screen.findByText("Paid booking welcome");
+
+      expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    });
+
+    test("does nothing when the host cancels the confirmation", async () => {
+      window.confirm.mockReturnValue(false);
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      expect(deleteAutomation).not.toHaveBeenCalled();
+      expect(screen.getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+
+    test("deletes after confirmation and removes it from the list", async () => {
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      await waitFor(() => expect(deleteAutomation).toHaveBeenCalledWith("automation-1"));
+      expect(window.confirm).toHaveBeenCalledWith("Delete this automation? Its scheduled messages will be cancelled.");
+      await waitFor(() => expect(screen.queryByText("Paid booking welcome")).not.toBeInTheDocument());
+      expect(screen.getByLabelText("Automation name")).toHaveValue("");
+      expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    });
+
+    test("removes the automation without an error when it was already deleted", async () => {
+      deleteAutomation.mockRejectedValueOnce(Object.assign(new Error("Automation not found."), { status: 404 }));
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      await waitFor(() => expect(screen.queryByText("Paid booking welcome")).not.toBeInTheDocument());
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Automation name")).toHaveValue("");
+    });
+
+    test("keeps the automation and shows the error when deleting fails", async () => {
+      deleteAutomation.mockRejectedValueOnce(Object.assign(new Error("Delete failed."), { status: 500 }));
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Delete failed.");
+      expect(within(screen.getByLabelText("Automation list")).getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+  });
+
   test("activates and pauses an automation", async () => {
     render(<AutomationsContent />);
     fireEvent.click(await screen.findByText("Paid booking welcome"));
@@ -158,15 +429,15 @@ describe("host automated messages v1", () => {
 
   describe("variable buttons", () => {
     const EXPECTED = [
-      ["guestName", "Guest's name"],
-      ["propertyName", "Name of the property"],
-      ["checkInDate", "Arrival date"],
-      ["checkOutDate", "Departure date"],
-      ["checkInTime", "Earliest check-in time"],
-      ["checkOutTime", "Latest check-out time"],
-      ["propertyAddress", "Street, number and postal code"],
-      ["propertyCity", "City of the property"],
-      ["numberOfGuests", "Number of guests on the booking"],
+      ["guestName", "Guest name", "Guest's name", "Insert guest name"],
+      ["propertyName", "Property name", "Name of the property", "Insert property name"],
+      ["checkInDate", "Check-in date", "Arrival date", "Insert check-in date"],
+      ["checkOutDate", "Check-out date", "Departure date", "Insert check-out date"],
+      ["checkInTime", "Check-in time", "Earliest check-in time", "Insert check-in time"],
+      ["checkOutTime", "Check-out time", "Latest check-out time", "Insert check-out time"],
+      ["propertyAddress", "Address", "Street, number and postal code", "Insert address"],
+      ["propertyCity", "City", "City of the property", "Insert city"],
+      ["numberOfGuests", "Number of guests", "Number of guests on the booking", "Insert number of guests"],
     ];
 
     const renderEditor = async () => {
@@ -176,33 +447,88 @@ describe("host automated messages v1", () => {
       return within(screen.getByLabelText("Supported variables"));
     };
 
-    test("offers every supported variable, the new ones after the four existing ones", async () => {
+    test("offers every supported variable as a readable label, in the same order", async () => {
       const variables = await renderEditor();
 
       expect(variables.getAllByRole("button").map((button) => button.textContent)).toEqual(
-        EXPECTED.map(([name]) => `{{${name}}}`)
+        EXPECTED.map(([, shortLabel]) => shortLabel)
       );
     });
 
-    test.each(EXPECTED)("explains {{%s}} with a short tooltip", async (name, label) => {
+    test("shows no raw tag on a chip", async () => {
       const variables = await renderEditor();
 
-      expect(variables.getByRole("button", { name: `{{${name}}}` })).toHaveAttribute("title", label);
+      variables.getAllByRole("button").forEach((button) => expect(button.textContent).not.toContain("{{"));
     });
 
-    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when clicked", async (name) => {
+    test.each(EXPECTED)("explains {{%s}} in the tooltip with the description and the tag", async (name, shortLabel, description) => {
+      const variables = await renderEditor();
+
+      expect(variables.getByRole("button", { name: `Insert ${shortLabel.toLowerCase()}` })).toHaveAttribute(
+        "title",
+        `${description} · {{${name}}}`
+      );
+    });
+
+    test.each(EXPECTED)("gives the {{%s}} chip a screen reader label", async (_name, _short, _description, ariaLabel) => {
+      const variables = await renderEditor();
+
+      expect(variables.getByRole("button", { name: ariaLabel })).toHaveAttribute("aria-label", ariaLabel);
+    });
+
+    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when the message box was not focused", async (name, _short, _description, ariaLabel) => {
       const variables = await renderEditor();
       fireEvent.change(screen.getByLabelText("Message template"), { target: { value: "Welcome. " } });
 
-      fireEvent.click(variables.getByRole("button", { name: `{{${name}}}` }));
+      fireEvent.click(variables.getByRole("button", { name: ariaLabel }));
 
       expect(screen.getByLabelText("Message template")).toHaveValue(`Welcome. {{${name}}}`);
+    });
+
+    test("inserts the variable at the cursor and keeps the cursor after it", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      fireEvent.change(template, { target: { value: "Hi , welcome." } });
+      template.focus();
+      template.setSelectionRange(3, 3);
+
+      fireEvent.click(variables.getByRole("button", { name: "Insert guest name" }));
+
+      expect(template).toHaveValue("Hi {{guestName}}, welcome.");
+      expect(template).toHaveFocus();
+      expect(template.selectionStart).toBe(16);
+      expect(template.selectionEnd).toBe(16);
+    });
+
+    test("replaces the selected text with the variable", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      fireEvent.change(template, { target: { value: "Stay at NAME tonight." } });
+      template.focus();
+      template.setSelectionRange(8, 12);
+
+      fireEvent.click(variables.getByRole("button", { name: "Insert property name" }));
+
+      expect(template).toHaveValue("Stay at {{propertyName}} tonight.");
+    });
+
+    test("appends again after switching to another automation", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      template.focus();
+      template.setSelectionRange(0, 0);
+
+      fireEvent.click(screen.getByText("Paid booking welcome"));
+      template.setSelectionRange(0, 0);
+      fireEvent.click(variables.getByRole("button", { name: "Insert city" }));
+
+      expect(template).toHaveValue("Hi {{guestName}} at {{propertyName}}{{propertyCity}}");
     });
 
     test("sends a template with a new variable to the backend preview", async () => {
       const variables = await renderEditor();
       fireEvent.change(screen.getByLabelText("Message template"), { target: { value: "Check-in from " } });
-      fireEvent.click(variables.getByRole("button", { name: "{{checkInTime}}" }));
+      fireEvent.click(variables.getByRole("button", { name: "Insert check-in time" }));
 
       fireEvent.click(screen.getByText("Render preview"));
 

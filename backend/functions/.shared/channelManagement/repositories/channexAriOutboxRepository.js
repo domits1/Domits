@@ -334,6 +334,17 @@ export default class ChannexAriOutboxRepository {
 
   // Read-only numbers for the health view (#2869, design note section 7). The table stays
   // small because cleanup removes sent rows after 30 days and failed rows after 90.
+  // Design note D7: an active OTA shows "Syncing…" while the listing still has changes on the way.
+  async hasWaitingRows(domitsPropertyId) {
+    const { client, table } = await this.table();
+    const { PENDING, PROCESSING } = CHANNEX_ARI_OUTBOX_STATUS;
+    const [row = {}] = await client.query(
+      `SELECT count(*) AS waiting FROM ${table} WHERE domitspropertyid = $1 AND status IN ($2, $3)`,
+      [domitsPropertyId, PENDING, PROCESSING]
+    );
+    return toCount(row.waiting) > 0;
+  }
+
   async healthSummary({ now = Date.now() } = {}) {
     const { client, table } = await this.table();
     const { PENDING, PROCESSING, FAILED, PROCESSED } = CHANNEX_ARI_OUTBOX_STATUS;

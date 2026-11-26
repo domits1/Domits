@@ -546,6 +546,47 @@ CREATE UNIQUE INDEX ASYNC property_owner_property_open_unique ON main.property_o
 CREATE INDEX ASYNC property_owner_property_property_id_idx ON main.property_owner_property (property_id);
 CREATE INDEX ASYNC property_owner_property_host_id_idx ON main.property_owner_property (host_id);
 
+CREATE TABLE IF NOT EXISTS main.document (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  host_id VARCHAR(255) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NULL,
+  category VARCHAR(50) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'active',
+  visibility VARCHAR(20) NOT NULL DEFAULT 'internal',
+  review_status VARCHAR(20) NULL,
+  current_version_id UUID NULL,
+  issue_date BIGINT NULL,
+  expiration_date BIGINT NULL,
+  created_by VARCHAR(255) NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  archived_at BIGINT NULL,
+  deleted_at BIGINT NULL
+);
+CREATE INDEX ASYNC document_host_id_idx ON main.document (host_id);
+CREATE INDEX ASYNC document_host_id_category_idx ON main.document (host_id, category);
+CREATE INDEX ASYNC document_host_id_expiration_date_idx ON main.document (host_id, expiration_date);
+
+CREATE TABLE IF NOT EXISTS main.document_version (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  version_number INTEGER NOT NULL,
+  storage_key VARCHAR(1024) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  file_size BIGINT NOT NULL,
+  checksum VARCHAR(128) NULL,
+  uploaded_by VARCHAR(255) NOT NULL,
+  change_description TEXT NULL,
+  created_at BIGINT NOT NULL,
+  CONSTRAINT document_version_version_number_check CHECK (version_number >= 1),
+  CONSTRAINT document_version_file_size_check CHECK (file_size > 0)
+);
+CREATE UNIQUE INDEX ASYNC document_version_document_id_version_number_unique ON main.document_version (document_id, version_number);
+CREATE INDEX ASYNC document_version_host_id_idx ON main.document_version (host_id);
+
 -- -----------------------------------------------------
 -- Table main.property_test_status
 -- -----------------------------------------------------
@@ -678,6 +719,47 @@ CREATE UNIQUE INDEX ASYNC property_owner_property_owner_property_from_unique_tes
 CREATE UNIQUE INDEX ASYNC property_owner_property_open_unique_test ON test.property_owner_property (owner_id, property_id) WHERE effective_to IS NULL;
 CREATE INDEX ASYNC property_owner_property_property_id_idx_test ON test.property_owner_property (property_id);
 CREATE INDEX ASYNC property_owner_property_host_id_idx_test ON test.property_owner_property (host_id);
+
+CREATE TABLE IF NOT EXISTS test.document (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  host_id VARCHAR(255) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NULL,
+  category VARCHAR(50) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'active',
+  visibility VARCHAR(20) NOT NULL DEFAULT 'internal',
+  review_status VARCHAR(20) NULL,
+  current_version_id UUID NULL,
+  issue_date BIGINT NULL,
+  expiration_date BIGINT NULL,
+  created_by VARCHAR(255) NOT NULL,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  archived_at BIGINT NULL,
+  deleted_at BIGINT NULL
+);
+CREATE INDEX ASYNC document_host_id_idx_test ON test.document (host_id);
+CREATE INDEX ASYNC document_host_id_category_idx_test ON test.document (host_id, category);
+CREATE INDEX ASYNC document_host_id_expiration_date_idx_test ON test.document (host_id, expiration_date);
+
+CREATE TABLE IF NOT EXISTS test.document_version (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  version_number INTEGER NOT NULL,
+  storage_key VARCHAR(1024) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  file_size BIGINT NOT NULL,
+  checksum VARCHAR(128) NULL,
+  uploaded_by VARCHAR(255) NOT NULL,
+  change_description TEXT NULL,
+  created_at BIGINT NOT NULL,
+  CONSTRAINT document_version_version_number_check_test CHECK (version_number >= 1),
+  CONSTRAINT document_version_file_size_check_test CHECK (file_size > 0)
+);
+CREATE UNIQUE INDEX ASYNC document_version_document_id_version_number_unique_test ON test.document_version (document_id, version_number);
+CREATE INDEX ASYNC document_version_host_id_idx_test ON test.document_version (host_id);
 
 -- Review persistence
 CREATE TABLE IF NOT EXISTS test.review (
