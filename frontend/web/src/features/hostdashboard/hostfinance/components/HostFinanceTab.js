@@ -89,6 +89,7 @@ export default function HostFinanceTab() {
   const [showAllPayouts, setShowAllPayouts] = useState(false);
   const {
     toast,
+    stripeAccountError,
     payouts,
     charges,
     faqs,
@@ -394,6 +395,12 @@ export default function HostFinanceTab() {
         )}
       </section>
 
+      {stripeAccountError && (
+        <p className="finance-stripe-warning" role="alert">
+          {stripeAccountError}
+        </p>
+      )}
+
       {(showFinanceSections || showFinanceSectionSkeletons) && (
         <>
           <section className="finance-section">
@@ -547,12 +554,20 @@ export default function HostFinanceTab() {
                     Save schedule
                   </button>
                 )}
-                {toast && <small className={`finance-toast ${toast.type}`}>{toast.message}</small>}
               </section>
               <HelpPanel faqs={faqs} />
             </aside>
           </div>
         </>
+      )}
+
+      {toast && (
+        <small
+          className={`finance-toast ${toast.type}`}
+          role={toast.type === "error" ? "alert" : "status"}
+        >
+          {toast.message}
+        </small>
       )}
 
       <InvoicesSection />

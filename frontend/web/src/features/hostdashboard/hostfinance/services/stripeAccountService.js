@@ -6,6 +6,20 @@ export const isStripePayoutSetupComplete = (details) => Boolean(
   details?.accountId && details?.onboardingComplete && details?.chargesEnabled && details?.payoutsEnabled
 );
 
+const throwApiError = async (response) => {
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  const error = new Error(data.message || `HTTP error! Status: ${response.status}`);
+  error.statusCode = response.status;
+  error.code = data.code;
+  throw error;
+};
+
 export async function getStripeAccountDetails() {
   const token = await getAccessToken();
   const response = await fetch(API, {
@@ -18,7 +32,7 @@ export async function getStripeAccountDetails() {
   }
 
   if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
+    await throwApiError(response);
   }
 
   const data = await response.json();
@@ -33,7 +47,7 @@ export async function createStripeAccount() {
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
+    await throwApiError(response);
   }
 
   const data = await response.json();
