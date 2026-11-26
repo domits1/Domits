@@ -15,7 +15,8 @@ export const ChannelIntegrationProperty = new EntitySchema({
     id: { primary: true, type: "varchar", generated: false, nullable: false },
     integrationAccountId: { type: "varchar", nullable: false },
     domitsPropertyId: { type: "varchar", nullable: false },
-    externalPropertyId: { type: "varchar", nullable: false },
+    // Nullable since the claim (design note D2, #506): a PROVISIONING row exists before Channex creates the property.
+    externalPropertyId: { type: "varchar", nullable: true },
     externalPropertyName: { type: "varchar", nullable: true },
     status: { type: "varchar", nullable: false },
     createdAt: { ...bigintNumber, nullable: false },

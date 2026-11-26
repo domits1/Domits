@@ -45,8 +45,16 @@ const requestModeration = async (method, fallback, query = {}, body) => {
   return payload;
 };
 
-export const getReviewFlags = (query) =>
-  requestModeration("GET", "Could not load the moderation queue.", query);
+export const getReviewFlags = async (query) => {
+  const payload = await requestModeration("GET", "Could not load the moderation queue.", query);
+  if (!payload || !Array.isArray(payload.flags) ||
+    payload.flags.some((flag) => !flag || typeof flag !== "object" || Array.isArray(flag)) ||
+    !(payload.next_offset === null ||
+      (Number.isSafeInteger(payload.next_offset) && payload.next_offset >= 0))) {
+    throw new Error("Could not load the moderation queue. The server returned an unexpected response. Please try again.");
+  }
+  return payload;
+};
 
 export const flagReview = (reviewId, reason, notes) =>
   requestModeration("POST", "Could not flag this review.", {}, { review_id: reviewId, reason, notes });
@@ -151,13 +159,17 @@ export const getPropertyReviewPerformance = async (query) => {
   return payload;
 };
 
-export const getPublicReviews = async (propertyId, offset = 0, signal) => {
+export const getPublicReviews = async (propertyId, offset = 0, signal, filters = {}) => {
   const query = new URLSearchParams({ offset: String(offset) });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== "" && value !== undefined) query.set(key, String(value));
+  });
   const response = await fetch(
     `${API_REVIEW_BASE}/properties/${encodeURIComponent(propertyId)}/reviews?${query}`, { signal },
   );
-  if (!response.ok) throw new Error("Could not load reviews. Please try again.");
-  return response.json();
+  const payload = await parseResponse(response);
+  if (!response.ok) throw new Error(payload?.message || "Could not load reviews. Please try again.");
+  return payload;
 };
 
 const parseResponse = async (response) => {

@@ -47,6 +47,14 @@ export const resolveQuoteErrorPresentation = (error) => {
     });
   }
 
+  if (code === "property_not_found") {
+    return presentation({
+      scope: QUOTE_ERROR_SCOPES.PANEL,
+      message: "This property can't be booked on this website right now.",
+      hideAction: true,
+    });
+  }
+
   if (SITE_LIFECYCLE_CODES.has(code)) {
     return presentation({
       scope: QUOTE_ERROR_SCOPES.PANEL,

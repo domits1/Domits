@@ -36,6 +36,18 @@ const SHARES_RESPONSE = Object.freeze({
 const OPERATIONS = [
   ["listOwners", (id) => ({ headers: { Authorization: "token-1" }, queryStringParameters: id ? { id } : null })],
   ["getOwner", () => ({ headers: { Authorization: "token-1" }, queryStringParameters: { id: OWNER_ID } })],
+  [
+    "getFinancialSourceData",
+    () => ({
+      headers: { Authorization: "token-1" },
+      queryStringParameters: {
+        action: "financial-data",
+        id: OWNER_ID,
+        period_start_ms: "1793491200000",
+        period_end_ms: "1796083200000",
+      },
+    }),
+  ],
   ["createOwner", () => ({ headers: { Authorization: "token-1" }, body: JSON.stringify(VALID_BODY) })],
   [
     "setShares",
@@ -68,6 +80,7 @@ const createController = ({ role = "Host", getUser } = {}) => {
   const service = {
     listOwners: jest.fn(async () => [{ id: OWNER_ID, properties: [] }]),
     getOwner: jest.fn(async () => ({ id: OWNER_ID, properties: [] })),
+    getFinancialSourceData: jest.fn(async () => ({ owner: { id: OWNER_ID }, bookingCandidates: [] })),
     createOwner: jest.fn(async (_hostId, body) => ({ id: OWNER_ID, ...body, properties: [] })),
     setShares: jest.fn(async () => SHARES_RESPONSE),
     updateOwner: jest.fn(async (_hostId, _id, body) => ({ id: OWNER_ID, ...body, properties: [] })),
@@ -177,6 +190,53 @@ describe("Controller.getOwner", () => {
     await controller.getOwner({ headers: { Authorization: "token-1" }, queryStringParameters: { id: "" } });
 
     expect(service.getOwner).toHaveBeenCalledWith("host-1", "");
+  });
+});
+
+describe("Controller.getFinancialSourceData", () => {
+  const query = {
+    action: "financial-data",
+    id: OWNER_ID,
+    period_start_ms: "1793491200000",
+    period_end_ms: "1796083200000",
+  };
+
+  test.each(["Host", "Admin"])("lets a %s read their own owner's source data", async (role) => {
+    const { controller, service } = createController({ role });
+
+    const response = await controller.getFinancialSourceData({
+      headers: { Authorization: "token-1" },
+      queryStringParameters: query,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(bodyOf(response)).toEqual({ owner: { id: OWNER_ID }, bookingCandidates: [] });
+    expect(service.getFinancialSourceData).toHaveBeenCalledWith("host-1", query);
+  });
+
+  test("does not call the service when authorization fails", async () => {
+    const { controller, service } = createController({ role: "Traveler" });
+
+    const response = await controller.getFinancialSourceData({
+      headers: { Authorization: "token-1" },
+      queryStringParameters: query,
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(service.getFinancialSourceData).not.toHaveBeenCalled();
+  });
+
+  test("returns validation errors from the service", async () => {
+    const { controller, service } = createController();
+    service.getFinancialSourceData.mockRejectedValue(new BadRequestException("period_end_ms must be later than period_start_ms."));
+
+    const response = await controller.getFinancialSourceData({
+      headers: { Authorization: "token-1" },
+      queryStringParameters: query,
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(bodyOf(response)).toEqual({ message: "period_end_ms must be later than period_start_ms." });
   });
 });
 

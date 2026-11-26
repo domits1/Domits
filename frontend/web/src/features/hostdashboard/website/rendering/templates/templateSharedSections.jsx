@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import PropTypes from "prop-types";
 import styles from "../WebsiteTemplatePreview.module.scss";
+import PanoramaPageLink from "./PanoramaPageLink";
 import {
   buildWebsiteImageSlotTarget,
   useWebsiteImageSlotRotation,
@@ -192,6 +193,7 @@ export function TemplateTopBar({
   onSelectTarget = undefined,
   activeTargetId = "",
   showMark = true,
+  brandHref = "",
   children,
 }) {
   return (
@@ -203,7 +205,13 @@ export function TemplateTopBar({
     >
       <div className={styles.templateTopBarBrand}>
         {showMark ? <span className={styles.templateTopBarMark} aria-hidden="true" /> : null}
-        <span>{model.site.title}</span>
+        {brandHref ? (
+          <PanoramaPageLink href={brandHref} className={styles.templateTopBarBrandLink}>
+            {model.site.title}
+          </PanoramaPageLink>
+        ) : (
+          <span>{model.site.title}</span>
+        )}
       </div>
       {children}
     </div>
@@ -219,6 +227,7 @@ TemplateTopBar.propTypes = {
   onSelectTarget: PropTypes.func,
   activeTargetId: PropTypes.string,
   showMark: PropTypes.bool,
+  brandHref: PropTypes.string,
   children: PropTypes.node.isRequired,
 };
 

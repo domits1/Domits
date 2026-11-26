@@ -88,8 +88,8 @@ export class ReviewRepository {
     return this.#hostReviews.softDeleteResponse(changes);
   }
 
-  async getPublicReviewPage(propertyId, offset) {
-    return this.#publicReviews.getPublicReviewPage(propertyId, offset);
+  async getPublicReviewPage(propertyId, offset, filters) {
+    return this.#publicReviews.getPublicReviewPage(propertyId, offset, filters);
   }
 
   async findReviews(where) {
@@ -514,13 +514,23 @@ export class ReviewRepository {
     }
   }
 
-  async findReviewFlags({ status, limit, offset }) {
+  async findReviewFlags({ status, limit, offset, search, rating }) {
     const database = await Database.getInstance();
-    const rows = await database.getRepository(Review_Flag).createQueryBuilder("flag")
+    const query = database.getRepository(Review_Flag).createQueryBuilder("flag")
       .innerJoin(Review, "review", "review.id = flag.review_id")
       .select("flag.*").addSelect(REVIEW_FIELDS.filter((field) => field !== "host_id").map((field) => `review.${field} AS review_${field}`)).addSelect("review.title", "title").addSelect("review.public_review", "public_review")
-      .addSelect("review.overall_rating", "overall_rating").where("flag.status = :status", { status })
-      .orderBy("flag.created_at", "ASC").addOrderBy("flag.id", "ASC").limit(limit).offset(offset).getRawMany();
+      .addSelect("review.overall_rating", "overall_rating").where("flag.status = :status", { status });
+    // Filter before pagination; all joins target primary keys to keep one row per flag.
+    if (search) {
+      query.leftJoin(Property, "searchProperty", "searchProperty.id = review.property_id")
+        .leftJoin(Property_Location, "searchLocation", "searchLocation.property_id = review.property_id")
+        .leftJoin(Booking, "searchBooking", "searchBooking.id = review.booking_id AND searchBooking.guestid = review.reviewer_user_id")
+        .andWhere(`(${["searchBooking.guestname", "searchProperty.title", "review.booking_id", "review.title",
+          "searchLocation.city", "searchLocation.country"].map((field) =>
+          `POSITION(:search IN LOWER(COALESCE(${field}, ''))) > 0`).join(" OR ")})`, { search: search.toLowerCase() });
+    }
+    if (rating !== undefined) query.andWhere("FLOOR(review.overall_rating) = :rating", { rating });
+    const rows = await query.orderBy("flag.created_at", "ASC").addOrderBy("flag.id", "ASC").limit(limit).offset(offset).getRawMany();
     const reviews = await this.addModerationDetails(database, rows.map((row) =>
       Object.fromEntries(REVIEW_FIELDS.filter((field) => field !== "host_id").map((field) => [field, row[`review_${field}`]]))));
     return rows.map((row, index) => {

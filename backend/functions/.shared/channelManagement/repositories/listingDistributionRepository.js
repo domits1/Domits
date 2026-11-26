@@ -13,13 +13,27 @@ const toNumberOrNull = (value) => {
   return Number.isFinite(number) ? number : null;
 };
 
+const locationOf = (row) => ({
+  country: row.country,
+  city: row.city ?? null,
+  street: row.street ?? null,
+  houseNumber: toNumberOrNull(row.housenumber),
+  houseNumberExtension: row.housenumberextension ?? null,
+  postalCode: row.postalcode ?? null,
+  latitude: toNumberOrNull(row.latitude),
+  longitude: toNumberOrNull(row.longitude),
+});
+
 export default class ListingDistributionRepository {
   async findListing(propertyId) {
     const client = await Database.getInstance();
     const rows = await client.query(
       `
-        SELECT p.id, p.hostid, p.status, l.country, g.value AS guests, pr.roomrate
+        SELECT p.id, p.hostid, p.status, p.title, t.type,
+          l.country, l.city, l.street, l.housenumber, l.housenumberextension, l.postalcode, l.latitude, l.longitude,
+          g.value AS guests, pr.roomrate
         FROM ${qualifyTableName(client, "property")} p
+        LEFT JOIN ${qualifyTableName(client, "property_type")} t ON t.property_id = p.id
         LEFT JOIN ${qualifyTableName(client, "property_location")} l ON l.property_id = p.id
         LEFT JOIN ${qualifyTableName(client, "property_generaldetail")} g
           ON g.property_id = p.id AND g.detail = 'Guests'
@@ -37,7 +51,9 @@ export default class ListingDistributionRepository {
       propertyId: row.id,
       hostId: row.hostid,
       status: row.status,
-      location: row.country == null ? null : { country: row.country },
+      title: row.title,
+      propertyType: row.type ?? null,
+      location: row.country == null ? null : locationOf(row),
       guests: toNumberOrNull(row.guests),
       roomRate: toNumberOrNull(row.roomrate),
     };

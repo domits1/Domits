@@ -278,7 +278,7 @@
 }
 
 .panoramaCalendarEyebrow {
-  color: #1f4e79;
+  color: var(--panorama-calendar-accent, #1f4e79);
   font-size: 0.88rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -289,8 +289,8 @@
 .panoramaCalendarTitle,
 .panoramaCalendarMonthTitle,
 .panoramaCalendarMonthNavigationLabel {
-  color: #1e3150;
-  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  color: var(--panorama-calendar-ink, #1e3150);
+  font-family: var(--panorama-calendar-serif, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif);
   font-weight: 500;
 }
 
@@ -303,11 +303,11 @@
 .panoramaCalendarDivider {
   width: 64px;
   height: 1px;
-  background: rgba(183, 138, 66, 0.65);
+  background: var(--panorama-calendar-accent, rgba(183, 138, 66, 0.65));
 }
 
 .panoramaCalendarDescription {
-  color: #7b8798;
+  color: var(--panorama-calendar-muted, #7b8798);
   font-size: 1rem;
   line-height: 1.75;
 }
@@ -349,7 +349,7 @@
   height: 52px;
   border: 0;
   background: transparent;
-  color: #1e3150;
+  color: var(--panorama-calendar-ink, #1e3150);
   font-size: 2.4rem;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -370,8 +370,9 @@
   min-width: 0;
   box-sizing: border-box;
   padding: var(--panorama-calendar-month-card-padding, 28px 24px 26px);
-  border: 1px solid rgba(208, 197, 178, 0.74);
-  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--panorama-calendar-line, rgba(208, 197, 178, 0.74));
+  border-radius: var(--panorama-calendar-month-card-radius, 0);
+  background: var(--panorama-calendar-card, rgba(255, 255, 255, 0.7));
 }
 
 .panoramaCalendarMonthTitle {
@@ -395,7 +396,7 @@
 
 .panoramaCalendarWeekday {
   text-align: center;
-  color: #7b8798;
+  color: var(--panorama-calendar-muted, #7b8798);
   font-size: 0.74rem;
   letter-spacing: var(--panorama-calendar-weekday-letter-spacing, 0.18em);
   text-transform: uppercase;
@@ -407,7 +408,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  color: #1e3150;
+  color: var(--panorama-calendar-ink, #1e3150);
 }
 
 .panoramaCalendarCellReserved {
@@ -431,7 +432,7 @@
   gap: 24px;
   width: min(100%, var(--panorama-calendar-content-max-width));
   margin-inline: auto;
-  color: #60708a;
+  color: var(--panorama-calendar-muted, #60708a);
   font-size: 0.82rem;
   letter-spacing: var(--panorama-calendar-legend-letter-spacing, 0.22em);
   text-transform: uppercase;
@@ -546,13 +547,13 @@
 
 .calendarCellInRange,
 .panoramaCalendarCellInRange {
-  background: rgba(30, 49, 80, 0.14);
+  background: var(--panorama-calendar-range, rgba(30, 49, 80, 0.14));
 }
 
 .calendarCellSelected,
 .panoramaCalendarCellSelected,
 .panoramaCalendarCellSelectable.panoramaCalendarCellSelected:hover {
-  background: #1e3150;
+  background: var(--panorama-calendar-ink, #1e3150);
   color: #ffffff;
 }
 

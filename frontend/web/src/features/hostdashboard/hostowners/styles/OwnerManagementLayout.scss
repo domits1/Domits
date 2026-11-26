@@ -1,0 +1,51 @@
+@use "../../../../styles/sass/variables" as *;
+
+.owner-management-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.owner-management-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-bottom: 1px solid $border;
+}
+
+.owner-management-navigation-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 0.875rem;
+  border-bottom: 2px solid transparent;
+  color: $muted;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 150ms ease, border-color 150ms ease;
+
+  &:hover {
+    color: $text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $green;
+    outline-offset: 2px;
+  }
+
+  &.is-active {
+    border-bottom-color: $green;
+    color: $text;
+  }
+}
+
+@media (max-width: 480px) {
+  .owner-management-navigation {
+    gap: 0.125rem;
+  }
+
+  .owner-management-navigation-link {
+    padding: 0.625rem 0.625rem;
+  }
+}

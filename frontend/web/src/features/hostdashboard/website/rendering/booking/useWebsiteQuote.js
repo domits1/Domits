@@ -33,7 +33,7 @@ const toQuoteError = (error) =>
     ? error
     : new WebsitePublicQuoteError({ code: WEBSITE_PUBLIC_QUOTE_CLIENT_ERROR_CODES.UNEXPECTED_RESPONSE });
 
-export const useWebsiteQuote = ({ siteId, sessionId }) => {
+export const useWebsiteQuote = ({ siteId, sessionId, propertyId = "" }) => {
   const [state, setState] = useState(INITIAL_STATE);
   const abortControllerRef = useRef(null);
 
@@ -47,6 +47,7 @@ export const useWebsiteQuote = ({ siteId, sessionId }) => {
       try {
         const quote = await requestPublicWebsiteQuote({
           siteId,
+          propertyId,
           checkIn,
           checkOut,
           guests,
@@ -67,7 +68,7 @@ export const useWebsiteQuote = ({ siteId, sessionId }) => {
         return { ok: false, error: quoteError };
       }
     },
-    [sessionId, siteId]
+    [propertyId, sessionId, siteId]
   );
 
   const markStale = useCallback((reason = QUOTE_STALE_REASONS.CHANGED) => {

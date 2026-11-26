@@ -1,4 +1,5 @@
 import SchedulingService, { calculateScheduledFor } from "../business/schedulingService.js";
+import { NOW, PAID_BOOKING, CHECK_IN_ROW, buildSchedulingService } from "./stayScheduleFixtures.js";
 
 const createDeliveryRepository = () => {
   const records = new Map();
@@ -62,16 +63,6 @@ describe("AutomatedMessaging booking-paid scheduling", () => {
 });
 
 describe("AutomatedMessaging stay-date scheduling", () => {
-  const NOW = Date.parse("2026-06-01T00:00:00Z");
-  const BOOKING = {
-    id: "booking-1",
-    hostid: "host-1",
-    property_id: "property-1",
-    status: "Paid",
-    arrivaldate: Date.parse("2026-06-20T00:00:00Z"),
-    departuredate: Date.parse("2026-06-23T00:00:00Z"),
-  };
-  const CHECK_IN_ROW = { checkInFrom: "15:00:00", checkOutTill: "11:00:00" };
   const EVENT = { bookingId: "booking-1", eventVersion: 1, occurredAt: NOW };
 
   const createDeliveries = () => {
@@ -89,18 +80,13 @@ describe("AutomatedMessaging stay-date scheduling", () => {
     };
   };
 
-  const setup = ({ automations, booking = BOOKING, checkIn = CHECK_IN_ROW } = {}) => {
+  const setup = ({ automations, booking = PAID_BOOKING, checkIn = CHECK_IN_ROW } = {}) => {
     const deliveryRepository = createDeliveries();
-    const bookingContextRepository = {
-      getBooking: jest.fn(async () => booking),
-      getPropertyCheckIn: jest.fn(async () => checkIn),
-    };
-    const service = new SchedulingService({
-      outboxRepository: {},
+    const { service, bookingContextRepository } = buildSchedulingService({
+      booking,
+      checkIn,
       deliveryRepository,
-      bookingContextRepository,
       automationRepository: { listActiveForBooking: jest.fn(async () => automations) },
-      clock: () => NOW,
     });
     return { service, deliveryRepository, bookingContextRepository };
   };
@@ -227,7 +213,7 @@ describe("AutomatedMessaging stay-date scheduling", () => {
   test("schedules a send time that is still ahead and cancels one that is behind", async () => {
     const { service, deliveryRepository } = setup({
       automations: [automation({ triggerType: "CHECK_IN", offsetDirection: "AFTER", sendTime: "10:00" })],
-      booking: { ...BOOKING, arrivaldate: Date.parse("2026-06-01T00:00:00Z") },
+      booking: { ...PAID_BOOKING, arrivaldate: Date.parse("2026-06-01T00:00:00Z") },
     });
 
     await service.processEvent(EVENT);
@@ -235,7 +221,7 @@ describe("AutomatedMessaging stay-date scheduling", () => {
 
     const later = setup({
       automations: [automation({ triggerType: "CHECK_IN", offsetDirection: "AFTER", sendTime: "10:00" })],
-      booking: { ...BOOKING, arrivaldate: Date.parse("2026-05-31T00:00:00Z") },
+      booking: { ...PAID_BOOKING, arrivaldate: Date.parse("2026-05-31T00:00:00Z") },
     });
     await later.service.processEvent(EVENT);
     expect(later.deliveryRepository.createCancelled).toHaveBeenCalled();
@@ -293,7 +279,7 @@ describe("AutomatedMessaging stay-date scheduling", () => {
   test("does not schedule anything for a booking that is not paid", async () => {
     const { service, deliveryRepository } = setup({
       automations: [automation({ triggerType: "CHECK_IN", offsetDirection: "AFTER", sendTime: "10:00" })],
-      booking: { ...BOOKING, status: "Cancelled" },
+      booking: { ...PAID_BOOKING, status: "Cancelled" },
     });
 
     expect(await service.processEvent(EVENT)).toEqual([]);
