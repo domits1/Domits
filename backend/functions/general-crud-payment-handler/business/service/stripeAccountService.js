@@ -77,12 +77,23 @@ export default class StripeAccountService {
     const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
     if (stripeAccount?.account_id) {
-      const details = await this.buildStatusForStripeAccount(stripeAccount.account_id);
-      const message = details.onboardingComplete
-        ? "Existing Stripe account found. Redirecting to Stripe Express Dashboard."
-        : "Existing Stripe account found. Redirecting to Stripe onboarding.";
+      try {
+        const details = await this.buildStatusForStripeAccount(stripeAccount.account_id);
+        const message = details.onboardingComplete
+          ? "Existing Stripe account found. Redirecting to Stripe Express Dashboard."
+          : "Existing Stripe account found. Redirecting to Stripe onboarding.";
 
-      return { statusCode: 200, message, details };
+        return { statusCode: 200, message, details };
+      } catch (error) {
+        if (error?.code !== "STRIPE_ACCOUNT_NOT_FOUND" || error?.cause?.code !== "resource_missing") {
+          throw error;
+        }
+
+        console.warn("Replacing a legacy Stripe account mapping that no longer exists on this platform.", {
+          cognitoUserId,
+          previousAccountId: stripeAccount.account_id,
+        });
+      }
     }
 
     if (!userEmail) {
@@ -95,13 +106,17 @@ export default class StripeAccountService {
       capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
     });
 
-    await this.stripeAccountRepository.insertStripeAccount(
-      randomUUID(),
-      account.id,
-      cognitoUserId,
-      unixNow(),
-      unixNow()
-    );
+    if (stripeAccount?.account_id) {
+      await this.stripeAccountRepository.replaceStripeAccount(cognitoUserId, account.id, unixNow());
+    } else {
+      await this.stripeAccountRepository.insertStripeAccount(
+        randomUUID(),
+        account.id,
+        cognitoUserId,
+        unixNow(),
+        unixNow()
+      );
+    }
 
     let onboardingUrl;
     try {
@@ -112,10 +127,12 @@ export default class StripeAccountService {
 
     return {
       statusCode: 202,
-      message: "New account created, redirecting to Stripe onboarding.",
+      message: stripeAccount?.account_id
+        ? "Legacy Stripe account replaced. Redirecting to onboarding."
+        : "New account created, redirecting to Stripe onboarding.",
       details: {
         accountId: account.id,
-        onboardingUrl: onboardingUrl,
+        onboardingUrl,
       },
     };
   }
