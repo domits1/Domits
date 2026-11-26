@@ -16,7 +16,7 @@ describe("public review retrieval", () => {
     property = { id: "p1" };
     summary = { score: "4", count: "11" };
     reviews = [{ id: "r1", overall_rating: 4, public_review: "Good stay", created_at: 1000,
-      verification_status: "VERIFIED", private_feedback: "secret", reviewer_user_id: "private" }];
+      verification_status: "VERIFIED_STAY", private_feedback: "secret", reviewer_user_id: "private" }];
     query = { getRawOne: jest.fn(async () => summary), getMany: jest.fn(async () => reviews),
       getRawMany: jest.fn(async () => [{ review_id: "r1", key: "comfort", label: "Comfort", rating: "4.5" }]) };
     for (const method of ["where", "andWhere", "innerJoin", "select", "addSelect", "orderBy", "addOrderBy", "offset", "limit"]) {
@@ -41,15 +41,6 @@ describe("public review retrieval", () => {
     expect(query.andWhere).toHaveBeenCalledWith("review.status = :status", { status: "PUBLISHED" });
     expect(query.andWhere).toHaveBeenCalledWith("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" });
   });
-  test.each(["UNVERIFIED", "VERIFIED_STAY", "VERIFIED"])(
-    "returns published %s reviews verified by reservation evidence", async (verification_status) => {
-      reviews[0].verification_status = verification_status;
-      const result = await controller.getPublicReviews(request());
-      expect(result.statusCode).toBe(200);
-      expect(JSON.parse(result.body)).toMatchObject({ overall_score: 4, review_count: 11,
-        reviews: [{ id: "r1", verified: true }] });
-      expect(query.andWhere.mock.calls.some(([sql]) => sql.includes("review.verification_status"))).toBe(false);
-    });
   test.each(["-1", "1.5", "", "100001", [], {}])("rejects invalid offset %j", async (offset) => {
     expect((await controller.getPublicReviews(request({ offset }))).statusCode).toBe(400);
     expect(query.getMany).not.toHaveBeenCalled();
@@ -103,15 +94,13 @@ describe("public review retrieval", () => {
     expect((await controller.getPublicReviews(request())).statusCode).toBe(404);
     expect(query.getMany).not.toHaveBeenCalled();
   });
-  test("checks reservation evidence before counts and paging without exposing booking data", async () => {
+  test("uses persisted stay verification for counts and paging without exposing booking data", async () => {
     const result = await controller.getPublicReviews(request({ minRating: "4", sort: "recent" }));
     expect(result.statusCode).toBe(200);
-    expect(query.innerJoin).toHaveBeenCalledWith(Booking, "stay",
-      "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id");
-    expect(query.andWhere).toHaveBeenCalledWith("LOWER(TRIM(stay.status)) IN (:...stayStatuses)",
-      { stayStatuses: ["paid", "confirmed"] });
-    expect(query.andWhere.mock.calls.filter(([sql]) => sql.includes(":stayNow"))).toHaveLength(3);
-    expect(query.andWhere).toHaveBeenCalledWith("stay.departuredate > 0 AND stay.departuredate <= :stayNow", { stayNow: 2000 });
+    expect(query.andWhere.mock.calls.filter(([sql]) => sql.includes(":stayVerification"))).toHaveLength(3);
+    expect(query.andWhere).toHaveBeenCalledWith("review.verification_status = :stayVerification",
+      { stayVerification: "VERIFIED_STAY" });
+    expect(query.innerJoin.mock.calls.some(([, alias]) => alias === "stay")).toBe(false);
     const review = JSON.parse(result.body).reviews[0];
     expect(review.verified).toBe(true);
     for (const key of ["booking_id", "reviewer_user_id", "private_feedback", "guestname", "paymentid"]) {
@@ -179,7 +168,7 @@ test("keeps review publication and property visibility parameters independent in
     propertyId: "p1", filterMinimum: 4, filterMaximum: 5, filterStart: 1000, filterEnd: 2000 });
   expect(query.getQuery()).toContain(">= :filterStart");
   expect(query.getQuery()).toContain("< :filterEnd");
-  expect(query.getQuery().split(" WHERE ")[1]).not.toContain("verification_status");
+  expect(query.getParameters()).toMatchObject({ stayVerification: "VERIFIED_STAY" });
   expect(query.getParameters()).toMatchObject({ cursorDate: 1500, cursorId: "r2" });
   expect(query.getQuery()).toContain("< :cursorId");
   expect(query.getQueryAndParameters()[1]).toEqual(expect.arrayContaining(["PUBLISHED", "ACTIVE", "GUEST_TO_PROPERTY"]));

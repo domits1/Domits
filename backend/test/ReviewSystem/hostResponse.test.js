@@ -42,11 +42,12 @@ describe("host response", () => {
     expect(saved).toMatchObject({ status: "published", message: "<b>Thanks</b>\nagain", createdAt: 1000, publishedAt: 1000 });
     expect(responses.save).toHaveBeenCalledWith(expect.objectContaining({ reviewId: "r1", authorId: "host-sub", updatedAt: 1000 }));
     expect(query.getQuery()).toContain('"property"."hostid" = :username OR "member"."id" IS NOT NULL');
-    for (const field of ["verification_status", "publication_status", "status", "review_type"]) {
+    for (const field of ["publication_status", "status", "review_type"]) {
       expect(query.getQuery()).toContain(`"review"."${field}" = :`);
     }
+    expect(query.getQuery()).toContain('"review"."verification_status" IN (:...verificationStatuses)');
     expect(query.getParameters()).toMatchObject({ username: "host-1", active: "active", role: "Property Operations Manager",
-      reviewId: "r1", propertyStatus: "ACTIVE", status: "PUBLISHED", publicationStatus: "PUBLISHED", verificationStatus: "VERIFIED", reviewType: "GUEST_TO_PROPERTY" });
+      reviewId: "r1", propertyStatus: "ACTIVE", status: "PUBLISHED", publicationStatus: "PUBLISHED", verificationStatuses: ["VERIFIED", "VERIFIED_STAY"], reviewType: "GUEST_TO_PROPERTY" });
   });
   test("edits the existing response without changing its original timestamps or ID", async () => {
     responses.findOne.mockResolvedValue({ id: "response-1", status: "published", createdAt: 100, publishedAt: 200 });
@@ -86,6 +87,7 @@ describe("host response", () => {
     responses.findOne.mockResolvedValue({ id: "response-1", authorId, status: "published" });
     await service.deleteReviewResponse(actor, "r1");
     expect(query.getQuery()).toContain('"property"."hostid" = :username OR "member"."id" IS NOT NULL');
+    expect(query.getQuery()).toContain('"review"."verification_status" IN (:...verificationStatuses)');
     expect(query.getParameters()).toMatchObject({ username: actor.username, active: "active",
       role: "Property Operations Manager", propertyStatus: "ACTIVE", reviewId: "r1" });
     expect(responses.update).toHaveBeenCalledWith(

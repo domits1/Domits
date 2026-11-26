@@ -103,7 +103,6 @@ export class ReviewService {
     }
     const result = await this.repository.getPublicReviewPage(propertyId.trim(), Number(offset), {
       minRating, maxRating, start, endExclusive: end === undefined ? undefined : end + 86400000, sort, cursor,
-      verificationNow: this.now(),
     });
     if (!result) throw new NotFoundException("Property not found.");
     return result;
@@ -422,7 +421,9 @@ export class ReviewService {
       this.validateReviewPayload({ ...current, overall_rating: Number(current.overall_rating) });
     };
     validate(review);
-    this.assertPublicationBooking(await this.repository.findBookingById(review.booking_id), review, this.now());
+    if (review.verification_status !== "VERIFIED_STAY") {
+      this.assertPublicationBooking(await this.repository.findBookingById(review.booking_id), review, this.now());
+    }
     const result = await this.repository.publishDraft({ reviewId: review.id,
       expectedUpdatedAt: version, updatedAt: this.now(), from, to, validate, authorize });
     if (!result) throw new ConflictException("Review changed. Reload before continuing.");
@@ -527,7 +528,7 @@ export class ReviewService {
           title: reviewData.title.trim(),
           public_review: publicReview,
           private_feedback: this.normalizeOptionalText(reviewData.private_feedback),
-          verification_status: "UNVERIFIED",
+          verification_status: "VERIFIED_STAY",
           publication_status: "UNPUBLISHED",
           status: "DRAFT",
           created_at: now,
