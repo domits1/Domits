@@ -75,6 +75,10 @@ POST /host/listings/{id}/channels/refresh  ──▶ refreshListing        ─�
 
 Full backend suite before every commit: 28 failed tests in 7 suites, the same as the known baseline on acceptance (database and infrastructure suites), no new failures.
 
+## Follow-up
+
+- `CHANNEX_PROVISIONING_CREDENTIALS_REF` points at the secret created when Domits' admin Channex account was connected (`domits/channex/<user id>/<account id>`), so every host's account row shares that one secret (D8). The code never deletes secrets, but rotating or removing that admin connection by hand would cut distribution for every host. After the Booking.com test: copy the key to a neutral secret (for example `domits/channex/provisioning`), point the variable and the existing host rows at it, and keep the old secret until both are switched.
+
 ## Not in scope
 
 - Disconnect (D5) and its channel table: the next pull request.
@@ -88,5 +92,7 @@ Full backend suite before every commit: 28 failed tests in 7 suites, the same as
 - The handler's Cognito check and `claims.sub` override, used by the existing routes.
 
 ## Manual check
+
+Done on 26 Nov: `CHANNEX_PROVISIONING_CREDENTIALS_REF` is set on the UnifiedMessaging Lambda. Without it, turning distribution on answers 503.
 
 After deploy: call the four routes as a signed-in test host (API Gateway route and CORS), and do the cross-property token check on staging before the Booking.com test.
