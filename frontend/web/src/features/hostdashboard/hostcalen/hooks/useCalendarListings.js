@@ -60,6 +60,9 @@ const fetchListingsByHostId = async ({ hostId, token, fallbackStatus }) => {
       Authorization: token,
     },
   });
+  if (response.status === 404) {
+    return [];
+  }
   if (!response.ok) {
     throw new Error(`Could not load listings (${response.status}).`);
   }
