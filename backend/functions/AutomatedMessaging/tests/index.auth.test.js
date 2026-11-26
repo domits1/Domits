@@ -21,6 +21,13 @@ describe("AutomatedMessaging HTTP authorization responses", () => {
     });
   });
 
+  test("routes DELETE on one automation through the host check", async () => {
+    const response = await handler({ httpMethod: "DELETE", path: "/automations/automation-1" });
+
+    expect(response.statusCode).toBe(401);
+    expect(parseBody(response).error).toBe("UNAUTHORIZED");
+  });
+
   test("returns 403 when an authenticated guest calls the host API", async () => {
     const response = await handler({
       httpMethod: "GET",
@@ -52,7 +59,7 @@ describe("AutomatedMessaging HTTP authorization responses", () => {
     expect(response.headers).toEqual(
       expect.objectContaining({
         "Access-Control-Allow-Origin": "https://acceptance.domits.com",
-        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
         "Access-Control-Allow-Headers": "Authorization,Content-Type",
       })
     );
@@ -62,7 +69,7 @@ describe("AutomatedMessaging HTTP authorization responses", () => {
   test.each([
     { httpMethod: "GET", path: "/not-automations" },
     { httpMethod: "POST", path: "/automations/id/activate/extra" },
-    { httpMethod: "DELETE", path: "/automations/id" },
+    { httpMethod: "DELETE", path: "/automations" },
   ])("returns 404 for invalid route $httpMethod $path", async (event) => {
     const response = await handler(event);
 

@@ -34,7 +34,7 @@ const ACCEPTANCE_FRONTEND_ORIGIN = "https://acceptance.domits.com";
 
 const baseCorsHeaders = {
   "Access-Control-Allow-Headers": "Authorization,Content-Type",
-  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 };
 
 const resolveCorsOrigin = (event) => {
@@ -81,6 +81,11 @@ const routeDefinitions = [
     method: "PATCH",
     matches: (route) => route.length === 1,
     handle: (event, route) => controller.update(event, route[0]),
+  },
+  {
+    method: "DELETE",
+    matches: (route) => route.length === 1,
+    handle: (event, route) => controller.delete(event, route[0]),
   },
   {
     method: "POST",
