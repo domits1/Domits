@@ -35,9 +35,9 @@ GET (LocationMapping ▶ PropertyLocation): no limits, old rows load ◀┘ not 
 | Severity | Where | Finding | Decision |
 |---|---|---|---|
 | P4 (9/10) | `propertyBuilder.js:156` and `propertyController.js:306` | `throw new Error(\`Missing ${item}.\`)` has no `statusCode`, and the create handler answers `error.statusCode \|\| 500`. House number `0` on create, and every other "Missing ..." field, already answers 500. | Not changed: "Missing houseNumber." stays as decided. Own issue. |
-| P4 (8/10) | `propertyBuilder.js:160-165` | A fractional house number such as `12.5` passed the create checks (no integer check) and reached the INTEGER column. | Fixed after review (Tufan and Enes): `getLocationLimitError` now refuses it with "Location houseNumber must be a whole number." and create answers 400. The update path already truncates. |
+| P4 (8/10) | `propertyBuilder.js:160-163` | A fractional house number such as `12.5` passed the create checks (no integer check) and reached the INTEGER column. | Fixed after review (Tufan and Enes): `getLocationLimitError` now refuses it with "Location houseNumber must be a whole number." and create answers 400. The update path already truncates. |
 | P4 (8/10) | `propertyService.js:449` | The editor sends the location on every save. A listing already stored with house number 0 now fails every overview save with a 400 until its host changes the number. | Accepted. Recoverable, no data loss, and #3938 already blocks the same value in the editor. |
-| P5 (7/10) | `util/locationLimits.js` | `!(houseNumber <= MAX_HOUSE_NUMBER)` is a negated comparison. It is deliberate: it sends `NaN` and `Infinity` into the "too large" branch. | Accepted, a comment says why. |
+| P5 (7/10) | `util/locationLimits.js` | `!(houseNumber <= MAX_HOUSE_NUMBER)` is a negated comparison. It is deliberate: it sends `NaN` and `Infinity` into the "too large" branch. | Accepted, see "Notes moved from code comments". |
 | P5 (6/10) | `test/PropertyHandler/locationLimits.test.js` | The POST 400 test replaces `createPropertyObject`, so it proves the status mapping and not that `body.propertyLocation` reaches `addLocation` (`propertyController.js:3970`, unchanged). | Accepted. |
 
 ## Not in scope
@@ -47,6 +47,18 @@ GET (LocationMapping ▶ PropertyLocation): no limits, old rows load ◀┘ not 
 - Non-string extensions sent to the update path are still ignored and stored as "" (unchanged).
 - Existing rows that break the limits are not migrated or listed. The count was not checked.
 - No frontend file is touched. The messages follow the wording of #3938 with a `Location ` prefix so `isOverviewClientError` answers 400.
+
+## Notes moved from code comments
+
+These were comments in the code until Karim's review of #3957 asked for them out. Each one still holds for the code as written.
+
+- `util/locationLimits.js`: `housenumber` is an INTEGER and `housenumberextension` a VARCHAR(45). The limits are checked on write only (overview update and create). Rows are read back through `PropertyLocation` without them, so a row stored before the limits existed still loads.
+- `getLocationLimitError` returns the message for a value the columns cannot store, or `""` when it fits. A missing house number is not handled in it: the callers have their own message.
+- `getLocationLimitError`, fractional numbers: the update path truncates before calling it, create does not, and the INTEGER column would answer 500.
+- `getLocationLimitError`, extension length: VARCHAR counts characters, not UTF-16 units, so an emoji is one.
+- `propertyBuilder.js`, `addLocation`: the check runs after the missing-field loop, so `0` and `NaN` keep their "Missing houseNumber." message. It throws `TypeException` because that answers 400; a plain `Error` would answer 500.
+- `propertyController.js`, `normalizeLocationPayload`: the check runs before the missing-field check. A digit string too long for a number parses to `Infinity` and has to be answered as too large, not as missing.
+- `propertyController.js`, the house-number parser: it does not check for `Infinity` itself, because `normalizeLocationPayload` rejects it as too large.
 
 ## Test run
 

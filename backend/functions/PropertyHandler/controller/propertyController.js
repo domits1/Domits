@@ -1443,8 +1443,6 @@ export class PropertyController {
             }
         }
 
-        // Before the missing-field check: a digit string too long for a number parses to Infinity and
-        // has to be answered as too large, not as missing.
         const limitError = getLocationLimitError({ houseNumber, houseNumberExtension });
         if (limitError) {
             throw new Error(limitError);
@@ -1483,7 +1481,6 @@ export class PropertyController {
             return null;
         }
 
-        // Not checked for Infinity here: normalizeLocationPayload rejects it as too large.
         const parsedHouseNumber = Number(normalizedValue.slice(0, digitEndIndex));
 
         return {
