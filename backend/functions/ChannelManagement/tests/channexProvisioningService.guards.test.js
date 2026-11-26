@@ -87,6 +87,19 @@ describe("ChannexProvisioningService.provisionListing guards", () => {
     expect(result.response.errorCode).toBe("DISTRIBUTION_TIMEZONE_INVALID_CHOICE");
   });
 
+  // Each timezone problem needs another step from the host; an unknown country has no list to pick from.
+  test.each([
+    ["an unknown country", { country: "Atlantis" }, undefined, "Check the country in its address"],
+    ["a country with several time zones", { country: "Spain" }, undefined, "Pick the listing's time zone"],
+    ["a time zone outside the country", { country: "Spain" }, "Asia/Tokyo", "Pick one from the list"],
+  ])("%s tells the host its own next step", async (_label, location, chosenTimezone, nextStep) => {
+    const { service } = buildService(readyListing({ location }));
+
+    const result = await service.provisionListing({ userId: "host-1", domitsPropertyId: "listing-1", chosenTimezone });
+
+    expect(result.response.error).toContain(nextStep);
+  });
+
   test("a ready listing with a known timezone goes on to the claim", async () => {
     const { service, claim } = buildService(readyListing());
     claim.mockResolvedValue({ statusCode: 200, response: {} });

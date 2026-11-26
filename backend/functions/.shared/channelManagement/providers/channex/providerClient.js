@@ -353,6 +353,27 @@ const createChannexObject = async ({ credentials, endpointPath, requestBody, req
   return { success: true, externalId, outcomeUnknown: false };
 };
 
+// Channex adapter codes of the OTAs Domits supports (design note D6), translated to the otaCode of D7.
+const OTA_CODE_BY_CHANNEX_CODE = Object.freeze({ BDC: "BookingCom", ABB: "Airbnb", VRB: "Vrbo" });
+
+const getChannexWithTimeout = async ({ apiKey, url, requestTimeoutMs }) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json", "user-api-key": apiKey },
+      signal: controller.signal,
+    });
+    return { response, parsed: parseJsonSafely(await response.text()), timedOut: false };
+  } catch (error) {
+    if (controller.signal.aborted) return { response: null, parsed: null, timedOut: true };
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
 const pushGroupedPayloads = async ({
   apiKey,
   groups,
@@ -829,6 +850,71 @@ export default class ChannexProviderClient {
 
   async createRatePlan(credentials, body, { requestTimeoutMs } = {}) {
     return createChannexObject({ credentials, endpointPath: "/api/v1/rate_plans", requestBody: body, requestTimeoutMs });
+  }
+
+  // A single-use token (15 minutes) that opens Channex's channel screen for exactly one property
+  // (design note D1). Always requested by the backend for the host's own property, never for a browser id.
+  async createOneTimeToken(credentials, { propertyId, username } = {}, { requestTimeoutMs = CREATE_REQUEST_TIMEOUT_MS } = {}) {
+    const apiKey = requireStr(credentials?.apiKey);
+    if (!apiKey) return { success: false, errorCode: "MISSING_API_KEY", errorMessage: "Channex credentials must include apiKey." };
+    const property = requireStr(propertyId);
+    if (!property) return { success: false, errorCode: "MISSING_PROPERTY_ID", errorMessage: "A Channex property id is required." };
+
+    try {
+      const { response, parsed } = await postChannexPushRequest({
+        apiKey,
+        endpointPath: "/api/v1/auth/one_time_token",
+        requestBody: { one_time_token: { property_id: property, username: requireStr(username) } },
+        requestTimeoutMs,
+      });
+      if (!response.ok) {
+        return {
+          success: false,
+          errorCode: parsed?.errors?.code || `CHANNEX_ONE_TIME_TOKEN_${response.status}`,
+          errorMessage: parsed?.errors?.title || `Channex one-time token failed with status ${response.status}.`,
+        };
+      }
+      const token = requireStr(parsed?.data?.token);
+      if (!token) {
+        return { success: false, errorCode: "CHANNEX_ONE_TIME_TOKEN_INVALID_RESPONSE", errorMessage: "Channex returned no token." };
+      }
+      return { success: true, token };
+    } catch (error) {
+      const timedOut = error?.code === "CHANNEX_PUSH_REQUEST_TIMEOUT";
+      return {
+        success: false,
+        errorCode: timedOut ? "CHANNEX_ONE_TIME_TOKEN_TIMEOUT" : error?.code || "CHANNEX_ONE_TIME_TOKEN_REQUEST_FAILED",
+        errorMessage: error?.message || "Channex one-time token request failed.",
+      };
+    }
+  }
+
+  async listChannels(credentials, propertyId, { requestTimeoutMs = CREATE_REQUEST_TIMEOUT_MS } = {}) {
+    const apiKey = requireStr(credentials?.apiKey);
+    if (!apiKey) return { success: false, channels: [], errorCode: "MISSING_API_KEY" };
+    const property = requireStr(propertyId);
+    if (!property) return { success: false, channels: [], errorCode: "MISSING_PROPERTY_ID" };
+
+    const url = new URL("/api/v1/channels", CHANNEX_BASE_URL);
+    url.searchParams.set("filter[property_id]", property);
+    try {
+      const { response, parsed, timedOut } = await getChannexWithTimeout({ apiKey, url, requestTimeoutMs });
+      if (timedOut) return { success: false, channels: [], errorCode: "CHANNEX_CHANNELS_TIMEOUT" };
+      if (!response.ok) return { success: false, channels: [], errorCode: `CHANNEX_CHANNELS_${response.status}` };
+      if (!Array.isArray(parsed?.data)) {
+        return { success: false, channels: [], errorCode: "CHANNEX_CHANNELS_INVALID_RESPONSE" };
+      }
+      const channels = parsed.data
+        .map((row) => ({
+          channexChannelId: requireStr(row?.id),
+          otaCode: OTA_CODE_BY_CHANNEX_CODE[row?.attributes?.channel] ?? null,
+          isActive: typeof row?.attributes?.is_active === "boolean" ? row.attributes.is_active : null,
+        }))
+        .filter((row) => row.channexChannelId && row.otaCode);
+      return { success: true, channels };
+    } catch (error) {
+      return { success: false, channels: [], errorCode: error?.code || "CHANNEX_CHANNELS_REQUEST_FAILED" };
+    }
   }
 
   async pushAvailability(credentials, groupedAvailabilityPayloads, options = {}) {

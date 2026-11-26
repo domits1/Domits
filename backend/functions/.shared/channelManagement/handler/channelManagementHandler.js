@@ -169,6 +169,11 @@ const routeDefinitions = [
   ["GET", "/integrations/holidu/status", "checkHoliduStatus"],
   ["GET", "/integrations/channex/status", "checkChannexStatus"],
   ["GET", "/integrations/channex/health", "getChannexHealth"],
+  // Host routes for the Distribution tab (design note section 6, #506): Cognito only, not admin.
+  ["POST", /\/integrations\/channex\/host\/listings\/[^/]+\/distribution$/, "turnOnDistribution"],
+  ["POST", /\/integrations\/channex\/host\/listings\/[^/]+\/connect-session$/, "createDistributionConnectSession"],
+  ["GET", /\/integrations\/channex\/host\/listings$/, "listDistributionListings"],
+  ["POST", /\/integrations\/channex\/host\/listings\/[^/]+\/channels\/refresh$/, "refreshDistributionListing"],
   [
     "GET",
     "/integrations/channex/admin-access",

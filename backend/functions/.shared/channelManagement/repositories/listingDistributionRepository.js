@@ -24,38 +24,44 @@ const locationOf = (row) => ({
   longitude: toNumberOrNull(row.longitude),
 });
 
+const listingOf = (row) => ({
+  propertyId: row.id,
+  hostId: row.hostid,
+  status: row.status,
+  title: row.title,
+  propertyType: row.type ?? null,
+  location: row.country == null ? null : locationOf(row),
+  guests: toNumberOrNull(row.guests),
+  roomRate: toNumberOrNull(row.roomrate),
+});
+
+const selectListings = async (where, params) => {
+  const client = await Database.getInstance();
+  const rows = await client.query(
+    `
+      SELECT p.id, p.hostid, p.status, p.title, t.type,
+        l.country, l.city, l.street, l.housenumber, l.housenumberextension, l.postalcode, l.latitude, l.longitude,
+        g.value AS guests, pr.roomrate
+      FROM ${qualifyTableName(client, "property")} p
+      LEFT JOIN ${qualifyTableName(client, "property_type")} t ON t.property_id = p.id
+      LEFT JOIN ${qualifyTableName(client, "property_location")} l ON l.property_id = p.id
+      LEFT JOIN ${qualifyTableName(client, "property_generaldetail")} g
+        ON g.property_id = p.id AND g.detail = 'Guests'
+      LEFT JOIN ${qualifyTableName(client, "property_pricing")} pr ON pr.property_id = p.id
+      ${where}
+    `,
+    params
+  );
+  return (Array.isArray(rows) ? rows : []).map(listingOf);
+};
+
 export default class ListingDistributionRepository {
   async findListing(propertyId) {
-    const client = await Database.getInstance();
-    const rows = await client.query(
-      `
-        SELECT p.id, p.hostid, p.status, p.title, t.type,
-          l.country, l.city, l.street, l.housenumber, l.housenumberextension, l.postalcode, l.latitude, l.longitude,
-          g.value AS guests, pr.roomrate
-        FROM ${qualifyTableName(client, "property")} p
-        LEFT JOIN ${qualifyTableName(client, "property_type")} t ON t.property_id = p.id
-        LEFT JOIN ${qualifyTableName(client, "property_location")} l ON l.property_id = p.id
-        LEFT JOIN ${qualifyTableName(client, "property_generaldetail")} g
-          ON g.property_id = p.id AND g.detail = 'Guests'
-        LEFT JOIN ${qualifyTableName(client, "property_pricing")} pr ON pr.property_id = p.id
-        WHERE p.id = $1
-        LIMIT 1
-      `,
-      [propertyId]
-    );
+    const [listing = null] = await selectListings("WHERE p.id = $1 LIMIT 1", [propertyId]);
+    return listing;
+  }
 
-    const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
-    if (!row) return null;
-
-    return {
-      propertyId: row.id,
-      hostId: row.hostid,
-      status: row.status,
-      title: row.title,
-      propertyType: row.type ?? null,
-      location: row.country == null ? null : locationOf(row),
-      guests: toNumberOrNull(row.guests),
-      roomRate: toNumberOrNull(row.roomrate),
-    };
+  async findListingsByHost(hostId) {
+    return selectListings("WHERE p.hostid = $1 AND p.status <> 'ARCHIVED' ORDER BY p.title", [hostId]);
   }
 }
