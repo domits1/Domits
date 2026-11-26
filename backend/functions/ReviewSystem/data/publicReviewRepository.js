@@ -1,12 +1,10 @@
 import { In, IsNull, Not } from "typeorm";
 import Database from "database";
-import { Booking } from "database/models/Booking";
 import { Property } from "database/models/Property";
 import { Review } from "database/models/Review";
 import { Review_Rating } from "database/models/Review_Rating";
 import { Review_Category } from "database/models/Review_Category";
 import { Review_Response } from "database/models/Review_Response";
-import { applyCompletedStayConditions } from "../util/verifiedStay.js";
 import { attachPublicDetails, eligibleReviewQuery, REVIEW_FIELDS } from "./reviewRepositoryShared.js";
 
 const average = (values) => {
@@ -42,13 +40,10 @@ export class PublicReviewRepository {
       where: { id: propertyId, status: "ACTIVE" }, select: ["id"],
     });
     if (!property) return null;
-    const verificationNow = filters.verificationNow ?? Date.now();
-    const eligible = () => applyCompletedStayConditions(eligibleReviewQuery(database, propertyId)
+    const eligible = () => eligibleReviewQuery(database, propertyId)
       .innerJoin(Property, "property", "property.id = review.property_id AND property.status = :propertyStatus",
         { propertyStatus: "ACTIVE" })
-      // Publication preserves verification_status; the matching booking proves the stay.
-      .innerJoin(Booking, "stay", "stay.id = review.booking_id AND stay.guestid = review.reviewer_user_id AND stay.property_id = review.property_id"),
-      verificationNow);
+      .andWhere("review.verification_status = :stayVerification", { stayVerification: "VERIFIED_STAY" });
     const matchingReviews = () => {
       const query = eligible().andWhere("review.overall_rating BETWEEN :filterMinimum AND :filterMaximum", {
         filterMinimum: filters.minRating ?? 1, filterMaximum: filters.maxRating ?? 5,
@@ -71,7 +66,6 @@ export class PublicReviewRepository {
         "(review.created_at < :cursorDate OR (review.created_at = :cursorDate AND review.id < :cursorId))",
         { cursorDate: filters.cursor.date, cursorId: filters.cursor.id });
     }
-    // Fetch one extra row to detect another page without applying the cursor to the matching count.
     const rows = await page.addOrderBy("review.id", "DESC").offset(offset).limit(recent ? 11 : 10).getMany();
     const reviews = rows.slice(0, 10), last = reviews[reviews.length - 1];
     const nextCursor = recent && rows.length > 10 ? Buffer.from(JSON.stringify({

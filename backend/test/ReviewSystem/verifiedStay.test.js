@@ -17,7 +17,7 @@ test.each([{ status: "cancelled", departuredate: 1000 }, { status: "pending", de
   "rejects an ineligible reservation %j", (booking) => {
     expect(completedStayError(booking, 2000)).not.toBeNull();
   });
-test("verifies score, count and page through completed booking evidence without requiring stored verification", async () => {
+test("keeps score, count and page based on persisted verification after cancellation or refund", async () => {
   const database = new DataSource({ type: "postgres", schema: "main", entities: [Booking, Property, Review] });
   await database.buildMetadatas();
   const queries = [];
@@ -31,19 +31,15 @@ test("verifies score, count and page through completed booking evidence without 
       return query;
     } });
   Database.getInstance.mockResolvedValue(database);
-  await new ReviewRepository().getPublicReviewPage("p1", 0, { verificationNow: 2000 });
+  await new ReviewRepository().getPublicReviewPage("p1", 0);
   expect(queries).toHaveLength(3);
   for (const query of queries) {
     const sql = query.getQuery();
-    expect(sql).toContain('INNER JOIN "main"."booking"');
-    for (const [bookingField, reviewField] of [["id", "booking_id"], ["guestid", "reviewer_user_id"], ["property_id", "property_id"]]) {
-      expect(sql).toContain(`"stay"."${bookingField}" = "review"."${reviewField}"`);
-    }
-    expect(sql).toContain("<= :stayNow");
-    expect(sql).toContain('"stay"."departuredate" > 0');
-    expect(sql).not.toContain("verification_status");
+    expect(sql).not.toContain('"booking"');
+    expect(sql).not.toContain('"stay"');
+    expect(sql).toContain('"review"."verification_status" = :stayVerification');
     expect(query.getParameters()).toMatchObject({ propertyId: "p1", propertyStatus: "ACTIVE",
       publicationStatus: "PUBLISHED", status: "PUBLISHED",
-      reviewType: "GUEST_TO_PROPERTY", stayStatuses: ["paid", "confirmed"], stayNow: 2000 });
+      reviewType: "GUEST_TO_PROPERTY", stayVerification: "VERIFIED_STAY" });
   }
 });
