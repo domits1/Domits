@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { MAX_PRICE, MIN_PRICE } from "../../constants/searchFilters";
 import { getListingPricingBreakdown } from "../../features/bookingengine/listingdetails/utils/pricing";
@@ -21,6 +21,42 @@ const computePriceBounds = (properties) => {
   }
 
   return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
+};
+
+const ACTIVE_SEARCH_KEYS = ["country", "type", "guests"];
+
+// Keep the active search (e.g. /home?country=Thailand&guests=2) so applying
+// filters narrows the search results instead of replacing them with the full catalog.
+const buildFilterUrl = (locationSearch, { priceValues, roomsAndBeds, bookingOptions, selectedAmenities }) => {
+  const url = new URL(FILTER_URL);
+
+  const activeSearch = new URLSearchParams(locationSearch);
+  for (const key of ACTIVE_SEARCH_KEYS) {
+    const value = activeSearch.get(key);
+    if (value) {
+      url.searchParams.append(key, value);
+    }
+  }
+
+  url.searchParams.append("minPrice", priceValues[0]);
+  url.searchParams.append("maxPrice", priceValues[1]);
+  appendPositiveNumberParam(url.searchParams, "bedrooms", roomsAndBeds.bedrooms);
+  appendPositiveNumberParam(url.searchParams, "beds", roomsAndBeds.beds);
+  appendPositiveNumberParam(url.searchParams, "bathrooms", roomsAndBeds.bathrooms);
+
+  if (selectedAmenities.length > 0) {
+    url.searchParams.append("amenities", selectedAmenities.join(","));
+  }
+
+  if (bookingOptions.bookInstantly && !bookingOptions.bookingRequest) {
+    url.searchParams.append("bookingType", "direct");
+  }
+
+  if (bookingOptions.bookingRequest && !bookingOptions.bookInstantly) {
+    url.searchParams.append("bookingType", "inquiry");
+  }
+
+  return url;
 };
 
 export default function useFilterLogic(props) {
@@ -97,8 +133,11 @@ export default function useFilterLogic(props) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const latestRequestId = useRef(0);
 
   async function fetchFilteredAccommodations(overrides = {}) {
+    latestRequestId.current += 1;
+    const requestId = latestRequestId.current;
     const nextPriceValues = overrides.priceValues ?? priceValues;
     const nextRoomsAndBeds = overrides.roomsAndBeds ?? roomsAndBeds;
     const nextBookingOptions = overrides.bookingOptions ?? bookingOptions;
@@ -108,39 +147,18 @@ export default function useFilterLogic(props) {
       setLoading(true);
       setError(null);
 
-      const url = new URL(FILTER_URL);
-
-      // Keep the active search (e.g. /home?country=Thailand&guests=2) so
-      // applying filters narrows the search results instead of replacing
-      // them with the full catalog.
-      const activeSearch = new URLSearchParams(location.search);
-      for (const key of ["country", "type", "guests"]) {
-        const value = activeSearch.get(key);
-        if (value) {
-          url.searchParams.append(key, value);
-        }
-      }
-
-      url.searchParams.append("minPrice", nextPriceValues[0]);
-      url.searchParams.append("maxPrice", nextPriceValues[1]);
-      appendPositiveNumberParam(url.searchParams, "bedrooms", nextRoomsAndBeds.bedrooms);
-      appendPositiveNumberParam(url.searchParams, "beds", nextRoomsAndBeds.beds);
-      appendPositiveNumberParam(url.searchParams, "bathrooms", nextRoomsAndBeds.bathrooms);
-
-      if (nextSelectedAmenities.length > 0) {
-        url.searchParams.append("amenities", nextSelectedAmenities.join(","));
-      }
-
-      if (nextBookingOptions.bookInstantly && !nextBookingOptions.bookingRequest) {
-        url.searchParams.append("bookingType", "direct");
-      }
-
-      if (nextBookingOptions.bookingRequest && !nextBookingOptions.bookInstantly) {
-        url.searchParams.append("bookingType", "inquiry");
-      }
+      const url = buildFilterUrl(location.search, {
+        priceValues: nextPriceValues,
+        roomsAndBeds: nextRoomsAndBeds,
+        bookingOptions: nextBookingOptions,
+        selectedAmenities: nextSelectedAmenities,
+      });
 
       const response = await fetch(url);
       const data = await response.json();
+      if (requestId !== latestRequestId.current) {
+        return;
+      }
       const properties = Array.isArray(data) ? data : (data?.properties ?? []);
       const lastEvaluatedKey = Array.isArray(data) ? null : (data?.lastEvaluatedKey ?? null);
 
@@ -157,9 +175,13 @@ export default function useFilterLogic(props) {
         setError("No accommodations found for these criteria");
       }
     } catch (err) {
-      setError(err.message);
+      if (requestId === latestRequestId.current) {
+        setError(err.message);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestId.current) {
+        setLoading(false);
+      }
     }
   }
 
