@@ -60,6 +60,17 @@ describe.each(CREATES)("ChannexProviderClient.$method", ({ method, endpoint, bod
     });
   });
 
+  // 429 means Channex was too busy; nothing was created or refused, so it can be retried.
+  test("a 429 is a known, retryable failure", async () => {
+    global.fetch.mockResolvedValue(jsonResponse(429, {}));
+
+    expect(await client[method](CREDENTIALS, body)).toMatchObject({
+      success: false,
+      outcomeUnknown: false,
+      retryable: true,
+    });
+  });
+
   test("a 5xx leaves the outcome unknown", async () => {
     global.fetch.mockResolvedValue(jsonResponse(502, {}));
 

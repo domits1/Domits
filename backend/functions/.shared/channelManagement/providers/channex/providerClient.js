@@ -257,7 +257,60 @@ const postChannexPushRequest = async ({ apiKey, endpointPath, requestBody, reque
   }
 };
 
-// Creates one Channex object (design note D2, #506). A 4xx is a known refusal: nothing was created.
+// Channex lists answer 10 records unless asked for more, and 100 is the most per page.
+// Look-before-create (design note D2) needs the whole list: a cut-off list makes it create a duplicate,
+// so a page that fails fails the whole list. All hosts share Domits' key (D8), so the property list
+// grows with Domits; the page cap keeps a Lambda from paging until its timeout and fails loudly instead.
+const LIST_PAGE_LIMIT = 100;
+const LIST_MAX_PAGES = 20;
+// One deadline for all pages of a list: a turn-on runs three lists and three creates inside
+// API Gateway's 29 s, and a per-page timeout could still add up past it over twenty pages.
+const LIST_REQUEST_TIMEOUT_MS = 5000;
+
+const fetchPages = async ({ url, apiKey, signal }) => {
+  const rows = [];
+  for (let page = 1; page <= LIST_MAX_PAGES; page += 1) {
+    const pageUrl = new URL(url);
+    pageUrl.searchParams.set("pagination[limit]", String(LIST_PAGE_LIMIT));
+    pageUrl.searchParams.set("pagination[page]", String(page));
+
+    const response = await fetch(pageUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json", "user-api-key": apiKey },
+      signal,
+    });
+    const parsed = parseJsonSafely(await response.text());
+    if (!response.ok) return { httpStatus: response.status, parsed };
+
+    const data = Array.isArray(parsed?.data) ? parsed.data : null;
+    if (!data) return { invalidResponse: true };
+    rows.push(...data);
+
+    const total = parsed?.meta?.total;
+    const lastPage = data.length < LIST_PAGE_LIMIT || (Number.isInteger(total) && rows.length >= total);
+    if (lastPage) return { rows };
+  }
+  return { tooManyPages: true };
+};
+
+// Returns { rows }, { httpStatus, parsed } for an error answer, { invalidResponse: true } or { tooManyPages: true }.
+// Throws an error with code CHANNEX_LIST_TIMEOUT when the deadline passes.
+const readAllPages = async ({ url, apiKey, requestTimeoutMs = LIST_REQUEST_TIMEOUT_MS }) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+  try {
+    return await fetchPages({ url, apiKey, signal: controller.signal });
+  } catch (error) {
+    if (!controller.signal.aborted) throw error;
+    const timeoutError = new Error(`Channex list request timed out after ${requestTimeoutMs} ms.`);
+    timeoutError.code = "CHANNEX_LIST_TIMEOUT";
+    throw timeoutError;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// A 4xx is a known refusal: nothing was created (design note D2).
 // A timeout, a 5xx, a network error or a success without an id may still have created it in Channex,
 // so those report outcomeUnknown and the caller must look before it creates again.
 const CREATE_REQUEST_TIMEOUT_MS = 8000;
@@ -286,6 +339,7 @@ const createChannexObject = async ({ credentials, endpointPath, requestBody, req
     return {
       success: false,
       outcomeUnknown: response.status >= 500,
+      retryable: response.status === 429,
       errorCode: parsed?.errors?.code || `CHANNEX_CREATE_${response.status}`,
       errorMessage: parsed?.errors?.title || `Channex create failed with status ${response.status}.`,
       validationDetails: parsed?.errors?.details ?? null,
@@ -473,7 +527,7 @@ export default class ChannexProviderClient {
     }
   }
 
-  async listProperties(credentials) {
+  async listProperties(credentials, { requestTimeoutMs } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
 
     if (!apiKey) {
@@ -488,34 +542,34 @@ export default class ChannexProviderClient {
 
     try {
       const url = new URL("/api/v1/properties", CHANNEX_BASE_URL);
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "user-api-key": apiKey,
-        },
-      });
+      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey, requestTimeoutMs });
 
-      const rawText = await response.text();
-      const parsed = parseJsonSafely(rawText);
-
-      if (!response.ok) {
+      if (httpStatus) {
         return {
           success: false,
           properties: [],
-          providerStatus: getProviderStatusForHttpStatus(response.status, "PROPERTY_LIST_FAILED"),
+          providerStatus: getProviderStatusForHttpStatus(httpStatus, "PROPERTY_LIST_FAILED"),
           errorCode:
             parsed?.errors?.code ||
             parsed?.error?.code ||
-            `CHANNEX_PROPERTIES_${response.status}`,
+            `CHANNEX_PROPERTIES_${httpStatus}`,
           errorMessage:
             parsed?.errors?.title ||
             parsed?.error?.message ||
-            `Channex property list failed with status ${response.status}.`,
+            `Channex property list failed with status ${httpStatus}.`,
         };
       }
 
-      const rows = Array.isArray(parsed?.data) ? parsed.data : null;
+      if (tooManyPages) {
+        return {
+          success: false,
+          properties: [],
+          providerStatus: "PROPERTY_LIST_FAILED",
+          errorCode: "CHANNEX_PROPERTIES_TOO_MANY_PAGES",
+          errorMessage: `Channex property list has more than ${LIST_MAX_PAGES} pages.`,
+        };
+      }
+
       if (!rows) {
         return {
           success: false,
@@ -538,6 +592,7 @@ export default class ChannexProviderClient {
               requireStr(row?.attributes?.name) ||
               null,
             propertyStatus: requireStr(row?.attributes?.state) || null,
+            website: requireStr(row?.attributes?.website) || null,
           };
         })
         .filter(Boolean);
@@ -560,7 +615,7 @@ export default class ChannexProviderClient {
     }
   }
 
-  async listRoomTypes(credentials, externalPropertyId) {
+  async listRoomTypes(credentials, externalPropertyId, { requestTimeoutMs } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const propertyId = requireStr(externalPropertyId);
 
@@ -587,35 +642,34 @@ export default class ChannexProviderClient {
     try {
       const url = new URL("/api/v1/room_types", CHANNEX_BASE_URL);
       url.searchParams.set("filter[property_id]", propertyId);
+      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey, requestTimeoutMs });
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "user-api-key": apiKey,
-        },
-      });
-
-      const rawText = await response.text();
-      const parsed = parseJsonSafely(rawText);
-
-      if (!response.ok) {
+      if (httpStatus) {
         return {
           success: false,
           roomTypes: [],
-          providerStatus: getProviderStatusForHttpStatus(response.status, "ROOM_TYPE_LIST_FAILED"),
+          providerStatus: getProviderStatusForHttpStatus(httpStatus, "ROOM_TYPE_LIST_FAILED"),
           errorCode:
             parsed?.errors?.code ||
             parsed?.error?.code ||
-            `CHANNEX_ROOM_TYPES_${response.status}`,
+            `CHANNEX_ROOM_TYPES_${httpStatus}`,
           errorMessage:
             parsed?.errors?.title ||
             parsed?.error?.message ||
-            `Channex room type list failed with status ${response.status}.`,
+            `Channex room type list failed with status ${httpStatus}.`,
         };
       }
 
-      const rows = Array.isArray(parsed?.data) ? parsed.data : null;
+      if (tooManyPages) {
+        return {
+          success: false,
+          roomTypes: [],
+          providerStatus: "ROOM_TYPE_LIST_FAILED",
+          errorCode: "CHANNEX_ROOM_TYPES_TOO_MANY_PAGES",
+          errorMessage: `Channex room type list has more than ${LIST_MAX_PAGES} pages.`,
+        };
+      }
+
       if (!rows) {
         return {
           success: false,
@@ -666,7 +720,7 @@ export default class ChannexProviderClient {
     }
   }
 
-  async listRatePlans(credentials, externalRoomTypeId) {
+  async listRatePlans(credentials, externalRoomTypeId, { requestTimeoutMs } = {}) {
     const apiKey = requireStr(credentials?.apiKey);
     const roomTypeId = requireStr(externalRoomTypeId);
 
@@ -693,35 +747,34 @@ export default class ChannexProviderClient {
     try {
       const url = new URL("/api/v1/rate_plans", CHANNEX_BASE_URL);
       url.searchParams.set("filter[room_type_id]", roomTypeId);
+      const { rows, httpStatus, parsed, tooManyPages } = await readAllPages({ url, apiKey, requestTimeoutMs });
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "user-api-key": apiKey,
-        },
-      });
-
-      const rawText = await response.text();
-      const parsed = parseJsonSafely(rawText);
-
-      if (!response.ok) {
+      if (httpStatus) {
         return {
           success: false,
           ratePlans: [],
-          providerStatus: getProviderStatusForHttpStatus(response.status, "RATE_PLAN_LIST_FAILED"),
+          providerStatus: getProviderStatusForHttpStatus(httpStatus, "RATE_PLAN_LIST_FAILED"),
           errorCode:
             parsed?.errors?.code ||
             parsed?.error?.code ||
-            `CHANNEX_RATE_PLANS_${response.status}`,
+            `CHANNEX_RATE_PLANS_${httpStatus}`,
           errorMessage:
             parsed?.errors?.title ||
             parsed?.error?.message ||
-            `Channex rate plan list failed with status ${response.status}.`,
+            `Channex rate plan list failed with status ${httpStatus}.`,
         };
       }
 
-      const rows = Array.isArray(parsed?.data) ? parsed.data : null;
+      if (tooManyPages) {
+        return {
+          success: false,
+          ratePlans: [],
+          providerStatus: "RATE_PLAN_LIST_FAILED",
+          errorCode: "CHANNEX_RATE_PLANS_TOO_MANY_PAGES",
+          errorMessage: `Channex rate plan list has more than ${LIST_MAX_PAGES} pages.`,
+        };
+      }
+
       if (!rows) {
         return {
           success: false,

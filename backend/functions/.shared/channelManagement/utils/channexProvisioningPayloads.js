@@ -1,6 +1,4 @@
-// Request bodies for creating a listing's Channex property, room type and rate plan (design note D2, #506).
-// Field rules from the Channex API docs (properties, room_types, rate_plans; read 23 Nov 2026).
-// Pure: the provisioning service supplies the listing, the country code and timezone (D4) and the created ids.
+// Field rules from the Channex API docs (properties, room_types, rate_plans; read 23 Nov 2026), design note D2.
 
 const CURRENCY = "EUR";
 const MAX_TEXT = 255;
@@ -14,6 +12,29 @@ const PROPERTY_TYPES = Object.freeze({ Villa: "villa", Apartment: "apartment", B
 const FALLBACK_PROPERTY_TYPE = "holiday_home";
 
 export const toChannexPropertyType = (domitsType) => PROPERTY_TYPES[domitsType] ?? FALLBACK_PROPERTY_TYPE;
+
+// All hosts share Domits' Channex key (D8), so titles repeat across hosts. The listing's own page link is
+// unique per listing, which lets look-before-create (D2) adopt only a property made for this listing.
+const DOMITS_HOST = "domits.com";
+const LISTING_PAGE_PATH = "/listingdetails";
+const LISTING_PAGE_URL = `https://www.${DOMITS_HOST}${LISTING_PAGE_PATH}?ID=`;
+
+export const channexListingLink = (propertyId) => `${LISTING_PAGE_URL}${encodeURIComponent(propertyId)}`;
+
+// Channex may store the link a little differently from how it was sent (scheme, www, case, a trailing
+// slash, encoding), so adoption compares the listing id inside it. Anything else is no listing at all.
+export const listingIdOfChannexWebsite = (website) => {
+  let url;
+  try {
+    url = new URL(website);
+  } catch {
+    return null;
+  }
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  const path = url.pathname.replace(/\/+$/, "");
+  if (host !== DOMITS_HOST || path !== LISTING_PAGE_PATH) return null;
+  return url.searchParams.get("ID") || null;
+};
 
 const textOrNull = (value, maxLength = MAX_TEXT) => {
   if (value === null || value === undefined) return null;
@@ -53,6 +74,7 @@ export const buildChannexPropertyPayload = (listing, { countryCode, timezone }) 
       longitude: coordinateOrNull(location.longitude),
       email: textOrNull(listing.contact?.email),
       phone: phoneOrNull(listing.contact?.phone),
+      website: channexListingLink(listing.propertyId),
       // Domits pushes availability itself; Channex recommends leaving these off for a PMS.
       settings: {
         allow_availability_autoupdate_on_modification: false,
