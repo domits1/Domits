@@ -60,11 +60,24 @@ export const Invoice = new EntitySchema({
       type: "int",
       nullable: false,
     },
+    currency: {
+      type: "varchar",
+      length: 3,
+      nullable: true,
+    },
     rate_per_night: {
       type: "numeric",
       precision: 10,
       scale: 2,
       nullable: false,
+    },
+    rate_per_night_minor: {
+      type: "bigint",
+      nullable: true,
+      transformer: {
+        from: (value) => value === null || value === undefined ? null : String(value),
+        to: (value) => value,
+      },
     },
     gross_amount: {
       type: "numeric",
@@ -72,17 +85,41 @@ export const Invoice = new EntitySchema({
       scale: 2,
       nullable: false,
     },
+    gross_amount_minor: {
+      type: "bigint",
+      nullable: true,
+      transformer: {
+        from: (value) => value === null || value === undefined ? null : String(value),
+        to: (value) => value,
+      },
+    },
     commission_amount: {
       type: "numeric",
       precision: 10,
       scale: 2,
       nullable: false,
     },
+    commission_amount_minor: {
+      type: "bigint",
+      nullable: true,
+      transformer: {
+        from: (value) => value === null || value === undefined ? null : String(value),
+        to: (value) => value,
+      },
+    },
     net_amount: {
       type: "numeric",
       precision: 10,
       scale: 2,
       nullable: false,
+    },
+    net_amount_minor: {
+      type: "bigint",
+      nullable: true,
+      transformer: {
+        from: (value) => value === null || value === undefined ? null : String(value),
+        to: (value) => value,
+      },
     },
     status: {
       type: "varchar",

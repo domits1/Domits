@@ -103,6 +103,7 @@ describe("ReservationRepository Channex outbox rows", () => {
     client.getRepository = jest.fn(() => ({ createQueryBuilder: () => read }));
 
     await repository.recordGuestRefund("booking-1", {
+      requestedAmount: 5000,
       refundedAmount: 5000,
       stripeRefundId: "re_1",
       refundError: null,
@@ -111,6 +112,7 @@ describe("ReservationRepository Channex outbox rows", () => {
 
     const update = client.createQueryBuilder.mock.results[0].value;
     expect(update.set).toHaveBeenCalledWith({
+      refund_requested_amount: 5000,
       refunded_amount: 5000,
       stripe_refund_id: "re_1",
       refund_error: null,

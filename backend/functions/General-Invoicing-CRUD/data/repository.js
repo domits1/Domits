@@ -3,8 +3,10 @@ import { Invoice } from "database/models/Invoice";
 import { Booking } from "database/models/Booking";
 import { DatabaseException } from "../util/exception/databaseException.js";
 import { BadRequestException } from "../util/exception/badRequestException.js";
+import { formatMinorUnits, getCurrencyFractionDigits, parseDecimalToMinorUnits } from "database/money";
 
-const COMMISSION_RATE = 0.1;
+const COMMISSION_RATE_NUMERATOR = 1n;
+const COMMISSION_RATE_DENOMINATOR = 10n;
 
 function generateInvoiceNumber(sequenceNumber) {
   const year = new Date().getFullYear();
@@ -48,9 +50,32 @@ export class Repository {
       return existing;
     }
 
-    const grossAmount = Number.parseFloat(Number(totalAmount).toFixed(2));
-    const commissionAmount = Number.parseFloat((grossAmount * COMMISSION_RATE).toFixed(2));
-    const netAmount = Number.parseFloat((grossAmount - commissionAmount).toFixed(2));
+    const bookingType = String(booking.bookingtype || "").trim().toLowerCase();
+    const hasStoredBookingPrice = booking.total_price !== null && booking.total_price !== undefined;
+    const currency =
+      String(booking.currency || "").trim().toUpperCase() ||
+      (bookingType === "channex" && !hasStoredBookingPrice ? "" : "EUR");
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      throw new BadRequestException("The booking currency is unavailable; an invoice cannot be created safely.");
+    }
+    if (getCurrencyFractionDigits(currency) > 2) {
+      throw new BadRequestException("Invoice compatibility amount fields support currencies with at most two fraction digits.");
+    }
+
+    const ratePerNightMinor = BigInt(parseDecimalToMinorUnits(ratePerNight, currency));
+    const grossAmountMinor = BigInt(parseDecimalToMinorUnits(totalAmount, currency));
+    if (ratePerNightMinor < 0n || grossAmountMinor < 0n) {
+      throw new BadRequestException("Invoice amounts must be non-negative.");
+    }
+
+    const commissionAmountMinor =
+      (grossAmountMinor * COMMISSION_RATE_NUMERATOR + COMMISSION_RATE_DENOMINATOR / 2n) /
+      COMMISSION_RATE_DENOMINATOR;
+    const netAmountMinor = grossAmountMinor - commissionAmountMinor;
+    const ratePerNightAmount = formatMinorUnits(ratePerNightMinor, currency);
+    const grossAmount = formatMinorUnits(grossAmountMinor, currency);
+    const commissionAmount = formatMinorUnits(commissionAmountMinor, currency);
+    const netAmount = formatMinorUnits(netAmountMinor, currency);
 
     const sequenceNumber = await getNextSequenceNumber(client);
     const invoiceNumber = generateInvoiceNumber(sequenceNumber);
@@ -69,10 +94,15 @@ export class Repository {
         arrival_date: Number(booking.arrivaldate),
         departure_date: Number(booking.departuredate),
         nights: Number(nights),
-        rate_per_night: Number.parseFloat(Number(ratePerNight).toFixed(2)),
+        currency,
+        rate_per_night: ratePerNightAmount,
+        rate_per_night_minor: ratePerNightMinor.toString(),
         gross_amount: grossAmount,
+        gross_amount_minor: grossAmountMinor.toString(),
         commission_amount: commissionAmount,
+        commission_amount_minor: commissionAmountMinor.toString(),
         net_amount: netAmount,
+        net_amount_minor: netAmountMinor.toString(),
         status: "finalized",
         created_at: Date.now(),
       })

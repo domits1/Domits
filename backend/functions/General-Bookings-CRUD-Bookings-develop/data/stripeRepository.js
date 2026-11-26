@@ -153,8 +153,12 @@ class StripeRepository {
     const client = await Database.getInstance();
     const updateObject = { paymentid: stripePaymentId };
 
-    if (typeof totalCents === "number" && Number.isFinite(totalCents)) {
-      updateObject.total_price = Math.round(totalCents) / 100;
+    if (totalCents !== null && totalCents !== undefined) {
+      if (!Number.isSafeInteger(totalCents) || totalCents < 0) {
+        throw new TypeError("totalCents must be a non-negative safe integer.");
+      }
+      updateObject.total_price = totalCents / 100;
+      updateObject.total_price_minor = String(totalCents);
     }
 
     await client.createQueryBuilder().update(Booking).set(updateObject).where("id = :id", { id: bookingId }).execute();

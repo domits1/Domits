@@ -253,6 +253,7 @@ const expectedRow = ({ propertyId, total, publicBookingRef, idempotencyKey = "id
     guestname: GUEST.name,
     hostname: "Amara Host",
     total_price: total / 100,
+    total_price_minor: String(total),
     cancellation_policy: POLICIES[propertyId],
     bookingtype: "inquiry",
     booking_source: "STANDALONE_SITE",

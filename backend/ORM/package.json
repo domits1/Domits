@@ -10,6 +10,7 @@
   "description": "",
   "exports": {
     ".": "./index.js",
-    "./models/*": "./models/*.js"
+    "./models/*": "./models/*.js",
+    "./money": "./money/currencyAmount.js"
   }
 }

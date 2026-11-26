@@ -170,11 +170,13 @@ describe("Refund Logic - 10 Test Scenarios", () => {
           create: jest.fn().mockResolvedValue({
             id: "re_test_123456",
             amount: 5000,
+            currency: "eur",
             status: "succeeded",
           }),
           retrieve: jest.fn().mockResolvedValue({
             id: "re_existing_123",
             amount: 10000,
+            currency: "eur",
             status: "succeeded",
           }),
         },
@@ -229,7 +231,8 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
     const expectRefundRecord = (bookingId, overrides = {}) => {
       expectCancelRecord(bookingId, {
-        refundedAmount: Math.round(bookingDefaults.total_price * 100),
+        requestedAmount: Math.round(bookingDefaults.total_price * 100),
+        refundedAmount: 0,
         stripeRefundId: null,
         refundError: null,
         refundStatus: null,
@@ -287,6 +290,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       );
 
       expectRefundRecord(bookingId, {
+        requestedAmount: 5000,
         refundedAmount: 5000,
         stripeRefundId: "re_test_123456",
         refundStatus: "refunded",
@@ -308,8 +312,11 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.paymentIntents.retrieve).not.toHaveBeenCalled();
+      expect(mockStripe.refunds.retrieve).toHaveBeenCalledWith("re_existing_123");
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
       expectRefundRecord(bookingId, {
+        requestedAmount: 10000,
+        refundedAmount: 10000,
         stripeRefundId: "re_existing_123",
         refundStatus: "refunded",
       });
@@ -329,6 +336,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
       expectRefundRecord(bookingId, {
+        refundedAmount: undefined,
         refundError: "Cannot refund usd PaymentIntent pi_test_usd; expected eur.",
         refundStatus: "unknown",
       });
@@ -348,6 +356,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
       expectRefundRecord(bookingId, {
+        requestedAmount: 0,
         refundedAmount: 0,
         refundStatus: "not_refunded",
       });
@@ -363,6 +372,7 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expectRefundRecord(bookingId, {
+        refundedAmount: undefined,
         refundError: "Card declined",
         refundStatus: "unknown",
       });
@@ -379,30 +389,30 @@ describe("Refund Logic - 10 Test Scenarios", () => {
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectRefundRecord(bookingId, { refundStatus: "unknown" });
+      expectRefundRecord(bookingId, { refundedAmount: undefined, refundStatus: "unknown" });
 
       expect(result.statusCode).toBe(200);
     });
 
     it.each([
-      { bookingId: "booking_no_payment", status: "Confirmed", refundStatus: null },
-      { bookingId: "booking_paid_without_payment_id", status: "Paid", refundStatus: "unknown" },
-    ])("handles a booking without a Stripe PaymentIntent: $bookingId", async ({ bookingId, status, refundStatus }) => {
+      { bookingId: "booking_no_payment", status: "Confirmed", refundStatus: null, refundedAmount: undefined },
+      { bookingId: "booking_paid_without_payment_id", status: "Paid", refundStatus: "unknown", refundedAmount: undefined },
+    ])("handles a booking without a Stripe PaymentIntent: $bookingId", async ({ bookingId, status, refundStatus, refundedAmount }) => {
       mockBooking({ id: bookingId, status, paymentid: null });
 
       const result = await controller.cancelBooking(bookingId, authEvent);
 
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectRefundRecord(bookingId, { refundStatus });
+      expectRefundRecord(bookingId, { refundStatus, refundedAmount });
       expect(result.statusCode).toBe(200);
     });
 
     it.each([
-      { stripeStatus: "requires_payment_method", refundStatus: null },
-      { stripeStatus: "requires_action", refundStatus: null },
-      { stripeStatus: "canceled", refundStatus: null },
-      { stripeStatus: "processing", refundStatus: "unknown" },
-    ])("does not create a refund for an unpaid $stripeStatus PaymentIntent", async ({ stripeStatus, refundStatus }) => {
+      { stripeStatus: "requires_payment_method", refundStatus: "not_refunded", refundedAmount: 0 },
+      { stripeStatus: "requires_action", refundStatus: "not_refunded", refundedAmount: 0 },
+      { stripeStatus: "canceled", refundStatus: "not_refunded", refundedAmount: 0 },
+      { stripeStatus: "processing", refundStatus: "unknown", refundedAmount: undefined },
+    ])("does not create a refund for an unpaid $stripeStatus PaymentIntent", async ({ stripeStatus, refundStatus, refundedAmount }) => {
       const bookingId = `booking_unpaid_${stripeStatus}`;
       mockBooking({ id: bookingId, status: "Awaiting Payment", paymentid: `pi_${stripeStatus}` });
       mockStripe.paymentIntents.retrieve.mockResolvedValue({
@@ -415,14 +425,14 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
       expect(mockStripe.paymentIntents.retrieve).toHaveBeenCalledWith(`pi_${stripeStatus}`);
       expect(mockStripe.refunds.create).not.toHaveBeenCalled();
-      expectRefundRecord(bookingId, { refundStatus });
+      expectRefundRecord(bookingId, { refundStatus, refundedAmount });
       expect(result.statusCode).toBe(200);
     });
 
     it.each([
-      { stripeStatus: "pending", refundStatus: "unknown" },
-      { stripeStatus: "failed", refundStatus: "not_refunded" },
-    ])("maps a Stripe $stripeStatus refund to the expected state", async ({ stripeStatus, refundStatus }) => {
+      { stripeStatus: "pending", refundStatus: "unknown", refundedAmount: undefined },
+      { stripeStatus: "failed", refundStatus: "not_refunded", refundedAmount: 0 },
+    ])("maps a Stripe $stripeStatus refund to the expected state", async ({ stripeStatus, refundStatus, refundedAmount }) => {
       const bookingId = `booking_refund_${stripeStatus}`;
       const stripeRefundId = `re_${stripeStatus}`;
       mockBooking({ id: bookingId, paymentid: `pi_${stripeStatus}` });
@@ -434,7 +444,21 @@ describe("Refund Logic - 10 Test Scenarios", () => {
 
       await controller.cancelBooking(bookingId, authEvent);
 
-      expectRefundRecord(bookingId, { stripeRefundId, refundStatus });
+      expectRefundRecord(bookingId, { stripeRefundId, refundStatus, refundedAmount });
+    });
+
+    it("does not send Channex synthetic payment references to Stripe", async () => {
+      const bookingId = "booking_channex_reference";
+      mockBooking({ id: bookingId, paymentid: "CHANNEX:external-reservation", status: "Paid" });
+
+      await controller.cancelBooking(bookingId, authEvent);
+
+      expect(mockStripe.paymentIntents.retrieve).not.toHaveBeenCalled();
+      expect(mockStripe.refunds.create).not.toHaveBeenCalled();
+      expectRefundRecord(bookingId, {
+        refundedAmount: undefined,
+        refundStatus: "unknown",
+      });
     });
 
     it("should correctly round refund amounts in cents", async () => {

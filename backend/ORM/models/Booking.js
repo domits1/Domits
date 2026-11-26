@@ -76,6 +76,15 @@ export const Booking = new EntitySchema({
       nullable: true,
       default: 0,
     },
+    total_price_minor: {
+      type: "bigint",
+      name: "total_price_minor",
+      nullable: true,
+      transformer: {
+        from: (value) => value === null || value === undefined ? null : String(value),
+        to: (value) => value,
+      },
+    },
     cancellation_policy: {
       type: "varchar",
       name: "cancellation_policy",
@@ -91,6 +100,15 @@ export const Booking = new EntitySchema({
       name: "refunded_amount",
       nullable: true,
       default: 0,
+    },
+    refund_requested_amount: {
+      type: "bigint",
+      name: "refund_requested_amount",
+      nullable: true,
+      transformer: {
+        from: (value) => value === null || value === undefined ? null : String(value),
+        to: (value) => value,
+      },
     },
     stripe_refund_id: {
       type: "varchar",

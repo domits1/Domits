@@ -22,6 +22,11 @@ const REFUND_STATUS = Object.freeze({
   NOT_REFUNDED: "not_refunded",
   UNKNOWN: "unknown",
 });
+const resolveRefundedAmount = (status, amount) => {
+  if (status === REFUND_STATUS.REFUNDED) return amount;
+  if (status === REFUND_STATUS.NOT_REFUNDED) return 0;
+  return undefined;
+};
 const CHANNEX_ACTIVE_CANCELLATION_STATUSES = new Set(["awaiting payment", "paid"]);
 const PUBLIC_SITE_BOOKINGS_PATH_PATTERN = /\/public\/sites\/([^/]+)\/bookings\/?$/;
 const PUBLIC_BOOKING_INTERNAL_ERROR_MESSAGE = "Something went wrong while sending your booking request. Please try again.";
@@ -371,20 +376,45 @@ class ReservationController {
   }
 
   async resolveExistingCancellationRefund(booking, refundAmountCents) {
-    let refundStatus = normalizeStoredRefundStatus(booking.refund_status) || REFUND_STATUS.UNKNOWN;
-
-    if (refundStatus === REFUND_STATUS.UNKNOWN) {
-      const stripeInstance = await this.getStripeInstance();
-      const existingRefund = await stripeInstance?.refunds?.retrieve?.(booking.stripe_refund_id);
-      if (existingRefund) {
-        refundStatus = resolveStripeRefundStatus(existingRefund.status);
-      }
+    const requestedAmount =
+      booking.refund_requested_amount !== null && booking.refund_requested_amount !== undefined
+        ? Number(booking.refund_requested_amount)
+        : refundAmountCents;
+    const stripeInstance = await this.getStripeInstance();
+    const existingRefund = await stripeInstance?.refunds?.retrieve?.(booking.stripe_refund_id);
+    if (!existingRefund) {
+      return {
+        requestedAmount,
+        stripeRefundId: booking.stripe_refund_id,
+        refundError: null,
+        refundStatus: REFUND_STATUS.UNKNOWN,
+      };
     }
 
+    const expectedCurrency = String(booking.currency || REFUND_CURRENCY).trim().toLowerCase();
+    if (existingRefund?.currency?.toLowerCase() !== expectedCurrency) {
+      return {
+        requestedAmount,
+        stripeRefundId: booking.stripe_refund_id,
+        refundError: `Stripe refund currency does not match booking currency ${expectedCurrency}.`,
+        refundStatus: REFUND_STATUS.UNKNOWN,
+      };
+    }
+
+    let refundStatus = resolveStripeRefundStatus(existingRefund.status);
+    if (refundStatus === REFUND_STATUS.REFUNDED && !Number.isSafeInteger(existingRefund.amount)) {
+      refundStatus = REFUND_STATUS.UNKNOWN;
+    }
+    const refundedAmount = resolveRefundedAmount(refundStatus, existingRefund.amount);
+
     return {
-      refundedAmount: Number(booking.refunded_amount) || refundAmountCents,
+      requestedAmount,
+      ...(refundedAmount === undefined ? {} : { refundedAmount }),
       stripeRefundId: booking.stripe_refund_id,
-      refundError: null,
+      refundError:
+        refundStatus === REFUND_STATUS.UNKNOWN && existingRefund.status === "succeeded"
+          ? "Stripe confirmed the refund status but returned an invalid amount."
+          : null,
       refundStatus,
     };
   }
@@ -393,7 +423,7 @@ class ReservationController {
     const stripeInstance = await this.getStripeInstance();
     if (!stripeInstance) {
       return {
-        refundedAmount: refundAmountCents,
+        requestedAmount: refundAmountCents,
         stripeRefundId: null,
         refundError: null,
         refundStatus: REFUND_STATUS.UNKNOWN,
@@ -401,7 +431,14 @@ class ReservationController {
     }
 
     const refund = await this.createStripeRefund(booking.paymentid, refundAmountCents);
-    const refundStatus = resolveStripeRefundStatus(refund?.status);
+    let refundStatus = resolveStripeRefundStatus(refund?.status);
+    if (
+      refundStatus === REFUND_STATUS.REFUNDED &&
+      (!Number.isSafeInteger(refund?.amount) || refund?.currency?.toLowerCase() !== REFUND_CURRENCY)
+    ) {
+      refundStatus = REFUND_STATUS.UNKNOWN;
+    }
+    const refundedAmount = resolveRefundedAmount(refundStatus, refund.amount);
     const refundContext = {
       hostId: booking.hostid,
       bookingId: booking.id,
@@ -416,32 +453,54 @@ class ReservationController {
     }
 
     return {
-      refundedAmount: refundAmountCents,
+      requestedAmount: refundAmountCents,
+      ...(refundedAmount === undefined ? {} : { refundedAmount }),
       stripeRefundId: refund.id,
-      refundError: null,
+      refundError:
+        refundStatus === REFUND_STATUS.UNKNOWN && refund?.status === "succeeded"
+          ? "Stripe confirmed the refund status but returned an invalid or mismatched amount."
+          : null,
       refundStatus,
     };
   }
 
   async processCancellationRefund(booking) {
     const paymentId = String(booking.paymentid || "").trim();
-    const hasStripePaymentIntent = Boolean(paymentId) && !paymentId.startsWith("FAILED");
+    const hasStripePaymentIntent = /^pi_\w+$/.test(paymentId);
     const isPaidBooking = normalizeBookingStatus(booking.status) === "paid";
-    let paymentIntentStatus = null;
-    let refundAmountCents = 0;
+    let refundAmountCents;
 
     try {
-      const totalPriceCents = Math.round((booking.total_price || 0) * 100);
-      refundAmountCents = calculateRefundAmountCents(
-        booking.cancellation_policy,
-        booking.arrivaldate,
-        totalPriceCents
-      );
+      const storedTotalMinor =
+        booking.total_price_minor !== null && booking.total_price_minor !== undefined
+          ? Number(booking.total_price_minor)
+          : Math.round(Number(booking.total_price || 0) * 100);
+      if (!Number.isSafeInteger(storedTotalMinor) || storedTotalMinor < 0) {
+        throw new TypeError("Booking total price must resolve to a non-negative safe integer in minor units.");
+      }
+
+      const storedRequestedAmount =
+        booking.refund_requested_amount !== null && booking.refund_requested_amount !== undefined
+          ? Number(booking.refund_requested_amount)
+          : null;
+      if (storedRequestedAmount !== null) {
+        if (!Number.isSafeInteger(storedRequestedAmount) || storedRequestedAmount < 0) {
+          throw new TypeError("Stored requested refund must be a non-negative safe integer.");
+        }
+        refundAmountCents = storedRequestedAmount;
+      } else {
+        refundAmountCents = calculateRefundAmountCents(
+          booking.cancellation_policy,
+          booking.arrivaldate,
+          storedTotalMinor
+        );
+      }
 
       if (booking.stripe_refund_id) {
         return await this.resolveExistingCancellationRefund(booking, refundAmountCents);
       }
 
+      let paymentIntentStatus = null;
       if (hasStripePaymentIntent && !isPaidBooking) {
         const stripeInstance = await this.getStripeInstance();
         const paymentIntent = await stripeInstance?.paymentIntents?.retrieve?.(paymentId);
@@ -454,12 +513,13 @@ class ReservationController {
             "requires_action",
             "canceled",
           ]);
-
+          const knownUnpaid = knownUnpaidStatuses.has(paymentIntentStatus);
           return {
-            refundedAmount: refundAmountCents,
+            requestedAmount: refundAmountCents,
+            ...(knownUnpaid ? { refundedAmount: 0 } : {}),
             stripeRefundId: null,
             refundError: null,
-            refundStatus: knownUnpaidStatuses.has(paymentIntentStatus) ? null : REFUND_STATUS.UNKNOWN,
+            refundStatus: knownUnpaid ? REFUND_STATUS.NOT_REFUNDED : REFUND_STATUS.UNKNOWN,
           };
         }
       }
@@ -467,30 +527,23 @@ class ReservationController {
       const hasConfirmedPayment = isPaidBooking || paymentIntentStatus === "succeeded";
       const hasRefundEvidence =
         hasConfirmedPayment ||
-        booking.stripe_refund_id ||
         Number(booking.refunded_amount) > 0 ||
         Boolean(booking.refund_error) ||
         (hasStripePaymentIntent && !paymentIntentStatus);
 
       if (refundAmountCents === 0) {
-        let refundStatus = null;
-        if (hasConfirmedPayment) {
-          refundStatus = REFUND_STATUS.NOT_REFUNDED;
-        } else if (hasRefundEvidence) {
-          refundStatus = REFUND_STATUS.UNKNOWN;
-        }
-
         return {
-          refundedAmount: refundAmountCents,
+          requestedAmount: 0,
+          refundedAmount: 0,
           stripeRefundId: null,
           refundError: null,
-          refundStatus,
+          refundStatus: hasConfirmedPayment ? REFUND_STATUS.NOT_REFUNDED : null,
         };
       }
 
       if (!hasStripePaymentIntent || !hasConfirmedPayment) {
         return {
-          refundedAmount: refundAmountCents,
+          requestedAmount: refundAmountCents,
           stripeRefundId: null,
           refundError: null,
           refundStatus: hasRefundEvidence ? REFUND_STATUS.UNKNOWN : null,
@@ -501,14 +554,13 @@ class ReservationController {
     } catch (error) {
       console.error(`Refund processing failed for booking ${booking.id}:`, error.message);
       return {
-        refundedAmount: refundAmountCents,
+        ...(refundAmountCents === undefined ? {} : { requestedAmount: refundAmountCents }),
         stripeRefundId: booking.stripe_refund_id || null,
         refundError: error.message,
         refundStatus: REFUND_STATUS.UNKNOWN,
       };
     }
   }
-
   async cancelBooking(bookingId, event) {
     const authToken = event?.headers?.Authorization ?? event?.headers?.authorization;
 
@@ -554,6 +606,12 @@ class ReservationController {
 
     const paymentIntent = await stripeInstance.paymentIntents.retrieve(paymentIntentId);
     const currency = paymentIntent?.currency?.toLowerCase();
+
+    if (paymentIntent?.status !== "succeeded") {
+      throw new Error(
+        `Cannot refund PaymentIntent ${paymentIntentId} with status ${paymentIntent?.status || "unknown"}; expected succeeded.`
+      );
+    }
 
     if (currency !== REFUND_CURRENCY) {
       throw new Error(

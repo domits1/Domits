@@ -33,6 +33,8 @@ const CATALOG_COLUMNS = [
   "special_request",
   "cancelled_at",
   "currency",
+  "total_price_minor",
+  "refund_requested_amount",
 ];
 
 const CATALOG_NOT_NULL_COLUMNS = [
@@ -117,7 +119,29 @@ describe("Booking entity", () => {
     expect(transformer.from(null)).toBeNull();
   });
 
+  it.each(["total_price_minor", "refund_requested_amount"])(
+    "does not declare a database default for nullable money field %s",
+    async (columnName) => {
+      const metadata = await loadBookingMetadata();
+      const column = metadata.findColumnWithDatabaseName(columnName);
+      expect(column.isNullable).toBe(true);
+      expect(column.default).toBeUndefined();
+    }
+  );
+
   it.todo("declares no column defaults that the booking table does not have (total_price, refunded_amount, bookingtype)");
+
+  it.each(["total_price_minor", "refund_requested_amount"])(
+    "maps %s as a nullable BIGINT and preserves its integer string",
+    async (columnName) => {
+      const metadata = await loadBookingMetadata();
+      const column = metadata.findColumnWithDatabaseName(columnName);
+      expect(column.type).toBe("bigint");
+      expect(column.isNullable).toBe(true);
+      expect(column.transformer.from("12345")).toBe("12345");
+      expect(column.transformer.from(null)).toBeNull();
+    }
+  );
 });
 
 // The entity selects every column on every booking read, so each migration must reach both schemas.
@@ -126,6 +150,8 @@ describe("booking column migrations", () => {
     ["20261030_booking_cancelled_at.sql", "cancelled_at BIGINT"],
     ["20261110_booking_refund_status.sql", "refund_status VARCHAR(32)"],
     ["20261113_booking_currency.sql", "currency VARCHAR(3)"],
+    ["20261124_booking_money_fields.sql", "total_price_minor BIGINT"],
+    ["20261124_booking_money_fields.sql", "refund_requested_amount BIGINT"],
   ])("%s adds %s to both booking schemas", (fileName, columnDefinition) => {
     const sql = loadMigrationSql(fileName);
     ["test", "main"].forEach((schema) => {

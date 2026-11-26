@@ -5,6 +5,7 @@ export default {
     testEnvironment: 'node',
     moduleNameMapper: {
       '^database/models/(.*)$': '<rootDir>/ORM/models/$1.js',
+      '^database/money$': '<rootDir>/ORM/money/currencyAmount.js',
       '^\\./\\.shared/(.*)$': '<rootDir>/functions/.shared/$1',
       '^\\.\\./\\.shared/(.*)$': '<rootDir>/functions/.shared/$1',
       '^\\.\\./\\.\\./\\.shared/(.*)$': '<rootDir>/functions/.shared/$1',

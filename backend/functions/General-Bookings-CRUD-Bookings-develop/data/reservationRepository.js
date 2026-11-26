@@ -428,6 +428,9 @@ class ReservationRepository {
         "booking.cancellation_policy",
         "booking.bookingtype",
         "booking.total_price",
+        "booking.total_price_minor",
+        "booking.currency",
+        "booking.refund_requested_amount",
         "booking.refunded_amount",
         "booking.stripe_refund_id",
         "booking.refund_error",
@@ -697,6 +700,9 @@ class ReservationRepository {
   async recordGuestRefund(id, refundInfo = {}) {
     const client = await Database.getInstance();
     const updateData = {};
+    if (refundInfo.requestedAmount !== undefined) {
+      updateData.refund_requested_amount = refundInfo.requestedAmount;
+    }
     if (refundInfo.refundedAmount !== undefined) {
       updateData.refunded_amount = refundInfo.refundedAmount;
     }

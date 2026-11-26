@@ -116,11 +116,17 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
   ])("an imported booking stores the currency of its amount: $label", async ({ currency, expected }) => {
     const { repository, client } = setup();
 
-    await repository.createExternalBooking({ ...booking, totalPrice: 250, currency });
+    await repository.createExternalBooking({
+      ...booking,
+      totalPrice: expected ? 250 : null,
+      totalPriceMinor: expected ? "25000" : null,
+      currency,
+    });
 
     const [sql, params] = client.query.mock.calls[0];
-    expect(sql).toContain("total_price, booking_source, currency)");
-    expect(params[17]).toBe(expected);
+    expect(sql).toContain("total_price, total_price_minor, booking_source, currency)");
+    expect(params[16]).toBe(expected ? "25000" : null);
+    expect(params[18]).toBe(expected);
   });
 
   test("an imported booking stores the guest count from Channex", async () => {
@@ -166,13 +172,21 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
   test("a date change updates the total price and its currency only when Channex sends them", async () => {
     const { repository, manager } = setup();
 
-    await repository.updateImportedBooking({ ...booking, totalPrice: 350, currency: "GBP", channexChanges: [change] });
+    await repository.updateImportedBooking({
+      ...booking,
+      totalPrice: 350,
+      totalPriceMinor: "35000",
+      currency: "GBP",
+      channexChanges: [change],
+    });
 
     const [sql, params] = manager.query.mock.calls[0];
     expect(sql).toContain("total_price = COALESCE($6, total_price)");
     expect(sql).toContain("currency = COALESCE($8, currency)");
+    expect(sql).toContain("total_price_minor = COALESCE($9, total_price_minor)");
     expect(params[5]).toBe(350);
     expect(params[7]).toBe("GBP");
+    expect(params[8]).toBe("35000");
   });
 
   test("a date change without an amount keeps the stored total price and currency", async () => {
@@ -182,8 +196,10 @@ describe("ChannexExternalBookingImportRepository Channex outbox rows", () => {
 
     const [sql, params] = manager.query.mock.calls[0];
     expect(sql).toContain("currency = COALESCE($8, currency)");
+    expect(sql).toContain("total_price_minor = COALESCE($9, total_price_minor)");
     expect(params[5]).toBeNull();
     expect(params[7]).toBeNull();
+    expect(params[8]).toBeNull();
   });
 
   test("an imported cancellation and its outbox row are saved in one transaction", async () => {

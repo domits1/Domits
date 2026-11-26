@@ -156,6 +156,9 @@ export class Service {
     const missingChannexCurrencyBookingIds = bookingCandidates
       .filter((booking) => isChannexBooking(booking) && !resolveBookingCurrency(booking))
       .map((booking) => booking.id);
+    const missingMinorUnitAmountBookingIds = bookingCandidates
+      .filter((booking) => booking.total_price_minor === null || booking.total_price_minor === undefined)
+      .map((booking) => booking.id);
 
     return {
       owner: {
@@ -194,8 +197,10 @@ export class Service {
         checkedOutAtMs: booking.checked_out_at,
         cancelledAtMs: booking.cancelled_at,
         rawTotalPrice: booking.total_price,
+        rawTotalPriceMinor: booking.total_price_minor,
         currency: resolveBookingCurrency(booking),
         paymentReference: booking.paymentid || null,
+        rawRefundRequestedAmount: booking.refund_requested_amount,
         rawRefundedAmount: booking.refunded_amount,
         stripeRefundId: booking.stripe_refund_id,
         refundStatus: booking.refund_status,
@@ -207,9 +212,14 @@ export class Service {
         propertyId: invoice.property_id,
         arrivalDateMs: invoice.arrival_date,
         departureDateMs: invoice.departure_date,
+        currency: invoice.currency || null,
+        ratePerNightMinor: invoice.rate_per_night_minor,
         grossAmount: invoice.gross_amount,
+        grossAmountMinor: invoice.gross_amount_minor,
         commissionAmount: invoice.commission_amount,
+        commissionAmountMinor: invoice.commission_amount_minor,
         netAmount: invoice.net_amount,
+        netAmountMinor: invoice.net_amount_minor,
         status: invoice.status,
         createdAtMs: invoice.created_at,
       })),
@@ -223,12 +233,15 @@ export class Service {
       dataQuality: {
         missingCurrencyBookingIds,
         missingChannexCurrencyBookingIds,
+        missingMinorUnitAmountBookingIds,
         limitations: [
           "The accounting-period attribution policy has not been selected. Booking candidates are not final period revenue.",
           "Stripe charge, balance-transaction and payout records are not fetched; only booking payment references and stored refund fields are returned.",
           "There is no persisted property-expense ledger in the current data model.",
-          "Invoice records do not store currency and their current creation flow applies a fixed 10% commission; invoice totals are supplemental records, not authoritative owner earnings.",
-          "Channex imports currently do not persist the source booking currency.",
+          "Invoice totals remain supplemental records: the invoice flow uses a fixed 10% rate, not an owner-agreement commission source.",
+          "Historical invoices may have no recorded currency or minor-unit snapshots; new invoices record both.",
+          "Historical booking rows may have no exact minor-unit snapshot until the reviewed backfill is run.",
+          "Historical refunded_amount values may include policy-requested amounts from the old cancellation flow; they require reconciliation before being treated as confirmed refunds.",
           "Taxes, fee responsibility, ownership changes during a stay and rounding rules still require Finance/Product decisions.",
         ],
       },
