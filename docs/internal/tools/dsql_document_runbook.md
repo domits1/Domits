@@ -8,7 +8,7 @@ The `.js` file is the migration record (nothing in this repo executes it). The `
 
 Connect as described in [dsql_transitioning_docs.md](./dsql_transitioning_docs.md). Confirm the cluster from SSM parameters `/aurora/dsql/host` and `/aurora/dsql/region` in eu-north-1, and apply as the `admin` database user the runtime uses (`backend/ORM/index.js`).
 
-This migration creates `document` and `document_version` only. `document_relationship` (links to properties, owners and other entities) and `document_activity` (the activity log) follow in a separate migration with its own runbook.
+This migration creates `document` and `document_version` only. `document_relationship` (links to properties, owners and other entities) and `document_activity` (the activity log) follow in a separate migration with its own runbook, [dsql_document_relationship_activity_runbook.md](./dsql_document_relationship_activity_runbook.md).
 
 ## Purpose
 
@@ -69,7 +69,7 @@ Nothing on this branch reads or writes the tables, and TypeORM runs with `synchr
 
 ## Rollback
 
-`20261124_document_rollback.sql` drops the indexes and then the table, `document_version` before `document`, `main` first, then `test`. Run each statement on its own in autocommit, and never as part of the apply. Roll back only while the tables hold no real data, or after the data is exported and the code using it is rolled back. The rollback does not remove files from storage.
+`20261124_document_rollback.sql` drops the indexes and then the table, `document_version` before `document`, `main` first, then `test`. Run `20261126_document_relationship_activity_rollback.sql` first, because `document_relationship` and `document_activity` point at `document`. Run each statement on its own in autocommit, and never as part of the apply. Roll back only while the tables hold no real data, or after the data is exported and the code using it is rolled back. The rollback does not remove files from storage.
 
 ## Status
 

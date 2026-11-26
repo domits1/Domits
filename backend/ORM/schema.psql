@@ -587,6 +587,30 @@ CREATE TABLE IF NOT EXISTS main.document_version (
 CREATE UNIQUE INDEX ASYNC document_version_document_id_version_number_unique ON main.document_version (document_id, version_number);
 CREATE INDEX ASYNC document_version_host_id_idx ON main.document_version (host_id);
 
+CREATE TABLE IF NOT EXISTS main.document_relationship (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  entity_type VARCHAR(50) NOT NULL,
+  entity_id VARCHAR(255) NOT NULL,
+  created_by VARCHAR(255) NOT NULL,
+  created_at BIGINT NOT NULL
+);
+CREATE UNIQUE INDEX ASYNC document_relationship_document_entity_unique ON main.document_relationship (document_id, entity_type, entity_id);
+CREATE INDEX ASYNC document_relationship_host_id_entity_idx ON main.document_relationship (host_id, entity_type, entity_id);
+
+CREATE TABLE IF NOT EXISTS main.document_activity (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  actor_id VARCHAR(255) NOT NULL,
+  action VARCHAR(50) NOT NULL,
+  details TEXT NULL,
+  created_at BIGINT NOT NULL
+);
+CREATE INDEX ASYNC document_activity_document_id_created_at_idx ON main.document_activity (document_id, created_at);
+CREATE INDEX ASYNC document_activity_host_id_created_at_idx ON main.document_activity (host_id, created_at);
+
 -- -----------------------------------------------------
 -- Table main.property_test_status
 -- -----------------------------------------------------
@@ -760,6 +784,30 @@ CREATE TABLE IF NOT EXISTS test.document_version (
 );
 CREATE UNIQUE INDEX ASYNC document_version_document_id_version_number_unique_test ON test.document_version (document_id, version_number);
 CREATE INDEX ASYNC document_version_host_id_idx_test ON test.document_version (host_id);
+
+CREATE TABLE IF NOT EXISTS test.document_relationship (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  entity_type VARCHAR(50) NOT NULL,
+  entity_id VARCHAR(255) NOT NULL,
+  created_by VARCHAR(255) NOT NULL,
+  created_at BIGINT NOT NULL
+);
+CREATE UNIQUE INDEX ASYNC document_relationship_document_entity_unique_test ON test.document_relationship (document_id, entity_type, entity_id);
+CREATE INDEX ASYNC document_relationship_host_id_entity_idx_test ON test.document_relationship (host_id, entity_type, entity_id);
+
+CREATE TABLE IF NOT EXISTS test.document_activity (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID NOT NULL,
+  host_id VARCHAR(255) NOT NULL,
+  actor_id VARCHAR(255) NOT NULL,
+  action VARCHAR(50) NOT NULL,
+  details TEXT NULL,
+  created_at BIGINT NOT NULL
+);
+CREATE INDEX ASYNC document_activity_document_id_created_at_idx_test ON test.document_activity (document_id, created_at);
+CREATE INDEX ASYNC document_activity_host_id_created_at_idx_test ON test.document_activity (host_id, created_at);
 
 -- Review persistence
 CREATE TABLE IF NOT EXISTS test.review (

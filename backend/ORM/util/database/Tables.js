@@ -72,6 +72,8 @@ import { Property_Owner } from "../../models/Property_Owner.js";
 import { Property_Owner_Property } from "../../models/Property_Owner_Property.js";
 import { Document } from "../../models/Document.js";
 import { Document_Version } from "../../models/Document_Version.js";
+import { Document_Relationship } from "../../models/Document_Relationship.js";
+import { Document_Activity } from "../../models/Document_Activity.js";
 import { Property_Moderation_Event } from "../../models/Property_Moderation_Event.js";
 import { Invoice } from "../../models/Invoice.js";
 
@@ -156,6 +158,8 @@ export const Tables = [
   Property_Owner_Property,
   Document,
   Document_Version,
+  Document_Relationship,
+  Document_Activity,
   Property_Moderation_Event,
   Invoice,
   EnterpriseRatePlan,
