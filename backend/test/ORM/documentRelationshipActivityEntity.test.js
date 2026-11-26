@@ -58,7 +58,7 @@ const TABLES = [
     },
     indexes: [
       ["", "document_activity_document_id_created_at_idx", "document_id, created_at", ""],
-      ["", "document_activity_host_id_idx", "host_id", ""],
+      ["", "document_activity_host_id_created_at_idx", "host_id, created_at", ""],
     ],
     checks: [],
   },

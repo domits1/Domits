@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS test.document_activity (
 CREATE INDEX ASYNC IF NOT EXISTS document_activity_document_id_created_at_idx_test
 ON test.document_activity (document_id, created_at);
 
-CREATE INDEX ASYNC IF NOT EXISTS document_activity_host_id_idx_test
-ON test.document_activity (host_id);
+CREATE INDEX ASYNC IF NOT EXISTS document_activity_host_id_created_at_idx_test
+ON test.document_activity (host_id, created_at);
 
 SELECT job_id, status, details, job_type, object_name, update_time
 FROM sys.jobs
@@ -86,8 +86,8 @@ CREATE TABLE IF NOT EXISTS main.document_activity (
 CREATE INDEX ASYNC IF NOT EXISTS document_activity_document_id_created_at_idx
 ON main.document_activity (document_id, created_at);
 
-CREATE INDEX ASYNC IF NOT EXISTS document_activity_host_id_idx
-ON main.document_activity (host_id);
+CREATE INDEX ASYNC IF NOT EXISTS document_activity_host_id_created_at_idx
+ON main.document_activity (host_id, created_at);
 
 SELECT job_id, status, details, job_type, object_name, update_time
 FROM sys.jobs

@@ -42,15 +42,15 @@ export class DocumentRelationshipActivity20261126 {
         ON ${schema}.document_activity (document_id, created_at);
       `);
       await queryRunner.query(`
-        CREATE INDEX ASYNC IF NOT EXISTS document_activity_host_id_idx${suffix}
-        ON ${schema}.document_activity (host_id);
+        CREATE INDEX ASYNC IF NOT EXISTS document_activity_host_id_created_at_idx${suffix}
+        ON ${schema}.document_activity (host_id, created_at);
       `);
     }
   }
 
   async down(queryRunner) {
     for (const { schema, suffix } of [...SCHEMAS].reverse()) {
-      await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.document_activity_host_id_idx${suffix};`);
+      await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.document_activity_host_id_created_at_idx${suffix};`);
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.document_activity_document_id_created_at_idx${suffix};`);
       await queryRunner.query(`DROP TABLE IF EXISTS ${schema}.document_activity;`);
       await queryRunner.query(`DROP INDEX IF EXISTS ${schema}.document_relationship_host_id_entity_idx${suffix};`);

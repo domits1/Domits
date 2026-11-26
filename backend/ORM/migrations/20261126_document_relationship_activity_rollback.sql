@@ -1,4 +1,4 @@
-DROP INDEX IF EXISTS main.document_activity_host_id_idx;
+DROP INDEX IF EXISTS main.document_activity_host_id_created_at_idx;
 
 DROP INDEX IF EXISTS main.document_activity_document_id_created_at_idx;
 
@@ -10,7 +10,7 @@ DROP INDEX IF EXISTS main.document_relationship_document_entity_unique;
 
 DROP TABLE IF EXISTS main.document_relationship;
 
-DROP INDEX IF EXISTS test.document_activity_host_id_idx_test;
+DROP INDEX IF EXISTS test.document_activity_host_id_created_at_idx_test;
 
 DROP INDEX IF EXISTS test.document_activity_document_id_created_at_idx_test;
 

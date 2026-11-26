@@ -20,7 +20,7 @@ Indexes:
 - `document_relationship_document_entity_unique`: one link per document and entity.
 - `document_relationship_host_id_entity_idx`: the documents of a host linked to one entity.
 - `document_activity_document_id_created_at_idx`: the activity of a document in time order.
-- `document_activity_host_id_idx`: a host's activity.
+- `document_activity_host_id_created_at_idx`: a host's activity in time order.
 
 ## Prerequisites
 
@@ -35,6 +35,7 @@ Indexes:
 - **No CHECK constraints.** `entity_type` and `action` are lists that may grow; the service layer validates them.
 - **No foreign keys**, as for the document tables. The service layer keeps `document_id` pointing to a `document`, `host_id` equal to that document's `host_id`, and `entity_type` and `entity_id` pointing to an entity of the same host.
 - Index names carry a `_test` suffix on `test`, and every name fits the 63-character PostgreSQL identifier limit.
+- **Index key size.** DSQL limits a secondary index key to 1 KiB combined and rejects a larger key with `key size too large`. `document_relationship_host_id_entity_idx` covers `host_id VARCHAR(255)`, `entity_type VARCHAR(50)` and `entity_id VARCHAR(255)`: 560 characters, up to 2240 bytes with 4-byte UTF-8 characters, so a row at the declared maximums could be rejected. `document_relationship_document_entity_unique` covers `document_id UUID` (16 bytes), `entity_type` and `entity_id`: up to 1236 bytes. Real values (a Cognito sub and UUIDs) take about 100 bytes. The service layer caps the `entity_id` length (PR D); that cap must keep both keys under 1 KiB.
 
 ## Blocks in the file, in order
 
