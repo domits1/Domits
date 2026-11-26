@@ -30,4 +30,13 @@ Only `channel = 'CHANNEX'`: on 23 Nov one user had three older `BOOKING_COM` row
 
 ## Status
 
-Not applied yet.
+Applied on `main` on 26 Nov 2026 by Enes Veli Yigit, after PR #4031 was merged and deployed (deploy run 45789971808, 09:21 UTC).
+
+| Block | Result |
+|---|---|
+| 1. Users with more than one `CHANNEX` row | 0 rows |
+| 2. Jobs still running on the table | 0 rows |
+| 3. `CREATE UNIQUE INDEX ASYNC` | job `hc5k2nwyvfg3jnhlslvurcvrwe` |
+| 4. `sys.jobs` | `completed` at 10:03 UTC |
+| 5. Catalog | `indisunique = true`, `indisvalid = true`, predicate `((channel)::text = 'CHANNEX'::text)` |
+| 6. Smoke test | the second `INSERT` failed: `duplicate key value violates unique constraint "channel_integration_account_channex_user_unique"`; after `ROLLBACK` no `smoke-host` row remains |
