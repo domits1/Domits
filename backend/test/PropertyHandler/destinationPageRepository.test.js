@@ -4,6 +4,8 @@ import {
   DestinationPageRepository,
   buildAccommodationImageUrl,
 } from "../../functions/PropertyHandler/data/repository/destinationPageRepository.js";
+import { buildDestinationPage } from "../../functions/PropertyHandler/business/service/destinationPageBuilder.js";
+import { ACCOMMODATION_IMAGE_BASE_URL } from "../../functions/PropertyHandler/util/destination/accommodationImage.js";
 
 jest.mock("database", () => ({
   __esModule: true,
@@ -74,7 +76,7 @@ describe("the destination page repository", () => {
     expect(parameters).toEqual(["ACTIVE"]);
   });
 
-  it("lists only listings whose property exists and is active, with their public fields and the first ready web image only", async () => {
+  it("lists only listings whose property exists and is active, with their public fields and the first ready web image", async () => {
     const query = withRows([
       {
         id: "p1",
@@ -83,7 +85,7 @@ describe("the destination page repository", () => {
         country: "Spain",
         roomrate: "240",
         path: "/destinations/europe/spain/marbella",
-        image_key: "images/p1/web.jpg",
+        web_key: "images/p1/web.jpg",
       },
       {
         id: "p2",
@@ -92,7 +94,7 @@ describe("the destination page repository", () => {
         country: "Spain",
         roomrate: null,
         path: "/destinations/europe/spain/malaga",
-        image_key: null,
+        web_key: null,
       },
     ]);
 
@@ -130,7 +132,7 @@ describe("the destination page repository", () => {
     expect(statement).toContain("WHERE d.path = $2 OR d.path LIKE $3");
     expect(statement).toContain("v.variant = 'web'");
     expect(statement).toContain("WHERE i.property_id = p.id AND i.status = 'READY'");
-    expect(statement).toContain("ORDER BY i.sort_order ASC, i.id ASC\n         LIMIT 1) AS image_key");
+    expect(statement).toContain("ORDER BY i.sort_order ASC, i.id ASC\n         LIMIT 1) AS web_key");
     expect(statement).not.toMatch(/street|postal|house|hostid|latitude/i);
     expect(parameters).toEqual(["ACTIVE", "/destinations/europe/spain", "/destinations/europe/spain/%", 24]);
   });
@@ -172,5 +174,108 @@ describe("the destination page repository", () => {
     );
     expect(buildAccommodationImageUrl("")).toBe("");
     expect(buildAccommodationImageUrl(null)).toBe("");
+  });
+});
+
+describe("the photo of a listing on a destination page", () => {
+  const SPAIN = "/destinations/europe/spain";
+  const WEB = "images/p1/image-1/web.jpg";
+  const ORIGINAL = "images/p1/image-1/original.jpg";
+  const LEGACY = "images/p1/0f8c2b1e-legacy";
+
+  const listingRow = (keys = {}) => ({
+    id: "p1",
+    title: "Villa",
+    city: "Marbella",
+    country: "Spain",
+    roomrate: "240",
+    path: `${SPAIN}/marbella`,
+    web_key: null,
+    original_key: null,
+    legacy_key: null,
+    ...keys,
+  });
+
+  const listingsFor = (rows) => {
+    const query = withRows(rows);
+    return { query, listings: new DestinationPageRepository().listActiveListingsUnderPath(SPAIN, 24) };
+  };
+
+  const photoOf = async (keys) => {
+    const [listing] = await listingsFor([listingRow(keys)]).listings;
+    return listing.imageUrl;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("gives a listing with only legacy photos its legacy photo", async () => {
+    expect(await photoOf({ legacy_key: LEGACY })).toBe(`${ACCOMMODATION_IMAGE_BASE_URL}${LEGACY}`);
+  });
+
+  it("takes the web photo over the original and the legacy one", async () => {
+    expect(await photoOf({ web_key: WEB, original_key: ORIGINAL, legacy_key: LEGACY })).toBe(
+      `${ACCOMMODATION_IMAGE_BASE_URL}${WEB}`
+    );
+  });
+
+  it("takes the original photo over the legacy one when there is no web photo", async () => {
+    expect(await photoOf({ original_key: ORIGINAL, legacy_key: LEGACY })).toBe(
+      `${ACCOMMODATION_IMAGE_BASE_URL}${ORIGINAL}`
+    );
+  });
+
+  it.each([
+    ["a full address", "https://accommodation.s3.eu-north-1.amazonaws.com/images/p1/0f8c2b1e-legacy"],
+    ["in the folder of another listing", "images/p2/0f8c2b1e-legacy"],
+    ["the folder of the listing alone", "images/p1/"],
+    ["outside the images folder", "uploads/p1/0f8c2b1e-legacy"],
+    ["the listing id without its folder", "images/p1-0f8c2b1e"],
+  ])("never builds a photo from a key that is %s", async (_name, legacyKey) => {
+    expect(await photoOf({ legacy_key: legacyKey })).toBe("");
+  });
+
+  it("passes over a key outside the listing's folder to the next photo in line", async () => {
+    expect(await photoOf({ web_key: "https://example.com/web.jpg", legacy_key: LEGACY })).toBe(
+      `${ACCOMMODATION_IMAGE_BASE_URL}${LEGACY}`
+    );
+  });
+
+  it("shows a listing without any photo with an empty photo, next to a listing with one", async () => {
+    const listings = await listingsFor([
+      listingRow({ id: "p2", title: "Flat" }),
+      listingRow({ legacy_key: LEGACY }),
+    ]).listings;
+
+    expect(listings.map((listing) => listing.imageUrl)).toEqual(["", `${ACCOMMODATION_IMAGE_BASE_URL}${LEGACY}`]);
+    const page = buildDestinationPage({
+      destination: { type: "country", name: "Spain", path: SPAIN },
+      listings,
+    });
+    expect(page.html).toContain('<a href="/listingdetails?ID=p2"><span class="photo"></span><h3 dir="auto">Flat</h3>');
+    expect(page.html).toContain(`<img src="${ACCOMMODATION_IMAGE_BASE_URL}${LEGACY}" alt="Villa" loading="lazy">`);
+  });
+
+  it("asks for the first ready web and the first ready original photo in the one query of the page", async () => {
+    const { query, listings } = listingsFor([]);
+    await listings;
+
+    expect(query).toHaveBeenCalledTimes(1);
+    const statement = oneLine(query.mock.calls[0][0]);
+    for (const variant of ["web", "original"]) {
+      expect(statement).toContain(
+        `(SELECT v.s3_key FROM ${SCHEMA}.property_image_v2 i JOIN ${SCHEMA}.property_image_variant v ON v.image_id = i.id AND v.variant = '${variant}' WHERE i.property_id = p.id AND i.status = 'READY' ORDER BY i.sort_order ASC, i.id ASC LIMIT 1) AS ${variant}_key`
+      );
+    }
+  });
+
+  it("takes the same legacy photo every time, only from the listing's own folder, whatever state its v2 photos are in", async () => {
+    const { query, listings } = listingsFor([]);
+    await listings;
+
+    expect(oneLine(query.mock.calls[0][0])).toContain(
+      `(SELECT li.key FROM ${SCHEMA}.property_image li WHERE li.property_id = p.id AND li.key LIKE ('images/' || p.id || '/%') ORDER BY li.key ASC LIMIT 1) AS legacy_key`
+    );
   });
 });

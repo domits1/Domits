@@ -37,7 +37,7 @@ const STALE_NOTICES = Object.freeze({
 
 const resolveStaleNotice = (staleReason) => STALE_NOTICES[staleReason] || "Selection changed — check again";
 
-const deriveQuoteView = (quoteState) => {
+export const deriveQuoteView = (quoteState) => {
   const isLoading = quoteState.status === QUOTE_STATUS.LOADING;
   const isStale = quoteState.status === QUOTE_STATUS.STALE;
   const isQuoted = quoteState.status === QUOTE_STATUS.SUCCESS && Boolean(quoteState.quote);
@@ -74,7 +74,7 @@ const deriveBookingView = (bookingState) => {
   };
 };
 
-function QuoteBreakdown({ quote, isStale, staleReason }) {
+export function QuoteBreakdown({ quote, isStale, staleReason }) {
   const { priceBreakdown, nights } = quote;
   const nightlyRate = nights > 0 ? Math.round(priceBreakdown.nightlyBaseTotal / nights) : null;
   const validUntil = formatQuoteValidUntil(quote.expiresAt);
@@ -117,7 +117,7 @@ QuoteBreakdown.propTypes = {
   staleReason: PropTypes.string,
 };
 
-function QuotePanelAlert({ presentation, requestId, contactHref, onRetry }) {
+export function QuotePanelAlert({ presentation, requestId, contactHref, onRetry }) {
   const showActions = presentation.canRetry || (presentation.showContact && contactHref) || presentation.showReference;
 
   return (

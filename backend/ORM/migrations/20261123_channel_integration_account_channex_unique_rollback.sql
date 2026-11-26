@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS main.channel_integration_account_channex_user_unique;

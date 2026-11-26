@@ -16,26 +16,11 @@ import {
 } from "./quoteSelection";
 import { TemplateAvailabilityCalendar } from "../templates/templateSharedSections";
 import { getOrCreateVisitorId } from "../../services/websiteVisitorId";
-
-const DEFAULT_GUEST_COUNT = 2;
-
-const resolveCapacity = (model) => {
-  const capacity = Number(model?.stay?.guests);
-  return Number.isInteger(capacity) && capacity > 0 ? capacity : null;
-};
+import { resolveDefaultGuestCount, resolveGuestCapacity, resolveHostContactHref } from "./quoteModel";
 
 const resolveMinimumStay = (model) => {
   const minimumStay = Number(model?.stay?.minimumStay);
   return Number.isFinite(minimumStay) && minimumStay > 0 ? minimumStay : null;
-};
-
-const resolveContactHref = (model) => {
-  if (model?.visibility?.chatWidget === false) {
-    return null;
-  }
-  const whatsapp = model?.host?.whatsapp;
-  const digits = String(whatsapp?.phoneNumberDigits || "").replaceAll(/\D/g, "");
-  return whatsapp?.isAvailable && digits ? `https://wa.me/${digits}` : null;
 };
 
 const toDateKeyList = (value) => (Array.isArray(value) ? value : []);
@@ -54,7 +39,7 @@ export default function QuoteAvailabilitySection({
 }) {
   const sessionId = useMemo(() => getOrCreateVisitorId(), []);
   const todayKey = useMemo(() => getTodayDateKey(), []);
-  const capacity = resolveCapacity(model);
+  const capacity = resolveGuestCapacity(model);
   const [sessionBlockedDateKeys, setSessionBlockedDateKeys] = useState(() => new Set());
   const blockedDateKeys = useMemo(
     () =>
@@ -67,9 +52,7 @@ export default function QuoteAvailabilitySection({
   );
 
   const [range, setRange] = useState(EMPTY_STAY_RANGE);
-  const [guests, setGuests] = useState(() =>
-    capacity ? Math.min(DEFAULT_GUEST_COUNT, capacity) : DEFAULT_GUEST_COUNT
-  );
+  const [guests, setGuests] = useState(() => resolveDefaultGuestCount(capacity));
   const [guest, setGuest] = useState(EMPTY_BOOKING_GUEST);
   const [guestErrors, setGuestErrors] = useState({});
   const { requestQuote, notifySelectionChanged, markStale, ...quoteState } = useWebsiteQuote({ siteId, sessionId });
@@ -214,7 +197,7 @@ export default function QuoteAvailabilitySection({
           minimumStay={resolveMinimumStay(model)}
           quoteState={displayedQuoteState}
           onRequestQuote={handleRequestQuote}
-          contactHref={resolveContactHref(model)}
+          contactHref={resolveHostContactHref(model)}
           bookingState={bookingState}
           guest={guest}
           guestErrors={guestErrors}

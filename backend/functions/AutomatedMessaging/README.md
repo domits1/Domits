@@ -29,6 +29,7 @@ The following Lambda proxy routes are configured. Every listed non-`OPTIONS` met
 - `GET /automations/health`
 - `GET /automations/{id}`
 - `PATCH /automations/{id}`
+- `DELETE /automations/{id}`
 - `POST /automations/{id}/activate`
 - `POST /automations/{id}/pause`
 - `POST /automations/{id}/preview`

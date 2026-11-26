@@ -75,9 +75,44 @@ describe("PlatformCard", () => {
     await user.click(screen.getByRole("switch"));
     expect(onToggle).toHaveBeenLastCalledWith({ otaCode: "BookingCom", turnOn: true });
 
-    rerender(<PlatformCard platform={PLATFORM} state={state({ switchOn: true })} onToggle={onToggle} />);
+    rerender(<PlatformCard platform={PLATFORM} state={state({ switchOn: true })} onToggle={onToggle} turnOffEnabled />);
     await user.click(screen.getByRole("switch"));
     expect(onToggle).toHaveBeenLastCalledWith({ otaCode: "BookingCom", turnOn: false });
+  });
+
+  test("keeps a switch that is on disabled by default, even with a handler, because turning off does not exist yet", async () => {
+    const user = userEvent.setup();
+    const onToggle = jest.fn();
+    render(<PlatformCard platform={PLATFORM} state={state({ switchOn: true })} onToggle={onToggle} />);
+
+    expect(screen.getByRole("switch")).toBeDisabled();
+    await user.click(screen.getByRole("switch"));
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  test("enables a switch that is on once turnOffEnabled is set", () => {
+    render(<PlatformCard platform={PLATFORM} state={state({ switchOn: true })} onToggle={jest.fn()} turnOffEnabled />);
+
+    expect(screen.getByRole("switch")).toBeEnabled();
+  });
+
+  test("turnOffEnabled does not unlock a switch the state locks", () => {
+    render(
+      <PlatformCard
+        platform={PLATFORM}
+        state={state({ switchOn: true, switchDisabled: true })}
+        onToggle={jest.fn()}
+        turnOffEnabled
+      />
+    );
+
+    expect(screen.getByRole("switch")).toBeDisabled();
+  });
+
+  test("an off switch with a handler is enabled without turnOffEnabled", () => {
+    render(<PlatformCard platform={PLATFORM} state={state({ switchOn: false })} onToggle={jest.fn()} />);
+
+    expect(screen.getByRole("switch")).toBeEnabled();
   });
 
   test("does not call the handler when the switch is locked", async () => {
