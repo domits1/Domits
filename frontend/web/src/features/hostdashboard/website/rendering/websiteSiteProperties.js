@@ -10,6 +10,7 @@ export const SITE_PROPERTY_PAGE_KINDS = Object.freeze({
   property: "property",
   photos: "photos",
   request: "request",
+  sent: "sent",
 });
 
 const SITE_CONTENT_OVERRIDE_KEYS = new Set(
@@ -32,6 +33,7 @@ const DAY_MS = 86_400_000;
 const PAGE_KIND_BY_SEGMENT = new Map([
   [SITE_PROPERTY_PAGE_KINDS.photos, SITE_PROPERTY_PAGE_KINDS.photos],
   [SITE_PROPERTY_PAGE_KINDS.request, SITE_PROPERTY_PAGE_KINDS.request],
+  [SITE_PROPERTY_PAGE_KINDS.sent, SITE_PROPERTY_PAGE_KINDS.sent],
 ]);
 const SITE_PROPERTY_NOT_FOUND = Object.freeze({ isFound: false, property: null, pageKind: "" });
 

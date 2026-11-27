@@ -21,6 +21,7 @@ import PanoramaEliteSitePage from "./elite/PanoramaEliteSitePage";
 import EliteFooter from "./elite/EliteFooter";
 import EliteSitePropertyPage from "./elite/EliteSitePropertyPage";
 import EliteSitePropertyRequestPage from "./elite/EliteSitePropertyRequestPage";
+import EliteSitePropertySentPage from "./elite/EliteSitePropertySentPage";
 import { isEliteRestyledPage, resolveEliteHeaderTone, resolveEliteLocation } from "./elite/eliteSitePageContent";
 import {
   amenityPropType,
@@ -80,6 +81,10 @@ const PANORAMA_AMENITY_CATEGORY_LABELS = Object.freeze({
 const PANORAMA_RESIDENCE_SECTION_LABEL = "The residence";
 const PANORAMA_JOURNEY_SECTION_LABEL = "The stay";
 const PANORAMA_BOOK_NAV_LABEL = "Book";
+const SITE_PROPERTY_FLOW_PAGES = Object.freeze({
+  [SITE_PROPERTY_PAGE_KINDS.request]: EliteSitePropertyRequestPage,
+  [SITE_PROPERTY_PAGE_KINDS.sent]: EliteSitePropertySentPage,
+});
 const loadPhotoBrowserOverlay = () => import("../../../../../components/gallery/PhotoBrowserOverlay");
 const LazyPhotoBrowserOverlay = lazy(loadPhotoBrowserOverlay);
 
@@ -1382,9 +1387,10 @@ export default function PanoramaLandingTemplate({
   );
 
   const renderPageOpening = () => {
-    if (sitePropertyPage?.kind === SITE_PROPERTY_PAGE_KINDS.request) {
+    const SitePropertyFlowPage = SITE_PROPERTY_FLOW_PAGES[sitePropertyPage?.kind];
+    if (SitePropertyFlowPage) {
       return (
-        <EliteSitePropertyRequestPage
+        <SitePropertyFlowPage
           sitePropertyPage={sitePropertyPage}
           headerTone={eliteHeaderTone}
           model={model}

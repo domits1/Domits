@@ -152,6 +152,8 @@ export const sitePropertyPagePropType = PropTypes.shape({
   title: PropTypes.string.isRequired,
   overviewHref: PropTypes.string.isRequired,
   propertyHref: PropTypes.string.isRequired,
+  sentHref: PropTypes.string.isRequired,
+  contactHref: PropTypes.string.isRequired,
   navItems: PropTypes.arrayOf(PropTypes.shape({ href: PropTypes.string, label: PropTypes.string })).isRequired,
   stay: PropTypes.shape({ checkIn: PropTypes.string, checkOut: PropTypes.string, guests: PropTypes.number }).isRequired,
   booking: PropTypes.shape({ key: PropTypes.string, siteId: PropTypes.string, propertyId: PropTypes.string }),
