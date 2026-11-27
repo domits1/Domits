@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import MainDashboardHost from "../mainDashboardHost";
-import { CHANNEX_CERTIFICATION_ADMIN_ROUTE, loadChannexAccess } from "./channexCertificationAccess";
+import { CHANNEX_ACCESS_STATE, CHANNEX_CERTIFICATION_ADMIN_ROUTE, loadChannexAccessState } from "./channexCertificationAccess";
 
 jest.mock("../Pages2", () => () => null);
 
@@ -12,7 +12,7 @@ jest.mock("../hostchanneldistribution/views/HostChannelDistribution", () => () =
 
 jest.mock("./channexCertificationAccess", () => ({
   ...jest.requireActual("./channexCertificationAccess"),
-  loadChannexAccess: jest.fn(),
+  loadChannexAccessState: jest.fn(),
 }));
 
 function LocationDisplay() {
@@ -54,7 +54,7 @@ describe("Channex admin route", () => {
 
 describe("Distribution route guard", () => {
   test("serves the Distribution page at distribution for an allowlisted user", async () => {
-    loadChannexAccess.mockResolvedValue(true);
+    loadChannexAccessState.mockResolvedValue(CHANNEX_ACCESS_STATE.ALLOWED);
 
     renderHostDashboardAt("/hostdashboard/distribution");
 
@@ -62,7 +62,7 @@ describe("Distribution route guard", () => {
   });
 
   test("does not serve the Distribution page by URL when the user is not allowlisted", async () => {
-    loadChannexAccess.mockResolvedValue(false);
+    loadChannexAccessState.mockResolvedValue(CHANNEX_ACCESS_STATE.DENIED);
 
     renderHostDashboardAt("/hostdashboard/distribution");
 

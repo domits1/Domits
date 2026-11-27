@@ -1,32 +1,30 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { loadChannexAccess } from "../../channexadmin/channexCertificationAccess";
+import { CHANNEX_ACCESS_STATE, loadChannexAccessState } from "../../channexadmin/channexCertificationAccess";
 import "../styles/HostChannelDistribution.css";
 
 export const CHECKING_MESSAGE = "Checking your access to Distribution…";
 export const NOT_AVAILABLE_MESSAGE = "Distribution isn't available for this account.";
+export const ACCESS_ERROR_MESSAGE = "We couldn't check your access to Distribution.";
+
+const CHECKING = "checking";
 
 // UX guard only: the backend allowlist is the real protection for /integrations/channex/*.
-// loadChannexAccess swallows lookup errors, so a failed lookup and a 403 both end up as "not available".
 function ChannexInternalRoute({ children }) {
-  const [allowed, setAllowed] = useState(null);
+  const [state, setState] = useState(CHECKING);
 
-  useEffect(() => {
-    let mounted = true;
-
-    // Auth.currentAuthenticatedUser rejects for a signed-out user, so a rejection must also deny.
-    loadChannexAccess()
-      .catch(() => false)
-      .then((isAllowed) => {
-        if (mounted) setAllowed(isAllowed === true);
-      });
-
-    return () => {
-      mounted = false;
-    };
+  const runCheck = useCallback(() => {
+    setState(CHECKING);
+    loadChannexAccessState()
+      .catch(() => CHANNEX_ACCESS_STATE.ERROR)
+      .then(setState);
   }, []);
 
-  if (allowed === null) {
+  useEffect(() => {
+    runCheck();
+  }, [runCheck]);
+
+  if (state === CHECKING) {
     return (
       <div className="host-chdist">
         <output className="host-chdist__empty-text">{CHECKING_MESSAGE}</output>
@@ -34,7 +32,22 @@ function ChannexInternalRoute({ children }) {
     );
   }
 
-  if (!allowed) {
+  if (state === CHANNEX_ACCESS_STATE.ERROR) {
+    return (
+      <div className="host-chdist">
+        <div className="host-chdist__error">
+          <p className="host-chdist__error-text" role="alert">
+            {ACCESS_ERROR_MESSAGE}
+          </p>
+          <button type="button" className="chdist-btn chdist-btn--primary" onClick={runCheck}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (state !== CHANNEX_ACCESS_STATE.ALLOWED) {
     return (
       <div className="host-chdist">
         <p className="host-chdist__empty-text" role="alert">
