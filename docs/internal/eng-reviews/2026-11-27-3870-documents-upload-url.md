@@ -1,6 +1,6 @@
 # feat(documents): upload-url endpoint of the documents API
 
-Pull request: (to be opened)
+Pull request: #4077
 Issue: #3870, split PR D1 (the first route of the documents API; the routes that use the tables follow in D2)
 Reviewed: working tree on `3870-documents-upload-url`, on top of acceptance `f526b9e09`
 Result: 1 blocking, fixed
