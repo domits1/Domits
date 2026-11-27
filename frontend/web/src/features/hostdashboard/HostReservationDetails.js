@@ -1734,7 +1734,14 @@ const HostReservationDetails = () => {
       }
     } catch (updateError) {
       console.error("Failed to update request status:", updateError);
-      toast.error(t.requestActions.updateFailed);
+      if (action === "accept-inquiry" && updateError?.status === 502 && updateError?.response?.paymentSetupFailed) {
+        setReservationData((currentReservation) =>
+          currentReservation ? { ...currentReservation, status: "AWAITING_PAYMENT" } : currentReservation
+        );
+        toast.warning(updateError.message);
+      } else {
+        toast.error(t.requestActions.updateFailed);
+      }
     } finally {
       setIsUpdatingInquiry(false);
     }

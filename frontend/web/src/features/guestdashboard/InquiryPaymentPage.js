@@ -17,6 +17,7 @@ const InquiryPaymentPage = () => {
   const [stripeClientSecret, setStripeClientSecret] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [retrying, setRetrying] = useState(false);
 
   const bookingId = useMemo(() => {
     if (!location.pathname.startsWith(PAY_ROUTE_PREFIX)) return null;
@@ -45,7 +46,7 @@ const InquiryPaymentPage = () => {
         setStripeClientSecret(secret);
       } catch (err) {
         console.error("Failed to fetch Stripe client secret:", err);
-        setError("Failed to load payment. Please try again or contact support.");
+        setError("We couldn't prepare your payment. Your booking is still awaiting payment. You can retry payment setup.");
       } finally {
         setLoading(false);
       }
@@ -54,6 +55,39 @@ const InquiryPaymentPage = () => {
     fetchClientSecret();
   }, [bookingId]);
 
+  const retryPaymentSetup = async () => {
+    if (!bookingId || retrying) return;
+
+    setRetrying(true);
+    try {
+      const authToken = getAccessToken();
+      const response = await fetch(BOOKINGS_API, {
+        method: "PATCH",
+        headers: {
+          Authorization: authToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "retry-payment-setup",
+          bookingId,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      const secret = data?.stripeClientSecret ?? data?.response?.stripeClientSecret;
+      if (!response.ok || !secret) {
+        throw new Error(data?.message || "We couldn't prepare the payment. Please try again.");
+      }
+
+      setStripeClientSecret(secret);
+      setError(null);
+    } catch (retryError) {
+      console.error("Failed to retry Stripe payment setup:", retryError);
+      setError(retryError.message || "We couldn't prepare the payment. Please try again.");
+    } finally {
+      setRetrying(false);
+    }
+  };
+
   if (loading) return <img src={spinner} alt="Loading..." className="centerObject" />;
   if (error) {
     return (
@@ -61,6 +95,13 @@ const InquiryPaymentPage = () => {
         <div className="right-panel">
           <h1>Payment unavailable</h1>
           <p className="error-message">{error}</p>
+          <button
+            className="view-booking-button"
+            onClick={retryPaymentSetup}
+            disabled={retrying}
+          >
+            {retrying ? "Retrying payment..." : "Retry payment"}
+          </button>
           <button
             className="view-booking-button"
             onClick={() => navigate(`/guestdashboard/reservation/${encodeURIComponent(bookingId || "")}`)}
