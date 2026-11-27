@@ -1,9 +1,11 @@
 import {
   MOCK_HOST_DISTRIBUTION_ENABLED,
   createConnectSession,
+  enableDistribution,
   getHostListings,
   refreshChannels,
   resetMockHostDistribution,
+  setMockEnableOutcome,
 } from "./hostDistributionApi";
 import { isChannexUrl } from "../utils/channexUrl";
 
@@ -99,6 +101,141 @@ describe("hostDistributionApi (mock)", () => {
       status: 409,
       method: "POST",
       responseBody: { errorCode: "DISTRIBUTION_NOT_TURNED_ON" },
+    });
+  });
+
+  describe("enableDistribution", () => {
+    const statusOf = async (propertyId) => {
+      const { listings } = await getHostListings();
+      return listings.find((listing) => listing.propertyId === propertyId).distribution.status;
+    };
+
+    test("turns a listing on: the answer is only a status, the next read says READY, and a connect session works", async () => {
+      const answer = await enableDistribution({ propertyId: "mock-listing-not-turned-on" });
+
+      expect(answer).toEqual({ status: "PROVISIONED" });
+      expect(await statusOf("mock-listing-not-turned-on")).toBe("READY");
+      await expect(createConnectSession({ propertyId: "mock-listing-not-turned-on" })).resolves.toHaveProperty("iframeUrl");
+    });
+
+    test("is idempotent: a listing that is already READY answers ALREADY_CONNECTED and stays as it was", async () => {
+      const before = (await getHostListings()).listings.find((listing) => listing.propertyId === "mock-listing-live");
+
+      const answer = await enableDistribution({ propertyId: "mock-listing-live" });
+
+      expect(answer).toEqual({ status: "ALREADY_CONNECTED" });
+      const after = (await getHostListings()).listings.find((listing) => listing.propertyId === "mock-listing-live");
+      expect(after).toEqual(before);
+    });
+
+    test("a listing in a multi-timezone country needs one of its options, and then no longer asks", async () => {
+      const options = ["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura"];
+      await expect(enableDistribution({ propertyId: "mock-listing-needs-timezone" })).rejects.toMatchObject({
+        status: 422,
+        responseBody: { errorCode: "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED", options },
+      });
+      await expect(
+        enableDistribution({ propertyId: "mock-listing-needs-timezone", chosenTimezone: "Europe/Paris" })
+      ).rejects.toMatchObject({
+        status: 422,
+        responseBody: { errorCode: "DISTRIBUTION_TIMEZONE_INVALID_CHOICE", options },
+      });
+
+      const answer = await enableDistribution({
+        propertyId: "mock-listing-needs-timezone",
+        chosenTimezone: "Asia/Makassar",
+      });
+
+      expect(answer).toEqual({ status: "PROVISIONED" });
+      const { listings } = await getHostListings();
+      const stored = listings.find((listing) => listing.propertyId === "mock-listing-needs-timezone");
+      expect(stored.distribution).toMatchObject({ status: "READY", timezone: { required: false, options: [] } });
+    });
+
+    test("a listing that is not ready rejects with a 422 and stays off", async () => {
+      await expect(enableDistribution({ propertyId: "mock-listing-not-ready" })).rejects.toMatchObject({
+        status: 422,
+        method: "POST",
+        responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_READY", missing: ["MISSING_ADDRESS", "MISSING_PRICE"] },
+      });
+      expect(await statusOf("mock-listing-not-ready")).toBe("NOT_ENABLED");
+    });
+
+    test("a listing that is still provisioning is resumed by turning it on again", async () => {
+      expect(await statusOf("mock-listing-provisioning")).toBe("PROVISIONING");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-provisioning" })).resolves.toEqual({
+        status: "PROVISIONED",
+      });
+
+      expect(await statusOf("mock-listing-provisioning")).toBe("READY");
+    });
+
+    test("an unknown listing rejects with a 404", async () => {
+      await expect(enableDistribution({ propertyId: "nope" })).rejects.toMatchObject({
+        status: 404,
+        responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_FOUND" },
+      });
+    });
+
+    test("the in-progress outcome rejects with a 409 and leaves the listing provisioning", async () => {
+      setMockEnableOutcome("in-progress");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
+        status: 409,
+        responseBody: { errorCode: "DISTRIBUTION_ALREADY_IN_PROGRESS" },
+      });
+      expect(await statusOf("mock-listing-not-turned-on")).toBe("PROVISIONING");
+    });
+
+    test("the try-again outcome answers a 503 once and leaves the listing provisioning, then turning on resumes", async () => {
+      setMockEnableOutcome("try-again");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
+        status: 503,
+        responseBody: { errorCode: "DISTRIBUTION_TRY_AGAIN" },
+      });
+      expect(await statusOf("mock-listing-not-turned-on")).toBe("PROVISIONING");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).resolves.toEqual({
+        status: "PROVISIONED",
+      });
+      expect(await statusOf("mock-listing-not-turned-on")).toBe("READY");
+    });
+
+    test("the not-ready outcome rejects with a 422 and the listing then reads as not ready", async () => {
+      setMockEnableOutcome("not-ready");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
+        status: 422,
+        responseBody: { errorCode: "DISTRIBUTION_LISTING_NOT_READY" },
+      });
+
+      const { listings } = await getHostListings();
+      const stored = listings.find((listing) => listing.propertyId === "mock-listing-not-turned-on");
+      expect(stored.distribution.missing).toEqual(["MISSING_PRICE"]);
+    });
+
+    test("the timezone-required outcome rejects with a 422 and the listing then asks for a timezone", async () => {
+      setMockEnableOutcome("timezone-required");
+
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).rejects.toMatchObject({
+        status: 422,
+        responseBody: { errorCode: "DISTRIBUTION_TIMEZONE_CHOICE_NEEDED" },
+      });
+
+      const { listings } = await getHostListings();
+      const stored = listings.find((listing) => listing.propertyId === "mock-listing-not-turned-on");
+      expect(stored.distribution.timezone.required).toBe(true);
+    });
+
+    test("resetting the mock also resets the outcome", async () => {
+      setMockEnableOutcome("in-progress");
+      resetMockHostDistribution();
+
+      await expect(enableDistribution({ propertyId: "mock-listing-not-turned-on" })).resolves.toEqual({
+        status: "PROVISIONED",
+      });
     });
   });
 });
