@@ -16,6 +16,8 @@ export function useHostDistribution() {
   // Which listing the last refresh failed for, so the message does not follow the host to another one.
   const [refreshFailedPropertyId, setRefreshFailedPropertyId] = useState(null);
   const mountedRef = useRef(true);
+  // Numbers the refreshes, so an answer can tell whether it is still the latest one.
+  const latestRefreshRef = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -67,7 +69,12 @@ export function useHostDistribution() {
     }
   }, []);
 
+  // Only the latest refresh owns the Refreshing… state and the failure message. An older one that
+  // answers late (the host moved to another listing and refreshed that one) still updates its own
+  // listing, but must not clear the newer one's state: that would allow a second request for it.
   const refresh = useCallback(async (propertyId) => {
+    const refreshNumber = ++latestRefreshRef.current;
+    const isLatest = () => mountedRef.current && latestRefreshRef.current === refreshNumber;
     setRefreshingPropertyId(propertyId);
     setRefreshFailedPropertyId(null);
     try {
@@ -78,9 +85,9 @@ export function useHostDistribution() {
       applyListing(propertyId, listing);
     } catch (err) {
       console.error("Failed to refresh the channels of a listing:", err);
-      if (mountedRef.current) setRefreshFailedPropertyId(propertyId);
+      if (isLatest()) setRefreshFailedPropertyId(propertyId);
     } finally {
-      if (mountedRef.current) setRefreshingPropertyId(null);
+      if (isLatest()) setRefreshingPropertyId(null);
     }
   }, [applyListing]);
 
