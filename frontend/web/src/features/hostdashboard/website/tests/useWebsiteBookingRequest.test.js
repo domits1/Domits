@@ -177,4 +177,29 @@ describe("useWebsiteBookingRequest", () => {
     expect(result.current.status).toBe(BOOKING_REQUEST_STATUS.IDLE);
     expect(result.current.error).toBeNull();
   });
+
+  it("keeps one key per scope across new quotes, and sends with a new key when the email changed", async () => {
+    requestPublicSiteBooking
+      .mockRejectedValueOnce(bookingError("network_error", 0))
+      .mockRejectedValueOnce(bookingError("idempotency_key_reused", 409))
+      .mockResolvedValueOnce(RESULT);
+    const { result } = renderBookingHook();
+    const send = (quote, guest) =>
+      act(async () => {
+        await result.current.submitBookingRequest({ quote, guest, idempotencyScope: "villa-b 2026-10-01" });
+      });
+
+    await send(QUOTE, GUEST);
+    await send({ ...QUOTE, quoteId: "quote_2", quoteToken: "qtok_2" }, { ...GUEST, email: "fixed@example.com" });
+
+    const [first, retried, fresh] = sentIdempotencyKeys();
+    expect(retried).toBe(first);
+    expect(fresh).not.toBe(first);
+    expect(requestPublicSiteBooking.mock.calls[2][0].guest.email).toBe("fixed@example.com");
+    expect(result.current.status).toBe(BOOKING_REQUEST_STATUS.SUCCESS);
+    expect(
+      globalThis.localStorage.getItem(resolveBookingIdempotencyStorageKey("site-1 villa-b 2026-10-01"))
+    ).toBeNull();
+    expect(globalThis.localStorage.getItem(resolveBookingIdempotencyStorageKey("site-1"))).toBeNull();
+  });
 });

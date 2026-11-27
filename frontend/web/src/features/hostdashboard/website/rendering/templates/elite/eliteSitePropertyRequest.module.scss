@@ -1,0 +1,99 @@
+@use "./eliteFonts" as fonts;
+
+$muted: #6b6458;
+$card-rule: #e4dccf;
+
+.request {
+  padding-top: clamp(24px, 4cqi, 40px);
+  padding-bottom: clamp(72px, 9cqi, 104px);
+}
+
+.layout {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: clamp(32px, 4cqi, 48px);
+}
+
+.main,
+.choose {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.main {
+  flex: 999 1 420px;
+  min-width: 0;
+}
+
+.choose {
+  max-width: 480px;
+}
+
+.heading,
+.summaryTitle {
+  margin: 0;
+  font-family: fonts.$elite-serif-stack;
+  font-weight: 400;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.heading {
+  font-size: clamp(26px, 3cqi, 32px);
+}
+
+.summaryTitle {
+  font-size: 24px;
+}
+
+.summaryPhoto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.summaryLocation,
+.chooseText {
+  margin: 4px 0 0;
+  color: $muted;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid $card-rule;
+  font-size: 15px;
+}
+
+.facts div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.facts dt {
+  color: $muted;
+}
+
+.facts dd {
+  min-width: 0;
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+}

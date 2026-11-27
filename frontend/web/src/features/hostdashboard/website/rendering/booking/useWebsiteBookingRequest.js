@@ -31,7 +31,10 @@ export const useWebsiteBookingRequest = ({ siteId, sessionId }) => {
   const abortControllerRef = useRef(null);
 
   const submitBookingRequest = useCallback(
-    async ({ quote, guest }) => {
+    async ({ quote, guest, idempotencyScope = "" }) => {
+      const keyRecord = idempotencyScope
+        ? { siteId: `${siteId} ${idempotencyScope}`, quoteId: idempotencyScope }
+        : { siteId, quoteId: quote.quoteId };
       abortControllerRef.current?.abort();
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -50,19 +53,19 @@ export const useWebsiteBookingRequest = ({ siteId, sessionId }) => {
       try {
         let result;
         try {
-          result = await send(getOrCreateBookingIdempotencyKey({ siteId, quoteId: quote.quoteId }));
+          result = await send(getOrCreateBookingIdempotencyKey(keyRecord));
         } catch (error) {
           if (error?.code !== IDEMPOTENCY_KEY_REUSED_CODE) {
             throw error;
           }
-          clearBookingIdempotencyKey(siteId);
-          result = await send(getOrCreateBookingIdempotencyKey({ siteId, quoteId: quote.quoteId }));
+          clearBookingIdempotencyKey(keyRecord.siteId);
+          result = await send(getOrCreateBookingIdempotencyKey(keyRecord));
         }
 
         if (abortController.signal.aborted) {
           return { ok: false, aborted: true };
         }
-        clearBookingIdempotencyKey(siteId);
+        clearBookingIdempotencyKey(keyRecord.siteId);
         setState({ status: BOOKING_REQUEST_STATUS.SUCCESS, result, error: null });
         return { ok: true, result };
       } catch (error) {

@@ -194,6 +194,7 @@ export function WebsiteTemplateSurface({
   pageSearch = "",
   currentPageHref = "",
   sitePropertyPage = null,
+  bookingHref = null,
 }) {
   const template = getWebsiteTemplateById(templateId);
   const TemplateComponent = getWebsiteTemplateRenderer(template.id);
@@ -246,6 +247,7 @@ export function WebsiteTemplateSurface({
             pageSearch={pageSearch}
             currentPageHref={currentPageHref}
             sitePropertyPage={sitePropertyPage}
+            bookingHref={bookingHref}
           />
         ) : (
           <UnsupportedTemplatePreview templateName={template.name} />
@@ -278,6 +280,7 @@ WebsiteTemplateSurface.propTypes = {
   pageSearch: PropTypes.string,
   currentPageHref: PropTypes.string,
   sitePropertyPage: sitePropertyPagePropType,
+  bookingHref: PropTypes.string,
 };
 
 export default function WebsiteTemplatePreview({

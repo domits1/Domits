@@ -26,7 +26,7 @@ import {
   resolveSitePropertyPageTitle,
   resolveSitePropertyRoute,
 } from "./rendering/websiteSiteProperties";
-import { SITE_PROPERTY_PAGES } from "./rendering/WebsiteSitePropertyPage";
+import { SITE_PROPERTY_PAGES, buildSiteBookingHref } from "./rendering/WebsiteSitePropertyPage";
 import EliteSitePropertiesHome from "./rendering/templates/elite/EliteSitePropertiesHome";
 import PageNotFound from "../../../utils/error/404NotFound";
 import { enrichWebsitePropertyDetails } from "./services/websitePropertyService";
@@ -510,6 +510,13 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
               activePageKey={activePageKey}
               pageBasePath={pageBasePath}
               pageSearch={pageSearch}
+              bookingHref={buildSiteBookingHref({
+                property: servedSiteProperties.find((entry) => entry.isMainProperty),
+                quoteContext,
+                model: publicModel,
+                pageBasePath,
+                pageSearch,
+              })}
             />
           )}
         </div>
