@@ -14,7 +14,14 @@ const listing = {
 const account = { id: "account-1", credentialsRef: "domits-channex-secret" };
 const live = { id: "mapping-1", status: "ACTIVE", externalPropertyId: "channex-property-1" };
 
-const build = ({ found = listing, hostAccount = account, mapping = live, channels = null, waiting = false } = {}) => {
+const build = ({
+  found = listing,
+  hostAccount = account,
+  mapping = live,
+  channels = null,
+  waiting = false,
+  secret = { apiKey: "key-1" },
+} = {}) => {
   const channex = {
     listChannels: jest.fn().mockResolvedValue(
       channels ?? {
@@ -32,7 +39,7 @@ const build = ({ found = listing, hostAccount = account, mapping = live, channel
     props: { findInUseByAccountAndListing: jest.fn().mockResolvedValue(mapping) },
     outbox: { hasWaitingRows: jest.fn().mockResolvedValue(waiting) },
     channex,
-    credentialStore: { readSecretOrNull: jest.fn().mockResolvedValue({ apiKey: "key-1" }) },
+    credentialStore: { readSecretOrNull: jest.fn().mockResolvedValue(secret) },
   });
   return { service, channex };
 };
@@ -88,12 +95,14 @@ describe("ChannexDistributionListingsService.refreshListing", () => {
   // The tab still loads when Channex does not answer; the host sees "unknown", never a guessed "Live".
   test("when Channex does not answer, the channels are unavailable instead of guessed", async () => {
     const { service } = build({ channels: { success: false, channels: [], errorCode: "CHANNEX_CHANNELS_TIMEOUT" } });
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
 
     const { listing: answered } = (await refresh(service)).response;
 
     expect(answered.distribution).toEqual({ status: "READY" });
     expect(answered.channels).toEqual([]);
     expect(answered.channelsUnavailable).toBe(true);
+    log.mockRestore();
   });
 
   test("when the Channex key cannot be read, the channels are unavailable and the tab still loads", async () => {
@@ -105,6 +114,24 @@ describe("ChannexDistributionListingsService.refreshListing", () => {
 
     expect(result.statusCode).toBe(200);
     expect(result.response.listing.channelsUnavailable).toBe(true);
+    log.mockRestore();
+  });
+
+  // Without the reason in the log, finding why channels are unknown needs database queries (live check, 26 Nov).
+  test.each([
+    ["Channex refuses", { channels: { success: false, channels: [], errorCode: "CHANNEX_CHANNELS_403" } }, "CHANNEX_CHANNELS_403"],
+    ["the key is missing", { secret: null }, "MISSING_API_KEY"],
+  ])("when %s, the reason is logged", async (_label, options, reason) => {
+    const { service } = build(options);
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    await refresh(service);
+
+    expect(JSON.parse(log.mock.calls[0][0])).toEqual({
+      event: "CHANNEX_DISTRIBUTION_CHANNELS_UNAVAILABLE",
+      domitsPropertyId: "listing-1",
+      error: reason,
+    });
     log.mockRestore();
   });
 
