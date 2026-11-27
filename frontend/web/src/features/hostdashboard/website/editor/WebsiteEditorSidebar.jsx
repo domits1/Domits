@@ -16,6 +16,7 @@ import { WebsiteEditorImageSlotsSection } from "./sections/WebsiteEditorImageSlo
 import { WebsiteEditorCalendarSection } from "./sections/WebsiteEditorCalendarSection";
 import { WebsiteEditorContactSection } from "./sections/WebsiteEditorContactSection";
 import { WebsiteEditorPagesSection } from "./sections/WebsiteEditorPagesSection";
+import { WebsiteEditorPropertiesSection, sitePropertiesEditorPropType } from "./sections/WebsiteEditorPropertiesSection";
 import { WebsiteEditorImageSlotCard } from "./WebsiteEditorImageSlotCard";
 import { WebsiteEditorSectionVisibilityFieldCard } from "./WebsiteEditorPageSupport";
 import { EDITOR_SECTION_KEYS, EDITOR_TARGET_KEYS } from "../websiteEditorConfig";
@@ -320,6 +321,7 @@ export function WebsiteEditorSidebar({
   setTargetRef,
   showWhatsAppSetupHint,
   sitePagesEditor,
+  sitePropertiesEditor,
   standaloneVisibilityFields,
   themeValues,
   toggleSection,
@@ -418,6 +420,16 @@ export function WebsiteEditorSidebar({
             onToggle={toggleSection}
             sectionRef={setSectionRef(EDITOR_SECTION_KEYS.pages)}
             sitePages={sitePagesEditor.sitePages}
+          />
+        ) : null}
+
+        {sitePropertiesEditor.canEditSiteProperties ? (
+          <WebsiteEditorPropertiesSection
+            isOpen={Boolean(expandedSections[EDITOR_SECTION_KEYS.properties])}
+            onSlugKeyDown={handleEditorFieldKeyDown({ component: "input" })}
+            onToggle={toggleSection}
+            sectionRef={setSectionRef(EDITOR_SECTION_KEYS.properties)}
+            sitePropertiesEditor={sitePropertiesEditor}
           />
         ) : null}
 
@@ -805,6 +817,7 @@ WebsiteEditorSidebar.propTypes = {
     setSitePageNavLabel: PropTypes.func.isRequired,
     sitePages: PropTypes.object.isRequired,
   }).isRequired,
+  sitePropertiesEditor: sitePropertiesEditorPropType.isRequired,
   standaloneVisibilityFields: PropTypes.array.isRequired,
   themeValues: PropTypes.object.isRequired,
   toggleSection: PropTypes.func.isRequired,

@@ -4,6 +4,7 @@ import { fetchWithWebsiteSession } from "./websiteSession";
 const WEBSITE_ENTITLEMENTS_URL = `${PROPERTY_API_BASE}/website/rate-plan?view=entitlements`;
 
 export const WEBSITE_ENTITLEMENT_UNLIMITED_PAGES = "website.unlimited_pages";
+export const WEBSITE_ENTITLEMENT_MULTI_PROPERTY = "website.multi_property";
 
 export const getWebsiteEntitlements = async () => {
   const response = await fetchWithWebsiteSession(WEBSITE_ENTITLEMENTS_URL, {

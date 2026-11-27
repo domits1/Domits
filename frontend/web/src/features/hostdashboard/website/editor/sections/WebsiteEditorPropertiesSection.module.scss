@@ -1,0 +1,25 @@
+.propertyList {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.propertyHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.propertyTitle {
+  flex: 1 1 12rem;
+  margin: 0;
+  min-width: 0;
+  color: #0f172a;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
