@@ -263,9 +263,14 @@ describe("ChannexProvisioningService.createChannexObjects: when Channex does not
 
   // 401 or 403 means Domits' key may not do this (a restricted key, live check 26 Nov): the host cannot fix
   // that by editing the listing, so the answer is the not-configured one that says to contact support.
-  test.each([401, 403])("a create refused with %s answers not configured, not a listing problem", async (httpStatus) => {
+  test.each([401, 403])("a %s refusal answers not configured, not a listing problem", async (httpStatus) => {
     const { service, channex } = build();
-    channex.createProperty.mockResolvedValue({ success: false, outcomeUnknown: false, httpStatus, errorCode: "forbidden" });
+    channex.createProperty.mockResolvedValue({
+      success: false,
+      outcomeUnknown: false,
+      httpStatus,
+      errorCode: "forbidden",
+    });
 
     const result = await run(service);
 
@@ -278,7 +283,12 @@ describe("ChannexProvisioningService.createChannexObjects: when Channex does not
   test("a refused payload's field messages are in the log too", async () => {
     const { service, channex } = build();
     const details = { occ_adults: ["must be greater than 0"] };
-    channex.createProperty.mockResolvedValue({ success: false, outcomeUnknown: false, httpStatus: 422, validationDetails: details });
+    channex.createProperty.mockResolvedValue({
+      success: false,
+      outcomeUnknown: false,
+      httpStatus: 422,
+      validationDetails: details,
+    });
 
     await run(service);
 

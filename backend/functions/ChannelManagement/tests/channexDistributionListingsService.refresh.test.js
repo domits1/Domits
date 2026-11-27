@@ -119,7 +119,11 @@ describe("ChannexDistributionListingsService.refreshListing", () => {
 
   // Without the reason in the log, finding why channels are unknown needs database queries (live check, 26 Nov).
   test.each([
-    ["Channex refuses", { channels: { success: false, channels: [], errorCode: "CHANNEX_CHANNELS_403" } }, "CHANNEX_CHANNELS_403"],
+    [
+      "Channex refuses",
+      { channels: { success: false, channels: [], errorCode: "CHANNEX_CHANNELS_403" } },
+      "CHANNEX_CHANNELS_403",
+    ],
     ["the key is missing", { secret: null }, "MISSING_API_KEY"],
   ])("when %s, the reason is logged", async (_label, options, reason) => {
     const { service } = build(options);
