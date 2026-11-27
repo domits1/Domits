@@ -46,7 +46,8 @@ export function useHostDistribution() {
 
   const reload = useCallback(() => setReloadKey((key) => key + 1), []);
 
-  // Replaces the one listing an answer carries, with no merge: the answer is the whole listing.
+  // Replaces the one listing an answer carries, with no merge: the answer is the whole listing. The
+  // refresh and the disconnect flow both end here, so there is one function and one meaning.
   const applyListing = useCallback((propertyId, listing) => {
     setResult((previous) => ({
       ...previous,
@@ -93,6 +94,7 @@ export function useHostDistribution() {
     reload,
     rereadListings,
     refresh,
+    applyListing,
     refreshingPropertyId,
     refreshFailedPropertyId,
   };

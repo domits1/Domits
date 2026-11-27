@@ -51,6 +51,13 @@ const CHANNEL_STATES = {
 const UNKNOWN_CHANNEL_STATE = CHANNEL_STATES.UNKNOWN;
 const UNKNOWN_NOTE = "We couldn't check this connection. Click Refresh to try again.";
 
+// The moment the host's turn-off request runs: off and locked, so a second click cannot start another.
+// After the answer the channel reads Disconnecting… (D7) until a Refresh finds it done.
+const TURNING_OFF = { label: "Turning off…", tone: "pending", switchOn: false, switchDisabled: true };
+
+// D5: the worker finishes a disconnect about a minute after the request, and the tab never polls (D7).
+const DISCONNECTING_HINT = "This takes about a minute. Click Refresh to see the result.";
+
 // A listing with missing items shows what is missing, and one being set up shows that, each instead of
 // the cards. Missing items win: a listing that cannot be set up has nothing to resume yet.
 export function describeListingView(listing) {
@@ -67,8 +74,11 @@ export function describeMissingItems(missingCodes = []) {
 // The contract carries no error detail for a channel, so the sentence is the same for every cause.
 const describeAttentionNote = (platformName) => `Something needs your attention on ${platformName}.`;
 
-export function describePlatformCard(listing, otaCode) {
+// `turningOff` is true while this OTA's turn-off request is running (see useDisconnectFlow).
+export function describePlatformCard(listing, otaCode, { turningOff = false } = {}) {
   const platformName = PLATFORMS.find((platform) => platform.otaCode === otaCode)?.name ?? otaCode;
+
+  if (turningOff) return { ...TURNING_OFF, note: null };
 
   const channel = listing.channels?.find((candidate) => candidate.otaCode === otaCode);
   if (!channel) return { ...NOT_CONNECTED, note: null };
@@ -76,6 +86,7 @@ export function describePlatformCard(listing, otaCode) {
   // hasOwn: a label such as "constructor" must not find a function on the prototype.
   const state = Object.hasOwn(CHANNEL_STATES, channel.label) ? CHANNEL_STATES[channel.label] : UNKNOWN_CHANNEL_STATE;
   if (state === CHANNEL_STATES.NEEDS_ATTENTION) return { ...state, note: describeAttentionNote(platformName) };
+  if (state === CHANNEL_STATES.DISCONNECTING) return { ...state, note: DISCONNECTING_HINT };
   if (state === CHANNEL_STATES.UNKNOWN) return { ...state, note: UNKNOWN_NOTE };
   return { ...state, note: null };
 }

@@ -104,6 +104,36 @@ describe("describePlatformCard", () => {
   test("has no note in the states that need none", () => {
     expect(booking(listing({ channels: [channel("BookingCom", "LIVE")] })).note).toBeNull();
   });
+
+  test("tells the host a disconnect takes about a minute and where to see the result", () => {
+    const state = booking(listing({ channels: [channel("BookingCom", "DISCONNECTING")] }));
+
+    expect(state.note).toBe("This takes about a minute. Click Refresh to see the result.");
+    expect(state.tone).toBe("pending");
+  });
+
+  describe("while the turn-off request runs", () => {
+    test.each([
+      ["a live channel", listing({ channels: [channel("BookingCom", "LIVE")] })],
+      ["a channel needing attention", listing({ channels: [channel("BookingCom", "NEEDS_ATTENTION")] })],
+      ["a channel that is not there", listing()],
+    ])("%s reads Turning off…, off and locked, with no note", (_name, input) => {
+      expect(describePlatformCard(input, "BookingCom", { turningOff: true })).toEqual({
+        label: "Turning off…",
+        tone: "pending",
+        switchOn: false,
+        switchDisabled: true,
+        note: null,
+      });
+    });
+
+    test("only for the OTA being turned off: the others read as they do", () => {
+      const input = listing({ channels: [channel("BookingCom", "LIVE"), channel("Airbnb", "LIVE")] });
+
+      expect(describePlatformCard(input, "Airbnb").label).toBe("Live");
+      expect(describePlatformCard(input, "Airbnb", { turningOff: false }).label).toBe("Live");
+    });
+  });
 });
 
 describe("describeMissingItems", () => {

@@ -48,6 +48,9 @@ export function useConnectFlow({ refresh, rereadListings }) {
     setFlow(next);
   }, []);
 
+  // For the section: a message from this flow must not stay on screen next to another flow's.
+  const clearError = useCallback(() => setError(NO_ERROR), []);
+
   const start = useCallback(
     ({ platform, listing }) => {
       if (stepRef.current !== CONNECT_STEP.IDLE) return;
@@ -222,6 +225,7 @@ export function useConnectFlow({ refresh, rereadListings }) {
     url: flow.url,
     errorMessage: error.message,
     errorPropertyId: error.propertyId,
+    clearError,
     unconfirmedSetupPropertyId,
     isActive: flow.step !== CONNECT_STEP.IDLE,
     start,
