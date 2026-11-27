@@ -1,0 +1,109 @@
+import IntegrationAccountRepository from "../../integrations/repositories/integrationAccountRepository.js";
+import IntegrationPropertyRepository from "../../integrations/repositories/integrationPropertyRepository.js";
+import ChannexCredentialStore from "../providers/channex/credentialStore.js";
+import ChannexProviderClient from "../providers/channex/providerClient.js";
+import ChannexAriOutboxRepository from "../repositories/channexAriOutboxRepository.js";
+import ListingDistributionRepository from "../repositories/listingDistributionRepository.js";
+import { channelDisplayLabel } from "../utils/channelDisplayLabel.js";
+import { refuseUnlessHostListing } from "../utils/hostListingAccess.js";
+import { listingDistributionReadiness } from "../utils/listingDistributionReadiness.js";
+import { TIMEZONE_PROBLEM, resolveListingTimezone } from "../utils/listingTimezone.js";
+
+// The listings of the Distribution tab, in the shape the frontend cards read (design note D7, section 6).
+// Channex is the source of truth for the OTAs; Domits keeps no channel table until disconnect (D5) needs one.
+
+const ok = (response) => ({ statusCode: 200, response });
+
+const CHANNEL = "CHANNEX";
+const ACTIVE = "ACTIVE";
+const PROVISIONING = "PROVISIONING";
+const DISTRIBUTION_STATUS = Object.freeze({ NOT_ENABLED: "NOT_ENABLED", PROVISIONING: "PROVISIONING", READY: "READY" });
+
+// The tab asks for a timezone before turning on only where the country has zones with different times (D4).
+const timezoneQuestionOf = (listing) => {
+  const resolved = resolveListingTimezone({ country: listing.location?.country });
+  return resolved.problem === TIMEZONE_PROBLEM.CHOICE_NEEDED
+    ? { required: true, options: resolved.options }
+    : { required: false, options: [] };
+};
+
+const distributionStatusOf = (mapping) => {
+  if (mapping?.status === ACTIVE && mapping.externalPropertyId) return DISTRIBUTION_STATUS.READY;
+  if (mapping?.status === PROVISIONING) return DISTRIBUTION_STATUS.PROVISIONING;
+  return DISTRIBUTION_STATUS.NOT_ENABLED;
+};
+
+export default class ChannexDistributionListingsService {
+  constructor({
+    listings = new ListingDistributionRepository(),
+    accounts = new IntegrationAccountRepository(),
+    props = new IntegrationPropertyRepository(),
+    outbox = new ChannexAriOutboxRepository(),
+    channex = new ChannexProviderClient(),
+    credentialStore = new ChannexCredentialStore(),
+  } = {}) {
+    Object.assign(this, { listings, accounts, props, outbox, channex, credentialStore });
+  }
+
+  async listHostListings({ userId }) {
+    const [hostListings, account] = await Promise.all([
+      this.listings.findListingsByHost(userId),
+      this.accounts.findByUserIdAndChannel(userId, CHANNEL),
+    ]);
+    const listings = await Promise.all(hostListings.map((listing) => this.describeListing(listing, account)));
+    return ok({ listings });
+  }
+
+  async refreshListing({ userId, domitsPropertyId }) {
+    const listing = await this.listings.findListing(domitsPropertyId);
+    const refusal = refuseUnlessHostListing(listing, userId);
+    if (refusal) return refusal;
+
+    const account = await this.accounts.findByUserIdAndChannel(userId, CHANNEL);
+    return ok({ listing: await this.describeListing(listing, account) });
+  }
+
+  async describeListing(listing, account) {
+    const mapping = account ? await this.props.findInUseByAccountAndListing(account.id, listing.propertyId) : null;
+    const status = distributionStatusOf(mapping);
+    const readiness = listingDistributionReadiness(listing);
+    const described = {
+      propertyId: listing.propertyId,
+      title: listing.title,
+      readiness: { ready: readiness.ready, missing: readiness.missing ?? [] },
+      distribution: { status },
+      timezone: timezoneQuestionOf(listing),
+      channels: [],
+    };
+    if (status !== DISTRIBUTION_STATUS.READY) return described;
+
+    const channels = await this.readChannelsOrNull(account, mapping.externalPropertyId, listing.propertyId);
+    return channels ? { ...described, channels } : { ...described, channelsUnavailable: true };
+  }
+
+  async readChannelsOrNull(account, externalPropertyId, domitsPropertyId) {
+    try {
+      return await this.readChannels(account, externalPropertyId, domitsPropertyId);
+    } catch (error) {
+      console.error(
+        JSON.stringify({ event: "CHANNEX_DISTRIBUTION_CHANNELS_UNAVAILABLE", domitsPropertyId, error: error?.message })
+      );
+      return null;
+    }
+  }
+
+  // Throws when Channex or the key cannot answer, so the caller logs why and shows the OTAs as unknown,
+  // never as live.
+  async readChannels(account, externalPropertyId, domitsPropertyId) {
+    const secret = await this.credentialStore.readSecretOrNull(account.credentialsRef);
+    if (!secret?.apiKey) throw new Error("MISSING_API_KEY");
+    const listed = await this.channex.listChannels({ apiKey: secret.apiKey }, externalPropertyId);
+    if (!listed.success) throw new Error(listed.errorCode);
+    const pendingOutbox = await this.outbox.hasWaitingRows(domitsPropertyId);
+    return listed.channels.map(({ channexChannelId, otaCode, isActive }) => ({
+      channexChannelId,
+      otaCode,
+      label: channelDisplayLabel({ isActive, pendingOutbox }),
+    }));
+  }
+}

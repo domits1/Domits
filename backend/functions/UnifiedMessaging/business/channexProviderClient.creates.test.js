@@ -60,6 +60,31 @@ describe.each(CREATES)("ChannexProviderClient.$method", ({ method, endpoint, bod
     });
   });
 
+  // A key restricted to selected properties gets 403 without details (live check, 26 Nov); the status
+  // is what tells it apart from a refused payload.
+  test("a refusal carries Channex's HTTP status, code and message", async () => {
+    global.fetch.mockResolvedValue(jsonResponse(403, { errors: { code: "forbidden", title: "Forbidden" } }));
+
+    expect(await client[method](CREDENTIALS, body)).toMatchObject({
+      success: false,
+      outcomeUnknown: false,
+      httpStatus: 403,
+      errorCode: "forbidden",
+      errorMessage: "Forbidden",
+    });
+  });
+
+  // 429 means Channex was too busy; nothing was created or refused, so it can be retried.
+  test("a 429 is a known, retryable failure", async () => {
+    global.fetch.mockResolvedValue(jsonResponse(429, {}));
+
+    expect(await client[method](CREDENTIALS, body)).toMatchObject({
+      success: false,
+      outcomeUnknown: false,
+      retryable: true,
+    });
+  });
+
   test("a 5xx leaves the outcome unknown", async () => {
     global.fetch.mockResolvedValue(jsonResponse(502, {}));
 

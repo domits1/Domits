@@ -80,6 +80,7 @@ import { useWebsiteEditorTargeting } from "./editor/hooks/useWebsiteEditorTarget
 import { useWebsiteEditorAssets } from "./editor/hooks/useWebsiteEditorAssets";
 import { useWebsiteEditorCollections } from "./editor/hooks/useWebsiteEditorCollections";
 import { useWebsiteEditorSitePages } from "./editor/hooks/useWebsiteEditorSitePages";
+import { useWebsiteEntitlements } from "./hooks/useWebsiteEntitlements";
 import { applySitePagesEdit, omitSitePages } from "./editor/websiteEditorSitePages";
 import {
   buildWebsiteEditorSectionData,
@@ -278,8 +279,10 @@ function WebsiteEditorPage() {
     setImagePickerState,
     setPreviewTargetId,
   });
+  const { has: hasWebsiteEntitlement } = useWebsiteEntitlements();
   const sitePagesEditor = useWebsiteEditorSitePages({
     draftTemplateKey,
+    hasEntitlement: hasWebsiteEntitlement,
     workingOverrides: getDraftWorkingContentOverrides(draftRecord),
   });
   const { isEliteHost, menuItems, previewPageKey, resetSitePagesEdit, selectPreviewPage, sitePagesEdit } =

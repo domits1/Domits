@@ -5,6 +5,7 @@
 import { Auth } from "aws-amplify";
 import {
   createAutomation,
+  deleteAutomation,
   listAutomations,
   resolveAutomationApiBase,
 } from "./automationService";
@@ -69,6 +70,15 @@ describe("AutomatedMessaging API authentication", () => {
         body: JSON.stringify({ name: "Welcome" }),
       })
     );
+  });
+
+  test("deletes one automation without a request body", async () => {
+    await deleteAutomation("automation 1");
+
+    const [url, options] = globalThis.fetch.mock.calls[0];
+    expect(url).toMatch(/\/automations\/automation%201$/);
+    expect(options.method).toBe("DELETE");
+    expect(options).not.toHaveProperty("body");
   });
 
   test("does not send a request without an authenticated session", async () => {
