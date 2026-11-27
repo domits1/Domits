@@ -13,7 +13,7 @@ const LazyRequestContent = lazy(() => import("./EliteSitePropertyRequestContent"
 
 export default function EliteSitePropertyRequestPage({ sitePropertyPage, headerTone, model, viewState, headerRef }) {
   const { key: locationKey } = useLocation();
-  const { title, overviewHref, propertyHref, sentHref, booking, stay, buildRequestHref } = sitePropertyPage;
+  const { title, overviewHref, propertyHref, sentHref, booking, stay, rules, buildRequestHref } = sitePropertyPage;
   const location = resolveEliteLocation(model);
 
   return (
@@ -47,6 +47,7 @@ export default function EliteSitePropertyRequestPage({ sitePropertyPage, headerT
               title={title}
               booking={booking}
               stay={stay}
+              rules={rules}
               propertyHref={propertyHref}
               overviewHref={overviewHref}
               sentHref={sentHref}

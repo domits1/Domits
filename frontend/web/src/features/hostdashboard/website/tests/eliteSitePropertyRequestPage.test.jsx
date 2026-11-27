@@ -100,10 +100,14 @@ const findForm = async () => {
   return screen.getByRole("button", { name: "Request to book" });
 };
 
-const fillAndSend = async () => {
+const fillIn = (fields) =>
+  Object.entries(fields).forEach(([label, value]) =>
+    fireEvent.change(screen.getByLabelText(label), { target: { value } })
+  );
+
+const fillAndSend = async (extraFields = {}) => {
   const sendButton = await findForm();
-  fireEvent.change(screen.getByLabelText("Your name"), { target: { value: GUEST.name } });
-  fireEvent.change(screen.getByLabelText("Email address"), { target: { value: GUEST.email } });
+  fillIn({ "First name": "Ana", "Last name (optional)": "Silva", "Email address": GUEST.email, ...extraFields });
   fireEvent.click(sendButton);
 };
 
@@ -165,7 +169,7 @@ describe("the request to book page of an Elite website", () => {
 
     expect(await screen.findByText("Choose your dates to request this stay.")).toBeInTheDocument();
     expect(screen.getByLabelText("Check in")).toHaveValue("");
-    expect(screen.queryByLabelText("Your name")).toBeNull();
+    expect(screen.queryByLabelText("First name")).toBeNull();
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
@@ -178,7 +182,7 @@ describe("the request to book page of an Elite website", () => {
 
     expect(await screen.findByText("Choose your dates to request this stay.")).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "Check availability" })).toBeInTheDocument();
-    expect(screen.queryByLabelText("Your name")).toBeNull();
+    expect(screen.queryByLabelText("First name")).toBeNull();
   });
 
   it("shows the not found page for a slug the site does not serve", async () => {
@@ -223,7 +227,7 @@ describe("the request to book page of an Elite website", () => {
     await fillAndSend();
     expect(await screen.findByText(/we've refreshed it/)).toBeInTheDocument();
     await waitFor(() => expect(quoteBodies()).toHaveLength(2));
-    expect(screen.getByLabelText("Your name")).toHaveValue(GUEST.name);
+    expect(screen.getByLabelText("First name")).toHaveValue("Ana");
 
     fireEvent.click(screen.getByRole("button", { name: "Request to book" }));
 
@@ -236,8 +240,7 @@ describe("the request to book page of an Elite website", () => {
     renderSiteAt(REQUEST_URL);
 
     expect(await screen.findByText(/^Price expired/)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: GUEST.name } });
-    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: GUEST.email } });
+    fillIn({ "First name": "Ana", "Last name (optional)": "Silva", "Email address": GUEST.email });
     fireEvent.click(screen.getByRole("button", { name: "Request to book" }));
 
     await waitFor(() => expect(quoteBodies()).toHaveLength(2));
@@ -271,7 +274,134 @@ describe("the request to book page of an Elite website", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/no longer available/);
     expect(screen.getByLabelText("Check in")).toHaveValue("");
-    expect(screen.queryByLabelText("Your name")).toBeNull();
+    expect(screen.queryByLabelText("First name")).toBeNull();
+  });
+});
+
+describe("the details on the request to book page", () => {
+  const RULED_PAYLOAD = {
+    ...PAYLOAD,
+    siteProperties: [
+      SITE_PROPERTIES[0],
+      {
+        ...VILLA_B,
+        propertySnapshot: {
+          ...VILLA_B.propertySnapshot,
+          rules: [
+            { rule: "SmokingAllowed", value: false },
+            { rule: "PetsAllowed", value: false },
+          ],
+        },
+      },
+    ],
+  };
+  const houseRulesBox = () => screen.getByRole("checkbox", { name: "I have read the house rules and accept them." });
+
+  it("shows the three steps and sends the joined name, email, phone and message", async () => {
+    answerWith();
+    renderSiteAt(REQUEST_URL);
+
+    await fillAndSend({
+      "Phone (optional)": " +31 6 1234 5678 ",
+      "Message to the host (optional)": " We arrive late. ",
+    });
+
+    expect(await screen.findByText("DBW-7KQ2M")).toBeInTheDocument();
+    expect(sends()[0]).toEqual(
+      expect.objectContaining({
+        guest: { name: "Ana Silva", email: GUEST.email, phone: "+31 6 1234 5678" },
+        message: "We arrive late.",
+      })
+    );
+  });
+
+  it("sends a guest with one name under that name alone", async () => {
+    answerWith();
+    renderSiteAt(REQUEST_URL);
+
+    await fillAndSend({ "Last name (optional)": "" });
+
+    expect(await screen.findByText("DBW-7KQ2M")).toBeInTheDocument();
+    expect(sends()[0].guest).toEqual({ name: "Ana", email: GUEST.email });
+  });
+
+  it("marks the first of the three steps and has no house rules box for a listing without rules", async () => {
+    answerWith();
+    renderSiteAt(REQUEST_URL);
+    await findForm();
+
+    const steps = screen.getByRole("list", { name: "How booking works" });
+    expect(
+      within(steps)
+        .getAllByRole("listitem")
+        .map((step) => step.textContent)
+    ).toEqual(["1Your details", "2Host confirms", "3You pay"]);
+    expect(within(steps).getAllByRole("listitem")[0]).toHaveAttribute("aria-current", "step");
+    expect(screen.queryByRole("checkbox")).toBeNull();
+  });
+
+  it("sends only after the listing's house rules are accepted, and keeps them accepted when a send fails", async () => {
+    answerWith({ sends: [new TypeError("Failed to fetch"), SENT] });
+    renderSiteAt(REQUEST_URL, RULED_PAYLOAD);
+
+    await fillAndSend();
+    expect(screen.getByText("No smoking")).toBeInTheDocument();
+    expect(screen.getByText("No pets")).toBeInTheDocument();
+    expect(houseRulesBox()).toHaveAccessibleDescription("Please accept the house rules to send your request.");
+    expect(sends()).toHaveLength(0);
+
+    fireEvent.click(houseRulesBox());
+    expect(houseRulesBox()).not.toHaveAttribute("aria-invalid");
+    expect(screen.queryByText("Please accept the house rules to send your request.")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Request to book" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(houseRulesBox()).toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: "Request to book" }));
+    expect(await screen.findByText("DBW-7KQ2M")).toBeInTheDocument();
+    expect(sends()).toHaveLength(2);
+  });
+
+  it("has no house rules box for a listing with only safety items, property rules and a cancellation policy", async () => {
+    answerWith();
+    const rules = ["SmokeDetector", "FireExtinguisher", "CancellationPolicy:Flexible", "CookingAllowed", "PetsAllowed"];
+    const villaB = {
+      ...VILLA_B,
+      propertySnapshot: { ...VILLA_B.propertySnapshot, rules: rules.map((name) => ({ rule: name, value: true })) },
+    };
+    renderSiteAt(REQUEST_URL, { ...PAYLOAD, siteProperties: [SITE_PROPERTIES[0], villaB] });
+
+    await fillAndSend();
+
+    expect(await screen.findByText("DBW-7KQ2M")).toBeInTheDocument();
+    expect(screen.queryByText("Smoke detector")).toBeNull();
+  });
+
+  it("lists the house rules and the check-in and check-out times of the main property", async () => {
+    answerWith({ quotes: [quoteAnswer({ propertyId: MAIN_ID })] });
+    const propertySnapshot = { ...PAYLOAD.propertySnapshot, rules: [{ rule: "SmokingAllowed", value: false }] };
+    renderSiteAt(`/properties/villa-a/request?${STAY_QUERY}`, { ...PAYLOAD, propertySnapshot });
+    await findForm();
+
+    const houseRules = screen.getByRole("group", { name: "House rules" });
+    expect(
+      within(houseRules)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent)
+    ).toEqual(["No smoking", "Check-in from 15:00", "Check-out by 11:00"]);
+  });
+
+  it("shows a phone the server refuses at its field, with what the guest typed", async () => {
+    const refusal = "Please enter a phone number of 6 to 15 digits.";
+    answerWith({ sends: [errorAnswer("invalid_guest_phone", 400, refusal)] });
+    renderSiteAt(REQUEST_URL);
+
+    await fillAndSend({ "Phone (optional)": "+31 6 1234 5678" });
+
+    expect(await screen.findByText(refusal)).toBeInTheDocument();
+    expect(screen.getByLabelText("Phone (optional)")).toHaveAccessibleDescription(refusal);
+    expect(screen.getByLabelText("First name")).toHaveValue("Ana");
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
 

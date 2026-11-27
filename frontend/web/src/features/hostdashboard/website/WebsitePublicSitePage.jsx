@@ -495,6 +495,10 @@ function WebsitePublicSitePage({ onSitePagesLoaded = null, requiresActivePage = 
               templateId={templateId}
               model={sitePropertyModel}
               property={activeSiteProperty}
+              propertyRules={
+                (activeSiteProperty.isMainProperty ? renderPayload.propertySnapshot : activeSiteProperty.propertySnapshot)
+                  ?.rules
+              }
               quoteContext={quoteContext}
               pageBasePath={pageBasePath}
               pageSearch={pageSearch}
