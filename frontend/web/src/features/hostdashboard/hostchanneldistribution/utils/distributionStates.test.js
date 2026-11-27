@@ -22,7 +22,12 @@ describe("describeListingView", () => {
       listing({ distribution: { status: "NOT_ENABLED", missing: ["MISSING_PRICE"] } }),
       LISTING_VIEW.NOT_READY,
     ],
-    ["a listing that is being set up", listing({ distribution: { status: "PROVISIONING" } }), LISTING_VIEW.CARDS],
+    ["a listing that is being set up", listing({ distribution: { status: "PROVISIONING" } }), LISTING_VIEW.SETTING_UP],
+    [
+      "a listing with missing items that is also being set up",
+      listing({ distribution: { status: "PROVISIONING", missing: ["MISSING_PRICE"] } }),
+      LISTING_VIEW.NOT_READY,
+    ],
     ["a listing not turned on yet", listing({ distribution: { status: "NOT_ENABLED" } }), LISTING_VIEW.CARDS],
   ])("%s", (_name, input, expected) => {
     expect(describeListingView(input)).toBe(expected);
@@ -34,7 +39,6 @@ describe("describePlatformCard", () => {
 
   test.each([
     ["not turned on", listing({ distribution: { status: "NOT_ENABLED" } }), "Not connected", "neutral", false, false],
-    ["being set up", listing({ distribution: { status: "PROVISIONING" } }), "Setting up…", "pending", false, true],
     ["turned on, no channel for this OTA", listing(), "Not connected", "neutral", false, false],
     ["channel syncing", listing({ channels: [channel("BookingCom", "SYNCING")] }), "Syncing…", "pending", true, false],
     ["channel live", listing({ channels: [channel("BookingCom", "LIVE")] }), "Live", "success", true, false],
