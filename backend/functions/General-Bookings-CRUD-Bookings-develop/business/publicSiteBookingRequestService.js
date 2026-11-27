@@ -106,7 +106,7 @@ class PublicSiteBookingRequestService {
     try {
       const existing = await this.reservationRepository.getByIdempotencyKey(normalizedIdempotencyKey);
       if (existing) {
-        return this.replayResponse(existing, stay);
+        return this.replayResponse(existing, stay, contact);
       }
 
       const site = await this.loadPublishedSite(normalizedSiteId);
@@ -363,7 +363,7 @@ class PublicSiteBookingRequestService {
         if (isUniqueViolationOn(error, IDEMPOTENCY_KEY_CONSTRAINT_FRAGMENT)) {
           const winner = await this.reservationRepository.getByIdempotencyKey(idempotencyKey);
           if (winner) {
-            return { replayed: true, result: this.replayResponse(winner, stay) };
+            return { replayed: true, result: this.replayResponse(winner, stay, contact) };
           }
           throw error;
         }
@@ -378,14 +378,16 @@ class PublicSiteBookingRequestService {
     throw new PublicBookingRequestError(CODES.BOOKING_SERVICE_UNAVAILABLE, MESSAGES.serviceUnavailable);
   }
 
-  replayResponse(existing, stay) {
-    const matchesStay =
+  replayResponse(existing, stay, contact) {
+    const matchesRequest =
       cleanText(existing.site_id) === stay.siteId &&
       cleanText(existing.property_id) === stay.propertyId &&
       Number(existing.arrivaldate) === stay.arrivalDateMs &&
       Number(existing.departuredate) === stay.departureDateMs &&
-      Number(existing.guests) === stay.guests;
-    if (!matchesStay) {
+      Number(existing.guests) === stay.guests &&
+      cleanText(existing.guestname) === contact.name &&
+      cleanText(existing.guest_email) === contact.email;
+    if (!matchesRequest) {
       throw new PublicBookingRequestError(CODES.IDEMPOTENCY_KEY_REUSED, MESSAGES.idempotencyKeyReused);
     }
 

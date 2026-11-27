@@ -4,10 +4,6 @@ $muted: #6b6458;
 $card-rule: #e4dccf;
 
 .request {
-  --website-quote-ink: #1c1b19;
-  --website-quote-muted: #{$muted};
-  --website-quote-line: #{$card-rule};
-  --website-quote-accent: #1c1b19;
   padding-top: clamp(24px, 4cqi, 40px);
   padding-bottom: clamp(72px, 9cqi, 104px);
 }

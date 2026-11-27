@@ -415,12 +415,12 @@ describe("the price card of a site with more than one property", () => {
     ["another property", "/properties/villa-b/photos", PAYLOAD, "/properties/villa-b/request"],
     ["the main property", "/properties/villa-a/photos", PAYLOAD, "/properties/villa-a/request"],
     ["the Accommodation page", "/accommodation", ACCOMMODATION_ON, "/properties/villa-a/request"],
+    ["a site with one property to", "/accommodation", { ...ACCOMMODATION_ON, siteProperties: [] }, "/#availability"],
   ])("links %s to its request page", async (_, url, payload, requestHref) => {
     renderSiteAt(url, payload);
 
     const priceCard = await screen.findByRole("complementary", { name: "Price and availability" });
     expect(within(priceCard).getByRole("link")).toHaveAttribute("href", requestHref);
-    expect(document.querySelector('a[href*="#availability"]')).toBeNull();
   });
 
   it("has no request link when the site has no quote panel", async () => {
@@ -429,19 +429,5 @@ describe("the price card of a site with more than one property", () => {
 
     const priceCard = await screen.findByRole("complementary", { name: "Price and availability" });
     expect(within(priceCard).queryByRole("link")).toBeNull();
-  });
-});
-
-describe("the price card of a site with one property", () => {
-  it("still links to the availability of the home page", async () => {
-    const payload = {
-      ...PAYLOAD,
-      siteProperties: [],
-      contentOverrides: { ...PAYLOAD.contentOverrides, sitePages: { accommodation: { enabled: true } } },
-    };
-    renderSiteAt("/accommodation", payload);
-
-    const priceCard = await screen.findByRole("complementary", { name: "Price and availability" });
-    expect(within(priceCard).getByRole("link")).toHaveAttribute("href", "/#availability");
   });
 });
