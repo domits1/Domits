@@ -340,6 +340,7 @@ const createChannexObject = async ({ credentials, endpointPath, requestBody, req
       success: false,
       outcomeUnknown: response.status >= 500,
       retryable: response.status === 429,
+      httpStatus: response.status,
       errorCode: parsed?.errors?.code || `CHANNEX_CREATE_${response.status}`,
       errorMessage: parsed?.errors?.title || `Channex create failed with status ${response.status}.`,
       validationDetails: parsed?.errors?.details ?? null,
