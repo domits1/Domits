@@ -78,8 +78,8 @@ Full backend suite before every commit: 28 failed tests in 7 suites, the same as
 ## Follow-up
 
 - The Channex key must have Properties Access: All (design note D8). The current key is restricted, so a new listing's turn-on gets 403 from Channex until it is replaced; that replacement is the neutral secret below.
-- A Channex 403 on create shows the host "check its address, guests and price", which is wrong for a key without rights. Map 401/403 to a "contact support" answer.
-- A failed create (`findOrCreate`) and an empty channel read (`readChannels`) return without logging Channex's code, status or message. Log them, so the next failure is found in CloudWatch, not by database queries.
+- Done (record `2026-11-27-506-channex-refusal-logging.md`): a Channex 401/403 on create answers "contact support" instead of "check its address, guests and price".
+- Done (same record): a failed create and an unavailable channel read are logged with Channex's status, code and message.
 - Emerald Estate's mapping points at Channex property `14624dc9-…`, which the production key does not list; the key lists only `8de57ac9-…` (Wellness Villa Bisous), possibly Emerald's real property. Check which one is right.
 - `CHANNEX_PROVISIONING_CREDENTIALS_REF` points at the secret created when Domits' admin Channex account was connected (`domits/channex/<user id>/<account id>`), so every host's account row shares that one secret (D8). The code never deletes secrets, but rotating or removing that admin connection by hand would cut distribution for every host. After the Booking.com test: copy the key to a neutral secret (for example `domits/channex/provisioning`), point the variable and the existing host rows at it, and keep the old secret until both are switched.
 
