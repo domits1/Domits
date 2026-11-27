@@ -41,7 +41,7 @@ const readJsonOrText = async (response) => {
   }
 };
 
-const requestChannex = async (path, { method = "GET", query = {}, body } = {}) => {
+export const requestChannex = async (path, { method = "GET", query = {}, body } = {}) => {
   let response;
   try {
     const authorizationHeader = { Authorization: `Bearer ${await getIdToken()}` };
