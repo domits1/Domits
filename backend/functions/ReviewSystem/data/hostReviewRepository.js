@@ -84,6 +84,7 @@ export class HostReviewRepository {
     const period = expressions[interval];
     const database = await Database.getInstance();
     return eligibleReviewQuery(database, propertyId)
+      .andWhere("review.verification_status = :stayVerification", { stayVerification: "VERIFIED_STAY" })
       .innerJoin(Property, "property",
         "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .andWhere("review.created_at >= :start", { start })
@@ -117,6 +118,7 @@ export class HostReviewRepository {
         .andWhere("review.publication_status = :published")
         .andWhere("review.status = :published")
         .andWhere("review.review_type = :reviewType")
+        .andWhere("review.verification_status = :stayVerification")
         .andWhere("rating.rating BETWEEN :minimum AND :maximum")
         .andWhere("rating.rating * 2 = FLOOR(rating.rating * 2)")
         .groupBy("definition.key"),
@@ -129,7 +131,7 @@ export class HostReviewRepository {
       .where("category.isActive = :active")
       .andWhere("category.reviewType = :reviewType")
       .setParameters({ propertyId, hostId, published: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY",
-        minimum: 1, maximum: 5, active: true })
+        minimum: 1, maximum: 5, active: true, stayVerification: "VERIFIED_STAY" })
       .orderBy("category.sortOrder", "ASC").addOrderBy("category.key", "ASC").getRawMany();
     return rows.map((row) => ({ category_key: row.category_key, label: row.label,
       average_rating: Number(row.rating_count) === 0 ? null : Number(row.average_rating),
@@ -152,6 +154,7 @@ export class HostReviewRepository {
     const bucket = `CASE ${[1, 2, 3, 4, 5].map((index) =>
       `WHEN review.created_at < :historyBoundary${index} THEN ${index - 1}`).join(" ")} ELSE 5 END`;
     const rows = await eligibleReviewQuery(database, propertyIds)
+      .andWhere("review.verification_status = :stayVerification", { stayVerification: "VERIFIED_STAY" })
       .innerJoin(Property, "property", "property.id = review.property_id AND property.hostid = :hostId", { hostId })
       .andWhere("review.created_at >= :historyStart AND review.created_at < :historyEnd", { historyStart: start, historyEnd: endExclusive })
       .select("review.property_id", "property_id")
@@ -169,6 +172,7 @@ export class HostReviewRepository {
     const aggregates = database.getRepository(Property).createQueryBuilder("property")
       .leftJoin(Review, "review", `review.property_id = property.id
         AND review.publication_status = :publicationStatus AND review.status = :publishedStatus
+        AND review.verification_status = :stayVerification
         AND review.review_type = :reviewType AND review.overall_rating BETWEEN 1 AND 5
         AND review.overall_rating * 2 = FLOOR(review.overall_rating * 2)
         AND review.created_at >= :previousStart AND review.created_at < :endExclusive`)
@@ -193,7 +197,7 @@ export class HostReviewRepository {
         endExclusive: options.endExclusive, minimumReviews: options.minimumReviews,
         boundary: options.threshold * (1 - 1e-12),
         declineBoundary: -options.threshold * (1 - 1e-12),
-        publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY" });
+        publicationStatus: "PUBLISHED", publishedStatus: "PUBLISHED", reviewType: "GUEST_TO_PROPERTY", stayVerification: "VERIFIED_STAY" });
     if (options.status !== undefined) page.where("trends.trend_status = :trendStatus", { trendStatus: options.status });
     if (options.sort === "declining-first") {
       page.orderBy("CASE WHEN trends.trend_status = 'DECLINING' THEN 0 ELSE 1 END", "ASC");
@@ -213,6 +217,7 @@ export class HostReviewRepository {
       .andWhere("review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" })
       .andWhere("review.status = :status", { status: "PUBLISHED" })
       .andWhere("review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" })
+      .andWhere("review.verification_status = :stayVerification", { stayVerification: "VERIFIED_STAY" })
       .andWhere("review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 })
       .andWhere("review.overall_rating * 2 = FLOOR(review.overall_rating * 2)")
       .innerJoin(Property, "property",

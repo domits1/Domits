@@ -39,6 +39,7 @@ describe("property score repository", () => {
       ["review.publication_status = :publicationStatus", { publicationStatus: "PUBLISHED" }],
       ["review.status = :status", { status: "PUBLISHED" }],
       ["review.review_type = :reviewType", { reviewType: "GUEST_TO_PROPERTY" }],
+      ["review.verification_status = :stayVerification", { stayVerification: "VERIFIED_STAY" }],
       ["review.overall_rating BETWEEN :minimum AND :maximum", { minimum: 1, maximum: 5 }],
       ["review.overall_rating * 2 = FLOOR(review.overall_rating * 2)"],
     ]);

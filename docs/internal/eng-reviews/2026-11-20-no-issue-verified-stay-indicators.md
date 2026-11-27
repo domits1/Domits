@@ -1,162 +1,57 @@
-# Verified stay indicators and inherited review changes
+# Verified stay indicators: current engineering review
 
-Pull request: not supplied
-Issue: not supplied
-Reviewed commit: fa76a6b5a
-Baseline: local origin/acceptance (539f763fa); no fetch performed for this review
-Scope: entire current branch diff, including inherited traveler and moderation changes
-Result: one P1 fixed in the working tree following the owner's decision; validation below.
+PR: https://github.com/domits1/Domits/pull/3487
+Related issue: #90
+Baseline: `acceptance`; local comparison uses `origin/acceptance`.
+Updated: 2026-11-27. This replaces the previous booking-dependent review notes.
 
-## Findings
+## Findings and decisions
 
-| Severity | Where | Finding | Decision |
-|---|---|---|---|
-| P1 (10/10) | backend/functions/ReviewSystem/data/publicReviewRepository.js:50 at reviewed commit | The public feed required stored VERIFIED, but normal creation and publication retain UNVERIFIED. Completed, approved, published reviews disappeared from the page, count and score. Legacy VERIFIED_STAY reviews were excluded too. | Fixed in working tree: owner chose removing the exact stored-status restriction and deriving stay verification from matching completed-booking evidence. Publication and booking checks remain required. |
+| Finding | Resolution |
+|---|---|
+| Later cancellation/refund could hide a published review | Creation and validated submission persist VERIFIED_STAY. Publication and public reads retain that evidence without rechecking mutable booking status. |
+| Legacy reviews lack stored evidence | Manual backfill is required before or at merge deployment, before public traffic resumes. See the release runbook. |
+| Unbounded migration can exceed DSQL transaction limits | SQL and JS update at most 500 rows per statement. JS disables migration-wide transactions, rejects active encompassing transactions, and repeats until exhausted. SQL batches must be committed separately. |
+| Already cancelled/refunded bookings cannot establish historical evidence | Read-only preflight counts eligible rows and excluded published reviews by booking status, including missing bookings and other eligibility failures. Recover trusted historical evidence or record an explicit release-owner exclusion decision before release. No reviews are deleted. |
+| Host/public scores and counts use different verification eligibility | Host performance, history, category ratings, trends and overall score now require VERIFIED_STAY. Ownership, time-range and property-status rules remain endpoint-specific. |
+| Old PR description used the wrong baseline and obsolete behavior | Description must explain persisted evidence, the manual migration gate and the acceptance baseline. |
 
-### Verified evidence
+## Behavior and authorization
 
-These quotes describe the reviewed commit before the correction.
+A review must match its reservation's guest, host and property, cannot be a self-review,
+and requires a paid/confirmed reservation after checkout before evidence is persisted.
+Existing authorization, moderation, publication and optimistic version checks remain.
+A later cancellation or refund does not invalidate persisted evidence. Public review
+count, score and pagination all use the stored status; the badge requires strict
+backend `verified: true`. Booking/private feedback fields remain excluded publicly.
 
-- `backend/functions/ReviewSystem/data/publicReviewRepository.js:50`:
-  `.andWhere("review.verification_status = :verificationStatus", { verificationStatus: "VERIFIED" }),`
-- `backend/functions/ReviewSystem/business/service/reviewService.js:530`:
-  `verification_status: "UNVERIFIED",`
-- `backend/functions/ReviewSystem/business/service/reviewService.js:419`:
-  `|| !["UNVERIFIED", "VERIFIED", "VERIFIED_STAY"].includes(current.verification_status)) {`
-  Moderation explicitly permits all three states.
-- `backend/functions/ReviewSystem/data/reviewRepository.js:602-606`:
-  `const updates = { status: to, publication_status: to === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED", updated_at: timestamp };`
-  Publication leaves verification unchanged.
-- `backend/test/ReviewSystem/reviewEntities.test.js:572`:
-  `it("publishes and completes the matching request in one transaction without upgrading verification", async () => {`
-- `backend/test/ReviewSystem/reviewEntities.test.js:576`:
-  `expect(result).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "UNVERIFIED" });`
+Backfill preserves VERIFIED_STAY, includes eligible legacy statuses (including null),
+and advances updated_at to prevent stale writes. Completed batches are idempotent.
+It intentionally does not manufacture historical evidence for ineligible bookings.
 
-This is a boundary mismatch between moderation verification state and evidence of
-a completed reservation. The query applies the restriction to all three public
-reads, so the failure appears as ordinary empty results rather than an error.
+## Migration and release checks
 
-## Four passes
-
-- Architecture: publication, verification state and reservation evidence are
-  separate concepts. The new exact verification predicate conflicts with the
-  existing publication contract; the correction removes that predicate. Public output otherwise projects allowed fields;
-  moderation endpoints reuse authentication and approver checks.
-- Code quality: completed-stay policy is shared between submission and public SQL;
-  filters and cursors are validated. Property-keyed remounts and abort guards
-  suppress obsolete results. Moderation search precedes pagination and metadata
-  reads are batched. Earlier recorded search and malformed-response defects are
-  fixed in this tree.
-- Tests: policy, SQL construction, cursor boundaries, public filters, badge
-  rendering and moderation failure paths have coverage. Missing integration:
-  creating an ordinary review, approving/publishing it, then reading the public
-  feed. Original mocks supplied VERIFIED rows and did not expose the P1 mismatch.
-  Regression coverage now exercises all three stored verification states and
-  independently generates SQL for score, count and page, proving each retains
-  completed-booking/publication predicates without a stored-verification gate.
-  This does not replace an actual database end-to-end test.
-- Performance: public page reads are bounded to eleven rows, with batched category
-  and response reads. Score/count/page each repeat booking eligibility joins;
-  aggregates and substring moderation search may scan many rows. No production
-  SQL plans or load measurements were available.
-
-## What already exists
-
-Reuse `eligibleReviewQuery`, review publication transactions/version checks,
-completed-booking assertions, authenticated moderation transport, public cards,
-and abort-aware public requests. No new dependency or schema migration is needed
-for the correction. Publication intentionally preserves verification.
-
-## Failure modes
-
-| Path / failure | Handling and visibility | Coverage |
-|---|---|---|
-| Normal published review remains UNVERIFIED | Included when published and linked to an eligible completed booking; badge derives from that evidence | Stored-state API regression and independent score/count/page SQL regression added. Original critical gap fixed at query boundary; live create-to-public integration remains unverified. |
-| Booking missing, guest/property mismatch, future checkout, invalid status | Query excludes row; submission rejects ineligible booking | SQL join/predicate assertions and completedStayError cases; no live DB execution |
-| Invalid filters/cursor | Backend 400; public UI alert and Retry/clear controls | Input and cursor validation tests |
-| Public request fails or property changes mid-request | Alert/Retry; keyed remount and abort guard prevent stale results | PublicReviews tests |
-| No matches or equal-date pagination boundary | Empty message; stable date/ID keyset cursor | Count/score and cursor construction tests; no DB concurrency test |
-| Badge receives false/missing value | Badge hidden; only strict true is shown | VerifiedStayIndicator tests |
-| Duplicate flag, resolution or approval failure | Alert, guarded mutations, retries/version checks | ReviewFlagging and ReviewApprovalPage tests |
-| Malformed successful moderation response | API rejects shape before render; alert and Retry | moderationResponse tests |
-
-## Data flow (component level)
-
-```text
-Guest + completed booking
-          ▼
-Create UNVERIFIED draft ▶ submit ▶ approve ▶ publish (still UNVERIFIED)
-                                                ▼
-Public query: published + matching completed booking
-                                                ▼
-                         review + verified-stay badge
-
-Public filters/cursor ▶ validate ▶ score + count + page ▶ cards/badge
-Admin token/role ▶ moderation queue ▶ resolve flag ▶ approve/publish
-```
-
-## Not in scope
-
-- Changing publication to auto-upgrade verification: contradicts an explicitly
-  tested contract; recommend preserving it and using reservation evidence.
-- Optional P3 UI polish: flagged APPROVED rows still offer Publish in
-  `ReviewApprovalTable.js:97` and `ReviewApprovalDetails.js:113`. Backend
-  `reviewRepository.js:591-594` rejects publication, so integrity is protected.
-  Deferred from the blocking policy decision.
-- Live database plans, deployment and browser/modal-focus QA: unavailable in this
-  source/test review; no production or browser validation claimed.
-- Unrelated acceptance changes: outside the agreed branch diff.
-
-## Independent second opinion
-
-A separate reviewer inspected frontend behavior and independently verified the
-backend P1 against creation, publication and the preservation test. Both reviewers
-agree on the P1 and recommend deriving verification from booking evidence. No
-disagreement. The second reviewer identified the optional Publish-action polish
-above; it is not an authorization bypass. A follow-up independent review of the
-correction and tests found no new issues and confirmed that all three queries
-retain the booking and publication checks.
+Follow [persist_verified_stays_runbook.md](../tools/persist_verified_stays_runbook.md).
+Save preflight counts before merge. Keep public traffic held if backend deployment
+precedes backfill; restore it only after eligible count is zero and exclusions have
+been reconciled or explicitly accepted. Migration execution is manual.
 
 ## Validation
 
-- `git diff --check`: passed before adding this record.
-- Backend `npm test -- --runInBand test/ReviewSystem`: 17 suites passed, one
-  failed; 429 tests passed, one failed. Runtime/deployment preflight fresh-Node
-  import exceeded its 20-second subprocess timeout (`reviewEntities.test.js:37`).
-- Isolated backend recheck of `loads the real handler`: passed (one test, 39
-  skipped), including the fresh-process import. The earlier timeout did not
-  reproduce; the complete backend run still had the timeout recorded above.
-- Frontend `CI=true npm test -- --watchAll=false --runInBand src/features/review`:
-  21 suites reported PASS, including PublicReviews, ReviewFlagging,
-  moderationResponse and publicReviewsAPI. ReviewApprovalPage reported a
-  five-second timeout in `flags a review, resolves it from the moderation queue
-  and views resolved flags`. The run then stopped producing output and was
-  interrupted without a final summary. Full frontend validation is incomplete.
-- Isolated frontend recheck of `flags a review, resolves it`: passed (one test,
-  21 skipped). The earlier timeout did not reproduce; the complete frontend run
-  remains incomplete.
-- After the approved correction, `npm test -- --runInBand test/ReviewSystem`:
-  all 18 suites and 433 tests passed, including the runtime preflight and the
-  new regression coverage. No frontend application code changed in this fix;
-  the earlier frontend validation limitations above still apply.
-- Final `git diff --check`: passed. Changes are the query correction, two backend
-  test files and this review record; no commit or remote PR update was made.
+Repository tests cover generated host/public SQL, lifecycle verification, migration
+batch repetition and rejection of enclosing transactions. UI tests cover strict
+badge visibility. Record current execution results and visual evidence below.
 
-## Owner decision and correction
+Live DSQL preflight counts, query execution/plans and the acceptance cancellation/
+refund end-to-end flow remain unexecuted. Source tests do not establish those results.
 
-The owner selected: "Remove stored VERIFIED requirement; use completed-booking
-evidence (recommended)". The query now uses the same matching reservation, guest,
-property, paid/confirmed status and passed checkout checks for score, count and
-page, alongside published review and active property constraints. Stored
-verification is unchanged. The public badge continues to reflect reservation
-evidence, rather than an automatic moderation-state upgrade.
+## Current execution results
 
-Alternatives considered: add a separate workflow to upgrade stored verification,
-or accept/defer missing public reviews. Neither was selected. Consequence: a
-published UNVERIFIED or VERIFIED_STAY record is visible only while its linked
-reservation satisfies the evidence checks. No migration or deployment step added.
-
-## Checklist status
-
-- [x] Engineering review ran; the P1 is fixed following the owner's decision.
-- [x] Findings recorded in this file. No remote PR description was edited.
+- Backend ReviewSystem: 19 suites, 436 tests passed.
+- Frontend PublicReviews, ReviewsSection and VerifiedStayIndicator: 3 suites, 19 tests passed.
+- git diff --check passed.
+- Badge tooltip text is asserted by the component test.
+- Screenshots and mobile/tablet/desktop visual checks remain pending: the browser
+  could not connect to the local component preview, and direct local-file navigation
+  was blocked by browser security policy. No visual or responsiveness pass is claimed.
+- Live database counts and cancellation/refund integration checks remain pending.

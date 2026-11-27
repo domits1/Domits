@@ -58,8 +58,8 @@ test.each([undefined, "DECLINING"])("aggregates both windows and filters %s befo
     }
     expect(sql).toContain('"property"."hostid" = :hostId');
     expect(sql).toContain("LEFT JOIN");
-    expect(sql).not.toContain("verification_status");
-    expect(executed.getParameters()).not.toHaveProperty("verificationStatus");
+    expect(sql).toContain("verification_status");
+    expect(executed.getParameters().stayVerification).toBe("VERIFIED_STAY");
     for (const field of ["publication_status", "status", "review_type"]) {
       expect(sql).toContain(`"review"."${field}" = :`);
     }
