@@ -48,6 +48,9 @@ const notConfigured = () =>
     errorCode: "DISTRIBUTION_NOT_CONFIGURED",
   });
 
+// Channex answers these when Domits' key may not do the call, which the host cannot fix in the listing.
+const KEY_NOT_ALLOWED_STATUSES = [401, 403];
+
 const CHANNEL = "CHANNEX";
 const ACTIVE = "ACTIVE";
 const RATE_PLAN_TITLE = "Standard Rate";
@@ -357,6 +360,7 @@ export default class ChannexProvisioningService {
         validationDetails: result.validationDetails ?? null,
       })
     );
+    if (KEY_NOT_ALLOWED_STATUSES.includes(result.httpStatus)) return { ok: false, answer: notConfigured() };
     // The create may still have happened in Channex; the next attempt looks first and adopts it.
     if (result.outcomeUnknown || result.retryable) return { ok: false, answer: tryAgain() };
     return {
