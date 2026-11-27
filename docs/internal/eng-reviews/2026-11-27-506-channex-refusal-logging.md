@@ -1,6 +1,6 @@
 # fix(channex): log Channex refusals and answer "contact support" on a 401/403 (#506)
 
-Pull request: (to fill in)
+Pull request: #4075
 Issue: #506
 Base: `acceptance`
 Reviewed: each commit on its staged diff before it was made (27 Nov)
