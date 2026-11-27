@@ -6,7 +6,7 @@ Runbook for the hand-applied migration under `backend/ORM/migrations/` (issue #3
 
 The `.js` file is the migration record (nothing in this repo executes it). The `.sql` file holds the statements to run. It opens with a short comment header that repeats the run order, as the document migration does.
 
-Connect as described in [dsql_transitioning_docs.md](./dsql_transitioning_docs.md). Confirm the cluster from SSM parameters `/aurora/dsql/host` and `/aurora/dsql/region` in eu-north-1, and apply as the `admin` database user the runtime uses (`backend/ORM/index.js`).
+Connect as described in [dsql_transitioning_docs.md](./dsql_transitioning_docs.md). Confirm the cluster from SSM parameters `/aurora/dsql/host` and `/aurora/dsql/region` in eu-north-1, and apply as the `admin` database user the runtime uses (`backend/ORM/index.js`). The parameters are read in eu-north-1, but the cluster they point to is in eu-west-2: open CloudShell and the Aurora DSQL console in eu-west-2.
 
 These two tables belong to the document tables of `20261124_document` ([dsql_document_runbook.md](./dsql_document_runbook.md)). Apply that migration first. Neither table here depends on it in the database, but a link or an activity only has meaning for an existing document.
 
@@ -70,5 +70,5 @@ Nothing on this branch reads or writes the tables, and TypeORM runs with `synchr
 
 ## Status
 
-- `test` schema applied: Not applied (date: -, by: -)
-- `main` schema applied: Not applied (date: -, by: -)
+- `test` schema applied: Applied (date: 2026-11-27, by: Mehedi)
+- `main` schema applied: Applied (date: 2026-11-27, by: Mehedi)
