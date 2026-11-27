@@ -39,7 +39,10 @@ function HostChannelDistribution() {
   const [pickedPropertyId, setPickedPropertyId] = useState("");
 
   // The picker below needs the status first, so the status hook knows nothing about properties.
-  const { status, loading, error, errorStatus, reload } = useChannexDistribution();
+  // The platform cards replace everything account-level, so the legacy status is not requested at all.
+  const { status, loading, error, errorStatus, reload } = useChannexDistribution({
+    enabled: !MOCK_HOST_DISTRIBUTION_ENABLED,
+  });
   const [activeModal, setActiveModal] = useState(null);
   const [propertyMappings, setPropertyMappings] = useState([]);
 
