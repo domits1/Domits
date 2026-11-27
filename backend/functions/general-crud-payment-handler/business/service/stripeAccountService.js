@@ -9,6 +9,10 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 const getAuth = (event) =>  event.headers.Authorization;
 const unixNow = () => Math.floor(Date.now() / 1000);
 
+const isLegacyAccountUnavailable = (error) =>
+  error?.code === "resource_missing" ||
+  (error?.type === "StripePermissionError" && error?.code === "account_invalid" && error?.statusCode === 403);
+
 const createStripeRequestError = (error, operation) => {
   const accountMissing = error?.code === "resource_missing";
   let statusCode = 502;
@@ -85,13 +89,15 @@ export default class StripeAccountService {
 
         return { statusCode: 200, message, details };
       } catch (error) {
-        if (error?.code !== "STRIPE_ACCOUNT_NOT_FOUND" || error?.cause?.code !== "resource_missing") {
+        if (!isLegacyAccountUnavailable(error?.cause)) {
           throw error;
         }
 
-        console.warn("Replacing a legacy Stripe account mapping that no longer exists on this platform.", {
-          cognitoUserId,
-          previousAccountId: stripeAccount.account_id,
+        console.warn("Replacing a legacy Stripe account mapping that is unavailable on the current platform.", {
+          errorType: error?.cause?.type,
+          errorCode: error?.cause?.code,
+          statusCode: error?.cause?.statusCode,
+          requestId: error?.cause?.requestId,
         });
       }
     }
