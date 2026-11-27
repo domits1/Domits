@@ -52,6 +52,24 @@ const recoverFromSendError = (error, { onFieldError, onDatesTaken, onRequote, on
   }
 };
 
+const readSendError = (bookingState) =>
+  bookingState.status === BOOKING_REQUEST_STATUS.ERROR && !FIELD_BY_ERROR_CODE[bookingState.error.code]
+    ? resolveBookingRequestErrorPresentation(bookingState.error)
+    : null;
+
+function RequestSteps() {
+  return (
+    <ol className={requestStyles.steps} aria-label="How booking works">
+      {REQUEST_STEPS.map((step, index) => (
+        <li key={step} aria-current={index === 0 ? "step" : undefined}>
+          <span className={requestStyles.stepNumber}>{index + 1}</span>
+          {step}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function RequestStaySummary({ model, title, selection, quoteState, quoteView, propertyHref, onCheckAgain }) {
   const location = resolveEliteLocation(model);
   const photo = hasEliteHeaderPhoto(model.media) ? model.media.heroImage : "";
@@ -219,20 +237,11 @@ export default function EliteSitePropertyRequestContent({
     );
   }
 
-  const isSendError =
-    bookingState.status === BOOKING_REQUEST_STATUS.ERROR && !FIELD_BY_ERROR_CODE[bookingState.error.code];
-  const sendError = isSendError ? resolveBookingRequestErrorPresentation(bookingState.error) : null;
+  const sendError = readSendError(bookingState);
 
   return (
     <div className={requestStyles.layout}>
-      <ol className={requestStyles.steps} aria-label="How booking works">
-        {REQUEST_STEPS.map((step, index) => (
-          <li key={step} aria-current={index === 0 ? "step" : undefined}>
-            <span className={requestStyles.stepNumber}>{index + 1}</span>
-            {step}
-          </li>
-        ))}
-      </ol>
+      <RequestSteps />
       <RequestStaySummary
         model={model}
         title={title}
