@@ -213,9 +213,7 @@ export default function EliteSitePropertyRequestContent({
       <div className={requestStyles.main}>
         <h2 className={requestStyles.heading}>Your details</h2>
         {sendError?.scope === SCOPES.QUOTE ? (
-          <p className={`${quoteStyles.notice} ${quoteStyles.noticeMessage}`} role="status">
-            {sendError.message}
-          </p>
+          <output className={`${quoteStyles.notice} ${quoteStyles.noticeMessage}`}>{sendError.message}</output>
         ) : null}
         {sendError?.scope === SCOPES.PANEL ? (
           <QuotePanelAlert
