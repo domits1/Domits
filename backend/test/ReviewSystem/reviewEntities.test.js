@@ -156,12 +156,22 @@ describe('Review entities and creation persistence', () => {
     });
   });
 
-// Deletion: enforce reviewer ownership, retain related records and hide rejected reviews on reload.
+// Deletion: enforce reviewer ownership, retain related records and preserve legacy rejected filtering.
 it("soft deletes only the author while retaining supporting records", async () => {
-  await repository.deleteOwnReview("legacy-review", "guest-1", 123);
-  expect(repositories.get(Review).update).toHaveBeenCalledWith({ id: "legacy-review", reviewer_user_id: "guest-1" }, {
-    status: "REJECTED", publication_status: "REJECTED", updated_at: 123,
-  });
+  const source = new DataSource({ type: "postgres", schema: "main", entities: [Review] });
+  await source.buildMetadatas();
+  const query = source.getRepository(Review).createQueryBuilder().update(Review);
+  const execute = jest.spyOn(query, "execute").mockResolvedValue({ affected: 1 });
+  repositories.get(Review).createQueryBuilder = jest.fn(() => query);
+
+  await expect(repository.deleteOwnReview("legacy-review", "guest-1", 123)).resolves.toEqual({ affected: 1 });
+
+  const [sql, parameters] = query.getQueryAndParameters();
+  expect(sql).toContain('UPDATE "main"."review" SET "status" = $1, "updated_at" = $2');
+  expect(sql).toContain('WHERE "id" = $3 AND "reviewer_user_id" = $4 AND "status" NOT IN ($5, $6)');
+  expect(parameters).toEqual(["DELETED", 123, "legacy-review", "guest-1", "DELETED", "REJECTED"]);
+  expect(execute).toHaveBeenCalledTimes(1);
+  expect(repositories.get(Review).update).not.toHaveBeenCalled();
   for (const entity of [Review_Rating, Review_Request, Review_Response]) {
     expect(repositories.get(entity).update).not.toHaveBeenCalled();
   }

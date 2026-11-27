@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import PublicReviews from "../PublicReviews";
 import { getPublicReviews } from "../services/reviewAPI";
 jest.mock("../services/reviewAPI", () => ({ getPublicReviews: jest.fn() }));
-const empty = { overall_score: null, review_count: 0, matching_count: 0, reviews: [], next_cursor: null, next_offset: null };
+const empty = { overall_score: null, review_count: 0, matching_count: 0, reviews: [], next_offset: null, next_cursor: null };
 beforeEach(() => getPublicReviews.mockReset());
 
 test("preserves the reviews anchor through loading, error, retry and success", async () => {
@@ -31,7 +31,7 @@ test("shows loading, empty, error and retry states", async () => {
   await screen.findByText("No reviews match your selected filters.");
 });
 test("shows all page cards, summary, categories, verified stay and pagination", async () => {
-  getPublicReviews.mockResolvedValueOnce({ overall_score: 4.5, review_count: 11, matching_count: 11, next_cursor: "page-two", next_offset: 10,
+  getPublicReviews.mockResolvedValueOnce({ overall_score: 4.5, review_count: 11, matching_count: 11, next_offset: 10, next_cursor: "page-two",
     reviews: [1, 2, 3].map((id) => ({ id, rating: 4, text: `Stay ${id}`, date: 1000,
       verified: true, categories: [{ key: "comfort", label: "Comfort", rating: 4.5 }] })) })
     .mockResolvedValueOnce({ ...empty, review_count: 11 });
@@ -57,7 +57,7 @@ test("distinguishes a public host response and renders its text safely", async (
   expect(response.querySelector("b")).toBeNull();
 });
 test("combines filters, resets the page, keeps filters during pagination, and clears them", async () => {
-  getPublicReviews.mockResolvedValue({ ...empty, review_count: 11, matching_count: 11, next_cursor: "page-two", next_offset: 10 });
+  getPublicReviews.mockResolvedValue({ ...empty, review_count: 11, matching_count: 11, next_offset: 10, next_cursor: "page-two" });
   render(<PublicReviews propertyId="p1" />);
   fireEvent.click(await screen.findByText("Next reviews"));
   await waitFor(() => expect(getPublicReviews).toHaveBeenLastCalledWith("p1", 0, expect.anything(),
