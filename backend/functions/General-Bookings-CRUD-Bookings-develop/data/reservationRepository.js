@@ -11,7 +11,7 @@ import { Property_Rule } from "database/models/Property_Rule";
 import { withDsqlRetry } from "../.shared/dsqlRetry.js";
 import ChannexAriOutboxWriter from "../.shared/channelManagement/services/channexAriOutboxWriter.js";
 import { bookingAvailabilityChange } from "../.shared/channelManagement/utils/channexBookingChange.js";
-import { CHANNEX_ARI_OUTBOX_SOURCE } from "../.shared/channelManagement/utils/channexAriOutboxConstants.js";
+import { ARI_CHANGE_SOURCE } from "../.shared/channelManagement/utils/ariChangeConstants.js";
 import { BookingAutomationOutbox } from "database/models/automation/BookingAutomationOutbox";
 import { parseBookingDateToMs } from "../util/bookingDateParser.js";
 
@@ -610,7 +610,7 @@ class ReservationRepository {
 
       // The accepted booking now blocks its nights, so Channex has to close them too. The
       // locked row has the current dates; the ones passed in were read before the lock.
-      const channexChange = bookingAvailabilityChange(propertyId, CHANNEX_ARI_OUTBOX_SOURCE.BOOKING, {
+      const channexChange = bookingAvailabilityChange(propertyId, ARI_CHANGE_SOURCE.BOOKING, {
         arrivalMs: Number(targetRow.arrivaldate),
         departureMs: Number(targetRow.departuredate),
       });

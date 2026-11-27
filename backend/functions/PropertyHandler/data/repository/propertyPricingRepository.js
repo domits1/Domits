@@ -2,7 +2,8 @@ import { PricingMapping } from "../../util/mapping/pricing.js";
 import Database from "database";
 import { withDsqlRetry } from "../../.shared/dsqlRetry.js";
 import ChannexAriOutboxWriter, { buildForwardSyncRange } from "../../.shared/channelManagement/services/channexAriOutboxWriter.js";
-import { CHANNEX_ARI_CHANGE_TYPE, CHANNEX_ARI_OUTBOX_SOURCE } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
+import { CHANNEX_ARI_CHANGE_TYPE } from "../../.shared/channelManagement/utils/channexAriOutboxConstants.js";
+import { ARI_CHANGE_SOURCE } from "../../.shared/channelManagement/utils/ariChangeConstants.js";
 
 export class PropertyPricingRepository {
   constructor(systemManager, { channexAriOutboxWriter = new ChannexAriOutboxWriter() } = {}) {
@@ -218,7 +219,7 @@ export class PropertyPricingRepository {
           domitsPropertyId: propertyId,
           changeTypes: [CHANNEX_ARI_CHANGE_TYPE.RATES],
           ...buildForwardSyncRange(),
-          source: CHANNEX_ARI_OUTBOX_SOURCE.GLOBAL_SETTINGS,
+          source: ARI_CHANGE_SOURCE.GLOBAL_SETTINGS,
         });
       })
     );

@@ -1,3 +1,5 @@
+import { ARI_CHANGE_SOURCE } from "./ariChangeConstants.js";
+
 export const CHANNEX_ARI_OUTBOX_STATUS = Object.freeze({
   PENDING: "PENDING",
   PROCESSING: "PROCESSING",
@@ -11,16 +13,6 @@ export const CHANNEX_ARI_OUTBOX_KIND = Object.freeze({
   FULL_SYNC: "FULL_SYNC",
 });
 
-export const CHANNEX_ARI_OUTBOX_SOURCE = Object.freeze({
-  CALENDAR: "CALENDAR",
-  GLOBAL_SETTINGS: "GLOBAL_SETTINGS",
-  BOOKING: "BOOKING",
-  CHANNEX_IMPORT: "CHANNEX_IMPORT",
-  // A full sync after a mapping is saved and ready: the property goes live, or recovers (#3282).
-  GO_LIVE: "GO_LIVE",
-  SITEMINDER_IMPORT: "SITEMINDER_IMPORT",
-});
-
 // Lowercase, because these values go to Channex in the payload, not into our own column.
 export const CHANNEX_ARI_CHANGE_TYPE = Object.freeze({
   AVAILABILITY: "availability",
@@ -31,9 +23,9 @@ export const CHANNEX_ARI_CHANGE_TYPE = Object.freeze({
 // A booking closes dates, and every minute those dates stay open on the other
 // channels is a double-booking risk, so these sources skip the quiet period (D3).
 export const URGENT_SOURCES = Object.freeze([
-  CHANNEX_ARI_OUTBOX_SOURCE.BOOKING,
-  CHANNEX_ARI_OUTBOX_SOURCE.CHANNEX_IMPORT,
-  CHANNEX_ARI_OUTBOX_SOURCE.SITEMINDER_IMPORT,
+  ARI_CHANGE_SOURCE.BOOKING,
+  ARI_CHANGE_SOURCE.CHANNEX_IMPORT,
+  ARI_CHANGE_SOURCE.SITEMINDER_IMPORT,
 ]);
 
 export const CHANNEX_ARI_OUTBOX_DEFAULTS = Object.freeze({
