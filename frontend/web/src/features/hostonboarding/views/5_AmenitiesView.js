@@ -10,6 +10,14 @@ import OnboardingProgress from "../components/OnboardingProgress";
 import "../styles/onboardingHost.scss";
 import { useOnboardingFlow } from "../hooks/useOnboardingFlow";
 
+const FIRST_CATEGORY = "Essentials";
+
+const compareCategories = (a, b) => {
+  if (a === FIRST_CATEGORY) return -1;
+  if (b === FIRST_CATEGORY) return 1;
+  return a.localeCompare(b);
+};
+
 function useCategoriesPerPage() {
   const getValue = () => {
     return 4;
@@ -49,7 +57,7 @@ const AmenitiesView = () => {
   }, []);
 
   const categoryKeys = useMemo(() => {
-    return Object.keys(amenitiesByType).sort((a, b) => a.localeCompare(b));
+    return Object.keys(amenitiesByType).sort(compareCategories);
   }, [amenitiesByType]);
 
   const totalPages = Math.max(1, Math.ceil(categoryKeys.length / categoriesPerPage));
