@@ -155,6 +155,34 @@ describe("StripeAccountService.createStripeAccount", () => {
     );
   });
 
+  it("replaces a legacy saved account when Stripe rejects it as invalid for the current platform", async () => {
+    const invalidAccount = Object.assign(new Error("The account is invalid for this platform"), {
+      type: "StripePermissionError",
+      code: "account_invalid",
+      statusCode: 403,
+      requestId: "req_invalid",
+    });
+    const { service, stripe, repository } = buildService({
+      existingAccount: { account_id: ACCOUNT_ID },
+      retrieveError: invalidAccount,
+    });
+
+    const result = await service.createStripeAccount(EVENT);
+
+    expect(result.statusCode).toBe(202);
+    expect(result.details).toMatchObject({
+      accountId: "acct_new",
+      onboardingUrl: "https://stripe.example/onboarding",
+    });
+    expect(stripe.accounts.create).toHaveBeenCalledTimes(1);
+    expect(repository.replaceStripeAccount).toHaveBeenCalledWith(
+      COGNITO_USER_ID,
+      "acct_new",
+      expect.any(Number)
+    );
+    expect(repository.insertStripeAccount).not.toHaveBeenCalled();
+  });
+
   it("preserves Stripe service failures as temporary lookup errors instead of 404", async () => {
     const stripeUnavailable = Object.assign(new Error("Stripe unavailable"), {
       type: "StripeConnectionError",
