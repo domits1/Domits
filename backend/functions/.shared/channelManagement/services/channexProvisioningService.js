@@ -48,6 +48,9 @@ const notConfigured = () =>
     errorCode: "DISTRIBUTION_NOT_CONFIGURED",
   });
 
+// Channex answers these when Domits' key may not do the call, which the host cannot fix in the listing.
+const KEY_NOT_ALLOWED_STATUSES = [401, 403];
+
 const CHANNEL = "CHANNEX";
 const ACTIVE = "ACTIVE";
 const RATE_PLAN_TITLE = "Standard Rate";
@@ -261,6 +264,8 @@ export default class ChannexProvisioningService {
     if (!externalPropertyId) {
       // Matched by the listing's link, not its title: titles repeat across hosts on Domits' shared key (D8).
       const property = await this.findOrCreate({
+        object: "property",
+        domitsPropertyId: listing.propertyId,
         list: () => this.channex.listProperties(credentials),
         rows: (result) => result.properties,
         idOf: (row) => row.externalPropertyId,
@@ -275,6 +280,8 @@ export default class ChannexProvisioningService {
     }
 
     const roomType = await this.findOrCreate({
+      object: "roomType",
+      domitsPropertyId: listing.propertyId,
       list: () => this.channex.listRoomTypes(credentials, externalPropertyId),
       rows: (result) => result.roomTypes,
       idOf: (row) => row.externalRoomTypeId,
@@ -294,6 +301,8 @@ export default class ChannexProvisioningService {
     });
 
     const ratePlan = await this.findOrCreate({
+      object: "ratePlan",
+      domitsPropertyId: listing.propertyId,
       list: () => this.channex.listRatePlans(credentials, roomType.id),
       rows: (result) => result.ratePlans,
       idOf: (row) => row.externalRatePlanId,
@@ -325,7 +334,7 @@ export default class ChannexProvisioningService {
   }
 
   // Without the list Domits cannot know whether the object exists, so a failed list never creates.
-  async findOrCreate({ list, rows, idOf, isMatch, create }) {
+  async findOrCreate({ object, domitsPropertyId, list, rows, idOf, isMatch, create }) {
     const listed = await list();
     if (!listed?.success) return { ok: false, answer: tryAgain() };
 
@@ -340,6 +349,18 @@ export default class ChannexProvisioningService {
 
     const result = await create();
     if (result.success) return { ok: true, id: result.externalId };
+    console.error(
+      JSON.stringify({
+        event: "CHANNEX_PROVISIONING_CREATE_FAILED",
+        object,
+        domitsPropertyId,
+        httpStatus: result.httpStatus,
+        errorCode: result.errorCode,
+        errorMessage: result.errorMessage,
+        validationDetails: result.validationDetails ?? null,
+      })
+    );
+    if (KEY_NOT_ALLOWED_STATUSES.includes(result.httpStatus)) return { ok: false, answer: notConfigured() };
     // The create may still have happened in Channex; the next attempt looks first and adopts it.
     if (result.outcomeUnknown || result.retryable) return { ok: false, answer: tryAgain() };
     return {

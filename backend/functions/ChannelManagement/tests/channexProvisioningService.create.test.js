@@ -191,6 +191,12 @@ describe("ChannexProvisioningService.createChannexObjects: look before create", 
 });
 
 describe("ChannexProvisioningService.createChannexObjects: when Channex does not cooperate", () => {
+  let log;
+  beforeEach(() => {
+    log = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => log.mockRestore());
+
   // The create may still have happened; the next attempt looks first and adopts it.
   test("an unknown create outcome stops with try again, before the next object", async () => {
     const { service, channex, props } = build();
@@ -229,6 +235,64 @@ describe("ChannexProvisioningService.createChannexObjects: when Channex does not
       statusCode: 502,
       response: expect.objectContaining({ errorCode: "DISTRIBUTION_CHANNEX_REFUSED", validationDetails: details }),
     });
+  });
+
+  // The host only sees a general text; the log says which object Channex refused and why (live check, 26 Nov).
+  test("a failed create is logged with the object, the listing and Channex's answer", async () => {
+    const { service, channex } = build();
+    channex.createRoomType.mockResolvedValue({
+      success: false,
+      outcomeUnknown: false,
+      httpStatus: 403,
+      errorCode: "forbidden",
+      errorMessage: "Forbidden",
+    });
+
+    await run(service);
+
+    expect(JSON.parse(log.mock.calls[0][0])).toEqual({
+      event: "CHANNEX_PROVISIONING_CREATE_FAILED",
+      object: "roomType",
+      domitsPropertyId: "listing-1",
+      httpStatus: 403,
+      errorCode: "forbidden",
+      errorMessage: "Forbidden",
+      validationDetails: null,
+    });
+  });
+
+  // 401 or 403 means Domits' key may not do this (a restricted key, live check 26 Nov): the host cannot fix
+  // that by editing the listing, so the answer is the not-configured one that says to contact support.
+  test.each([401, 403])("a %s refusal answers not configured, not a listing problem", async (httpStatus) => {
+    const { service, channex } = build();
+    channex.createProperty.mockResolvedValue({
+      success: false,
+      outcomeUnknown: false,
+      httpStatus,
+      errorCode: "forbidden",
+    });
+
+    const result = await run(service);
+
+    expect(result).toEqual({
+      statusCode: 503,
+      response: expect.objectContaining({ errorCode: "DISTRIBUTION_NOT_CONFIGURED" }),
+    });
+  });
+
+  test("a refused payload's field messages are in the log too", async () => {
+    const { service, channex } = build();
+    const details = { occ_adults: ["must be greater than 0"] };
+    channex.createProperty.mockResolvedValue({
+      success: false,
+      outcomeUnknown: false,
+      httpStatus: 422,
+      validationDetails: details,
+    });
+
+    await run(service);
+
+    expect(JSON.parse(log.mock.calls[0][0]).validationDetails).toEqual(details);
   });
 
   // Without the list Domits cannot know whether it already exists, so it does not create blindly.

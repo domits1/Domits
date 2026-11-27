@@ -92,12 +92,13 @@ export default class ChannexDistributionListingsService {
     }
   }
 
-  // Null when Channex or the key cannot answer: the tab then shows the OTAs as unknown, never as live.
+  // Throws when Channex or the key cannot answer, so the caller logs why and shows the OTAs as unknown,
+  // never as live.
   async readChannels(account, externalPropertyId, domitsPropertyId) {
     const secret = await this.credentialStore.readSecretOrNull(account.credentialsRef);
-    if (!secret?.apiKey) return null;
+    if (!secret?.apiKey) throw new Error("MISSING_API_KEY");
     const listed = await this.channex.listChannels({ apiKey: secret.apiKey }, externalPropertyId);
-    if (!listed.success) return null;
+    if (!listed.success) throw new Error(listed.errorCode);
     const pendingOutbox = await this.outbox.hasWaitingRows(domitsPropertyId);
     return listed.channels.map(({ channexChannelId, otaCode, isActive }) => ({
       channexChannelId,
