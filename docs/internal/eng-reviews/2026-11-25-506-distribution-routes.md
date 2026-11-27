@@ -77,6 +77,10 @@ Full backend suite before every commit: 28 failed tests in 7 suites, the same as
 
 ## Follow-up
 
+- The Channex key must have Properties Access: All (design note D8). The current key is restricted, so a new listing's turn-on gets 403 from Channex until it is replaced; that replacement is the neutral secret below.
+- A Channex 403 on create shows the host "check its address, guests and price", which is wrong for a key without rights. Map 401/403 to a "contact support" answer.
+- A failed create (`findOrCreate`) and an empty channel read (`readChannels`) return without logging Channex's code, status or message. Log them, so the next failure is found in CloudWatch, not by database queries.
+- Emerald Estate's mapping points at Channex property `14624dc9-…`, which the production key does not list; the key lists only `8de57ac9-…` (Wellness Villa Bisous), possibly Emerald's real property. Check which one is right.
 - `CHANNEX_PROVISIONING_CREDENTIALS_REF` points at the secret created when Domits' admin Channex account was connected (`domits/channex/<user id>/<account id>`), so every host's account row shares that one secret (D8). The code never deletes secrets, but rotating or removing that admin connection by hand would cut distribution for every host. After the Booking.com test: copy the key to a neutral secret (for example `domits/channex/provisioning`), point the variable and the existing host rows at it, and keep the old secret until both are switched.
 
 ## Not in scope
@@ -95,4 +99,13 @@ Full backend suite before every commit: 28 failed tests in 7 suites, the same as
 
 Done on 26 Nov: `CHANNEX_PROVISIONING_CREDENTIALS_REF` is set on the UnifiedMessaging Lambda. Without it, turning distribution on answers 503.
 
-After deploy: call the four routes as a signed-in test host (API Gateway route and CORS), and do the cross-property token check on staging before the Booking.com test.
+Done on production on 26 Nov, after deploy run 45837163832, as the test host Yousuf (Enes's own test account):
+
+| Check | Result |
+|---|---|
+| `GET /host/listings` | 200, 16 listings with status, readiness and timezone question |
+| Turn-on, Villa The Rock (`69a9520b-…`) | First 502 `DISTRIBUTION_CHANNEX_REFUSED`: the key is restricted to selected properties and Channex answers 403 on `POST /properties`. After creating the property by hand with the listing link and ticking it on the key: 200 `PROVISIONED`, Channex property `afb483c7-…` adopted by its link, full sync queued |
+| Account row | The host's row had no `credentialsRef`; the first turn-on filled it and set `CONNECTED`, as designed |
+| List after turn-on | Villa The Rock and Emerald Estate `READY`; Channex answered, 0 channels each (no channel connected yet) |
+| `connect-session` | 200, valid 900 s; the Channex Channels screen opens headless |
+| Cross-property check (D1) | Pass: the same session with Wellness Villa Bisous in the URL shows no property |

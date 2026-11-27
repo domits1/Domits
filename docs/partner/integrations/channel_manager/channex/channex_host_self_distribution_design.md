@@ -195,6 +195,8 @@ Extra build step from this decision: reconnect resets all account rows with the 
 
 A host's own Channex account is never taken over (#4031 review): turning on reuses a row with Domits' key or with no key (after a disconnect the key is cleared), and creates one when there is none. A row with another key belongs to a host who connected their own Channex account; it is left alone and turning on answers 409 `DISTRIBUTION_OWN_CHANNEX_ACCOUNT`. A unique index on `("userId", channel) WHERE channel = 'CHANNEX'` keeps it to one row per host.
 
+Domits' key must be a Channex API key with **Properties Access: All** (found in the live check, 26 Nov). A key restricted to selected properties only sees the properties ticked on it, and Channex refuses `POST /properties` with it (403 `forbidden`), so turning on a new listing fails. Channex cannot switch a restricted key to All; it needs a new key. The current key ("Domits Production", 21 Oct) is restricted, with Wellness Villa Bisous and Villa The Rock ticked by hand. Replacing it: create a key with All, store it as `domits/channex/provisioning`, point `CHANNEX_PROVISIONING_CREDENTIALS_REF` and the host account rows at it, and keep the old secret until both are switched.
+
 ### D9. A listing that stops being live is disconnected everywhere
 
 Live means status ACTIVE. Not live: INACTIVE, ARCHIVED, REJECTED, PENDING_REVIEW. Editing a live listing does not change its status: a submit for review only starts from INACTIVE, REJECTED or ARCHIVED (`SUBMITTABLE_FOR_REVIEW_STATUSES` in `PropertyHandler/util/propertyStatus.js`), so a normal edit never disconnects anything.
@@ -298,7 +300,7 @@ Suggested pages were shared in the group chat on 18 Nov; Ilan owns the final des
 - D7 labels as one pure function (row status, Channex active, waiting rows in; label out), table-tested like `evaluateChannexHealth` in `channexHealthStatus.js`, including "Disconnected outside Domits".
 - D9 reconciliation: a listing that is not live with an active channel goes to `DISCONNECTING`; a live listing is left alone; held rows are released once no channel of the listing is `DISCONNECTING`; the cap per run holds.
 - Before building D5: on the staging test property, with two test channels, set availability 0, wait a minute, deactivate one channel, run the full sync, and confirm the deactivated channel stays closed while the other reopens.
-- Before releasing the iframe (D1): request a one-time token for property A, change the property in the iframe URL to property B, and confirm Channex refuses it.
+- Before releasing the iframe (D1): request a one-time token for property A, change the property in the iframe URL to property B, and confirm Channex refuses it. Done on production on 26 Nov: a session for Villa The Rock with Wellness Villa Bisous in the URL opened an empty Properties page, so the token is limited to its own property.
 - End to end on staging: the Booking.com test account (shared pool, connect late, test fast), an Airbnb test listing if available. Vrbo has no test account (D6): its first test is a real listing.
 
 ## 10. Open questions
