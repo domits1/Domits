@@ -9,6 +9,10 @@ import { BadRequestException } from "../../util/exception/badRequestException.js
 const getAuth = (event) =>  event.headers.Authorization;
 const unixNow = () => Math.floor(Date.now() / 1000);
 
+const isLegacyAccountUnavailable = (error) =>
+  error?.code === "resource_missing" ||
+  (error?.type === "StripePermissionError" && error?.code === "account_invalid" && error?.statusCode === 403);
+
 const createStripeRequestError = (error, operation) => {
   const accountMissing = error?.code === "resource_missing";
   let statusCode = 502;
@@ -77,12 +81,25 @@ export default class StripeAccountService {
     const stripeAccount = await this.stripeAccountRepository.getExistingStripeAccount(cognitoUserId);
 
     if (stripeAccount?.account_id) {
-      const details = await this.buildStatusForStripeAccount(stripeAccount.account_id);
-      const message = details.onboardingComplete
-        ? "Existing Stripe account found. Redirecting to Stripe Express Dashboard."
-        : "Existing Stripe account found. Redirecting to Stripe onboarding.";
+      try {
+        const details = await this.buildStatusForStripeAccount(stripeAccount.account_id);
+        const message = details.onboardingComplete
+          ? "Existing Stripe account found. Redirecting to Stripe Express Dashboard."
+          : "Existing Stripe account found. Redirecting to Stripe onboarding.";
 
-      return { statusCode: 200, message, details };
+        return { statusCode: 200, message, details };
+      } catch (error) {
+        if (!isLegacyAccountUnavailable(error?.cause)) {
+          throw error;
+        }
+
+        console.warn("Replacing a legacy Stripe account mapping that is unavailable on the current platform.", {
+          errorType: error?.cause?.type,
+          errorCode: error?.cause?.code,
+          statusCode: error?.cause?.statusCode,
+          requestId: error?.cause?.requestId,
+        });
+      }
     }
 
     if (!userEmail) {
@@ -95,13 +112,17 @@ export default class StripeAccountService {
       capabilities: { card_payments: { requested: true }, transfers: { requested: true } },
     });
 
-    await this.stripeAccountRepository.insertStripeAccount(
-      randomUUID(),
-      account.id,
-      cognitoUserId,
-      unixNow(),
-      unixNow()
-    );
+    if (stripeAccount?.account_id) {
+      await this.stripeAccountRepository.replaceStripeAccount(cognitoUserId, account.id, unixNow());
+    } else {
+      await this.stripeAccountRepository.insertStripeAccount(
+        randomUUID(),
+        account.id,
+        cognitoUserId,
+        unixNow(),
+        unixNow()
+      );
+    }
 
     let onboardingUrl;
     try {
@@ -112,10 +133,12 @@ export default class StripeAccountService {
 
     return {
       statusCode: 202,
-      message: "New account created, redirecting to Stripe onboarding.",
+      message: stripeAccount?.account_id
+        ? "Legacy Stripe account replaced. Redirecting to onboarding."
+        : "New account created, redirecting to Stripe onboarding.",
       details: {
         accountId: account.id,
-        onboardingUrl: onboardingUrl,
+        onboardingUrl,
       },
     };
   }
