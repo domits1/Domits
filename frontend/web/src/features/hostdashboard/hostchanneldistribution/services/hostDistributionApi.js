@@ -1,6 +1,8 @@
-// Mock of the host self-distribution routes from design note #3954, section 6, until Enes's backend
-// exists. Every function matches one route (name, params, response). Swapping to the real routes
-// means changing the bodies in this file only; the hooks and components do not change.
+import * as realApi from "./hostDistributionRealApi";
+
+// Host self-distribution routes from design note #3954, section 6. Every function matches one route
+// (name, params, response). Real or mock is chosen per function at the bottom of this file; the hooks
+// and components do not change.
 //
 // Routes (all under /integrations/channex, Cognito-authenticated):
 //   getHostListings()          GET  /host/listings
@@ -9,9 +11,13 @@
 //   refreshChannels({ propertyId })  POST /host/listings/{propertyId}/channels/refresh
 // disconnectChannel arrives with the pull request that uses it.
 
+// REACT_APP_REAL_DISTRIBUTION=true sends getHostListings, createConnectSession and refreshChannels to the
+// real routes and shows the platform cards. Unset (production, Jest) the tab stays off and Jest never
+// reaches the network. enableDistribution stays mock until its own pull request.
+export const USE_REAL_HOST_DISTRIBUTION_API = process.env.REACT_APP_REAL_DISTRIBUTION === "true";
+
 // While false, the Distribution tab shows none of this, so a real host never sees invented data.
-// Flip to true only for local preview. Remove the flag when the real routes are wired.
-export const MOCK_HOST_DISTRIBUTION_ENABLED = false;
+export const MOCK_HOST_DISTRIBUTION_ENABLED = USE_REAL_HOST_DISTRIBUTION_API;
 
 // What enableDistribution answers, to preview each error without a backend:
 // "success" | "in-progress" | "timezone-required" | "not-ready" | "try-again". Each error outcome
@@ -150,14 +156,14 @@ const listingNotFoundError = (endpoint) =>
     errorCode: "DISTRIBUTION_LISTING_NOT_FOUND",
   });
 
-export const getHostListings = async () => {
+const mockGetHostListings = async () => {
   await mockDelay();
   return { listings: copy(mockListings) };
 };
 
 // The mock stands in for "read the channels from Channex": a syncing channel has caught up by the
 // time the host refreshes, so Refresh visibly does something in a preview.
-export const refreshChannels = async ({ propertyId } = {}) => {
+const mockRefreshChannels = async ({ propertyId } = {}) => {
   await mockDelay();
 
   const found = mockListings.find((listing) => listing.propertyId === propertyId);
@@ -246,7 +252,7 @@ const MOCK_CONNECT_SESSION_LIFETIME_SECONDS = 900;
 // The real route requests a one-time token for the listing's own Channex property after the owner
 // check, and never takes a property id from the browser. The mock only answers for a listing that
 // has been turned on, like the real one will.
-export const createConnectSession = async ({ propertyId } = {}) => {
+const mockCreateConnectSession = async ({ propertyId } = {}) => {
   await mockDelay();
 
   const endpoint = `/integrations/channex/host/listings/${propertyId}/connect-session`;
@@ -263,3 +269,9 @@ export const createConnectSession = async ({ propertyId } = {}) => {
 
   return { iframeUrl: MOCK_CONNECT_SESSION_URL, expiresInSeconds: MOCK_CONNECT_SESSION_LIFETIME_SECONDS };
 };
+
+export const getHostListings = USE_REAL_HOST_DISTRIBUTION_API ? realApi.getHostListings : mockGetHostListings;
+export const refreshChannels = USE_REAL_HOST_DISTRIBUTION_API ? realApi.refreshChannels : mockRefreshChannels;
+export const createConnectSession = USE_REAL_HOST_DISTRIBUTION_API
+  ? realApi.createConnectSession
+  : mockCreateConnectSession;
