@@ -54,6 +54,8 @@ export const listAutomations = () => request("");
 export const createAutomation = (automation) => request("", { method: "POST", body: automation });
 export const updateAutomation = (id, automation) =>
   request(`/${encodeURIComponent(id)}`, { method: "PATCH", body: automation });
+export const deleteAutomation = (id) =>
+  request(`/${encodeURIComponent(id)}`, { method: "DELETE" });
 export const activateAutomation = (id) =>
   request(`/${encodeURIComponent(id)}/activate`, { method: "POST" });
 export const pauseAutomation = (id) =>

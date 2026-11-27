@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useWebsiteEditorSitePages } from "../editor/hooks/useWebsiteEditorSitePages";
+import { useWebsiteEntitlements } from "../hooks/useWebsiteEntitlements";
 import { WEBSITE_ENTITLEMENT_UNLIMITED_PAGES, getWebsiteEntitlements } from "../services/websitePlanService";
 
 jest.mock("../services/websitePlanService", () => ({
@@ -11,7 +12,10 @@ const STORED = { sitePages: { gallery: { enabled: true, navLabel: "Photos" } } }
 
 const renderSitePages = async (entitlements, draftTemplateKey = "panorama-landing") => {
   getWebsiteEntitlements.mockResolvedValue(entitlements);
-  const hook = renderHook(() => useWebsiteEditorSitePages({ draftTemplateKey, workingOverrides: STORED }));
+  const hook = renderHook(() => {
+    const { has } = useWebsiteEntitlements();
+    return useWebsiteEditorSitePages({ draftTemplateKey, hasEntitlement: has, workingOverrides: STORED });
+  });
   await waitFor(() => expect(getWebsiteEntitlements).toHaveBeenCalled());
   await act(async () => {});
   return hook;

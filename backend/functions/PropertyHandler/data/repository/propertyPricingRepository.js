@@ -73,6 +73,11 @@ export class PropertyPricingRepository {
     return Math.trunc(weekendRate);
   }
 
+  // Run before a transaction opens, so the catalog lookup is cached and not issued mid-transaction.
+  async warmProbes() {
+    await this.supportsWeekendRateColumn(await Database.getInstance());
+  }
+
   async supportsWeekendRateColumn(client) {
     if (this.weekendRateColumnSupported === true) {
       return true;

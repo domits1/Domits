@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import FilterButton from './FilterButton';
+import { MONDAY_FIRST_EN_LOCALE } from './mondayFirstLocale';
 import {LanguageContext} from "../../context/LanguageContext.js";
 import en from "../../content/en.json";
 import nl from "../../content/nl.json";
@@ -296,7 +297,7 @@ export const SearchBar = ({ setSearchResults = () => {}, setLoading = () => {}, 
         value={selectedDayRange}
         onChange={setSelectedDayRange}
         minimumDate={utils("en").getToday()}
-        shouldHighlightWeekends
+        locale={MONDAY_FIRST_EN_LOCALE}
         format="MMM DD, YYYY"
         calendarClassName="responsive-calendar"
         renderInput={({ ref }) => (

@@ -10,6 +10,7 @@ import { fetchAccommodationsByOwnerId } from "../../../../services/fetchAccommod
 import {
   activateAutomation,
   createAutomation,
+  deleteAutomation,
   listAutomationDeliveries,
   listAutomations,
   pauseAutomation,
@@ -24,6 +25,7 @@ jest.mock("../../../../services/fetchAccommodationByOwnerIdService", () => ({
 jest.mock("../services/automationService", () => ({
   activateAutomation: jest.fn(),
   createAutomation: jest.fn(),
+  deleteAutomation: jest.fn(),
   listAutomationDeliveries: jest.fn(),
   listAutomations: jest.fn(),
   pauseAutomation: jest.fn(),
@@ -287,6 +289,133 @@ describe("host automated messages v1", () => {
     });
   });
 
+  describe("automation list", () => {
+    const stayAutomation = {
+      ...automation,
+      id: "automation-3",
+      name: "Check-out thanks",
+      triggerType: "CHECK_OUT",
+      offsetDirection: "AFTER",
+      offsetAmount: 1,
+      offsetUnit: "DAYS",
+      sendTime: "10:00",
+      status: "ACTIVE",
+    };
+
+    const renderList = async (items) => {
+      listAutomations.mockResolvedValueOnce(items);
+      render(<AutomationsContent />);
+      await screen.findByRole("option", { name: "Canal Loft" });
+      return within(screen.getByLabelText("Automation list"));
+    };
+
+    test("shows when each automation sends under its name", async () => {
+      const list = await renderList([automation, stayAutomation]);
+
+      expect(await list.findByText("2 hours after the booking is paid")).toBeInTheDocument();
+      expect(list.getByText("1 day after check-out, at 10:00 (Amsterdam time)")).toBeInTheDocument();
+    });
+
+    test("shows only active automations on the Active tab", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+
+      fireEvent.click(list.getByRole("button", { name: "Active" }));
+
+      expect(list.getByText("Check-out thanks")).toBeInTheDocument();
+      expect(list.queryByText("Paid booking welcome")).not.toBeInTheDocument();
+      expect(list.getByRole("button", { name: "Active" })).toHaveAttribute("aria-pressed", "true");
+    });
+
+    test("shows an empty state on the Paused tab when nothing is paused", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+
+      fireEvent.click(list.getByRole("button", { name: "Paused" }));
+
+      expect(list.getByText("No paused automations.")).toBeInTheDocument();
+      expect(list.queryByText("Check-out thanks")).not.toBeInTheDocument();
+    });
+
+    test("shows every automation again on the All tab", async () => {
+      const list = await renderList([automation, stayAutomation]);
+      await list.findByText("Check-out thanks");
+      fireEvent.click(list.getByRole("button", { name: "Paused" }));
+
+      fireEvent.click(list.getByRole("button", { name: "All" }));
+
+      expect(list.getByText("Check-out thanks")).toBeInTheDocument();
+      expect(list.getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+  });
+
+  describe("deleting an automation", () => {
+    const openAutomation = async () => {
+      render(<AutomationsContent />);
+      fireEvent.click(await screen.findByText("Paid booking welcome"));
+      await screen.findByRole("option", { name: "Canal Loft" });
+    };
+
+    beforeEach(() => {
+      jest.spyOn(window, "confirm").mockReturnValue(true);
+      deleteAutomation.mockResolvedValue({ id: "automation-1", deleted: true });
+    });
+
+    afterEach(() => {
+      window.confirm.mockRestore();
+    });
+
+    test("offers no Delete button for an automation that was never saved", async () => {
+      render(<AutomationsContent />);
+      await screen.findByText("Paid booking welcome");
+
+      expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    });
+
+    test("does nothing when the host cancels the confirmation", async () => {
+      window.confirm.mockReturnValue(false);
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      expect(deleteAutomation).not.toHaveBeenCalled();
+      expect(screen.getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+
+    test("deletes after confirmation and removes it from the list", async () => {
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      await waitFor(() => expect(deleteAutomation).toHaveBeenCalledWith("automation-1"));
+      expect(window.confirm).toHaveBeenCalledWith("Delete this automation? Its scheduled messages will be cancelled.");
+      await waitFor(() => expect(screen.queryByText("Paid booking welcome")).not.toBeInTheDocument());
+      expect(screen.getByLabelText("Automation name")).toHaveValue("");
+      expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    });
+
+    test("removes the automation without an error when it was already deleted", async () => {
+      deleteAutomation.mockRejectedValueOnce(Object.assign(new Error("Automation not found."), { status: 404 }));
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      await waitFor(() => expect(screen.queryByText("Paid booking welcome")).not.toBeInTheDocument());
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Automation name")).toHaveValue("");
+    });
+
+    test("keeps the automation and shows the error when deleting fails", async () => {
+      deleteAutomation.mockRejectedValueOnce(Object.assign(new Error("Delete failed."), { status: 500 }));
+      await openAutomation();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Delete failed.");
+      expect(within(screen.getByLabelText("Automation list")).getByText("Paid booking welcome")).toBeInTheDocument();
+    });
+  });
+
   test("activates and pauses an automation", async () => {
     render(<AutomationsContent />);
     fireEvent.click(await screen.findByText("Paid booking welcome"));
@@ -347,13 +476,53 @@ describe("host automated messages v1", () => {
       expect(variables.getByRole("button", { name: ariaLabel })).toHaveAttribute("aria-label", ariaLabel);
     });
 
-    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when clicked", async (name, _short, _description, ariaLabel) => {
+    test.each(EXPECTED.slice(4))("adds {{%s}} to the end of the template when the message box was not focused", async (name, _short, _description, ariaLabel) => {
       const variables = await renderEditor();
       fireEvent.change(screen.getByLabelText("Message template"), { target: { value: "Welcome. " } });
 
       fireEvent.click(variables.getByRole("button", { name: ariaLabel }));
 
       expect(screen.getByLabelText("Message template")).toHaveValue(`Welcome. {{${name}}}`);
+    });
+
+    test("inserts the variable at the cursor and keeps the cursor after it", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      fireEvent.change(template, { target: { value: "Hi , welcome." } });
+      template.focus();
+      template.setSelectionRange(3, 3);
+
+      fireEvent.click(variables.getByRole("button", { name: "Insert guest name" }));
+
+      expect(template).toHaveValue("Hi {{guestName}}, welcome.");
+      expect(template).toHaveFocus();
+      expect(template.selectionStart).toBe(16);
+      expect(template.selectionEnd).toBe(16);
+    });
+
+    test("replaces the selected text with the variable", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      fireEvent.change(template, { target: { value: "Stay at NAME tonight." } });
+      template.focus();
+      template.setSelectionRange(8, 12);
+
+      fireEvent.click(variables.getByRole("button", { name: "Insert property name" }));
+
+      expect(template).toHaveValue("Stay at {{propertyName}} tonight.");
+    });
+
+    test("appends again after switching to another automation", async () => {
+      const variables = await renderEditor();
+      const template = screen.getByLabelText("Message template");
+      template.focus();
+      template.setSelectionRange(0, 0);
+
+      fireEvent.click(screen.getByText("Paid booking welcome"));
+      template.setSelectionRange(0, 0);
+      fireEvent.click(variables.getByRole("button", { name: "Insert city" }));
+
+      expect(template).toHaveValue("Hi {{guestName}} at {{propertyName}}{{propertyCity}}");
     });
 
     test("sends a template with a new variable to the backend preview", async () => {
