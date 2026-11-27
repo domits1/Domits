@@ -45,6 +45,8 @@ const EXISTING_ROW = {
   public_booking_ref: "DBW-EXISTINGAA",
   status: "Inquiry",
   idempotency_key: "idem-1",
+  guestname: "Guest Name",
+  guest_email: "guest@example.com",
 };
 
 const REQUEST = {
@@ -232,7 +234,7 @@ describe("PublicSiteBookingRequestService.createBookingRequest", () => {
   });
 
   describe("idempotency", () => {
-    it("replays the original response for a known key without re-quoting or inserting", async () => {
+    it("replays the original response for a known key and the same guest without re-quoting or inserting", async () => {
       const { service, deps } = buildService({
         reservationRepository: {
           getByIdempotencyKey: jest.fn().mockResolvedValue(EXISTING_ROW),
@@ -241,7 +243,10 @@ describe("PublicSiteBookingRequestService.createBookingRequest", () => {
         },
       });
 
-      const result = await service.createBookingRequest(REQUEST);
+      const result = await service.createBookingRequest({
+        ...REQUEST,
+        guest: { name: " Guest Name ", email: " Guest@Example.com " },
+      });
 
       expect(result).toEqual({
         statusCode: 201,
@@ -283,6 +288,37 @@ describe("PublicSiteBookingRequestService.createBookingRequest", () => {
 
       await expectError(service.createBookingRequest(REQUEST), "idempotency_key_reused");
       expect(deps.reservationRepository.createPublicSiteBookingRequest).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["the email was fixed", { name: "Guest Name", email: "fixed@example.com" }],
+      ["the name was fixed", { name: "Guest Namee", email: "guest@example.com" }],
+    ])("answers idempotency_key_reused when %s after an unknown outcome", async (_, guest) => {
+      const { service, deps } = buildService({
+        reservationRepository: {
+          getByIdempotencyKey: jest.fn().mockResolvedValue(EXISTING_ROW),
+          createPublicSiteBookingRequest: jest.fn(),
+          assertNoBookingConflict: jest.fn(),
+        },
+      });
+
+      await expectError(service.createBookingRequest({ ...REQUEST, guest }), "idempotency_key_reused");
+      expect(deps.reservationRepository.createPublicSiteBookingRequest).not.toHaveBeenCalled();
+    });
+
+    it("answers idempotency_key_reused when a concurrent request with another email wins the insert race", async () => {
+      const { service } = buildService({
+        reservationRepository: {
+          getByIdempotencyKey: jest
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({ ...EXISTING_ROW, guest_email: "other@example.com" }),
+          createPublicSiteBookingRequest: jest.fn().mockRejectedValue(uniqueViolation("booking_idempotency_key_unique")),
+          assertNoBookingConflict: jest.fn().mockResolvedValue(true),
+        },
+      });
+
+      await expectError(service.createBookingRequest(REQUEST), "idempotency_key_reused");
     });
 
     it("replays when a concurrent request wins the insert race on the same key", async () => {

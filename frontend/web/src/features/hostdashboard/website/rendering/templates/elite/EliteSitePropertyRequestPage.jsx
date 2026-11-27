@@ -38,7 +38,7 @@ export default function EliteSitePropertyRequestPage({ sitePropertyPage, headerT
         headerRef={headerRef}
         showTopBar={viewState.showTopBar}
       />
-      <section className={`${styles.eliteSection} ${requestStyles.request}`}>
+      <section className={`${styles.eliteSection} ${styles.eliteBookingPanel} ${requestStyles.request}`}>
         {booking ? (
           <Suspense fallback={null}>
             <LazyRequestContent
