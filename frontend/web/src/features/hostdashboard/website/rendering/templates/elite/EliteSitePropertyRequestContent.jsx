@@ -31,6 +31,64 @@ const toAlert = (presentation) => ({
 const readIdempotencyScope = (booking, quote) =>
   [booking.propertyId || "main", quote.checkIn, quote.checkOut, quote.guestCount].join(" ");
 
+const recoverFromSendError = (error, { onDatesTaken, onRequote, onRecheck }) => {
+  const presentation = resolveBookingRequestErrorPresentation(error);
+  if (presentation.scope === SCOPES.DATES) {
+    onDatesTaken(presentation.message);
+  } else if (presentation.recovery === RECOVERY.REQUOTE) {
+    onRequote();
+  } else if (presentation.recovery === RECOVERY.RECHECK) {
+    onRecheck();
+  }
+};
+
+function RequestStaySummary({ model, title, selection, quoteState, quoteView, propertyHref, onCheckAgain }) {
+  const location = resolveEliteLocation(model);
+  const photo = hasEliteHeaderPhoto(model.media) ? model.media.heroImage : "";
+
+  return (
+    <aside className={styles.elitePriceCard} aria-label="Your stay">
+      {photo ? <img className={requestStyles.summaryPhoto} src={photo} alt={title} /> : null}
+      <div>
+        <p className={requestStyles.summaryTitle}>{title}</p>
+        {location ? <p className={requestStyles.summaryLocation}>{location}</p> : null}
+      </div>
+      <dl className={requestStyles.facts}>
+        <div>
+          <dt>Dates</dt>
+          <dd>{`${formatStayDate(selection.checkIn)} to ${formatStayDate(selection.checkOut)}`}</dd>
+        </div>
+        <div>
+          <dt>Guests</dt>
+          <dd>{selection.guests}</dd>
+        </div>
+      </dl>
+      {quoteView.showBreakdown ? (
+        <QuoteBreakdown quote={quoteState.quote} isStale={quoteView.isStale} staleReason={quoteState.staleReason} />
+      ) : null}
+      {quoteView.isLoading ? <p className={quoteStyles.hint}>Checking the price…</p> : null}
+      {quoteView.isStale ? (
+        <button type="button" className={quoteStyles.secondaryAction} onClick={onCheckAgain}>
+          Check the price again
+        </button>
+      ) : null}
+      <PanoramaPageLink href={propertyHref} className={styles.eliteCrumbLink}>
+        Change dates or guests
+      </PanoramaPageLink>
+    </aside>
+  );
+}
+
+RequestStaySummary.propTypes = {
+  model: PropTypes.shape({ media: PropTypes.object }).isRequired,
+  title: PropTypes.string.isRequired,
+  selection: PropTypes.object.isRequired,
+  quoteState: PropTypes.object.isRequired,
+  quoteView: PropTypes.object.isRequired,
+  propertyHref: PropTypes.string.isRequired,
+  onCheckAgain: PropTypes.func.isRequired,
+};
+
 export default function EliteSitePropertyRequestContent({
   model,
   title,
@@ -83,13 +141,12 @@ export default function EliteSitePropertyRequestContent({
       idempotencyScope: readIdempotencyScope(booking, quote),
     });
     isSendingRef.current = false;
-    const presentation = outcome?.error ? resolveBookingRequestErrorPresentation(outcome.error) : null;
-    if (presentation?.scope === SCOPES.DATES) {
-      setDatesProblem(presentation.message);
-    } else if (presentation?.recovery === RECOVERY.REQUOTE) {
-      void quoteStay();
-    } else if (presentation?.recovery === RECOVERY.RECHECK) {
-      markStale(QUOTE_STALE_REASONS.REJECTED);
+    if (outcome?.error) {
+      recoverFromSendError(outcome.error, {
+        onDatesTaken: setDatesProblem,
+        onRequote: () => void quoteStay(),
+        onRecheck: () => markStale(QUOTE_STALE_REASONS.REJECTED),
+      });
     }
   };
 
@@ -98,7 +155,7 @@ export default function EliteSitePropertyRequestContent({
   }
 
   const contactHref = resolveHostContactHref(model);
-  const needsOtherDates = !hasStay || Boolean(datesProblem) || Boolean(quoteView.datesError || quoteView.guestsError);
+  const needsOtherDates = !hasStay || datesProblem || quoteView.datesError || quoteView.guestsError;
   if (needsOtherDates) {
     return (
       <div className={requestStyles.choose}>
@@ -121,7 +178,7 @@ export default function EliteSitePropertyRequestContent({
       <div className={requestStyles.main}>
         <QuotePanelAlert
           presentation={quoteView.panelError}
-          requestId={quoteState.error?.requestId || ""}
+          requestId={quoteState.error?.requestId}
           contactHref={contactHref}
           onRetry={quoteStay}
         />
@@ -141,40 +198,18 @@ export default function EliteSitePropertyRequestContent({
     bookingState.status === BOOKING_REQUEST_STATUS.ERROR
       ? resolveBookingRequestErrorPresentation(bookingState.error)
       : null;
-  const location = resolveEliteLocation(model);
-  const photo = hasEliteHeaderPhoto(model.media) ? model.media.heroImage : "";
 
   return (
     <div className={requestStyles.layout}>
-      <aside className={styles.elitePriceCard} aria-label="Your stay">
-        {photo ? <img className={requestStyles.summaryPhoto} src={photo} alt={title} /> : null}
-        <div>
-          <p className={requestStyles.summaryTitle}>{title}</p>
-          {location ? <p className={requestStyles.summaryLocation}>{location}</p> : null}
-        </div>
-        <dl className={requestStyles.facts}>
-          <div>
-            <dt>Dates</dt>
-            <dd>{`${formatStayDate(selection.checkIn)} to ${formatStayDate(selection.checkOut)}`}</dd>
-          </div>
-          <div>
-            <dt>Guests</dt>
-            <dd>{selection.guests}</dd>
-          </div>
-        </dl>
-        {quoteView.showBreakdown ? (
-          <QuoteBreakdown quote={quote} isStale={quoteView.isStale} staleReason={quoteState.staleReason} />
-        ) : null}
-        {quoteView.isLoading ? <p className={quoteStyles.hint}>Checking the price…</p> : null}
-        {quoteView.isStale ? (
-          <button type="button" className={quoteStyles.secondaryAction} onClick={quoteStay}>
-            Check the price again
-          </button>
-        ) : null}
-        <PanoramaPageLink href={propertyHref} className={styles.eliteCrumbLink}>
-          Change dates or guests
-        </PanoramaPageLink>
-      </aside>
+      <RequestStaySummary
+        model={model}
+        title={title}
+        selection={selection}
+        quoteState={quoteState}
+        quoteView={quoteView}
+        propertyHref={propertyHref}
+        onCheckAgain={quoteStay}
+      />
       <div className={requestStyles.main}>
         <h2 className={requestStyles.heading}>Your details</h2>
         {sendError?.scope === SCOPES.QUOTE ? (
@@ -185,7 +220,7 @@ export default function EliteSitePropertyRequestContent({
         {sendError?.scope === SCOPES.PANEL ? (
           <QuotePanelAlert
             presentation={toAlert(sendError)}
-            requestId={bookingState.error?.requestId || ""}
+            requestId={bookingState.error?.requestId}
             contactHref={contactHref}
             onRetry={send}
           />
