@@ -43,7 +43,8 @@ test.each(["week", "month", "year"])("builds UTC %s averages/counts scoped to th
   expect(sql).toContain("GROUP BY DATE_TRUNC");
   expect(sql).toContain("ORDER BY DATE_TRUNC");
   expect(sql).toContain("ASC");
-  expect(sql).not.toContain("verification_status");
+  expect(sql).toContain("verification_status");
+    expect(query.getParameters().stayVerification).toBe("VERIFIED_STAY");
   for (const field of ["property_id", "publication_status", "status", "review_type"]) {
     expect(sql).toMatch(new RegExp(`"review"\\."${field}" = \\$\\d+`));
   }

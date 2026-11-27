@@ -246,7 +246,7 @@ describe('Review creation and existing operations', () => {
       reviewee_user_id: booking.hostid,
       review_type: "GUEST_TO_PROPERTY",
       publication_status: "UNPUBLISHED",
-      verification_status: "UNVERIFIED",
+      verification_status: "VERIFIED_STAY",
       status: "DRAFT",
     }), {});
   });
@@ -811,6 +811,16 @@ describe('Review workflows', () => {
     expect(JSON.parse(response.body).verification_status).toBe("UNVERIFIED");
     const args = repository.publishDraft.mock.calls[0][0];
     expect(await args.authorize(draft)).toBe(true);
+  });
+
+  it.each(["Cancelled", "Refunded"])("preserves verified-stay evidence when a booking becomes %s", async (status) => {
+    service.canPublishReview = async () => true;
+    repository.findById.mockResolvedValue({ ...draft, verification_status: "VERIFIED_STAY" });
+    repository.findBookingById.mockResolvedValue({ guestid: "guest", hostid: "host", property_id: "p1",
+      status, departuredate: now - 100 });
+    expect((await controller.publishReview(event())).statusCode).toBe(200);
+    expect(repository.findBookingById).not.toHaveBeenCalled();
+    expect(repository.publishDraft).toHaveBeenCalled();
   });
 
   it("rechecks eligibility before publishing and reports concurrent changes", async () => {

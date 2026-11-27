@@ -394,7 +394,7 @@ describe('Review transactional writes', () => {
     const service = new ReviewService({ repository, now: () => now });
     const review = await service.createReview("guest", { booking_id: "b1", overall_rating: 5,
       title: "Stay", public_review: "Good" });
-    expect(review.verification_status).toBe("UNVERIFIED");
+    expect(review.verification_status).toBe("VERIFIED_STAY");
     const empty = { property_id: "p1", overall_score: null, review_count: 0 };
     expect(await service.getPropertyReviewScore("host", "p1")).toEqual(empty);
     await service.publishReview("guest", review.id);
@@ -569,12 +569,29 @@ describe('Review transactional writes', () => {
     }
   });
 
-  it("publishes and completes the matching request in one transaction without upgrading verification", async () => {
+  it.each(["Cancelled", "Refunded"])("allows approval and publication after a verified booking becomes %s", async (status) => {
+    const submitted = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
+      updatedAt: now, from: "DRAFT", to: "PENDING_APPROVAL", authorize: async () => true });
+    expect(submitted.verification_status).toBe("VERIFIED_STAY");
+    committed.get(Booking)[0].status = status;
+    const approved = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: submitted.updated_at,
+      updatedAt: now + 1, from: "PENDING_APPROVAL", to: "APPROVED", authorize: async () => true });
+    await expect(repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: approved.updated_at,
+      updatedAt: now + 2, authorize: async () => true })).resolves.toMatchObject({
+      status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "VERIFIED_STAY",
+    });
+  });
+
+  it("persists completed-stay verification and completes the request in the publication transaction", async () => {
     committed.get(Review)[0].status = "APPROVED";
     const result = await repository.publishDraft({ reviewId: "r1", expectedUpdatedAt: draft.updated_at,
       updatedAt: now, authorize: async () => true });
-    expect(result).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "UNVERIFIED" });
+    expect(result).toMatchObject({ status: "PUBLISHED", publication_status: "PUBLISHED", verification_status: "VERIFIED_STAY" });
     expect(committed.get(Review_Request)[0]).toMatchObject({ status: "COMPLETED", completedAt: now, nextSendAt: null, claimedAt: null });
+    committed.get(Booking)[0].status = "Cancelled";
+    expect(committed.get(Review)[0]).toMatchObject({ status: "PUBLISHED", verification_status: "VERIFIED_STAY" });
+    committed.get(Booking)[0].status = "Refunded";
+    expect(committed.get(Review)[0]).toMatchObject({ status: "PUBLISHED", verification_status: "VERIFIED_STAY" });
   });
 
   it("rechecks publication policy and booking eligibility before committing", async () => {

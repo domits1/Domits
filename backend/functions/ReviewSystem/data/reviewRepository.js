@@ -601,6 +601,7 @@ export class ReviewRepository {
 
       const updates = {
         status: to,
+        verification_status: "VERIFIED_STAY",
         publication_status: to === "PUBLISHED" ? "PUBLISHED" : "UNPUBLISHED",
         updated_at: timestamp,
       };
@@ -641,6 +642,8 @@ export class ReviewRepository {
         "You cannot publish this review."
       );
     }
+
+    if (review.verification_status === "VERIFIED_STAY") return;
 
     const booking = await manager.getRepository(Booking).findOne({
       where: { id: review.booking_id },
